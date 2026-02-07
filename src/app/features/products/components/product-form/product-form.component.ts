@@ -76,7 +76,10 @@ export class ProductFormComponent implements OnInit {
       const reader = new FileReader();
       reader.onload = (e) => {
         this.imagePreview = e.target?.result || null;
-        this.productForm.patchValue({ image: this.imagePreview });
+        const currentImages = this.productForm.get('images')?.value || [];
+        this.productForm.patchValue({
+          images: [this.imagePreview as string, ...currentImages.slice(1)]
+        });
       };
       reader.readAsDataURL(file);
     }
