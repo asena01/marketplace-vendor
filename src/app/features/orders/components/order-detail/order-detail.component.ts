@@ -49,16 +49,8 @@ export class OrderDetailComponent implements OnInit {
     );
   }
 
-  updateOrderStatus(order: Order, newStatus: string) {
-    this.orderService.updateOrder(order.id, { status: newStatus as any }).subscribe(
-      () => {
-        this.loadOrder();
-      },
-      () => {
-        this.error = 'Failed to update order status';
-      }
-    );
-  }
+  // Note: updateOrderStatus would require a PUT/PATCH endpoint in the service
+  // For now, this is a placeholder for future implementation
 
   goBack() {
     this.router.navigate(['/orders']);
