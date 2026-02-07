@@ -1,0 +1,141 @@
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <h1>Dashboard</h1>
+    <p class="header-subtitle">Welcome back to your vendor dashboard</p>
+  </div>
+
+  <!-- Key Metrics -->
+  <div class="metrics-grid">
+    <div class="metric-card" *ngIf="vendor$ | async as vendor">
+      <div class="metric-icon revenue">
+        <span>💰</span>
+      </div>
+      <div class="metric-content">
+        <h3 class="metric-label">Total Revenue</h3>
+        <p class="metric-value">${{ vendor.totalRevenue | number: '1.2-2' }}</p>
+        <span class="metric-change positive">+12.5% this month</span>
+      </div>
+    </div>
+
+    <div class="metric-card" *ngIf="vendor$ | async as vendor">
+      <div class="metric-icon orders">
+        <span>📦</span>
+      </div>
+      <div class="metric-content">
+        <h3 class="metric-label">Total Orders</h3>
+        <p class="metric-value">{{ vendor.totalOrders }}</p>
+        <span class="metric-change positive">+8 this week</span>
+      </div>
+    </div>
+
+    <div class="metric-card" *ngIf="vendor$ | async as vendor">
+      <div class="metric-icon products">
+        <span>🛍️</span>
+      </div>
+      <div class="metric-content">
+        <h3 class="metric-label">Total Products</h3>
+        <p class="metric-value">{{ vendor.totalProducts }}</p>
+        <span class="metric-change neutral">2 new this week</span>
+      </div>
+    </div>
+
+    <div class="metric-card" *ngIf="affiliateStats$ | async as stats">
+      <div class="metric-icon affiliates">
+        <span>🤝</span>
+      </div>
+      <div class="metric-content">
+        <h3 class="metric-label">Active Affiliates</h3>
+        <p class="metric-value">{{ stats.activeCount }}</p>
+        <span class="metric-change positive">{{ stats.pendingCount }} pending approval</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="dashboard-content">
+    <!-- Recent Orders -->
+    <section class="content-section recent-orders-section">
+      <div class="section-header">
+        <h2>Recent Orders</h2>
+        <a href="#" class="view-all-link">View All →</a>
+      </div>
+
+      <div class="orders-table-wrapper" *ngIf="recentOrders$ | async as orders">
+        <table class="orders-table" *ngIf="orders.length > 0; else noOrders">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let order of orders">
+              <td class="order-id">#{{ order.id }}</td>
+              <td class="customer-name">{{ order.customerName }}</td>
+              <td class="order-amount">${{ order.totalAmount | number: '1.2-2' }}</td>
+              <td class="order-status">
+                <span [class]="'status-badge status-' + order.status.toLowerCase()">
+                  {{ order.status }}
+                </span>
+              </td>
+              <td class="order-date">{{ order.createdAt | date: 'short' }}</td>
+              <td class="action-cell">
+                <button class="action-btn view-btn">View</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <ng-template #noOrders>
+          <div class="empty-state">
+            <p>No orders yet</p>
+          </div>
+        </ng-template>
+      </div>
+    </section>
+
+    <!-- Affiliate Performance -->
+    <section class="content-section affiliate-section">
+      <div class="section-header">
+        <h2>Affiliate Performance</h2>
+        <a href="#" class="view-all-link">Manage Affiliates →</a>
+      </div>
+
+      <div class="affiliate-stats" *ngIf="affiliateStats$ | async as stats">
+        <div class="stat-row">
+          <span class="stat-label">Pending Approvals</span>
+          <span class="stat-value">{{ stats.pendingCount }}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Active Affiliates</span>
+          <span class="stat-value">{{ stats.activeCount }}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Suspended</span>
+          <span class="stat-value">{{ stats.suspendedCount }}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Total Payouts</span>
+          <span class="stat-value">${{ stats.totalPayouts | number: '1.2-2' }}</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Analytics Section -->
+  <section class="content-section analytics-section" *ngIf="analyticsData$ | async as analytics">
+    <div class="section-header">
+      <h2>Sales Trends</h2>
+      <span class="period-selector">Last 7 Days</span>
+    </div>
+
+    <div class="analytics-chart-placeholder">
+      <p>📈 Sales trend chart will be displayed here</p>
+      <small>Total Sales: ${{ analytics.totalSales | number: '1.2-2' }}</small>
+    </div>
+  </section>
+</div>
