@@ -23,23 +23,18 @@ export class AnalyticsService {
 
         orders.forEach(order => {
           const date = new Date(order.createdAt).toISOString().split('T')[0];
-          const existing: DailySalesData = salesByDate.get(date) || {
+          const existing = salesByDate.get(date);
+
+          const salesData: DailySalesData = {
             date,
-            sales: 0,
-            orders: 0,
-            revenue: 0,
-            affiliateOrders: 0,
-            affiliateRevenue: 0
+            sales: (existing?.sales ?? 0) + 1,
+            orders: (existing?.orders ?? 0) + 1,
+            revenue: (existing?.revenue ?? 0) + order.totalAmount,
+            affiliateOrders: (existing?.affiliateOrders ?? 0) + (order.affiliateId ? 1 : 0),
+            affiliateRevenue: (existing?.affiliateRevenue ?? 0) + (order.affiliateId ? order.totalAmount : 0)
           };
 
-          salesByDate.set(date, {
-            date,
-            sales: existing.sales + 1,
-            orders: existing.orders + 1,
-            revenue: existing.revenue + order.totalAmount,
-            affiliateOrders: existing.affiliateOrders + (order.affiliateId ? 1 : 0),
-            affiliateRevenue: existing.affiliateRevenue + (order.affiliateId ? order.totalAmount : 0)
-          });
+          salesByDate.set(date, salesData);
         });
 
         return Array.from(salesByDate.values())
