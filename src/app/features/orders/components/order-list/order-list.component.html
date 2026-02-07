@@ -79,12 +79,12 @@
         <tbody>
           <tr *ngFor="let order of getPaginatedOrders(orders)" class="order-row">
             <td class="col-id">
-              <a href="#" class="order-id-link">#{{ order.id }}</a>
+              <a href="#" class="order-id-link">#{{ order.orderNumber }}</a>
             </td>
             <td class="col-customer">
               <div class="customer-info">
                 <div class="customer-name">{{ order.customerName }}</div>
-                <div class="customer-email">{{ order.customerEmail }}</div>
+                <div class="customer-email">ID: {{ order.customerId }}</div>
               </div>
             </td>
             <td class="col-amount">
