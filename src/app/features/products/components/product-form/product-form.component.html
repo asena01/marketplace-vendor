@@ -228,15 +228,15 @@
           </div>
         </div>
 
-        <!-- Profit Margin Display -->
-        <div class="form-group profit-summary" *ngIf="productForm.get('price')?.value && productForm.get('cost')?.value">
-          <div class="profit-stat">
-            <span class="label">Profit per Unit</span>
-            <span class="value">${{ (productForm.get('price')?.value - productForm.get('cost')?.value) | number: '1.2-2' }}</span>
+        <!-- Price Summary Display -->
+        <div class="form-group price-summary" *ngIf="productForm.get('price')?.value && productForm.get('originalPrice')?.value">
+          <div class="summary-stat">
+            <span class="label">Discount Amount</span>
+            <span class="value">${{ (productForm.get('originalPrice')?.value - productForm.get('price')?.value) | number: '1.2-2' }}</span>
           </div>
-          <div class="profit-stat">
-            <span class="label">Profit Margin</span>
-            <span class="value">{{ ((productForm.get('price')?.value - productForm.get('cost')?.value) / productForm.get('price')?.value * 100) | number: '1.1-1' }}%</span>
+          <div class="summary-stat">
+            <span class="label">Discount %</span>
+            <span class="value">{{ ((productForm.get('originalPrice')?.value - productForm.get('price')?.value) / productForm.get('originalPrice')?.value * 100) | number: '1.1-1' }}%</span>
           </div>
         </div>
       </div>
