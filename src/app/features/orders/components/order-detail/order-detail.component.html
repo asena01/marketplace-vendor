@@ -139,24 +139,31 @@
     <section class="detail-section order-status">
       <h2>Order Status</h2>
       <div class="status-timeline">
-        <div class="timeline-item" [class.active]="order.status === 'Pending'">
+        <div class="timeline-item" [class.active]="order.status === 'pending'">
           <div class="timeline-marker"></div>
           <div class="timeline-content">
             <h4>Pending</h4>
             <p>Order received and awaiting processing</p>
           </div>
         </div>
-        <div class="timeline-item" [class.active]="order.status === 'Processing'">
+        <div class="timeline-item" [class.active]="order.status === 'processing'">
           <div class="timeline-marker"></div>
           <div class="timeline-content">
             <h4>Processing</h4>
             <p>Order is being prepared for shipment</p>
           </div>
         </div>
-        <div class="timeline-item" [class.active]="order.status === 'Completed'">
+        <div class="timeline-item" [class.active]="order.status === 'shipped'">
           <div class="timeline-marker"></div>
           <div class="timeline-content">
-            <h4>Completed</h4>
+            <h4>Shipped</h4>
+            <p>Order is on its way</p>
+          </div>
+        </div>
+        <div class="timeline-item" [class.active]="order.status === 'delivered'">
+          <div class="timeline-marker"></div>
+          <div class="timeline-content">
+            <h4>Delivered</h4>
             <p>Order has been delivered</p>
           </div>
         </div>
