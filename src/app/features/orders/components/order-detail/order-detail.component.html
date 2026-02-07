@@ -102,7 +102,6 @@
           <thead>
             <tr>
               <th class="col-product">Product</th>
-              <th class="col-sku">SKU</th>
               <th class="col-qty">Quantity</th>
               <th class="col-price">Price</th>
               <th class="col-total">Total</th>
@@ -115,7 +114,6 @@
                   <div class="product-name">{{ item.productName }}</div>
                 </div>
               </td>
-              <td class="col-sku">{{ item.sku || 'N/A' }}</td>
               <td class="col-qty">{{ item.quantity }}</td>
               <td class="col-price">${{ item.price | number: '1.2-2' }}</td>
               <td class="col-total">${{ item.quantity * item.price | number: '1.2-2' }}</td>
@@ -128,15 +126,7 @@
       <div class="order-totals">
         <div class="total-row">
           <span class="label">Subtotal</span>
-          <span class="value">${{ (order.totalAmount - (order.shippingCost || 0)) | number: '1.2-2' }}</span>
-        </div>
-        <div class="total-row" *ngIf="order.shippingCost">
-          <span class="label">Shipping</span>
-          <span class="value">${{ order.shippingCost | number: '1.2-2' }}</span>
-        </div>
-        <div class="total-row" *ngIf="order.taxAmount">
-          <span class="label">Tax</span>
-          <span class="value">${{ order.taxAmount | number: '1.2-2' }}</span>
+          <span class="value">${{ order.totalAmount | number: '1.2-2' }}</span>
         </div>
         <div class="total-row final">
           <span class="label">Total Amount</span>
