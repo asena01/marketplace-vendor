@@ -54,8 +54,8 @@ export class OrderListComponent implements OnInit {
       const term = this.searchTerm.toLowerCase();
       filtered = filtered.filter(o =>
         o.id.toLowerCase().includes(term) ||
-        o.customerName.toLowerCase().includes(term) ||
-        o.customerEmail.toLowerCase().includes(term)
+        o.orderNumber.toLowerCase().includes(term) ||
+        o.customerName.toLowerCase().includes(term)
       );
     }
 
