@@ -47,7 +47,7 @@
           </div>
           <div class="summary-item">
             <span class="label">Tracking Number</span>
-            <span class="value">{{ order.trackingNumber || 'N/A' }}</span>
+            <span class="value">{{ order.shippingTrackingNumber || 'N/A' }}</span>
           </div>
         </div>
       </section>
@@ -61,12 +61,12 @@
             <span class="value">{{ order.customerName }}</span>
           </div>
           <div class="info-item">
-            <span class="label">Email</span>
-            <span class="value">{{ order.customerEmail }}</span>
+            <span class="label">Customer ID</span>
+            <span class="value">{{ order.customerId }}</span>
           </div>
           <div class="info-item">
             <span class="label">Phone</span>
-            <span class="value">{{ order.customerPhone || 'N/A' }}</span>
+            <span class="value">{{ order.shippingAddress.phone || 'N/A' }}</span>
           </div>
         </div>
       </section>
@@ -75,19 +75,21 @@
       <section class="detail-section shipping-address">
         <h2>Shipping Address</h2>
         <div class="address-content" *ngIf="order.shippingAddress">
+          <p class="address-line">{{ order.shippingAddress.fullName }}</p>
           <p class="address-line">{{ order.shippingAddress.street }}</p>
-          <p class="address-line">{{ order.shippingAddress.city }}, {{ order.shippingAddress.state }} {{ order.shippingAddress.zipCode }}</p>
+          <p class="address-line">{{ order.shippingAddress.city }}, {{ order.shippingAddress.state }} {{ order.shippingAddress.postalCode }}</p>
           <p class="address-line">{{ order.shippingAddress.country }}</p>
         </div>
       </section>
 
-      <!-- Billing Address -->
+      <!-- Billing Address (same as shipping for simplicity) -->
       <section class="detail-section billing-address">
         <h2>Billing Address</h2>
-        <div class="address-content" *ngIf="order.billingAddress">
-          <p class="address-line">{{ order.billingAddress.street }}</p>
-          <p class="address-line">{{ order.billingAddress.city }}, {{ order.billingAddress.state }} {{ order.billingAddress.zipCode }}</p>
-          <p class="address-line">{{ order.billingAddress.country }}</p>
+        <div class="address-content" *ngIf="order.shippingAddress">
+          <p class="address-line">{{ order.shippingAddress.fullName }}</p>
+          <p class="address-line">{{ order.shippingAddress.street }}</p>
+          <p class="address-line">{{ order.shippingAddress.city }}, {{ order.shippingAddress.state }} {{ order.shippingAddress.postalCode }}</p>
+          <p class="address-line">{{ order.shippingAddress.country }}</p>
         </div>
       </section>
     </div>
