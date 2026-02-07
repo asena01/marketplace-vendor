@@ -23,7 +23,7 @@ export class AnalyticsService {
 
         orders.forEach(order => {
           const date = new Date(order.createdAt).toISOString().split('T')[0];
-          const existing = salesByDate.get(date) || {
+          const existing: DailySalesData = salesByDate.get(date) || {
             date,
             sales: 0,
             orders: 0,
