@@ -6,35 +6,35 @@
 
   <!-- Key Metrics -->
   <div class="metrics-grid">
-    <div class="metric-card" *ngIf="vendor$ | async as vendor">
+    <div class="metric-card" *ngIf="vendorStats$ | async as stats">
       <div class="metric-icon revenue">
         <span>💰</span>
       </div>
       <div class="metric-content">
         <h3 class="metric-label">Total Revenue</h3>
-        <p class="metric-value">${{ vendor.totalRevenue | number: '1.2-2' }}</p>
+        <p class="metric-value">${{ stats.totalRevenue | number: '1.2-2' }}</p>
         <span class="metric-change positive">+12.5% this month</span>
       </div>
     </div>
 
-    <div class="metric-card" *ngIf="vendor$ | async as vendor">
+    <div class="metric-card" *ngIf="vendorStats$ | async as stats">
       <div class="metric-icon orders">
         <span>📦</span>
       </div>
       <div class="metric-content">
         <h3 class="metric-label">Total Orders</h3>
-        <p class="metric-value">{{ vendor.totalOrders }}</p>
+        <p class="metric-value">{{ stats.totalOrders }}</p>
         <span class="metric-change positive">+8 this week</span>
       </div>
     </div>
 
-    <div class="metric-card" *ngIf="vendor$ | async as vendor">
+    <div class="metric-card" *ngIf="vendorStats$ | async as stats">
       <div class="metric-icon products">
         <span>🛍️</span>
       </div>
       <div class="metric-content">
         <h3 class="metric-label">Total Products</h3>
-        <p class="metric-value">{{ vendor.totalProducts }}</p>
+        <p class="metric-value">{{ stats.totalProducts }}</p>
         <span class="metric-change neutral">2 new this week</span>
       </div>
     </div>
