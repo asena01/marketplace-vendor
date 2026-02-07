@@ -19,8 +19,9 @@ export class OrderListComponent implements OnInit {
   sortBy: string = 'date';
   currentPage: number = 1;
   pageSize: number = 10;
+  Math = Math; // Expose Math to template
 
-  statuses = ['Pending', 'Processing', 'Completed', 'Cancelled'];
+  statuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
 
   constructor(private orderService: OrderService) {}
 
