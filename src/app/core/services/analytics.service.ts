@@ -92,9 +92,9 @@ export class AnalyticsService {
   }
 
   getAffiliateMetrics(): Observable<AffiliateMetrics> {
-    return this.affiliateService.getTopAffiliates(1).pipe(
-      map(affiliates => {
-        const topPerformer = affiliates[0] || {
+    return this.affiliateService.getAffiliates().pipe(
+      map((affiliates: any) => {
+        const topPerformer = affiliates && affiliates.length > 0 ? affiliates[0] : {
           id: '',
           name: 'N/A',
           totalConversions: 0,
