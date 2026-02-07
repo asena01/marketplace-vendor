@@ -97,7 +97,7 @@
           </span>
         </div>
 
-        <!-- Category and Stock -->
+        <!-- Category and Subcategory -->
         <div class="form-row">
           <div class="form-group">
             <label for="category">Category *</label>
@@ -110,6 +110,23 @@
           </div>
 
           <div class="form-group">
+            <label for="subcategory">Subcategory *</label>
+            <input
+              id="subcategory"
+              type="text"
+              formControlName="subcategory"
+              placeholder="e.g., Electronics"
+              class="form-input"
+              [class.error]="productForm.get('subcategory')?.invalid && productForm.get('subcategory')?.touched">
+            <span class="error-message" *ngIf="productForm.get('subcategory')?.invalid && productForm.get('subcategory')?.touched">
+              Subcategory is required
+            </span>
+          </div>
+        </div>
+
+        <!-- Stock and Status -->
+        <div class="form-row">
+          <div class="form-group">
             <label for="stock">Stock Quantity *</label>
             <input
               id="stock"
@@ -121,6 +138,18 @@
             <span class="error-message" *ngIf="productForm.get('stock')?.invalid && productForm.get('stock')?.touched">
               Stock is required
             </span>
+          </div>
+
+          <div class="form-group">
+            <label for="status">Status *</label>
+            <select
+              id="status"
+              formControlName="status"
+              class="form-input">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="draft">Draft</option>
+            </select>
           </div>
         </div>
 
