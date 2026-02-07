@@ -46,10 +46,10 @@
           </span>
         </div>
 
-        <!-- Price and Cost -->
+        <!-- Price and Original Price -->
         <div class="form-row">
           <div class="form-group">
-            <label for="price">Price ($) *</label>
+            <label for="price">Selling Price ($) *</label>
             <input
               id="price"
               type="number"
@@ -64,19 +64,37 @@
           </div>
 
           <div class="form-group">
-            <label for="cost">Cost ($) *</label>
+            <label for="originalPrice">Original Price ($) *</label>
             <input
-              id="cost"
+              id="originalPrice"
               type="number"
-              formControlName="cost"
+              formControlName="originalPrice"
               placeholder="0.00"
               class="form-input"
               step="0.01"
-              [class.error]="productForm.get('cost')?.invalid && productForm.get('cost')?.touched">
-            <span class="error-message" *ngIf="productForm.get('cost')?.invalid && productForm.get('cost')?.touched">
-              Cost is required
+              [class.error]="productForm.get('originalPrice')?.invalid && productForm.get('originalPrice')?.touched">
+            <span class="error-message" *ngIf="productForm.get('originalPrice')?.invalid && productForm.get('originalPrice')?.touched">
+              Original price is required
             </span>
           </div>
+        </div>
+
+        <!-- Discount -->
+        <div class="form-group">
+          <label for="discount">Discount (%) *</label>
+          <input
+            id="discount"
+            type="number"
+            formControlName="discount"
+            placeholder="0"
+            class="form-input"
+            step="0.1"
+            min="0"
+            max="100"
+            [class.error]="productForm.get('discount')?.invalid && productForm.get('discount')?.touched">
+          <span class="error-message" *ngIf="productForm.get('discount')?.invalid && productForm.get('discount')?.touched">
+            Discount must be between 0 and 100
+          </span>
         </div>
 
         <!-- Category and Stock -->
