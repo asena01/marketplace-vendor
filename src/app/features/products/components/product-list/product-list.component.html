@@ -46,10 +46,10 @@
   </div>
 
   <!-- Products Grid -->
-  <div class="products-grid" *ngIf="products$ | async as products">
-    <div *ngLet="getFilteredProducts(products) as filteredProducts">
-      <div *ngIf="filteredProducts.length > 0; else noProducts">
-        <div class="product-card" *ngFor="let product of filteredProducts">
+  <div class="products-wrapper" *ngIf="products$ | async as products">
+    <ng-container *ngIf="getFilteredProducts(products).length > 0; else noProducts">
+      <div class="products-grid">
+        <div class="product-card" *ngFor="let product of getFilteredProducts(products)">
           <div class="product-image">
             <img [src]="product.images[0]" [alt]="product.name" class="image">
             <span class="stock-badge" [class.in-stock]="product.stock > 0" [class.out-of-stock]="product.stock === 0">
@@ -85,18 +85,14 @@
           </div>
         </div>
       </div>
+    </ng-container>
 
-      <ng-template #noProducts>
-        <div class="empty-state">
-          <p>📦</p>
-          <h3>No Products Found</h3>
-          <p>Try adjusting your filters or search terms</p>
-        </div>
-      </ng-template>
-    </div>
+    <ng-template #noProducts>
+      <div class="empty-state">
+        <p>📦</p>
+        <h3>No Products Found</h3>
+        <p>Try adjusting your filters or search terms</p>
+      </div>
+    </ng-template>
   </div>
 </div>
-
-<ng-template #ngLet let-ctx>
-  <ng-container *ngTemplateOutlet="$implicit; context: { $implicit: ctx }"></ng-container>
-</ng-template>
