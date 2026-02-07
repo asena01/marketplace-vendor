@@ -33,6 +33,6 @@ export class DashboardComponent implements OnInit {
     this.vendor$ = this.vendorService.getVendorProfile();
     this.recentOrders$ = this.orderService.getRecentOrders(5);
     this.affiliateStats$ = this.affiliateService.getAffiliateStats();
-    this.analyticsData$ = this.analyticsService.getDailySalesData();
+    this.analyticsData$ = this.analyticsService.getSalesData('7days');
   }
 }
