@@ -48,7 +48,7 @@ export class VendorService {
   }
 
   getVendorStats(): Observable<Analytics> {
-    return new Observable(observer => {
+    return new Observable<Analytics>(observer => {
       Promise.all([
         this.productService.getProducts().toPromise(),
         this.orderService.getOrders().toPromise(),
