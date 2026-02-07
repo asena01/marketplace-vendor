@@ -18,11 +18,11 @@
     <div class="detail-header">
       <div class="header-title">
         <button class="back-btn" (click)="goBack()">← Back</button>
-        <h1>Order #{{ order.id }}</h1>
+        <h1>Order #{{ order.orderNumber }}</h1>
       </div>
       <div class="header-actions">
         <span [class]="'status-badge status-' + getStatusClass(order.status)">
-          {{ order.status }}
+          {{ order.status | titlecase }}
         </span>
       </div>
     </div>
