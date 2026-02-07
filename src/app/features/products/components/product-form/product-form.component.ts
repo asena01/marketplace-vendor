@@ -46,13 +46,16 @@ export class ProductFormComponent implements OnInit {
       name: ['', [Validators.required, Validators.minLength(3)]],
       description: ['', [Validators.required, Validators.minLength(10)]],
       price: ['', [Validators.required, Validators.min(0.01)]],
-      cost: ['', [Validators.required, Validators.min(0)]],
+      originalPrice: ['', [Validators.required, Validators.min(0)]],
       category: ['Electronics', Validators.required],
+      subcategory: ['', Validators.required],
       stock: ['', [Validators.required, Validators.min(0)]],
       sku: ['', Validators.required],
-      image: ['', Validators.required],
+      images: [[], Validators.required],
       rating: ['', [Validators.required, Validators.min(0), Validators.max(5)]],
-      reviews: ['', [Validators.required, Validators.min(0)]]
+      reviews: ['', [Validators.required, Validators.min(0)]],
+      discount: ['0', [Validators.required, Validators.min(0), Validators.max(100)]],
+      status: ['active', Validators.required]
     });
   }
 
@@ -60,7 +63,9 @@ export class ProductFormComponent implements OnInit {
     if (this.productId) {
       this.productService.getProductById(this.productId).subscribe(product => {
         this.productForm.patchValue(product);
-        this.imagePreview = product.image;
+        if (product.images && product.images.length > 0) {
+          this.imagePreview = product.images[0];
+        }
       });
     }
   }
