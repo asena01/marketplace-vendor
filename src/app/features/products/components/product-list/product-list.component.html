@@ -51,7 +51,7 @@
       <div *ngIf="filteredProducts.length > 0; else noProducts">
         <div class="product-card" *ngFor="let product of filteredProducts">
           <div class="product-image">
-            <img [src]="product.image" [alt]="product.name" class="image">
+            <img [src]="product.images[0]" [alt]="product.name" class="image">
             <span class="stock-badge" [class.in-stock]="product.stock > 0" [class.out-of-stock]="product.stock === 0">
               {{ product.stock > 0 ? 'In Stock' : 'Out of Stock' }}
             </span>
