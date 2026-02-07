@@ -1,0 +1,208 @@
+<div class="product-form-container">
+  <div class="form-header">
+    <h1>{{ isEditing ? 'Edit Product' : 'Add New Product' }}</h1>
+  </div>
+
+  <!-- Messages -->
+  <div class="message-container" *ngIf="successMessage || errorMessage">
+    <div class="alert" [class.alert-success]="successMessage" [class.alert-error]="errorMessage">
+      <span>{{ successMessage || errorMessage }}</span>
+      <button class="close-btn" (click)="clearMessages()">×</button>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <form [formGroup]="productForm" (ngSubmit)="onSubmit()" class="product-form">
+    <div class="form-grid">
+      <!-- Left Column -->
+      <div class="form-column">
+        <!-- Product Name -->
+        <div class="form-group">
+          <label for="name">Product Name *</label>
+          <input
+            id="name"
+            type="text"
+            formControlName="name"
+            placeholder="Enter product name"
+            class="form-input"
+            [class.error]="productForm.get('name')?.invalid && productForm.get('name')?.touched">
+          <span class="error-message" *ngIf="productForm.get('name')?.invalid && productForm.get('name')?.touched">
+            Product name is required and must be at least 3 characters
+          </span>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label for="description">Description *</label>
+          <textarea
+            id="description"
+            formControlName="description"
+            placeholder="Enter product description"
+            class="form-input form-textarea"
+            rows="4"
+            [class.error]="productForm.get('description')?.invalid && productForm.get('description')?.touched"></textarea>
+          <span class="error-message" *ngIf="productForm.get('description')?.invalid && productForm.get('description')?.touched">
+            Description is required and must be at least 10 characters
+          </span>
+        </div>
+
+        <!-- Price and Cost -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="price">Price ($) *</label>
+            <input
+              id="price"
+              type="number"
+              formControlName="price"
+              placeholder="0.00"
+              class="form-input"
+              step="0.01"
+              [class.error]="productForm.get('price')?.invalid && productForm.get('price')?.touched">
+            <span class="error-message" *ngIf="productForm.get('price')?.invalid && productForm.get('price')?.touched">
+              Price is required and must be greater than 0
+            </span>
+          </div>
+
+          <div class="form-group">
+            <label for="cost">Cost ($) *</label>
+            <input
+              id="cost"
+              type="number"
+              formControlName="cost"
+              placeholder="0.00"
+              class="form-input"
+              step="0.01"
+              [class.error]="productForm.get('cost')?.invalid && productForm.get('cost')?.touched">
+            <span class="error-message" *ngIf="productForm.get('cost')?.invalid && productForm.get('cost')?.touched">
+              Cost is required
+            </span>
+          </div>
+        </div>
+
+        <!-- Category and Stock -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="category">Category *</label>
+            <select
+              id="category"
+              formControlName="category"
+              class="form-input">
+              <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="stock">Stock Quantity *</label>
+            <input
+              id="stock"
+              type="number"
+              formControlName="stock"
+              placeholder="0"
+              class="form-input"
+              [class.error]="productForm.get('stock')?.invalid && productForm.get('stock')?.touched">
+            <span class="error-message" *ngIf="productForm.get('stock')?.invalid && productForm.get('stock')?.touched">
+              Stock is required
+            </span>
+          </div>
+        </div>
+
+        <!-- SKU -->
+        <div class="form-group">
+          <label for="sku">SKU *</label>
+          <input
+            id="sku"
+            type="text"
+            formControlName="sku"
+            placeholder="e.g., PROD-001"
+            class="form-input"
+            [class.error]="productForm.get('sku')?.invalid && productForm.get('sku')?.touched">
+          <span class="error-message" *ngIf="productForm.get('sku')?.invalid && productForm.get('sku')?.touched">
+            SKU is required
+          </span>
+        </div>
+      </div>
+
+      <!-- Right Column -->
+      <div class="form-column">
+        <!-- Product Image -->
+        <div class="form-group">
+          <label for="image">Product Image *</label>
+          <div class="image-upload">
+            <input
+              id="image"
+              type="file"
+              (change)="onImageSelected($event)"
+              accept="image/*"
+              class="file-input"
+              [class.error]="productForm.get('image')?.invalid && productForm.get('image')?.touched">
+            <div class="upload-area" *ngIf="!imagePreview">
+              <span class="upload-icon">📸</span>
+              <p>Click to upload or drag and drop</p>
+              <small>PNG, JPG, GIF up to 10MB</small>
+            </div>
+            <div class="image-preview" *ngIf="imagePreview">
+              <img [src]="imagePreview" [alt]="productForm.get('name')?.value || 'Product'">
+              <button type="button" class="remove-btn" (click)="imagePreview = null">Remove</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rating and Reviews -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="rating">Rating *</label>
+            <input
+              id="rating"
+              type="number"
+              formControlName="rating"
+              placeholder="0-5"
+              class="form-input"
+              step="0.1"
+              min="0"
+              max="5"
+              [class.error]="productForm.get('rating')?.invalid && productForm.get('rating')?.touched">
+            <span class="error-message" *ngIf="productForm.get('rating')?.invalid && productForm.get('rating')?.touched">
+              Rating must be between 0 and 5
+            </span>
+          </div>
+
+          <div class="form-group">
+            <label for="reviews">Number of Reviews *</label>
+            <input
+              id="reviews"
+              type="number"
+              formControlName="reviews"
+              placeholder="0"
+              class="form-input"
+              [class.error]="productForm.get('reviews')?.invalid && productForm.get('reviews')?.touched">
+            <span class="error-message" *ngIf="productForm.get('reviews')?.invalid && productForm.get('reviews')?.touched">
+              Number of reviews is required
+            </span>
+          </div>
+        </div>
+
+        <!-- Profit Margin Display -->
+        <div class="form-group profit-summary" *ngIf="productForm.get('price')?.value && productForm.get('cost')?.value">
+          <div class="profit-stat">
+            <span class="label">Profit per Unit</span>
+            <span class="value">${{ (productForm.get('price')?.value - productForm.get('cost')?.value) | number: '1.2-2' }}</span>
+          </div>
+          <div class="profit-stat">
+            <span class="label">Profit Margin</span>
+            <span class="value">{{ ((productForm.get('price')?.value - productForm.get('cost')?.value) / productForm.get('price')?.value * 100) | number: '1.1-1' }}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" (click)="onCancel()" [disabled]="isLoading">
+        Cancel
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="isLoading || productForm.invalid">
+        {{ isLoading ? 'Saving...' : (isEditing ? 'Update Product' : 'Create Product') }}
+      </button>
+    </div>
+  </form>
+</div>
