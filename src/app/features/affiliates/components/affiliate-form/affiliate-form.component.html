@@ -1,0 +1,78 @@
+<div class="affiliate-form-container">
+  <h1>{{ isEditing ? 'Edit Affiliate' : 'Add New Affiliate' }}</h1>
+
+  <div *ngIf="successMessage || errorMessage" class="alert" [class.alert-success]="successMessage" [class.alert-error]="errorMessage">
+    {{ successMessage || errorMessage }}
+  </div>
+
+  <form [formGroup]="affiliateForm" (ngSubmit)="onSubmit()" class="affiliate-form">
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="name">Name *</label>
+        <input id="name" type="text" formControlName="name" placeholder="Affiliate name" class="form-input">
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email *</label>
+        <input id="email" type="email" formControlName="email" placeholder="email@example.com" class="form-input">
+      </div>
+
+      <div class="form-group">
+        <label for="phone">Phone *</label>
+        <input id="phone" type="tel" formControlName="phone" placeholder="Phone number" class="form-input">
+      </div>
+
+      <div class="form-group">
+        <label for="website">Website</label>
+        <input id="website" type="url" formControlName="website" placeholder="https://example.com" class="form-input">
+      </div>
+
+      <div class="form-group">
+        <label for="commissionRate">Commission Rate (%) *</label>
+        <input id="commissionRate" type="number" formControlName="commissionRate" placeholder="10" class="form-input" step="0.1" min="0" max="100">
+      </div>
+
+      <div class="form-group">
+        <label for="accountHolder">Account Holder *</label>
+        <input id="accountHolder" type="text" formControlName="accountHolder" placeholder="Full name" class="form-input">
+      </div>
+
+      <div class="form-group">
+        <label for="bankName">Bank Name *</label>
+        <input id="bankName" type="text" formControlName="bankName" placeholder="Bank name" class="form-input">
+      </div>
+
+      <div class="form-group">
+        <label for="accountNumber">Account Number *</label>
+        <input id="accountNumber" type="text" formControlName="accountNumber" placeholder="Account number" class="form-input">
+      </div>
+
+      <div class="form-section">
+        <h3>Social Media</h3>
+        <div class="form-group">
+          <label for="instagram">Instagram</label>
+          <input id="instagram" type="text" formControlName="instagram" placeholder="@username" class="form-input">
+        </div>
+        <div class="form-group">
+          <label for="tiktok">TikTok</label>
+          <input id="tiktok" type="text" formControlName="tiktok" placeholder="@username" class="form-input">
+        </div>
+        <div class="form-group">
+          <label for="youtube">YouTube</label>
+          <input id="youtube" type="text" formControlName="youtube" placeholder="channel" class="form-input">
+        </div>
+        <div class="form-group">
+          <label for="twitter">Twitter</label>
+          <input id="twitter" type="text" formControlName="twitter" placeholder="@username" class="form-input">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+      <button type="submit" class="btn btn-primary" [disabled]="affiliateForm.invalid || isLoading">
+        {{ isLoading ? 'Saving...' : (isEditing ? 'Update' : 'Create') }}
+      </button>
+    </div>
+  </form>
+</div>
