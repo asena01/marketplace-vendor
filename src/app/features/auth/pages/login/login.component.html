@@ -1,0 +1,50 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <h1>Vendor Dashboard</h1>
+      <p>Manage your marketplace business</p>
+    </div>
+
+    <div *ngIf="errorMessage" class="alert alert-error">
+      {{ errorMessage }}
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          placeholder="Enter your email"
+          class="form-input">
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          placeholder="Enter your password"
+          class="form-input">
+      </div>
+
+      <button type="submit" class="btn btn-primary" [disabled]="loginForm.invalid || isLoading">
+        {{ isLoading ? 'Logging in...' : 'Login' }}
+      </button>
+
+      <div class="login-footer">
+        <a href="#" class="forgot-link">Forgot password?</a>
+        <span class="divider">•</span>
+        <a href="/register" class="register-link">Create account</a>
+      </div>
+    </form>
+
+    <div class="demo-info">
+      <p><strong>Demo Credentials:</strong></p>
+      <p>Email: john@marketplace.com</p>
+      <p>Password: password</p>
+    </div>
+  </div>
+</div>
