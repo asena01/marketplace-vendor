@@ -1,0 +1,99 @@
+<div class="link-generator-container">
+  <div class="generator-header">
+    <h1>Link Generator</h1>
+    <p>Create tracking links to share with your audience</p>
+  </div>
+
+  <div class="generator-card">
+    <!-- Product Selection -->
+    <div class="section">
+      <h2>Select Product</h2>
+      <div class="product-selector" *ngIf="products$ | async as products">
+        <select class="product-select" (change)="onProductSelect($event.target.value)" #productSelect>
+          <option value="">Choose a product...</option>
+          <option *ngFor="let product of products" [ngValue]="product">
+            {{ product.name }} - ${{ product.price | number: '1.2-2' }}
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Generated Links -->
+    <div class="section" *ngIf="selectedProduct">
+      <h2>Your Tracking Link</h2>
+
+      <div class="link-display">
+        <div class="link-box">
+          <p class="link-label">Full Link</p>
+          <div class="link-content">
+            <code>{{ generatedLink }}</code>
+            <button class="copy-btn" (click)="copyLink()" [class.copied]="linkCopied">
+              {{ linkCopied ? '✓ Copied!' : '📋 Copy' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="link-box">
+          <p class="link-label">Tracking Code</p>
+          <div class="link-content">
+            <code>{{ generatedCode }}</code>
+            <button class="copy-btn" (click)="copyCode()" [class.copied]="codeCopied">
+              {{ codeCopied ? '✓ Copied!' : '📋 Copy' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product Info -->
+      <div class="product-info">
+        <img [src]="selectedProduct.images[0]" [alt]="selectedProduct.name" class="product-image">
+        <div class="product-details">
+          <h3>{{ selectedProduct.name }}</h3>
+          <p class="price">${{ selectedProduct.price | number: '1.2-2' }}</p>
+          <p class="category">{{ selectedProduct.category }}</p>
+          <p class="description">{{ selectedProduct.description | slice: 0: 100 }}...</p>
+        </div>
+      </div>
+
+      <!-- Social Share -->
+      <div class="social-section">
+        <h3>Share on Social Media</h3>
+        <div class="social-buttons">
+          <button class="social-btn twitter" (click)="shareOnSocial('twitter')">
+            𝕏 Twitter
+          </button>
+          <button class="social-btn facebook" (click)="shareOnSocial('facebook')">
+            f Facebook
+          </button>
+          <button class="social-btn whatsapp" (click)="shareOnSocial('whatsapp')">
+            💬 WhatsApp
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats Placeholder -->
+      <div class="stats-section">
+        <h3>Link Performance</h3>
+        <div class="stats-grid">
+          <div class="stat">
+            <label>Clicks</label>
+            <p>0</p>
+          </div>
+          <div class="stat">
+            <label>Conversions</label>
+            <p>0</p>
+          </div>
+          <div class="stat">
+            <label>Earnings</label>
+            <p>$0.00</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="!selectedProduct">
+      <p>📎</p>
+      <p>Select a product above to generate your tracking link</p>
+    </div>
+  </div>
+</div>
