@@ -9,7 +9,7 @@
     <div class="section">
       <h2>Select Product</h2>
       <div class="product-selector" *ngIf="products$ | async as products">
-        <select class="product-select" (change)="onProductSelect(products[+($event.target as HTMLSelectElement).value])" #productSelect>
+        <select class="product-select" #productSelect (change)="onProductSelect(products[$any(productSelect.value)])">
           <option value="">Choose a product...</option>
           <option *ngFor="let product of products; let i = index" [value]="i">
             {{ product.name }} - ${{ product.price | number: '1.2-2' }}
