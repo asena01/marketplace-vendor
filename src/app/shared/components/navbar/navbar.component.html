@@ -1,0 +1,40 @@
+<nav class="navbar">
+  <div class="navbar-container">
+    <div class="navbar-left">
+      <div class="logo">
+        <span class="logo-icon">📊</span>
+        <span class="logo-text">Marketplace</span>
+      </div>
+    </div>
+
+    <div class="navbar-center">
+      <div class="search-box">
+        <input type="text" placeholder="Search..." class="search-input">
+        <span class="search-icon">🔍</span>
+      </div>
+    </div>
+
+    <div class="navbar-right" *ngIf="vendor$ | async as vendor">
+      <div class="notifications">
+        <button class="notification-btn">🔔</button>
+        <span class="badge">3</span>
+      </div>
+
+      <div class="user-menu">
+        <button class="user-btn" (click)="toggleUserMenu()">
+          <span class="user-avatar">{{ vendor.name.charAt(0) }}</span>
+          <span class="user-name">{{ vendor.name }}</span>
+          <span class="dropdown-icon">▼</span>
+        </button>
+
+        <div class="dropdown-menu" *ngIf="userMenuOpen">
+          <a href="#" class="menu-item">👤 Profile</a>
+          <a href="#" class="menu-item">⚙️ Settings</a>
+          <a href="#" class="menu-item">💼 Store</a>
+          <div class="menu-divider"></div>
+          <button class="menu-item logout-btn" (click)="logout()">🚪 Logout</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>

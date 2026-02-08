@@ -1,0 +1,116 @@
+<div class="affiliate-list-container">
+  <div class="page-header">
+    <h1>Affiliates</h1>
+    <button class="btn btn-primary">+ Add New Affiliate</button>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <div class="search-box">
+      <input
+        type="text"
+        placeholder="Search by name or email..."
+        class="search-input"
+        [(ngModel)]="searchTerm">
+      <span class="search-icon">🔍</span>
+    </div>
+
+    <div class="filter-controls">
+      <div class="filter-group">
+        <label for="status">Status</label>
+        <select id="status" class="filter-select" [(ngModel)]="selectedStatus">
+          <option value="">All Status</option>
+          <option *ngFor="let s of statuses" [value]="s">{{ s | titlecase }}</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="tier">Tier</label>
+        <select id="tier" class="filter-select" [(ngModel)]="selectedTier">
+          <option value="">All Tiers</option>
+          <option *ngFor="let t of tiers" [value]="t">{{ t | titlecase }}</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="sort">Sort By</label>
+        <select id="sort" class="filter-select" [(ngModel)]="sortBy">
+          <option value="name">Name</option>
+          <option value="earnings">Total Earnings</option>
+          <option value="conversions">Conversions</option>
+          <option value="tier">Tier Level</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Affiliates Grid -->
+  <div class="affiliates-wrapper" *ngIf="affiliates$ | async as affiliates">
+    <ng-container *ngIf="getFilteredAffiliates(affiliates).length > 0; else noAffiliates">
+      <div class="affiliates-grid">
+        <div class="affiliate-card" *ngFor="let affiliate of getFilteredAffiliates(affiliates)">
+          <div class="card-header">
+            <div class="card-title">
+              <h3>{{ affiliate.name }}</h3>
+              <span [class]="'tier-badge ' + getTierBadgeClass(affiliate.tier)">
+                {{ affiliate.tier | titlecase }}
+              </span>
+            </div>
+            <span [class]="'status-badge ' + getStatusBadgeClass(affiliate.status)">
+              {{ affiliate.status | titlecase }}
+            </span>
+          </div>
+
+          <div class="card-content">
+            <div class="info-row">
+              <span class="label">Email</span>
+              <span class="value">{{ affiliate.email }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Phone</span>
+              <span class="value">{{ affiliate.phone }}</span>
+            </div>
+
+            <div class="stats-grid">
+              <div class="stat">
+                <span class="stat-label">Total Earnings</span>
+                <span class="stat-value">${{ affiliate.totalEarnings | number: '1.2-2' }}</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">Conversions</span>
+                <span class="stat-value">{{ affiliate.totalConversions }}</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">Conv. Rate</span>
+                <span class="stat-value">{{ affiliate.conversionRate * 100 | number: '1.1-1' }}%</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">Clicks</span>
+                <span class="stat-value">{{ affiliate.totalClicks }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-actions">
+            <button class="action-btn view">👁️ View</button>
+            <button class="action-btn edit">✏️ Edit</button>
+            <button class="action-btn" *ngIf="affiliate.status === 'pending'" (click)="approveAffiliate(affiliate.id)">
+              ✓ Approve
+            </button>
+            <button class="action-btn suspend" *ngIf="affiliate.status === 'active'" (click)="suspendAffiliate(affiliate.id)">
+              ⊗ Suspend
+            </button>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-template #noAffiliates>
+      <div class="empty-state">
+        <p>🤝</p>
+        <h3>No Affiliates Found</h3>
+        <p>Try adjusting your filters or create a new affiliate</p>
+      </div>
+    </ng-template>
+  </div>
+</div>

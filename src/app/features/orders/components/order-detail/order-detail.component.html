@@ -1,0 +1,179 @@
+<div class="order-detail-container">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading order details...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-state">
+    <p class="error-icon">⚠️</p>
+    <p class="error-message">{{ error }}</p>
+    <button class="btn btn-primary" (click)="goBack()">Back to Orders</button>
+  </div>
+
+  <!-- Order Detail -->
+  <div *ngIf="order$ | async as order" class="order-detail">
+    <!-- Header -->
+    <div class="detail-header">
+      <div class="header-title">
+        <button class="back-btn" (click)="goBack()">← Back</button>
+        <h1>Order #{{ order.orderNumber }}</h1>
+      </div>
+      <div class="header-actions">
+        <span [class]="'status-badge status-' + getStatusClass(order.status)">
+          {{ order.status | titlecase }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="detail-grid">
+      <!-- Order Summary -->
+      <section class="detail-section order-summary">
+        <h2>Order Summary</h2>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <span class="label">Order Date</span>
+            <span class="value">{{ order.createdAt | date: 'full' }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Total Amount</span>
+            <span class="value price">${{ order.totalAmount | number: '1.2-2' }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Payment Status</span>
+            <span class="value">{{ order.paymentStatus }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Tracking Number</span>
+            <span class="value">{{ order.shippingTrackingNumber || 'N/A' }}</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Customer Information -->
+      <section class="detail-section customer-info">
+        <h2>Customer Information</h2>
+        <div class="info-row">
+          <div class="info-item">
+            <span class="label">Name</span>
+            <span class="value">{{ order.customerName }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Customer ID</span>
+            <span class="value">{{ order.customerId }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Phone</span>
+            <span class="value">{{ order.shippingAddress.phone || 'N/A' }}</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Shipping Address -->
+      <section class="detail-section shipping-address">
+        <h2>Shipping Address</h2>
+        <div class="address-content" *ngIf="order.shippingAddress">
+          <p class="address-line">{{ order.shippingAddress.fullName }}</p>
+          <p class="address-line">{{ order.shippingAddress.street }}</p>
+          <p class="address-line">{{ order.shippingAddress.city }}, {{ order.shippingAddress.state }} {{ order.shippingAddress.postalCode }}</p>
+          <p class="address-line">{{ order.shippingAddress.country }}</p>
+        </div>
+      </section>
+
+      <!-- Billing Address (same as shipping for simplicity) -->
+      <section class="detail-section billing-address">
+        <h2>Billing Address</h2>
+        <div class="address-content" *ngIf="order.shippingAddress">
+          <p class="address-line">{{ order.shippingAddress.fullName }}</p>
+          <p class="address-line">{{ order.shippingAddress.street }}</p>
+          <p class="address-line">{{ order.shippingAddress.city }}, {{ order.shippingAddress.state }} {{ order.shippingAddress.postalCode }}</p>
+          <p class="address-line">{{ order.shippingAddress.country }}</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- Order Items -->
+    <section class="detail-section order-items">
+      <h2>Order Items</h2>
+      <div class="items-table-wrapper">
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th class="col-product">Product</th>
+              <th class="col-qty">Quantity</th>
+              <th class="col-price">Price</th>
+              <th class="col-total">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of order.items" class="item-row">
+              <td class="col-product">
+                <div class="product-info">
+                  <div class="product-name">{{ item.productName }}</div>
+                </div>
+              </td>
+              <td class="col-qty">{{ item.quantity }}</td>
+              <td class="col-price">${{ item.price | number: '1.2-2' }}</td>
+              <td class="col-total">${{ item.quantity * item.price | number: '1.2-2' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Order Totals -->
+      <div class="order-totals">
+        <div class="total-row">
+          <span class="label">Subtotal</span>
+          <span class="value">${{ order.totalAmount | number: '1.2-2' }}</span>
+        </div>
+        <div class="total-row final">
+          <span class="label">Total Amount</span>
+          <span class="value">${{ order.totalAmount | number: '1.2-2' }}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Order Status -->
+    <section class="detail-section order-status">
+      <h2>Order Status</h2>
+      <div class="status-timeline">
+        <div class="timeline-item" [class.active]="order.status === 'pending'">
+          <div class="timeline-marker"></div>
+          <div class="timeline-content">
+            <h4>Pending</h4>
+            <p>Order received and awaiting processing</p>
+          </div>
+        </div>
+        <div class="timeline-item" [class.active]="order.status === 'processing'">
+          <div class="timeline-marker"></div>
+          <div class="timeline-content">
+            <h4>Processing</h4>
+            <p>Order is being prepared for shipment</p>
+          </div>
+        </div>
+        <div class="timeline-item" [class.active]="order.status === 'shipped'">
+          <div class="timeline-marker"></div>
+          <div class="timeline-content">
+            <h4>Shipped</h4>
+            <p>Order is on its way</p>
+          </div>
+        </div>
+        <div class="timeline-item" [class.active]="order.status === 'delivered'">
+          <div class="timeline-marker"></div>
+          <div class="timeline-content">
+            <h4>Delivered</h4>
+            <p>Order has been delivered</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Actions -->
+    <div class="detail-actions">
+      <button class="btn btn-secondary" (click)="goBack()">Back to Orders</button>
+      <button class="btn btn-primary">Print Invoice</button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,20 @@
+<aside class="sidebar">
+  <nav class="nav-menu">
+    <a
+      *ngFor="let item of menuItems"
+      [routerLink]="item.route"
+      class="nav-item"
+      [class.active]="isActive(item.route)">
+      <span class="nav-icon">{{ item.icon }}</span>
+      <span class="nav-label">{{ item.label }}</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="help-section">
+      <p class="help-title">Need Help?</p>
+      <a href="#" class="help-link">📖 Documentation</a>
+      <a href="#" class="help-link">💬 Support</a>
+    </div>
+  </div>
+</aside>

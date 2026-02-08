@@ -1,0 +1,98 @@
+<div class="product-list-container">
+  <div class="page-header">
+    <h1>Products</h1>
+    <button class="btn btn-primary">+ Add New Product</button>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="search-box">
+      <input
+        type="text"
+        placeholder="Search products by name or description..."
+        class="search-input"
+        [(ngModel)]="searchTerm"
+        (input)="onSearch(searchTerm)">
+      <span class="search-icon">🔍</span>
+    </div>
+
+    <div class="filter-controls">
+      <div class="filter-group">
+        <label for="category">Category</label>
+        <select
+          id="category"
+          class="filter-select"
+          [(ngModel)]="selectedCategory"
+          (change)="onCategoryChange(selectedCategory)">
+          <option value="">All Categories</option>
+          <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="sort">Sort By</label>
+        <select
+          id="sort"
+          class="filter-select"
+          [(ngModel)]="sortBy"
+          (change)="onSortChange(sortBy)">
+          <option value="name">Name (A-Z)</option>
+          <option value="price-asc">Price (Low to High)</option>
+          <option value="price-desc">Price (High to Low)</option>
+          <option value="rating">Rating (Highest)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Products Grid -->
+  <div class="products-wrapper" *ngIf="products$ | async as products">
+    <ng-container *ngIf="getFilteredProducts(products).length > 0; else noProducts">
+      <div class="products-grid">
+        <div class="product-card" *ngFor="let product of getFilteredProducts(products)">
+          <div class="product-image">
+            <img [src]="product.images[0]" [alt]="product.name" class="image">
+            <span class="stock-badge" [class.in-stock]="product.stock > 0" [class.out-of-stock]="product.stock === 0">
+              {{ product.stock > 0 ? 'In Stock' : 'Out of Stock' }}
+            </span>
+          </div>
+
+          <div class="product-content">
+            <h3 class="product-name">{{ product.name }}</h3>
+            <p class="product-category">{{ product.category }}</p>
+            <p class="product-description">{{ product.description | slice: 0: 80 }}...</p>
+
+            <div class="product-stats">
+              <div class="stat">
+                <span class="label">Price</span>
+                <span class="value">${{ product.price | number: '1.2-2' }}</span>
+              </div>
+              <div class="stat">
+                <span class="label">Rating</span>
+                <span class="value">⭐ {{ product.rating | number: '1.1-1' }}</span>
+              </div>
+              <div class="stat">
+                <span class="label">Stock</span>
+                <span class="value">{{ product.stock }}</span>
+              </div>
+            </div>
+
+            <div class="product-actions">
+              <button class="btn btn-outline">View</button>
+              <button class="btn btn-outline">Edit</button>
+              <button class="btn btn-danger" (click)="deleteProduct(product.id)">Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-template #noProducts>
+      <div class="empty-state">
+        <p>📦</p>
+        <h3>No Products Found</h3>
+        <p>Try adjusting your filters or search terms</p>
+      </div>
+    </ng-template>
+  </div>
+</div>

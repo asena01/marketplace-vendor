@@ -1,0 +1,152 @@
+<div class="orders-container">
+  <div class="page-header">
+    <h1>Orders</h1>
+    <div class="header-stats">
+      <span class="stat-badge">Total Orders: <strong>0</strong></span>
+      <span class="stat-badge">This Month: <strong>0</strong></span>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="search-box">
+      <input
+        type="text"
+        placeholder="Search by Order ID, Customer Name or Email..."
+        class="search-input"
+        [(ngModel)]="searchTerm"
+        (input)="onSearch(searchTerm)">
+      <span class="search-icon">🔍</span>
+    </div>
+
+    <div class="filter-controls">
+      <div class="filter-group">
+        <label for="status">Status</label>
+        <select
+          id="status"
+          class="filter-select"
+          [(ngModel)]="selectedStatus"
+          (change)="onStatusChange(selectedStatus)">
+          <option value="">All Statuses</option>
+          <option *ngFor="let status of statuses" [value]="status">{{ status }}</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="sort">Sort By</label>
+        <select
+          id="sort"
+          class="filter-select"
+          [(ngModel)]="sortBy"
+          (change)="onSortChange(sortBy)">
+          <option value="date">Newest First</option>
+          <option value="date-oldest">Oldest First</option>
+          <option value="amount-desc">Highest Amount</option>
+          <option value="amount-asc">Lowest Amount</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="pageSize">Per Page</label>
+        <select
+          id="pageSize"
+          class="filter-select"
+          [(ngModel)]="pageSize">
+          <option value="5">5</option>
+          <option value="10">10</option>
+          <option value="20">20</option>
+          <option value="50">50</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Orders Table -->
+  <div class="table-section" *ngIf="orders$ | async as orders">
+    <div *ngIf="getPaginatedOrders(orders).length > 0; else noOrders">
+      <table class="orders-table">
+        <thead>
+          <tr>
+            <th class="col-id">Order ID</th>
+            <th class="col-customer">Customer</th>
+            <th class="col-amount">Amount</th>
+            <th class="col-status">Status</th>
+            <th class="col-items">Items</th>
+            <th class="col-date">Date</th>
+            <th class="col-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let order of getPaginatedOrders(orders)" class="order-row">
+            <td class="col-id">
+              <a href="#" class="order-id-link">#{{ order.orderNumber }}</a>
+            </td>
+            <td class="col-customer">
+              <div class="customer-info">
+                <div class="customer-name">{{ order.customerName }}</div>
+                <div class="customer-email">ID: {{ order.customerId }}</div>
+              </div>
+            </td>
+            <td class="col-amount">
+              <span class="amount-value">${{ order.totalAmount | number: '1.2-2' }}</span>
+            </td>
+            <td class="col-status">
+              <span [class]="'status-badge status-' + getStatusClass(order.status)">
+                {{ order.status }}
+              </span>
+            </td>
+            <td class="col-items">
+              <span class="items-count">{{ order.items.length }} items</span>
+            </td>
+            <td class="col-date">
+              <span class="date-value">{{ order.createdAt | date: 'short' }}</span>
+            </td>
+            <td class="col-actions">
+              <button class="action-btn view-btn" title="View Details">👁️</button>
+              <button class="action-btn edit-btn" title="Edit">✏️</button>
+              <button class="action-btn delete-btn" title="Delete">🗑️</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      <div class="pagination-section">
+        <div class="pagination-info">
+          Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, getFilteredOrders(orders).length) }} of {{ getFilteredOrders(orders).length }} orders
+        </div>
+        <div class="pagination-controls">
+          <button
+            class="pagination-btn"
+            (click)="goToPage(currentPage - 1)"
+            [disabled]="currentPage === 1">
+            ← Previous
+          </button>
+          <div class="page-numbers">
+            <button
+              *ngFor="let page of [].constructor(getTotalPages(orders)); let i = index"
+              class="page-btn"
+              [class.active]="currentPage === i + 1"
+              (click)="goToPage(i + 1)">
+              {{ i + 1 }}
+            </button>
+          </div>
+          <button
+            class="pagination-btn"
+            (click)="goToPage(currentPage + 1)"
+            [disabled]="currentPage === getTotalPages(orders)">
+            Next →
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <ng-template #noOrders>
+      <div class="empty-state">
+        <p>📋</p>
+        <h3>No Orders Found</h3>
+        <p>Try adjusting your filters or search terms</p>
+      </div>
+    </ng-template>
+  </div>
+</div>
