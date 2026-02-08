@@ -1,0 +1,117 @@
+<div class="affiliate-detail-container" *ngIf="affiliate$ | async as affiliate">
+  <div class="detail-header">
+    <button class="back-btn" (click)="goBack()">← Back</button>
+    <h1>{{ affiliate.name }}</h1>
+    <div class="header-badges">
+      <span [class]="'tier-badge tier-' + getTierClass(affiliate.tier)">{{ affiliate.tier | titlecase }}</span>
+      <span [class]="'status-badge status-' + getStatusClass(affiliate.status)">{{ affiliate.status | titlecase }}</span>
+    </div>
+  </div>
+
+  <div class="detail-grid">
+    <!-- Contact Info -->
+    <section class="detail-section">
+      <h2>Contact Information</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Email</label>
+          <p>{{ affiliate.email }}</p>
+        </div>
+        <div class="info-item">
+          <label>Phone</label>
+          <p>{{ affiliate.phone }}</p>
+        </div>
+        <div class="info-item" *ngIf="affiliate.website">
+          <label>Website</label>
+          <p><a [href]="affiliate.website" target="_blank">{{ affiliate.website }}</a></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Performance -->
+    <section class="detail-section">
+      <h2>Performance Metrics</h2>
+      <div class="metrics-grid">
+        <div class="metric">
+          <label>Total Earnings</label>
+          <p class="value">${{ affiliate.totalEarnings | number: '1.2-2' }}</p>
+        </div>
+        <div class="metric">
+          <label>Total Clicks</label>
+          <p class="value">{{ affiliate.totalClicks }}</p>
+        </div>
+        <div class="metric">
+          <label>Conversions</label>
+          <p class="value">{{ affiliate.totalConversions }}</p>
+        </div>
+        <div class="metric">
+          <label>Conversion Rate</label>
+          <p class="value">{{ affiliate.conversionRate * 100 | number: '1.1-1' }}%</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Commission & Payout -->
+    <section class="detail-section">
+      <h2>Commission & Payout</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Commission Rate</label>
+          <p>{{ affiliate.commissionRate * 100 }}%</p>
+        </div>
+        <div class="info-item">
+          <label>Last Payment</label>
+          <p>${{ affiliate.lastPaymentAmount | number: '1.2-2' }} on {{ affiliate.lastPaymentDate | date: 'short' }}</p>
+        </div>
+        <div class="info-item">
+          <label>Next Payment Due</label>
+          <p>${{ affiliate.nextPaymentDue | number: '1.2-2' }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Referred Sales -->
+    <section class="detail-section">
+      <h2>Referred Sales</h2>
+      <p class="big-number">${{ affiliate.totalReferredSales | number: '1.2-2' }}</p>
+    </section>
+
+    <!-- Bank Details -->
+    <section class="detail-section" *ngIf="affiliate.bankDetails">
+      <h2>Bank Details</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Account Holder</label>
+          <p>{{ affiliate.bankDetails.accountHolder }}</p>
+        </div>
+        <div class="info-item">
+          <label>Bank Name</label>
+          <p>{{ affiliate.bankDetails.bankName }}</p>
+        </div>
+        <div class="info-item">
+          <label>Account Number</label>
+          <p>{{ affiliate.bankDetails.accountNumber | slice: 0: 5 }}****</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Dates -->
+    <section class="detail-section">
+      <h2>Timeline</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Created</label>
+          <p>{{ affiliate.createdAt | date: 'full' }}</p>
+        </div>
+        <div class="info-item" *ngIf="affiliate.approvedAt">
+          <label>Approved</label>
+          <p>{{ affiliate.approvedAt | date: 'full' }}</p>
+        </div>
+        <div class="info-item" *ngIf="affiliate.suspendedAt">
+          <label>Suspended</label>
+          <p>{{ affiliate.suspendedAt | date: 'full' }}</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
