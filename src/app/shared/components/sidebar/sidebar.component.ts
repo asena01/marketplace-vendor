@@ -1,11 +1,27 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
+
 @Component({
   selector: 'app-sidebar',
   standalone: true,
   imports: [CommonModule, RouterLink],
-  template: '<aside>Sidebar Placeholder</aside>',
-  styles: ['aside { background: #1a1a1a; color: white; width: 250px; padding: 1rem; }']
+  templateUrl: './sidebar.component.html',
+  styleUrl: './sidebar.component.scss'
 })
-export class SidebarComponent {}
+export class SidebarComponent {
+  menuItems = [
+    { icon: '📊', label: 'Dashboard', route: '/dashboard' },
+    { icon: '📦', label: 'Products', route: '/products' },
+    { icon: '📋', label: 'Orders', route: '/orders' },
+    { icon: '🤝', label: 'Affiliates', route: '/affiliates' },
+    { icon: '📈', label: 'Analytics', route: '/analytics' },
+    { icon: '⚙️', label: 'Settings', route: '/settings' }
+  ];
+
+  constructor(private router: Router) {}
+
+  isActive(route: string): boolean {
+    return this.router.url.startsWith(route);
+  }
+}
