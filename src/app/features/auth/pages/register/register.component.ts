@@ -53,7 +53,8 @@ export class RegisterComponent implements OnInit {
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.authService.register(this.registerForm.value).subscribe(
+    const { email, password, storeName } = this.registerForm.value;
+    this.authService.register(email, password, storeName).subscribe(
       () => {
         this.isLoading = false;
         this.successMessage = 'Account created successfully! Redirecting to login...';
