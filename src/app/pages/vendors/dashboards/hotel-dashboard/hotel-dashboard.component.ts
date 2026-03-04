@@ -134,7 +134,7 @@ import { VendorSidenavComponent } from '../../../../layout/vendor-sidenav/vendor
                     'bg-blue-100 text-blue-700': booking.status === 'confirmed',
                     'bg-yellow-100 text-yellow-700': booking.status === 'pending'
                   }">
-                    {{ booking.status | titlecase || 'Pending' }}
+                    {{ booking.status ? (booking.status | titlecase) : 'Pending' }}
                   </span>
                 </div>
               }
