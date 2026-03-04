@@ -1,0 +1,61 @@
+/* Tour Payment Modal Styles */
+
+:host {
+  --primary-color: #06b6d4;
+  --primary-dark: #0891b2;
+  --border-color: #e5e7eb;
+  --text-color: #111827;
+}
+
+/* Smooth transitions */
+input, select {
+  transition: all 0.3s ease;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Button animations */
+button:not(:disabled) {
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Card formatting */
+input[type="text"][maxlength="19"] {
+  font-family: 'Courier New', monospace;
+  letter-spacing: 2px;
+}
+
+/* Radio button styling */
+input[type="radio"] {
+  cursor: pointer;
+  accent-color: var(--primary-color);
+}
+
+label {
+  cursor: pointer;
+  user-select: none;
+}

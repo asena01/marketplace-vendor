@@ -1,0 +1,187 @@
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+  <app-header></app-header>
+
+  <!-- Hero Section -->
+  <section class="pt-12 pb-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-purple-600 to-purple-500">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-white text-center mb-12">
+        <h1 class="text-5xl font-bold mb-4">Connect With Service Providers</h1>
+        <p class="text-xl text-purple-50">Find trusted professionals for every need</p>
+      </div>
+
+      <!-- Categories -->
+      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        @for (category of categories; track category.id) {
+          <a href="#" class="group">
+            <div class="bg-white rounded-xl p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 text-center">
+              <div class="text-5xl mb-4">{{ category.icon }}</div>
+              <h3 class="text-sm font-bold text-slate-900 mb-1 group-hover:text-purple-600 transition-colors">
+                {{ category.name }}
+              </h3>
+              <p class="text-gray-600 text-xs">{{ category.description }}</p>
+            </div>
+          </a>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Service Search -->
+  <section class="py-8 px-4 sm:px-6 lg:px-8 bg-white border-b">
+    <div class="max-w-6xl mx-auto">
+      <div class="flex flex-col md:flex-row gap-4">
+        <input type="text" placeholder="What service are you looking for?" class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-600">
+        <select class="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-600">
+          <option>All Categories</option>
+          @for (category of categories; track category.id) {
+            <option>{{ category.name }}</option>
+          }
+        </select>
+        <button class="bg-purple-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-purple-700 transition">
+          Search
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Services -->
+  <section class="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+    <div class="max-w-7xl mx-auto">
+      <div class="mb-12">
+        <h2 class="text-4xl font-bold text-slate-900 mb-2">Top Service Providers</h2>
+        <p class="text-gray-600 text-lg">Verified professionals ready to serve you</p>
+      </div>
+
+      @if (isLoading()) {
+        <div class="flex justify-center items-center py-20">
+          <div class="text-center">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mb-4"></div>
+            <p class="text-gray-600">Loading services...</p>
+          </div>
+        </div>
+      } @else if (featuredServices().length === 0) {
+        <div class="text-center py-20">
+          <div class="text-6xl mb-4">🔧</div>
+          <h3 class="text-2xl font-bold text-slate-900 mb-2">No Services Available Yet</h3>
+          <p class="text-gray-600 mb-4">The database hasn't been populated with services yet.</p>
+          <p class="text-gray-500 text-sm mb-8">To populate the database with sample services, run:</p>
+          <div class="inline-block bg-gray-900 text-white px-4 py-3 rounded-lg font-mono text-sm mb-8">
+            npm run seed
+          </div>
+          <p class="text-gray-600">This will create 6 sample services that you can view here.</p>
+        </div>
+      } @else {
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          @for (service of featuredServices(); track service.id || service._id) {
+            <a [routerLink]="['/services', service.id]" class="block group">
+              <div class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-300">
+                <!-- Service Image -->
+                <div class="relative h-48 bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center text-7xl overflow-hidden">
+                  <div class="group-hover:scale-110 transition-transform duration-300">
+                    {{ service.icon }}
+                  </div>
+                  <!-- Category Badge -->
+                  <div class="absolute top-4 right-4 bg-white px-3 py-1 rounded-full text-xs font-semibold text-purple-700 shadow-md">
+                    {{ service.category | titlecase }}
+                  </div>
+                </div>
+
+                <!-- Service Info -->
+                <div class="p-6">
+                  <!-- Name and Location -->
+                  <h3 class="text-xl font-bold text-slate-900 mb-2">{{ service.name }}</h3>
+                  <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ service.description }}</p>
+
+                  <!-- Rating and Reviews -->
+                  <div class="flex items-center gap-3 mb-4">
+                    <div class="flex items-center gap-1">
+                      <span class="text-yellow-400">★★★★★</span>
+                      <span class="font-semibold text-gray-900">{{ service.rating }}</span>
+                    </div>
+                    <span class="text-sm text-gray-600">({{ service.reviews }} reviews)</span>
+                  </div>
+
+                  <!-- Service Details -->
+                  <div class="grid grid-cols-2 gap-3 mb-4 pb-4 border-b border-gray-200 text-center text-sm">
+                    <div>
+                      <p class="text-xs text-gray-600">Duration</p>
+                      <p class="font-semibold text-gray-900">{{ service.duration }}</p>
+                    </div>
+                    <div>
+                      <p class="text-xs text-gray-600">Service Area</p>
+                      <p class="font-semibold text-gray-900 text-xs">{{ service.serviceArea }}</p>
+                    </div>
+                  </div>
+
+                  <!-- Price and CTA -->
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="text-sm text-gray-600">From per {{ service.priceUnit || 'service' }}</p>
+                      <p class="text-2xl font-bold text-purple-600">{{ service.basePrice ? ('$' + service.basePrice) : 'Contact' }}</p>
+                    </div>
+                    <button type="button" class="inline-block bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 hover:-translate-y-1 text-sm">
+                      Book Now
+                    </button>
+                  </div>
+
+                  <!-- Features Preview -->
+                  @if (service.features && service.features.length > 0) {
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                      <div class="flex flex-wrap gap-1">
+                        @for (feature of service.features.slice(0, 2); track feature) {
+                          <span class="text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded">{{ feature }}</span>
+                        }
+                        @if (service.features.length > 2) {
+                          <span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">+{{ service.features.length - 2 }}</span>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            </a>
+          }
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- Why Choose Our Platform -->
+  <section class="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+    <div class="max-w-6xl mx-auto">
+      <h2 class="text-4xl font-bold text-slate-900 mb-12 text-center">Why Choose Our Platform</h2>
+
+      <div class="grid md:grid-cols-4 gap-8">
+        <div class="text-center">
+          <div class="text-5xl mb-4">✅</div>
+          <h3 class="text-xl font-bold text-slate-900 mb-2">Verified Professionals</h3>
+          <p class="text-gray-600">All service providers are screened</p>
+        </div>
+        <div class="text-center">
+          <div class="text-5xl mb-4">⭐</div>
+          <h3 class="text-xl font-bold text-slate-900 mb-2">Trusted Reviews</h3>
+          <p class="text-gray-600">Real feedback from customers</p>
+        </div>
+        <div class="text-center">
+          <div class="text-5xl mb-4">🔒</div>
+          <h3 class="text-xl font-bold text-slate-900 mb-2">Secure Payments</h3>
+          <p class="text-gray-600">Safe and protected transactions</p>
+        </div>
+        <div class="text-center">
+          <div class="text-5xl mb-4">📞</div>
+          <h3 class="text-xl font-bold text-slate-900 mb-2">24/7 Support</h3>
+          <p class="text-gray-600">Always here for you</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Back to Home -->
+  <section class="py-16 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto text-center">
+      <a href="/" class="inline-block px-8 py-4 bg-gradient-to-r from-purple-600 to-purple-500 text-white rounded-lg hover:shadow-lg transition font-semibold">
+        Back to Home
+      </a>
+    </div>
+  </section>
+</div>

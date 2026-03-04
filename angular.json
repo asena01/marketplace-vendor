@@ -59,7 +59,8 @@
               "buildTarget": "fusion-angular-tailwind-starter:build:production"
             },
             "development": {
-              "buildTarget": "fusion-angular-tailwind-starter:build:development"
+              "buildTarget": "fusion-angular-tailwind-starter:build:development",
+              "proxyConfig": "proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"

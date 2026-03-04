@@ -1,0 +1,578 @@
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+  <app-header></app-header>
+
+  <!-- Header Section -->
+  <section class="bg-gradient-to-r from-teal-600 to-cyan-600 text-white py-16 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+      <h1 class="text-4xl sm:text-5xl font-bold mb-4">⚡ Fast Delivery Service</h1>
+      <p class="text-lg text-teal-100 mb-2">Send packages, food, groceries - Choose your vehicle, get instant pricing</p>
+      <p class="text-sm text-teal-200">Real-time tracking • Multiple vehicle options • Flexible delivery</p>
+    </div>
+  </section>
+
+  <!-- Main Delivery Form -->
+  <section class="py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid lg:grid-cols-3 gap-8">
+        
+        <!-- Left: Delivery Form -->
+        <div class="lg:col-span-2 space-y-8">
+
+          <!-- Step 1: Select Vehicle Type -->
+          <div class="bg-white rounded-lg shadow-lg p-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+              <span class="bg-teal-100 text-teal-700 rounded-full w-8 h-8 flex items-center justify-center font-bold">1</span>
+              Choose Your Vehicle
+            </h2>
+            
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+              @for (vehicle of deliveryMethods; track vehicle.type) {
+                <button
+                  (click)="selectedVehicle.set(vehicle.type)"
+                  [class]="'p-4 rounded-lg border-2 transition text-center ' + 
+                    (selectedVehicle() === vehicle.type 
+                      ? 'border-teal-600 bg-teal-50' 
+                      : 'border-gray-200 bg-white hover:border-teal-300')"
+                >
+                  <div class="text-4xl mb-2">{{ getVehicleIcon(vehicle.type) }}</div>
+                  <p class="font-semibold text-sm text-gray-800">{{ vehicle.type | titlecase }}</p>
+                  <p class="text-xs text-gray-600 mt-1">{{ vehicle.maxWeight?.value }}kg max</p>
+                </button>
+              }
+            </div>
+
+            <!-- Vehicle Details -->
+            @if (selectedVehicleData()) {
+              <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h4 class="font-semibold text-gray-800 mb-2">{{ selectedVehicleData()?.description }}</h4>
+                <div class="grid grid-cols-2 gap-4 text-sm text-gray-700">
+                  <div>📦 Max Packages: {{ selectedVehicleData()?.maxPackages }}</div>
+                  <div>⚖️ Max Weight: {{ selectedVehicleData()?.maxWeight?.value }}{{ selectedVehicleData()?.maxWeight?.unit }}</div>
+                  <div class="col-span-2">✨ Features: {{ selectedVehicleData()?.features?.join(', ') }}</div>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Step 2: Package Details -->
+          <div class="bg-white rounded-lg shadow-lg p-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+              <span class="bg-teal-100 text-teal-700 rounded-full w-8 h-8 flex items-center justify-center font-bold">2</span>
+              Package Details
+            </h2>
+
+            <div class="space-y-4">
+              <!-- Description -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">What are you delivering?</label>
+                <input
+                  type="text"
+                  [(ngModel)]="packageDescription"
+                  placeholder="e.g., Electronics, Food, Documents..."
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                />
+              </div>
+
+              <!-- Package Size -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-3">Package Size</label>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  @for (size of packageSizes; track size.category) {
+                    <button
+                      (click)="selectedPackageSize.set(size.category)"
+                      [class]="'p-3 rounded-lg border-2 transition text-center ' + 
+                        (selectedPackageSize() === size.category 
+                          ? 'border-teal-600 bg-teal-50' 
+                          : 'border-gray-200 bg-white hover:border-teal-300')"
+                    >
+                      <div class="text-2xl mb-1">{{ getSizeIcon(size.category) }}</div>
+                      <p class="font-semibold text-xs text-gray-800">{{ size.category | titlecase }}</p>
+                      <p class="text-xs text-gray-600">+${{ size.charge }}</p>
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <!-- Weight & Quantity -->
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Weight (kg)</label>
+                  <input
+                    type="number"
+                    [(ngModel)]="weight"
+                    min="0"
+                    step="0.5"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
+                  <input
+                    type="number"
+                    [(ngModel)]="quantity"
+                    min="1"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3: Delivery Locations -->
+          <div class="bg-white rounded-lg shadow-lg p-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+              <span class="bg-teal-100 text-teal-700 rounded-full w-8 h-8 flex items-center justify-center font-bold">3</span>
+              Locations & Distance
+            </h2>
+
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">📍 Pickup Location</label>
+                <input
+                  type="text"
+                  [(ngModel)]="pickupLocation"
+                  placeholder="Enter pickup address..."
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">📌 Delivery Location</label>
+                <input
+                  type="text"
+                  [(ngModel)]="deliveryLocation"
+                  placeholder="Enter delivery address..."
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">🗺️ Distance (km)</label>
+                <input
+                  type="number"
+                  [(ngModel)]="distance"
+                  min="0"
+                  step="0.1"
+                  placeholder="Distance in kilometers"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 4: Service Type -->
+          <div class="bg-white rounded-lg shadow-lg p-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+              <span class="bg-teal-100 text-teal-700 rounded-full w-8 h-8 flex items-center justify-center font-bold">4</span>
+              Delivery Speed
+            </h2>
+
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+              @for (service of serviceTypes; track service.type) {
+                <button
+                  (click)="selectedServiceType.set(service.type)"
+                  [class]="'p-4 rounded-lg border-2 transition text-center ' + 
+                    (selectedServiceType() === service.type 
+                      ? 'border-teal-600 bg-teal-50' 
+                      : 'border-gray-200 bg-white hover:border-teal-300')"
+                >
+                  <div class="text-2xl mb-2">{{ service.icon }}</div>
+                  <p class="font-semibold text-xs text-gray-800">{{ service.label }}</p>
+                  <p class="text-xs text-gray-600 mt-1">x{{ service.multiplier }}</p>
+                </button>
+              }
+            </div>
+
+            @if (selectedServiceData()) {
+              <div class="mt-4 p-3 bg-purple-50 border border-purple-200 rounded-lg text-sm text-gray-700">
+                {{ selectedServiceData()?.description }}
+              </div>
+            }
+          </div>
+
+          <!-- Step 5: Customer Information -->
+          <div class="bg-white rounded-lg shadow-lg p-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+              <span class="bg-teal-100 text-teal-700 rounded-full w-8 h-8 flex items-center justify-center font-bold">5</span>
+              Your Information
+            </h2>
+
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">👤 Full Name</label>
+                <input
+                  type="text"
+                  [(ngModel)]="customerName"
+                  placeholder="Enter your name"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">📱 Phone Number</label>
+                <input
+                  type="tel"
+                  [(ngModel)]="customerPhone"
+                  placeholder="Enter your phone number"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Error Message -->
+          @if (orderError()) {
+            <div class="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg">
+              ❌ {{ orderError() }}
+            </div>
+          }
+
+          <!-- Success Message -->
+          @if (orderSuccess()) {
+            <div class="bg-green-50 border border-green-300 text-green-700 px-4 py-3 rounded-lg">
+              ✅ Order created successfully! You will receive tracking updates via SMS.
+            </div>
+          }
+        </div>
+
+        <!-- Right: Price Summary & Order Button -->
+        <div class="lg:col-span-1">
+          <div class="bg-white rounded-lg shadow-lg p-8 sticky top-8">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6">Order Summary</h3>
+
+            <!-- Vehicle Selection Display -->
+            @if (selectedVehicleData()) {
+              <div class="mb-6 p-4 bg-teal-50 border border-teal-200 rounded-lg">
+                <p class="text-sm text-gray-600 mb-1">Selected Vehicle</p>
+                <p class="text-xl font-bold text-teal-700">{{ getVehicleIcon(selectedVehicleData()?.type) }} {{ selectedVehicleData()?.type | titlecase }}</p>
+              </div>
+            }
+
+            <!-- Pricing Breakdown -->
+            <div class="space-y-3 mb-6 pb-6 border-b border-gray-200">
+              <div class="flex justify-between text-gray-700">
+                <span>Base Rate</span>
+                <span class="font-semibold">$5.00</span>
+              </div>
+              @if (distance()) {
+                <div class="flex justify-between text-gray-700">
+                  <span>Distance ({{ distance() }}km × $0.50)</span>
+                  <span class="font-semibold">${{ (distance() * 0.5).toFixed(2) }}</span>
+                </div>
+              }
+              @if (weight()) {
+                <div class="flex justify-between text-gray-700">
+                  <span>Weight ({{ weight() }}kg × $0.20)</span>
+                  <span class="font-semibold">${{ (weight() * 0.2).toFixed(2) }}</span>
+                </div>
+              }
+              @if (selectedSizeData() && selectedSizeData()?.charge > 0) {
+                <div class="flex justify-between text-gray-700">
+                  <span>{{ selectedSizeData()?.label }}</span>
+                  <span class="font-semibold">+${{ selectedSizeData()?.charge.toFixed(2) }}</span>
+                </div>
+              }
+              @if (selectedServiceType() !== 'standard') {
+                <div class="flex justify-between text-gray-700">
+                  <span>Service Multiplier</span>
+                  <span class="font-semibold">{{ selectedServiceData()?.multiplier }}x</span>
+                </div>
+              }
+            </div>
+
+            <!-- Total -->
+            <div class="space-y-2 mb-6">
+              <div class="flex justify-between text-gray-700">
+                <span>Subtotal</span>
+                <span class="font-semibold">${{ calculatedPrice().toFixed(2) }}</span>
+              </div>
+              <div class="flex justify-between text-gray-700">
+                <span>Tax (10%)</span>
+                <span class="font-semibold">${{ tax().toFixed(2) }}</span>
+              </div>
+              <div class="flex justify-between text-2xl font-bold text-teal-700 pt-2 border-t border-gray-200">
+                <span>Total</span>
+                <span>${{ totalPrice().toFixed(2) }}</span>
+              </div>
+            </div>
+
+            <!-- Order Button -->
+            <button
+              (click)="submitOrder()"
+              [disabled]="isSubmitting() || !distance() || !weight()"
+              [class]="'w-full py-3 rounded-lg font-bold text-white transition ' + 
+                (isSubmitting() || !distance() || !weight()
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-teal-600 hover:bg-teal-700')"
+            >
+              @if (isSubmitting()) {
+                ⏳ Processing...
+              } @else {
+                🚀 Place Order Now
+              }
+            </button>
+
+            <!-- Info -->
+            <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-gray-700">
+              <p class="font-semibold mb-2">✨ Order Features</p>
+              <ul class="space-y-1 text-xs">
+                <li>✅ Real-time tracking</li>
+                <li>✅ Professional couriers</li>
+                <li>✅ Insured delivery</li>
+                <li>✅ Same-day options</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- TRACKING VIEW (shown after order placed) -->
+  @if (isTracking()) {
+    <section class="py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-slate-50 to-slate-100">
+      <div class="max-w-7xl mx-auto mb-8">
+        <!-- Order & Tracking Header -->
+        <div class="bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-lg shadow-lg p-8 flex items-center justify-between">
+          <div>
+            <h2 class="text-3xl font-bold mb-2">🎉 Order Confirmed!</h2>
+            <p class="text-green-100">Order #{{ currentDelivery()?.orderNumber }}</p>
+          </div>
+          <button
+            (click)="stopTracking()"
+            class="bg-white text-red-600 hover:bg-gray-100 px-6 py-3 rounded-lg font-semibold transition"
+          >
+            ✕ Close Tracking
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Tracking Container -->
+      <div class="max-w-7xl mx-auto">
+        <div class="grid lg:grid-cols-3 gap-6">
+          <!-- Left: Map & Status -->
+          <div class="lg:col-span-2 space-y-6">
+            <!-- Map Placeholder -->
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden h-80 flex items-center justify-center border-2 border-dashed border-gray-300">
+              <div class="text-center">
+                <div class="text-6xl mb-3">🗺️</div>
+                <p class="text-gray-600 font-semibold mb-1">Live Map Tracking</p>
+                <p class="text-sm text-gray-500">📍 {{ currentLocation() }}</p>
+              </div>
+            </div>
+
+            <!-- Status & Progress -->
+            <div [class]="'rounded-lg shadow-lg p-6 border ' + getStatusColor(currentDelivery()?.tracking?.status || 'pending')">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold text-gray-800">Delivery Status</h3>
+                <span class="text-lg font-bold">{{ trackingStatus() }}</span>
+              </div>
+
+              <!-- Progress Bar -->
+              <div class="mb-4">
+                <div class="w-full bg-gray-200 rounded-full h-3">
+                  <div
+                    class="bg-gradient-to-r from-teal-500 to-cyan-500 h-3 rounded-full transition-all duration-500"
+                    [style.width.%]="getProgressPercentage(currentDelivery()?.tracking?.status || 'pending')"
+                  ></div>
+                </div>
+                <p class="text-sm text-gray-600 mt-2">{{ getProgressPercentage(currentDelivery()?.tracking?.status || 'pending') }}% complete</p>
+              </div>
+
+              <!-- Status Timeline -->
+              @if (trackingHistory().length > 0) {
+                <div class="border-t border-gray-300 pt-4">
+                  <p class="text-sm font-semibold text-gray-700 mb-3">📋 Journey Timeline</p>
+                  <div class="space-y-2">
+                    @for (event of trackingHistory(); track $index; let last = $last) {
+                      <div class="flex gap-3 text-sm">
+                        <div class="flex flex-col items-center">
+                          <div class="w-2 h-2 bg-teal-600 rounded-full mt-1"></div>
+                          @if (!last) {
+                            <div class="w-0.5 h-6 bg-gray-300 mt-1"></div>
+                          }
+                        </div>
+                        <div class="flex-1">
+                          <p class="font-semibold text-gray-800">{{ event.status | titlecase }}</p>
+                          <p class="text-gray-600">{{ event.timestamp | date: 'short' }}</p>
+                          @if (event.location) {
+                            <p class="text-gray-500 text-xs">📍 {{ event.location }}</p>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Right: Order Details & Courier Info -->
+          <div class="space-y-6">
+            <!-- Order Summary -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+              <h3 class="text-lg font-bold text-gray-800 mb-4">📦 Order Details</h3>
+              <div class="space-y-3 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-gray-600">Vehicle:</span>
+                  <span class="font-semibold">{{ selectedVehicleData()?.type | titlecase }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-600">Distance:</span>
+                  <span class="font-semibold">{{ currentDelivery()?.distance?.value }} {{ currentDelivery()?.distance?.unit }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-600">Package:</span>
+                  <span class="font-semibold">{{ currentDelivery()?.package?.description }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-600">Service:</span>
+                  <span class="font-semibold">{{ currentDelivery()?.serviceType | titlecase }}</span>
+                </div>
+                <div class="border-t border-gray-200 pt-3 flex justify-between">
+                  <span class="font-bold">Total:</span>
+                  <span class="font-bold text-teal-600">${{ currentDelivery()?.pricing?.totalPrice }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Estimated Time -->
+            @if (estimatedTime()) {
+              <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                <h3 class="text-lg font-bold text-blue-900 mb-2">⏱️ Estimated Time</h3>
+                <p class="text-2xl font-bold text-blue-600">{{ estimatedTime() }}</p>
+              </div>
+            }
+
+            <!-- Courier Info -->
+            @if (courierName()) {
+              <div class="bg-white rounded-lg shadow-lg p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">👤 Your Courier</h3>
+                <div class="space-y-3">
+                  <div>
+                    <p class="text-sm text-gray-600">Name</p>
+                    <p class="font-semibold text-gray-800">{{ courierName() }}</p>
+                  </div>
+                  @if (courierPhone()) {
+                    <div>
+                      <p class="text-sm text-gray-600">Phone</p>
+                      <a [href]="'tel:' + courierPhone()" class="font-semibold text-teal-600 hover:underline">
+                        {{ courierPhone() }}
+                      </a>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Locations -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+              <h3 class="text-lg font-bold text-gray-800 mb-4">📍 Locations</h3>
+              <div class="space-y-4">
+                <div>
+                  <p class="text-xs font-semibold text-teal-600 uppercase mb-1">Pickup</p>
+                  <p class="text-sm font-medium text-gray-800">{{ currentDelivery()?.pickupLocation?.address }}</p>
+                </div>
+                <div>
+                  <p class="text-xs font-semibold text-blue-600 uppercase mb-1">Delivery</p>
+                  <p class="text-sm font-medium text-gray-800">{{ currentDelivery()?.deliveryLocation?.address }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="space-y-2">
+              <button
+                (click)="placeNewOrder()"
+                class="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 px-4 rounded-lg transition"
+              >
+                🚀 Place New Order
+              </button>
+              <button
+                class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition"
+              >
+                📞 Contact Support
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  }
+
+  <!-- FAQ Section -->
+  <section class="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
+    <div class="max-w-4xl mx-auto">
+      <h2 class="text-3xl font-bold text-gray-900 mb-12 text-center">How It Works</h2>
+      <div class="grid md:grid-cols-4 gap-8">
+        <div class="text-center">
+          <div class="bg-teal-100 text-teal-700 rounded-full w-16 h-16 flex items-center justify-center text-2xl mx-auto mb-4">📋</div>
+          <h3 class="font-bold text-gray-900 mb-2">1. Choose Vehicle</h3>
+          <p class="text-gray-600 text-sm">Select the right vehicle for your package size and weight</p>
+        </div>
+        <div class="text-center">
+          <div class="bg-teal-100 text-teal-700 rounded-full w-16 h-16 flex items-center justify-center text-2xl mx-auto mb-4">📦</div>
+          <h3 class="font-bold text-gray-900 mb-2">2. Enter Details</h3>
+          <p class="text-gray-600 text-sm">Provide pickup, delivery, and package information</p>
+        </div>
+        <div class="text-center">
+          <div class="bg-teal-100 text-teal-700 rounded-full w-16 h-16 flex items-center justify-center text-2xl mx-auto mb-4">💰</div>
+          <h3 class="font-bold text-gray-900 mb-2">3. Get Price</h3>
+          <p class="text-gray-600 text-sm">Instant pricing based on distance, weight, and service type</p>
+        </div>
+        <div class="text-center">
+          <div class="bg-teal-100 text-teal-700 rounded-full w-16 h-16 flex items-center justify-center text-2xl mx-auto mb-4">🚀</div>
+          <h3 class="font-bold text-gray-900 mb-2">4. Order & Track</h3>
+          <p class="text-gray-600 text-sm">Get real-time tracking and delivery updates</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="py-16 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto">
+      <h2 class="text-3xl font-bold text-gray-900 mb-12 text-center">Why Choose FastDeliver?</h2>
+      <div class="grid md:grid-cols-3 gap-8">
+        <div class="bg-white rounded-lg shadow-lg p-8">
+          <div class="text-4xl mb-4">⚡</div>
+          <h3 class="text-xl font-bold text-gray-900 mb-3">Super Fast Options</h3>
+          <p class="text-gray-600">Express, Same-Day, and Scheduled delivery options to fit your needs</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-lg p-8">
+          <div class="text-4xl mb-4">💰</div>
+          <h3 class="text-xl font-bold text-gray-900 mb-3">Transparent Pricing</h3>
+          <p class="text-gray-600">Know the cost upfront. No hidden charges or surprise fees</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-lg p-8">
+          <div class="text-4xl mb-4">📍</div>
+          <h3 class="text-xl font-bold text-gray-900 mb-3">Real-Time Tracking</h3>
+          <p class="text-gray-600">Track your delivery in real-time with GPS location updates</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-lg p-8">
+          <div class="text-4xl mb-4">🛡️</div>
+          <h3 class="text-xl font-bold text-gray-900 mb-3">Safe & Insured</h3>
+          <p class="text-gray-600">All deliveries are insured and handled by professional couriers</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-lg p-8">
+          <div class="text-4xl mb-4">🚗</div>
+          <h3 class="text-xl font-bold text-gray-900 mb-3">Multiple Vehicles</h3>
+          <p class="text-gray-600">From bikes to trucks - choose the perfect vehicle for your needs</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-lg p-8">
+          <div class="text-4xl mb-4">📱</div>
+          <h3 class="text-xl font-bold text-gray-900 mb-3">Easy Booking</h3>
+          <p class="text-gray-600">Simple 5-step process to book your delivery in minutes</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-slate-900 text-gray-400 py-16 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+      <p class="text-center text-sm">© 2024 FastDeliver Service. All rights reserved. Real-time delivery tracking and management.</p>
+    </div>
+  </footer>
+</div>
