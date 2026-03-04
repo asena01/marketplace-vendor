@@ -1,18 +1,44 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { AuthService } from '../../../../services/auth.service';
+import { VendorSidenavComponent } from '../../../../layout/vendor-sidenav/vendor-sidenav.component';
 
 @Component({
   selector: 'app-retail-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, VendorSidenavComponent],
   template: `
-    <div class="space-y-8">
+    <div class="flex h-screen bg-slate-50">
+      <!-- Sidenav -->
+      <app-vendor-sidenav
+        vendorType="retail"
+        [sidenavItems]="retailSidenavItems"
+        (logout)="onLogout()"
+      ></app-vendor-sidenav>
+
+      <!-- Main Content -->
+      <div class="flex-1 overflow-y-auto">
+        <div class="p-8 space-y-8">
       <!-- Welcome Section -->
       <div class="bg-gradient-to-r from-green-600 to-green-700 rounded-xl p-8 text-white shadow-lg">
         <h1 class="text-3xl font-bold mb-2">Retail Management Dashboard</h1>
         <p class="text-green-100">Monitor sales, inventory, products, and customer interactions across your store.</p>
       </div>
+
+      <!-- Loading State -->
+      @if (isLoading()) {
+        <div class="bg-blue-50 border border-blue-300 text-blue-700 px-4 py-3 rounded-lg">
+          <p class="font-semibold">Loading retail data...</p>
+        </div>
+      }
+
+      <!-- Error State -->
+      @if (errorMessage()) {
+        <div class="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg">
+          <p class="font-semibold">Error: {{ errorMessage() }}</p>
+        </div>
+      }
 
       <!-- Key Metrics -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -222,7 +248,39 @@ import { RouterModule } from '@angular/router';
           </button>
         </div>
       </div>
+        </div>
+      </div>
     </div>
   `,
+  styles: [`
+    :host {
+      display: block;
+      height: 100vh;
+      overflow: hidden;
+    }
+  `]
 })
-export class RetailDashboardComponent {}
+export class RetailDashboardComponent implements OnInit {
+  isLoading = signal(false);
+  errorMessage = signal('');
+
+  retailSidenavItems = [
+    { label: 'Dashboard', icon: '🛍️', route: '/retail-dashboard' },
+    { label: 'Sales', icon: '💰', route: '/retail-dashboard/sales', badge: 0 },
+    { label: 'Inventory', icon: '📦', route: '/retail-dashboard/inventory', badge: 24 },
+    { label: 'Products', icon: '🏷️', route: '/retail-dashboard/products', badge: 0 },
+    { label: 'Customers', icon: '👥', route: '/retail-dashboard/customers', badge: 0 },
+    { label: 'Reports', icon: '📈', route: '/retail-dashboard/reports' },
+    { label: 'Settings', icon: '⚙️', route: '/retail-dashboard/settings' }
+  ];
+
+  constructor(private authService: AuthService) {}
+
+  ngOnInit(): void {
+    this.isLoading.set(false);
+  }
+
+  onLogout(): void {
+    this.authService.logout();
+  }
+}
