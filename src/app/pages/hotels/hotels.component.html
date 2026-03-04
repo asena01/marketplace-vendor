@@ -1,0 +1,1026 @@
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+  <app-header></app-header>
+
+  <!-- Hero Section -->
+  <section class="pt-12 pb-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-emerald-600 to-emerald-500">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-white text-center mb-12">
+        <h1 class="text-5xl font-bold mb-4">Find Your Perfect Stay</h1>
+        <p class="text-xl text-emerald-50">Discover hotels, apartments, and rooms at the best prices</p>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="bg-white rounded-xl p-6 shadow-xl">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Location</label>
+            <input 
+              type="text" 
+              [(ngModel)]="searchLocation" 
+              placeholder="Where are you going?" 
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Check In</label>
+            <input 
+              type="date" 
+              [(ngModel)]="checkInDate" 
+              [min]="getMinDate()"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Check Out</label>
+            <input 
+              type="date" 
+              [(ngModel)]="checkOutDate" 
+              [min]="checkInDate()"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Guests</label>
+            <select 
+              [(ngModel)]="guests" 
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600"
+            >
+              <option [value]="1">1 Guest</option>
+              <option [value]="2">2 Guests</option>
+              <option [value]="3">3 Guests</option>
+              <option [value]="4">4+ Guests</option>
+            </select>
+          </div>
+          <div class="flex items-end gap-2">
+            <button 
+              (click)="search()"
+              class="flex-1 bg-emerald-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-emerald-700 transition"
+            >
+              🔍 Search
+            </button>
+            <button 
+              (click)="showFilterSidebar.set(!showFilterSidebar())"
+              class="px-4 py-3 bg-white border-2 border-emerald-600 text-emerald-600 rounded-lg font-semibold hover:bg-emerald-50 transition md:hidden"
+            >
+              ⚙️
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <section id="featured-hotels" class="py-20 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex gap-8">
+        <!-- Sidebar Filters - Desktop -->
+        <aside class="hidden md:block w-72 flex-shrink-0">
+          <div class="bg-white rounded-xl shadow-lg p-6 sticky top-20 filter-sidebar-desktop">
+            <div class="flex items-center justify-between mb-6">
+              <h3 class="text-lg font-bold text-slate-900">Filters</h3>
+              <button 
+                (click)="clearFilters()"
+                class="text-sm text-emerald-600 hover:text-emerald-700 font-semibold"
+              >
+                Clear All
+              </button>
+            </div>
+
+            <!-- Price Range Filter -->
+            <div class="mb-6 pb-6 border-b border-gray-200">
+              <h4 class="font-semibold text-gray-900 mb-3">Price Range</h4>
+              <div class="space-y-3">
+                <div class="flex items-center gap-2">
+                  <span class="text-sm text-gray-600">Min:</span>
+                  <span class="font-bold text-emerald-600">{{ formatPrice(priceRange()[0]) }}</span>
+                </div>
+                <input 
+                  type="range" 
+                  [min]="0" 
+                  [max]="maxPrice()"
+                  [value]="priceRange()[0]"
+                  (change)="priceRange.set([+$event.target!.value, priceRange()[1]]); currentPage.set(1)"
+                  class="w-full"
+                />
+                <div class="flex items-center gap-2">
+                  <span class="text-sm text-gray-600">Max:</span>
+                  <span class="font-bold text-emerald-600">{{ formatPrice(priceRange()[1]) }}</span>
+                </div>
+                <input 
+                  type="range" 
+                  [min]="0" 
+                  [max]="maxPrice()"
+                  [value]="priceRange()[1]"
+                  (change)="priceRange.set([priceRange()[0], +$event.target!.value]); currentPage.set(1)"
+                  class="w-full"
+                />
+              </div>
+            </div>
+
+            <!-- Rating Filter -->
+            <div class="mb-6 pb-6 border-b border-gray-200">
+              <h4 class="font-semibold text-gray-900 mb-3">Minimum Rating</h4>
+              <div class="space-y-2">
+                @for (rating of [0, 3, 3.5, 4, 4.5]; track rating) {
+                  <label class="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <input 
+                      type="radio" 
+                      [value]="rating"
+                      [(ngModel)]="minRating"
+                      (change)="currentPage.set(1)"
+                      class="w-4 h-4"
+                    />
+                    <span class="text-sm text-gray-700">
+                      @if (rating === 0) {
+                        All Ratings
+                      } @else {
+                        ⭐ {{ rating }}+
+                      }
+                    </span>
+                  </label>
+                }
+              </div>
+            </div>
+
+            <!-- Property Type Filter -->
+            <div class="mb-6 pb-6 border-b border-gray-200">
+              <h4 class="font-semibold text-gray-900 mb-3">Property Type</h4>
+              <div class="space-y-2 max-h-48 overflow-y-auto">
+                @for (type of uniquePropertyTypes(); track type) {
+                  <label class="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <input 
+                      type="checkbox" 
+                      [checked]="selectedPropertyTypes().includes(type)"
+                      (change)="togglePropertyType(type)"
+                      class="w-4 h-4"
+                    />
+                    <span class="text-sm text-gray-700">{{ type }}</span>
+                  </label>
+                }
+              </div>
+            </div>
+
+            <!-- Amenities Filter -->
+            <div class="mb-6">
+              <h4 class="font-semibold text-gray-900 mb-3">Amenities</h4>
+              <div class="space-y-2 max-h-48 overflow-y-auto">
+                @for (amenity of uniqueAmenities(); track amenity) {
+                  <label class="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <input 
+                      type="checkbox" 
+                      [checked]="selectedAmenities().includes(amenity)"
+                      (change)="toggleAmenity(amenity)"
+                      class="w-4 h-4"
+                    />
+                    <span class="text-sm text-gray-700">{{ amenity }}</span>
+                  </label>
+                }
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Mobile Filter Sidebar -->
+        <aside 
+          class="fixed inset-0 z-50 md:hidden filter-sidebar-mobile"
+          [class.show]="showFilterSidebar()"
+        >
+          <div class="fixed inset-0 bg-black/50" (click)="showFilterSidebar.set(false)"></div>
+          <div class="fixed left-0 top-0 bottom-0 w-80 bg-white shadow-xl overflow-y-auto animate-slide-in">
+            <div class="p-6">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-bold text-slate-900">Filters</h3>
+                <button
+                  (click)="showFilterSidebar.set(false)"
+                  class="text-2xl font-bold hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <button
+                (click)="clearFilters(); showFilterSidebar.set(false)"
+                class="w-full mb-6 text-sm text-emerald-600 hover:text-emerald-700 font-semibold py-2 border-b border-gray-200"
+              >
+                Clear All
+              </button>
+
+              <!-- Price Range Filter Mobile -->
+              <div class="mb-6 pb-6 border-b border-gray-200">
+                <h4 class="font-semibold text-gray-900 mb-3">Price Range</h4>
+                <div class="space-y-3">
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm text-gray-600">Min:</span>
+                    <span class="font-bold text-emerald-600">{{ formatPrice(priceRange()[0]) }}</span>
+                  </div>
+                  <input
+                    type="range"
+                    [min]="0"
+                    [max]="maxPrice()"
+                    [value]="priceRange()[0]"
+                    (change)="priceRange.set([+$event.target!.value, priceRange()[1]]); currentPage.set(1)"
+                    class="w-full"
+                  />
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm text-gray-600">Max:</span>
+                    <span class="font-bold text-emerald-600">{{ formatPrice(priceRange()[1]) }}</span>
+                  </div>
+                  <input
+                    type="range"
+                    [min]="0"
+                    [max]="maxPrice()"
+                    [value]="priceRange()[1]"
+                    (change)="priceRange.set([priceRange()[0], +$event.target!.value]); currentPage.set(1)"
+                    class="w-full"
+                  />
+                </div>
+              </div>
+
+              <!-- Rating Filter Mobile -->
+              <div class="mb-6 pb-6 border-b border-gray-200">
+                <h4 class="font-semibold text-gray-900 mb-3">Minimum Rating</h4>
+                <div class="space-y-2">
+                  @for (rating of [0, 3, 3.5, 4, 4.5]; track rating) {
+                    <label class="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                      <input
+                        type="radio"
+                        [value]="rating"
+                        [(ngModel)]="minRating"
+                        (change)="currentPage.set(1); showFilterSidebar.set(false)"
+                        class="w-4 h-4"
+                      />
+                      <span class="text-sm text-gray-700">
+                        @if (rating === 0) {
+                          All Ratings
+                        } @else {
+                          ⭐ {{ rating }}+
+                        }
+                      </span>
+                    </label>
+                  }
+                </div>
+              </div>
+
+              <!-- Property Type Filter Mobile -->
+              <div class="mb-6 pb-6 border-b border-gray-200">
+                <h4 class="font-semibold text-gray-900 mb-3">Property Type</h4>
+                <div class="space-y-2">
+                  @for (type of uniquePropertyTypes(); track type) {
+                    <label class="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                      <input
+                        type="checkbox"
+                        [checked]="selectedPropertyTypes().includes(type)"
+                        (change)="togglePropertyType(type)"
+                        class="w-4 h-4"
+                      />
+                      <span class="text-sm text-gray-700">{{ type }}</span>
+                    </label>
+                  }
+                </div>
+              </div>
+
+              <!-- Amenities Filter Mobile -->
+              <div class="mb-6">
+                <h4 class="font-semibold text-gray-900 mb-3">Amenities</h4>
+                <div class="space-y-2">
+                  @for (amenity of uniqueAmenities(); track amenity) {
+                    <label class="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                      <input
+                        type="checkbox"
+                        [checked]="selectedAmenities().includes(amenity)"
+                        (change)="toggleAmenity(amenity)"
+                        class="w-4 h-4"
+                      />
+                      <span class="text-sm text-gray-700">{{ amenity }}</span>
+                    </label>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Hotels List -->
+        <div class="flex-1 min-w-0">
+          <!-- Loading State -->
+          @if (isLoadingHotels()) {
+            <div class="py-12 text-center">
+              <div class="inline-block">
+                <div class="w-12 h-12 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mb-4"></div>
+                <p class="text-gray-600 font-semibold">Loading hotels from API...</p>
+              </div>
+            </div>
+          }
+
+          <!-- Info/Error State -->
+          @if (hotelError() && !isLoadingHotels()) {
+            <div class="bg-orange-50 border border-orange-300 text-orange-700 px-4 py-3 rounded-lg text-sm mb-6 font-semibold">
+              ⚠️ {{ hotelError() }}
+            </div>
+          }
+
+          <!-- Results Header -->
+          @if (!isLoadingHotels()) {
+            <div class="mb-6 flex items-center justify-between">
+              <h2 class="text-2xl font-bold text-slate-900">
+                Showing {{ paginatedHotels().length }} of {{ filteredHotels().length }} hotels
+              </h2>
+            </div>
+          }
+
+          <!-- Hotel Cards - Collapsed/Expanded View -->
+          <div class="space-y-4">
+            @for (hotel of paginatedHotels(); track hotel.id) {
+              <div class="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl">
+                <!-- Collapsed View -->
+                <div 
+                  [class]="'p-6 cursor-pointer border-l-4 transition-colors ' +
+                    (isExpanded(hotel.id) ? 'border-emerald-600 bg-emerald-50' : 'border-gray-200 hover:bg-gray-50')"
+                  (click)="toggleExpanded(hotel.id)"
+                >
+                  <div class="flex items-start gap-6">
+                    <!-- Image/Carousel Thumbnail -->
+                    <div class="w-24 h-24 flex-shrink-0 bg-gradient-to-br from-emerald-100 to-emerald-50 rounded-lg flex items-center justify-center text-4xl relative group overflow-hidden">
+                      @let currentImg = getCurrentImage(hotel);
+                      @if (currentImg && currentImg.startsWith('http')) {
+                        <img [src]="currentImg" [alt]="hotel.name" class="w-full h-full object-cover" />
+                      } @else {
+                        <span>{{ currentImg }}</span>
+                      }
+                      @if (hotel.images && hotel.images.length > 1) {
+                        <div class="absolute bottom-1 left-1/2 -translate-x-1/2 text-xs bg-gray-900/70 text-white px-2 py-1 rounded">
+                          {{ getCarouselIndex(hotel.id) + 1 }}/{{ hotel.images.length }}
+                        </div>
+                      }
+                    </div>
+
+                    <!-- Hotel Info -->
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-start justify-between gap-4 mb-2">
+                        <div class="flex-1">
+                          <h3 class="text-xl font-bold text-slate-900 truncate">{{ hotel.name }}</h3>
+                          <p class="text-sm text-gray-600">📍 {{ hotel.location }}</p>
+                        </div>
+                        <button 
+                          (click)="toggleFavorite(hotel.id); $event.stopPropagation()"
+                          [class]="'text-2xl transition-transform ' +
+                            (isFavorite(hotel.id) ? 'scale-125' : 'hover:scale-110')"
+                        >
+                          {{ isFavorite(hotel.id) ? '❤️' : '🤍' }}
+                        </button>
+                      </div>
+
+                      <!-- Rating & Reviews -->
+                      <div class="flex items-center gap-4 mb-3">
+                        <div class="flex items-center gap-1 cursor-pointer hover:opacity-80" (click)="openReviewModal(hotel); $event.stopPropagation()">
+                          <span class="text-yellow-500">⭐</span>
+                          <span class="font-bold text-gray-900">{{ hotel.rating }}</span>
+                          <span class="text-sm text-gray-600">({{ hotel.reviews }})</span>
+                        </div>
+                        @if ((hotel.discount || 0) > 0) {
+                          <span class="text-xs bg-red-100 text-red-700 px-3 py-1 rounded-full font-semibold">
+                            -{{ hotel.discount }}% OFF
+                          </span>
+                        }
+                      </div>
+
+                      <!-- Amenities -->
+                      <div class="flex flex-wrap gap-2 mb-3">
+                        @for (amenity of hotel.amenities.slice(0, 4); track amenity) {
+                          <span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">{{ amenity }}</span>
+                        }
+                        @if (hotel.amenities.length > 4) {
+                          <span class="text-xs text-gray-600">+{{ hotel.amenities.length - 4 }} more</span>
+                        }
+                      </div>
+
+                      <!-- Price -->
+                      <div class="flex items-center justify-between">
+                        <div>
+                          <span class="text-sm text-gray-600">From</span>
+                          <div class="text-2xl font-bold text-emerald-600">{{ formatPrice(hotel.price) }}</div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                          <span class="text-sm text-gray-600">per night</span>
+                          <span class="text-2xl text-gray-400">→</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Expanded View -->
+                @if (isExpanded(hotel.id)) {
+                  <div class="border-t border-gray-200 p-6 bg-gray-50 space-y-6 animate-expand">
+                    <!-- Image Carousel -->
+                    <div>
+                      <h4 class="font-semibold text-gray-900 mb-3">Photo Gallery</h4>
+                      <div class="relative bg-gradient-to-br from-emerald-100 to-emerald-50 rounded-lg h-64 flex items-center justify-center text-6xl group overflow-hidden">
+                        @let currentImg = getCurrentImage(hotel);
+                        @if (currentImg && currentImg.startsWith('http')) {
+                          <img [src]="currentImg" [alt]="hotel.name" class="w-full h-full object-cover" />
+                        } @else {
+                          <span>{{ currentImg }}</span>
+                        }
+
+                        @if (hotel.images && hotel.images.length > 1) {
+                          <button 
+                            (click)="previousImage(hotel.id)"
+                            class="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white text-gray-900 p-3 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100"
+                          >
+                            ←
+                          </button>
+                          <button 
+                            (click)="nextImage(hotel.id)"
+                            class="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white text-gray-900 p-3 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100"
+                          >
+                            →
+                          </button>
+                          <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                            @for (img of hotel.images; track $index) {
+                              <button
+                                (click)="setCarouselIndex(hotel.id, $index)"
+                                [class]="'w-2 h-2 rounded-full transition-all ' +
+                                  (($index === getCarouselIndex(hotel.id)) ? 'bg-white w-8' : 'bg-white/50')"
+                              ></button>
+                            }
+                          </div>
+                        }
+                      </div>
+                    </div>
+
+                    <!-- Room Selection by Type -->
+                    <div>
+                      <h4 class="font-semibold text-gray-900 mb-4">Available Rooms</h4>
+                      <div class="space-y-4">
+                        @for (groupedRoom of getGroupedRooms(hotel); track groupedRoom.type) {
+                          <div class="bg-white rounded-lg p-4 border border-gray-200">
+                            <div class="flex items-center justify-between mb-3">
+                              <h5 class="font-bold text-gray-900">{{ groupedRoom.type }}</h5>
+                              <span class="text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-semibold">
+                                {{ groupedRoom.availableCount }} available
+                              </span>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              @for (room of groupedRoom.rooms; track room.id) {
+                                <button
+                                  (click)="selectRoom(room, hotel)"
+                                  class="p-3 text-left rounded-lg border-2 border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 transition group"
+                                >
+                                  <div class="flex items-start justify-between mb-2">
+                                    <div>
+                                      <p class="text-sm font-bold text-gray-900">{{ room.bedType }}</p>
+                                      <p class="text-xs text-gray-600">Up to {{ room.maxGuests }} guest(s)</p>
+                                    </div>
+                                    <div class="text-right">
+                                      <p class="text-sm font-bold text-emerald-600">{{ formatPrice(room.price) }}</p>
+                                      <p class="text-xs text-gray-600">per night</p>
+                                    </div>
+                                  </div>
+                                  <div class="flex flex-wrap gap-1 mb-2">
+                                    @for (amenity of room.amenities.slice(0, 2); track amenity) {
+                                      <span class="text-xs bg-gray-100 text-gray-700 px-1 py-0.5 rounded">{{ amenity }}</span>
+                                    }
+                                  </div>
+                                  <div class="flex items-center gap-1 text-xs text-yellow-500">
+                                    <span>⭐</span>
+                                    <span class="font-semibold text-gray-900">{{ room.rating }}</span>
+                                    <span class="text-gray-600">({{ room.reviews }})</span>
+                                  </div>
+                                  <button class="mt-2 w-full text-sm font-semibold text-emerald-600 group-hover:text-emerald-700 transition">
+                                    View & Book →
+                                  </button>
+                                </button>
+                              }
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+
+                    <!-- Full Amenities List -->
+                    <div>
+                      <h4 class="font-semibold text-gray-900 mb-3">Amenities</h4>
+                      <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        @for (amenity of hotel.amenities; track amenity) {
+                          <span class="text-sm bg-white text-gray-700 px-3 py-2 rounded border border-gray-200">
+                            ✓ {{ amenity }}
+                          </span>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+
+            @if (paginatedHotels().length === 0) {
+              <div class="text-center py-12 bg-white rounded-xl shadow-lg">
+                <div class="text-4xl mb-3">🏨</div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">No hotels found</h3>
+                <p class="text-gray-600">Try adjusting your filters or search criteria</p>
+                <button 
+                  (click)="clearFilters()"
+                  class="mt-4 text-emerald-600 hover:text-emerald-700 font-semibold"
+                >
+                  Clear filters
+                </button>
+              </div>
+            }
+          </div>
+
+          <!-- Pagination -->
+          @if (totalPages() > 1) {
+            <div class="mt-12 flex items-center justify-center gap-2 flex-wrap">
+              <button
+                (click)="goToPage(currentPage() - 1)"
+                [disabled]="currentPage() === 1"
+                class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition font-semibold"
+              >
+                ← Previous
+              </button>
+
+              <!-- Page Numbers -->
+              @if (currentPage() > 2) {
+                <button 
+                  (click)="goToPage(1)"
+                  class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 hover:bg-gray-50 transition"
+                >
+                  1
+                </button>
+                @if (currentPage() > 3) {
+                  <span class="px-2 py-2 text-gray-600">...</span>
+                }
+              }
+
+              @for (page of [currentPage() - 1, currentPage(), currentPage() + 1]; track page) {
+                @if (page > 0 && page <= totalPages()) {
+                  <button 
+                    (click)="goToPage(page)"
+                    [class]="'px-3 py-2 rounded-lg transition font-semibold ' +
+                      (page === currentPage()
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-white border border-gray-300 text-gray-900 hover:bg-gray-50')"
+                  >
+                    {{ page }}
+                  </button>
+                }
+              }
+
+              @if (currentPage() < totalPages() - 1) {
+                @if (currentPage() < totalPages() - 2) {
+                  <span class="px-2 py-2 text-gray-600">...</span>
+                }
+                <button 
+                  (click)="goToPage(totalPages())"
+                  class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 hover:bg-gray-50 transition"
+                >
+                  {{ totalPages() }}
+                </button>
+              }
+
+              <button
+                (click)="goToPage(currentPage() + 1)"
+                [disabled]="currentPage() === totalPages()"
+                class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition font-semibold"
+              >
+                Next →
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Booking Modal -->
+  @if (showBookingForm() && selectedHotel() && selectedRoom()) {
+    @let hotel = selectedHotel();
+    @let room = selectedRoom();
+    <div class="fixed inset-0 bg-black/60 z-50 flex items-start justify-center p-4 overflow-y-auto pt-4 md:pt-20">
+      <div class="bg-white rounded-lg max-w-3xl w-full shadow-2xl">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white p-6 border-b border-emerald-800">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-2xl font-bold">{{ hotel!.name }}</h2>
+              <p class="text-emerald-100 text-sm">{{ hotel!.location }} • {{ room!.type }}</p>
+            </div>
+            <button (click)="closeBooking()" class="text-3xl font-bold hover:text-emerald-100 transition">✕</button>
+          </div>
+        </div>
+
+        <!-- Content -->
+        <div class="p-6 space-y-6">
+          <!-- Edit Trip Dates -->
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-4">
+            <h3 class="font-bold text-gray-900 mb-3">Trip Dates</h3>
+            <div class="grid md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Check In *</label>
+                <input
+                  type="date"
+                  [(ngModel)]="checkInDate"
+                  [min]="getMinDate()"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Check Out *</label>
+                <input
+                  type="date"
+                  [(ngModel)]="checkOutDate"
+                  [min]="checkInDate()"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Trip Summary -->
+          <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+            <h3 class="font-bold text-gray-900 mb-3">Trip Summary</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <span class="text-gray-600">Check In</span>
+                <p class="font-bold text-gray-900">{{ checkInDate() }}</p>
+              </div>
+              <div>
+                <span class="text-gray-600">Check Out</span>
+                <p class="font-bold text-gray-900">{{ checkOutDate() }}</p>
+              </div>
+              <div>
+                <span class="text-gray-600">Duration</span>
+                <p class="font-bold text-gray-900">{{ calculateStayDays() }} night(s)</p>
+              </div>
+              <div>
+                <span class="text-gray-600">Rooms</span>
+                <p class="font-bold text-gray-900">{{ rooms() }} room(s)</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Room Details -->
+          <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <h3 class="font-bold text-gray-900 mb-3">Room Details</h3>
+            <div class="flex items-start justify-between">
+              <div>
+                <p class="text-sm text-gray-600">Room Type</p>
+                <p class="font-bold text-gray-900">{{ room!.type }}</p>
+                <p class="text-sm text-gray-600 mt-2">Bed: {{ room!.bedType }}</p>
+                <p class="text-sm text-gray-600">Capacity: Up to {{ room!.maxGuests }} guest(s)</p>
+              </div>
+              <div class="text-right">
+                <p class="text-sm text-gray-600">Price per night</p>
+                <p class="text-2xl font-bold text-emerald-600">{{ formatPrice(room!.price) }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Guest Information -->
+          <div class="bg-gray-50 rounded-lg p-4 space-y-4 border border-gray-200">
+            <h3 class="font-bold text-gray-900">Guest Information</h3>
+            
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Full Name *</label>
+              <input
+                type="text"
+                [(ngModel)]="customerName"
+                placeholder="Enter your full name"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Email *</label>
+                <input
+                  type="email"
+                  [(ngModel)]="customerEmail"
+                  placeholder="your.email@example.com"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Phone *</label>
+                <input
+                  type="tel"
+                  [(ngModel)]="customerPhone"
+                  placeholder="+1 (555) 000-0000"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Special Requests</label>
+              <textarea
+                [(ngModel)]="specialRequests"
+                placeholder="Any special requests or preferences?"
+                rows="3"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- Pricing Summary -->
+          <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+            <h3 class="font-bold text-gray-900 mb-3">Pricing Summary</h3>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between">
+                <span class="text-gray-600">{{ room!.type }} × {{ calculateStayDays() }} night(s)</span>
+                <span class="font-bold">{{ formatPrice(room!.price * calculateStayDays()) }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Number of rooms</span>
+                <span class="font-bold">× {{ rooms() }}</span>
+              </div>
+              <div class="border-t border-emerald-300 pt-2 flex justify-between text-lg">
+                <span class="font-bold text-gray-900">Total Price</span>
+                <span class="font-bold text-emerald-600">{{ formatPrice(calculateTotalPrice()) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment Method Selection -->
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h3 class="font-bold text-gray-900 mb-4">Payment Method</h3>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
+              @for (method of getPaymentMethods(); track method.id) {
+                <button
+                  (click)="selectedPaymentMethod.set(method.id)"
+                  [class]="'p-3 rounded-lg border-2 transition text-center ' +
+                    (selectedPaymentMethod() === method.id
+                      ? 'border-blue-600 bg-blue-100'
+                      : 'border-gray-300 bg-white hover:border-blue-300')"
+                >
+                  <div class="text-2xl mb-1">{{ method.icon }}</div>
+                  <p class="text-xs font-semibold text-gray-900">{{ method.name }}</p>
+                  <p class="text-xs text-gray-600">{{ method.description }}</p>
+                </button>
+              }
+            </div>
+
+            <!-- Dynamic Payment Forms -->
+            @if (selectedPaymentMethod() === 'credit-card' || selectedPaymentMethod() === 'debit-card') {
+              <div class="space-y-3 bg-white p-4 rounded-lg">
+                <h4 class="font-semibold text-gray-900 text-sm">{{ selectedPaymentMethod() === 'credit-card' ? 'Credit' : 'Debit' }} Card Details</h4>
+                <div>
+                  <label class="block text-xs font-semibold text-gray-700 mb-1">Card Number *</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="cardNumber"
+                    placeholder="1234 5678 9012 3456"
+                    maxlength="19"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-gray-700 mb-1">Cardholder Name *</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="cardholderName"
+                    placeholder="Name on card"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                  <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">Month *</label>
+                    <select [(ngModel)]="expiryMonth" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                      <option value="">MM</option>
+                      @for (m of [1,2,3,4,5,6,7,8,9,10,11,12]; track m) {
+                        <option [value]="m.toString().padStart(2, '0')">{{ m.toString().padStart(2, '0') }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">Year *</label>
+                    <select [(ngModel)]="expiryYear" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                      <option value="">YY</option>
+                      @for (y of [2025,2026,2027,2028,2029,2030]; track y) {
+                        <option [value]="y.toString().slice(-2)">{{ y }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">CVV *</label>
+                    <input
+                      type="password"
+                      [(ngModel)]="cvv"
+                      placeholder="123"
+                      maxlength="4"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+            }
+
+            @if (selectedPaymentMethod() === 'bank-transfer') {
+              <div class="space-y-3 bg-white p-4 rounded-lg">
+                <h4 class="font-semibold text-gray-900 text-sm">Bank Details</h4>
+                <div>
+                  <label class="block text-xs font-semibold text-gray-700 mb-1">Bank Name *</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="bankName"
+                    placeholder="Your bank name"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-gray-700 mb-1">Account Number *</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="accountNumber"
+                    placeholder="Your account number"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-gray-700 mb-1">Account Name *</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="accountName"
+                    placeholder="Account holder name"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-gray-700 mb-1">Bank Code</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="bankCode"
+                    placeholder="Optional bank code"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                </div>
+              </div>
+            }
+
+            @if (selectedPaymentMethod() === 'mobile-money') {
+              <div class="space-y-3 bg-white p-4 rounded-lg">
+                <h4 class="font-semibold text-gray-900 text-sm">Mobile Money Details</h4>
+                <div>
+                  <label class="block text-xs font-semibold text-gray-700 mb-1">Provider *</label>
+                  <select [(ngModel)]="mobileMoneyProvider" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    <option value="">Select provider</option>
+                    <option value="MTN">MTN Mobile Money</option>
+                    <option value="Airtel">Airtel Money</option>
+                    <option value="Vodafone">Vodafone Cash</option>
+                    <option value="Telecel">Telecel</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-gray-700 mb-1">Phone Number *</label>
+                  <input
+                    type="tel"
+                    [(ngModel)]="mobileMoneyPhone"
+                    placeholder="+1 (555) 000-0000"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                </div>
+              </div>
+            }
+
+            @if (selectedPaymentMethod() === 'wallet') {
+              <div class="space-y-3 bg-white p-4 rounded-lg">
+                <h4 class="font-semibold text-gray-900 text-sm">Digital Wallet</h4>
+                <div>
+                  <label class="block text-xs font-semibold text-gray-700 mb-1">Wallet ID *</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="walletId"
+                    placeholder="Your wallet ID or email"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Payment Error & Success Messages -->
+          @if (paymentError()) {
+            <div class="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg text-sm">
+              ❌ {{ paymentError() }}
+            </div>
+          }
+
+          @if (paymentSuccess()) {
+            <div class="bg-green-50 border border-green-300 text-green-700 px-4 py-3 rounded-lg text-sm">
+              ✅ Payment approved! Processing your booking...
+            </div>
+          }
+
+          <!-- Error & Success Messages -->
+          @if (bookingError()) {
+            <div class="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg text-sm">
+              ❌ {{ bookingError() }}
+            </div>
+          }
+
+          @if (bookingSuccess()) {
+            <div class="bg-green-50 border border-green-300 text-green-700 px-4 py-3 rounded-lg text-sm">
+              ✅ Booking confirmed! Processing your reservation...
+            </div>
+          }
+
+          <!-- Action Buttons -->
+          <div class="flex gap-3">
+            <button
+              (click)="submitPayment()"
+              [disabled]="isProcessingPayment() || paymentSuccess() || !selectedPaymentMethod()"
+              class="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded-lg transition"
+            >
+              {{ isProcessingPayment() ? '⏳ Processing...' : '💳 Pay & Book' }}
+            </button>
+            <button
+              (click)="closeBooking()"
+              [disabled]="isProcessingPayment()"
+              class="flex-1 bg-white border-2 border-gray-300 hover:border-gray-400 text-gray-900 font-bold py-3 px-4 rounded-lg transition disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Review Modal -->
+  @if (showReviewModal() && selectedHotelForReview()) {
+    @let hotel = selectedHotelForReview();
+    <div class="fixed inset-0 bg-black/60 z-50 flex items-start justify-center p-4 overflow-y-auto pt-4 md:pt-20">
+      <div class="bg-white rounded-lg max-w-md w-full shadow-2xl animate-scale-in">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white p-6 border-b border-emerald-800">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-bold">Leave a Review</h2>
+            <button (click)="closeReviewModal()" class="text-2xl font-bold hover:text-emerald-100 transition">✕</button>
+          </div>
+        </div>
+
+        <!-- Content -->
+        <div class="p-6 space-y-4">
+          <div>
+            <p class="text-sm text-gray-600 mb-2">Hotel Name</p>
+            <p class="font-bold text-gray-900">{{ hotel!.name }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-3">Your Rating</label>
+            <div class="flex gap-2">
+              @for (rating of [1, 2, 3, 4, 5]; track rating) {
+                <button
+                  (click)="reviewRating.set(rating)"
+                  [class]="'text-3xl transition-transform ' +
+                    (rating <= reviewRating() ? 'scale-110 text-yellow-400' : 'text-gray-300 hover:scale-110')"
+                >
+                  ★
+                </button>
+              }
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Your Review</label>
+            <textarea
+              [(ngModel)]="reviewText"
+              placeholder="Share your experience..."
+              rows="4"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            ></textarea>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex gap-3 pt-4">
+            <button
+              (click)="submitReview()"
+              class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg transition"
+            >
+              Submit Review
+            </button>
+            <button
+              (click)="closeReviewModal()"
+              class="flex-1 bg-white border-2 border-gray-300 hover:border-gray-400 text-gray-900 font-bold py-2 px-4 rounded-lg transition"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Back to Home -->
+  <section class="py-16 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto text-center">
+      <a href="/" class="inline-block px-8 py-4 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white rounded-lg hover:shadow-lg transition font-semibold">
+        🏠 Back to Home
+      </a>
+    </div>
+  </section>
+</div>
