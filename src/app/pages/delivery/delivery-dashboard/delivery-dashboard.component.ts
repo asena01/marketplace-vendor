@@ -9,8 +9,6 @@ import { DeliveryOrdersComponent } from '../delivery-orders/delivery-orders.comp
 import { DeliveryCouriersComponent } from '../delivery-couriers/delivery-couriers.component';
 import { DeliveryTrackingComponent } from '../delivery-tracking/delivery-tracking.component';
 import { DeliveryAnalyticsComponent } from '../delivery-analytics/delivery-analytics.component';
-import { input } from '@angular/core';
-import { VendorChatSupportComponent } from '../../vendor/vendor-chat-support/vendor-chat-support.component';
 
 @Component({
   selector: 'app-delivery-dashboard',
@@ -20,8 +18,7 @@ import { VendorChatSupportComponent } from '../../vendor/vendor-chat-support/ven
     DeliveryOrdersComponent,
     DeliveryCouriersComponent,
     DeliveryTrackingComponent,
-    DeliveryAnalyticsComponent,
-    VendorChatSupportComponent
+    DeliveryAnalyticsComponent
   ],
   template: `
     <div class="min-h-screen bg-gray-100">
@@ -99,16 +96,6 @@ import { VendorChatSupportComponent } from '../../vendor/vendor-chat-support/ven
             >
               📈 Analytics
             </button>
-
-            <button
-              (click)="setCurrentPage('chat')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition ' +
-                (currentPage() === 'chat'
-                  ? 'bg-teal-100 text-teal-700 border-l-4 border-teal-600'
-                  : 'text-gray-700 hover:bg-gray-100')"
-            >
-              💬 Chat
-            </button>
           </nav>
         </aside>
 
@@ -180,12 +167,6 @@ import { VendorChatSupportComponent } from '../../vendor/vendor-chat-support/ven
             <app-delivery-couriers></app-delivery-couriers>
           } @else if (currentPage() === 'analytics') {
             <app-delivery-analytics></app-delivery-analytics>
-          } @else if (currentPage() === 'chat') {
-            <app-vendor-chat-support
-              [vendorId]="deliveryId()"
-              [vendorType]="vendorType()"
-              [vendorName]="businessName()"
-            ></app-vendor-chat-support>
           }
         </main>
       </div>
