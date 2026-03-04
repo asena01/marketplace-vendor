@@ -50,6 +50,43 @@ export class HotelService {
     }
   }
 
+  // ==================== HOTEL DETAILS ====================
+  getHotelDetails(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}`).pipe(
+      tap((data) => {
+        console.log('✅ Hotel details retrieved:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to fetch hotel details:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  getHotelStats(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/stats`).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch hotel stats:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  getHotelBookings(page = 1, limit = 10, status?: string): Observable<ApiResponse<any[]>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('limit', limit.toString());
+
+    if (status) params = params.set('status', status);
+
+    return this.http.get<ApiResponse<any[]>>(`${API_URL}/hotels/${this.hotelId}/bookings`, { params }).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch bookings:', error);
+        return of({ status: 'error', data: [], message: error.message });
+      })
+    );
+  }
+
   // ==================== ROOMS ====================
   getRooms(page = 1, limit = 10, status?: string, type?: string): Observable<ApiResponse<any[]>> {
     let params = new HttpParams()
