@@ -5,8 +5,8 @@ import { tap, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { AuthService } from './auth.service';
 
-// API URL - Use relative URL that works with proxy and in any environment
-const API_URL = '/api';
+// API URL - Use Cloud Functions URL
+const API_URL = 'https://us-central1-uni-backend01.cloudfunctions.net/api';
 
 interface ApiResponse<T> {
   status: string;

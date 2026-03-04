@@ -27,7 +27,7 @@ export interface User {
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = '/api';
+  private apiUrl = 'https://us-central1-uni-backend01.cloudfunctions.net/api';
   private tokenKey = 'token';
   private userKey = 'user';
 

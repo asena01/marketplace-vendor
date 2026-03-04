@@ -76,7 +76,7 @@ export interface VendorResponse {
   providedIn: 'root'
 })
 export class VendorService {
-  private apiUrl = '/api/vendors';
+  private apiUrl = 'https://us-central1-uni-backend01.cloudfunctions.net/api/vendors';
 
   constructor(private http: HttpClient) {}
 

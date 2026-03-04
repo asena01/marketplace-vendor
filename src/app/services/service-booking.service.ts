@@ -62,7 +62,7 @@ export interface ApiResponse {
   providedIn: 'root'
 })
 export class ServiceBookingService {
-  private apiUrl = '/api/service-bookings';
+  private apiUrl = 'https://us-central1-uni-backend01.cloudfunctions.net/api/service-bookings';
 
   constructor(private http: HttpClient) {}
 
