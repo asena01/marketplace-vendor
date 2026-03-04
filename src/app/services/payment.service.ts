@@ -130,8 +130,8 @@ export interface PaymentResponse {
   providedIn: 'root'
 })
 export class PaymentService {
-  // Use relative path for proxy compatibility (works with Builder.io Mac app)
-  private apiUrl = '/api/payments';
+  // Cloud Functions URL
+  private apiUrl = 'https://us-central1-uni-backend01.cloudfunctions.net/api/payments';
 
   constructor(private http: HttpClient) {}
 

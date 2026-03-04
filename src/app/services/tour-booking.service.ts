@@ -55,7 +55,7 @@ export interface ApiResponse {
   providedIn: 'root'
 })
 export class TourBookingService {
-  private apiUrl = '/api/tour-bookings';
+  private apiUrl = 'https://us-central1-uni-backend01.cloudfunctions.net/api/tour-bookings';
 
   constructor(private http: HttpClient) {}
 

@@ -71,7 +71,7 @@ export interface DeliveryConfiguration {
   providedIn: 'root'
 })
 export class DeliveryService {
-  private apiUrl = '/api/delivery-admin';
+  private apiUrl = 'https://us-central1-uni-backend01.cloudfunctions.net/api/delivery-admin';
 
   constructor(private http: HttpClient) {}
 

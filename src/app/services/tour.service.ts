@@ -67,7 +67,7 @@ export interface ApiResponse {
   providedIn: 'root'
 })
 export class TourService {
-  private apiUrl = '/api/tours';
+  private apiUrl = 'https://us-central1-uni-backend01.cloudfunctions.net/api/tours';
   private agencyId: string = '';
 
   constructor(private http: HttpClient) {}

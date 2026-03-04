@@ -33,7 +33,7 @@ export interface GymResponse {
   providedIn: 'root'
 })
 export class GymEquipmentService {
-  private apiUrl = '/api/gym-equipment';
+  private apiUrl = 'https://us-central1-uni-backend01.cloudfunctions.net/api/gym-equipment';
 
   constructor(private http: HttpClient) {}
 

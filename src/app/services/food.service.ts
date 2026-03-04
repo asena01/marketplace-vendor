@@ -62,7 +62,7 @@ export interface ApiResponse<T> {
   providedIn: 'root'
 })
 export class FoodService {
-  private apiUrl = '/api/restaurants';
+  private apiUrl = 'https://us-central1-uni-backend01.cloudfunctions.net/api/restaurants';
 
   constructor(private http: HttpClient) {}
 
