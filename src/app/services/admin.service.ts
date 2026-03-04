@@ -13,7 +13,7 @@ interface ApiResponse<T> {
   providedIn: 'root'
 })
 export class AdminService {
-  private apiUrl = 'https://us-central1-uni-backend01.cloudfunctions.net/api/admin';
+  private apiUrl = '/api/admin';
 
   constructor(private http: HttpClient) {}
 

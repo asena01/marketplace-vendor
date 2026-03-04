@@ -30,7 +30,7 @@ export interface PetsResponse {
   providedIn: 'root'
 })
 export class PetsService {
-  private apiUrl = 'https://us-central1-uni-backend01.cloudfunctions.net/api/pets';
+  private apiUrl = '/api/pets';
 
   constructor(private http: HttpClient) {}
 

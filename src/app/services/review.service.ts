@@ -30,7 +30,7 @@ export interface ApiResponse<T> {
   providedIn: 'root'
 })
 export class ReviewService {
-  private apiUrl = 'https://us-central1-uni-backend01.cloudfunctions.net/api/reviews';
+  private apiUrl = '/api/reviews';
 
   constructor(private http: HttpClient) {}
 

@@ -1,7 +1,7 @@
 {
   "/api": {
-    "target": "http://localhost:5000",
-    "secure": false,
+    "target": "https://us-central1-uni-backend01.cloudfunctions.net",
+    "secure": true,
     "changeOrigin": true,
     "pathRewrite": {
       "^/api": "/api"

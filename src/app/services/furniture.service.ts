@@ -35,7 +35,7 @@ export interface FurnitureResponse {
   providedIn: 'root'
 })
 export class FurnitureService {
-  private apiUrl = 'https://us-central1-uni-backend01.cloudfunctions.net/api/furniture';
+  private apiUrl = '/api/furniture';
 
   constructor(private http: HttpClient) {}
 

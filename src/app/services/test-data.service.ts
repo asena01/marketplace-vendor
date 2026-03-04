@@ -12,7 +12,7 @@ interface ApiResponse<T> {
   providedIn: 'root'
 })
 export class TestDataService {
-  private apiUrl = 'https://us-central1-uni-backend01.cloudfunctions.net/api';
+  private apiUrl = '/api';
 
   constructor(private http: HttpClient) {}
 

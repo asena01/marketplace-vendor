@@ -32,7 +32,7 @@ export interface ApiResponse<T> {
   providedIn: 'root'
 })
 export class ReturnService {
-  private apiUrl = 'https://us-central1-uni-backend01.cloudfunctions.net/api/returns';
+  private apiUrl = '/api/returns';
 
   constructor(private http: HttpClient) {}
 

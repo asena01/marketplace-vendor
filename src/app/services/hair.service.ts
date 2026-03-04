@@ -29,7 +29,7 @@ export interface HairResponse {
   providedIn: 'root'
 })
 export class HairService {
-  private apiUrl = 'https://us-central1-uni-backend01.cloudfunctions.net/api/hair';
+  private apiUrl = '/api/hair';
 
   constructor(private http: HttpClient) {}
 

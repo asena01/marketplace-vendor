@@ -58,7 +58,7 @@ export interface ApiResponse {
   providedIn: 'root'
 })
 export class ServiceService {
-  private apiUrl = 'https://us-central1-uni-backend01.cloudfunctions.net/api/services';
+  private apiUrl = '/api/services';
 
   constructor(private http: HttpClient) {}
 
