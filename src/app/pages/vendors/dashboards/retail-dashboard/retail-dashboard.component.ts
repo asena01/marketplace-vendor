@@ -1,6 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../../services/auth.service';
 import { VendorSidenavComponent } from '../../../../layout/vendor-sidenav/vendor-sidenav.component';
 
@@ -19,6 +19,11 @@ import { VendorSidenavComponent } from '../../../../layout/vendor-sidenav/vendor
 
       <!-- Main Content -->
       <div class="flex-1 overflow-y-auto">
+        <!-- Router Outlet for Child Pages -->
+        <router-outlet></router-outlet>
+
+        <!-- Dashboard Content (shown only on main dashboard page) -->
+        @if (!hasChildRoute()) {
         <div class="p-8 space-y-8">
       <!-- Welcome Section -->
       <div class="bg-gradient-to-r from-green-600 to-green-700 rounded-xl p-8 text-white shadow-lg">
@@ -249,6 +254,7 @@ import { VendorSidenavComponent } from '../../../../layout/vendor-sidenav/vendor
         </div>
       </div>
         </div>
+        }
       </div>
     </div>
   `,
@@ -263,6 +269,7 @@ import { VendorSidenavComponent } from '../../../../layout/vendor-sidenav/vendor
 export class RetailDashboardComponent implements OnInit {
   isLoading = signal(false);
   errorMessage = signal('');
+  currentRoute = signal('');
 
   retailSidenavItems = [
     { label: 'Dashboard', icon: '🛍️', route: '/retail-dashboard' },
@@ -276,10 +283,23 @@ export class RetailDashboardComponent implements OnInit {
     { label: 'Settings', icon: '⚙️', route: '/retail-dashboard/settings' }
   ];
 
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private activatedRoute: ActivatedRoute
+  ) {}
 
   ngOnInit(): void {
     this.isLoading.set(false);
+    this.activatedRoute.firstChild?.params.subscribe(() => {
+      const firstChild = this.activatedRoute.firstChild;
+      if (firstChild) {
+        this.currentRoute.set(firstChild.component?.name || 'dashboard');
+      }
+    });
+  }
+
+  hasChildRoute(): boolean {
+    return !!this.activatedRoute.firstChild;
   }
 
   onLogout(): void {

@@ -39,32 +39,62 @@ export const routes: Routes = [
   { path: 'customer-dashboard', component: CustomerDashboardComponent },
   { path: 'admin-dashboard', component: AdminDashboardComponent, canActivate: [AdminGuard] },
   { path: 'delivery-dashboard', component: DeliveryDashboardComponent, canActivate: [VendorGuard] },
-  // Hotel Dashboard Routes - Specific routes BEFORE catch-all
-  { path: 'hotel-dashboard/devices', component: DeviceManagementComponent, canActivate: [VendorGuard] },
-  { path: 'hotel-dashboard/reviews', component: ReviewManagementComponent, canActivate: [VendorGuard] },
-  { path: 'hotel-dashboard/incidents', component: IncidentManagementComponent, canActivate: [VendorGuard] },
-  { path: 'hotel-dashboard/:page', component: HotelDashboardComponent, canActivate: [VendorGuard] },
-  { path: 'hotel-dashboard', component: HotelDashboardComponent, canActivate: [VendorGuard] },
-  // Restaurant Dashboard Routes
-  { path: 'restaurant-dashboard/reviews', component: ReviewManagementComponent, canActivate: [VendorGuard] },
-  { path: 'restaurant-dashboard/incidents', component: IncidentManagementComponent, canActivate: [VendorGuard] },
-  { path: 'restaurant-dashboard/:page', component: RestaurantDashboardComponent, canActivate: [VendorGuard] },
-  { path: 'restaurant-dashboard', component: RestaurantDashboardComponent, canActivate: [VendorGuard] },
-  // Retail Dashboard Routes
-  { path: 'retail-dashboard/reviews', component: ReviewManagementComponent, canActivate: [VendorGuard] },
-  { path: 'retail-dashboard/incidents', component: IncidentManagementComponent, canActivate: [VendorGuard] },
-  { path: 'retail-dashboard/:page', component: RetailDashboardComponent, canActivate: [VendorGuard] },
-  { path: 'retail-dashboard', component: RetailDashboardComponent, canActivate: [VendorGuard] },
-  // Service Dashboard Routes
-  { path: 'service-dashboard/reviews', component: ReviewManagementComponent, canActivate: [VendorGuard] },
-  { path: 'service-dashboard/incidents', component: IncidentManagementComponent, canActivate: [VendorGuard] },
-  { path: 'service-dashboard/:page', component: ServiceDashboardComponent, canActivate: [VendorGuard] },
-  { path: 'service-dashboard', component: ServiceDashboardComponent, canActivate: [VendorGuard] },
-  // Tours Dashboard Routes
-  { path: 'tours-dashboard/reviews', component: ReviewManagementComponent, canActivate: [VendorGuard] },
-  { path: 'tours-dashboard/incidents', component: IncidentManagementComponent, canActivate: [VendorGuard] },
-  { path: 'tours-dashboard/:page', component: ToursDashboardComponent, canActivate: [VendorGuard] },
-  { path: 'tours-dashboard', component: ToursDashboardComponent, canActivate: [VendorGuard] },
+  // Hotel Dashboard with child routes
+  {
+    path: 'hotel-dashboard',
+    component: HotelDashboardComponent,
+    canActivate: [VendorGuard],
+    children: [
+      { path: '', redirectTo: '', pathMatch: 'full' },
+      { path: 'devices', component: DeviceManagementComponent },
+      { path: 'reviews', component: ReviewManagementComponent },
+      { path: 'incidents', component: IncidentManagementComponent }
+    ]
+  },
+  // Restaurant Dashboard with child routes
+  {
+    path: 'restaurant-dashboard',
+    component: RestaurantDashboardComponent,
+    canActivate: [VendorGuard],
+    children: [
+      { path: '', redirectTo: '', pathMatch: 'full' },
+      { path: 'reviews', component: ReviewManagementComponent },
+      { path: 'incidents', component: IncidentManagementComponent }
+    ]
+  },
+  // Retail Dashboard with child routes
+  {
+    path: 'retail-dashboard',
+    component: RetailDashboardComponent,
+    canActivate: [VendorGuard],
+    children: [
+      { path: '', redirectTo: '', pathMatch: 'full' },
+      { path: 'reviews', component: ReviewManagementComponent },
+      { path: 'incidents', component: IncidentManagementComponent }
+    ]
+  },
+  // Service Dashboard with child routes
+  {
+    path: 'service-dashboard',
+    component: ServiceDashboardComponent,
+    canActivate: [VendorGuard],
+    children: [
+      { path: '', redirectTo: '', pathMatch: 'full' },
+      { path: 'reviews', component: ReviewManagementComponent },
+      { path: 'incidents', component: IncidentManagementComponent }
+    ]
+  },
+  // Tours Dashboard with child routes
+  {
+    path: 'tours-dashboard',
+    component: ToursDashboardComponent,
+    canActivate: [VendorGuard],
+    children: [
+      { path: '', redirectTo: '', pathMatch: 'full' },
+      { path: 'reviews', component: ReviewManagementComponent },
+      { path: 'incidents', component: IncidentManagementComponent }
+    ]
+  },
   { path: 'signup', component: SignupComponent },
   { path: 'tours-signup', component: ToursSignupComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
