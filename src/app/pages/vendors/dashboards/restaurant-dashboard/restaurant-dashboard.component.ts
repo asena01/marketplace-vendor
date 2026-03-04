@@ -258,6 +258,8 @@ export class RestaurantDashboardComponent implements OnInit {
     { label: 'Menu', icon: '🍔', route: '/restaurant-dashboard/menu', badge: 0 },
     { label: 'Reservations', icon: '📅', route: '/restaurant-dashboard/reservations', badge: 3 },
     { label: 'Inventory', icon: '📦', route: '/restaurant-dashboard/inventory', badge: 0 },
+    { label: 'Reviews', icon: '⭐', route: '/restaurant-dashboard/reviews', badge: 2 },
+    { label: 'Incidents', icon: '🚨', route: '/restaurant-dashboard/incidents', badge: 1 },
     { label: 'Reports', icon: '📈', route: '/restaurant-dashboard/reports' },
     { label: 'Settings', icon: '⚙️', route: '/restaurant-dashboard/settings' }
   ];

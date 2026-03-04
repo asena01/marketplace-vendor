@@ -26,6 +26,9 @@ import { RestaurantDashboardComponent } from './pages/vendors/dashboards/restaur
 import { RetailDashboardComponent } from './pages/vendors/dashboards/retail-dashboard/retail-dashboard.component';
 import { ServiceDashboardComponent } from './pages/vendors/dashboards/service-dashboard/service-dashboard.component';
 import { ToursDashboardComponent } from './pages/vendors/dashboards/tours-dashboard/tours-dashboard.component';
+import { DeviceManagementComponent } from './pages/vendors/dashboards/hotel-dashboard/device-management/device-management.component';
+import { ReviewManagementComponent } from './pages/vendors/dashboards/shared/review-management/review-management.component';
+import { IncidentManagementComponent } from './pages/vendors/dashboards/shared/incident-management/incident-management.component';
 import { VendorGuard } from './guards/vendor.guard';
 import { AdminGuard } from './guards/admin.guard';
 
@@ -38,14 +41,25 @@ export const routes: Routes = [
   { path: 'delivery-dashboard', component: DeliveryDashboardComponent, canActivate: [VendorGuard] },
   { path: 'hotel-dashboard', component: HotelDashboardComponent, canActivate: [VendorGuard] },
   { path: 'hotel-dashboard/:page', component: HotelDashboardComponent, canActivate: [VendorGuard] },
+  { path: 'hotel-dashboard/devices', component: DeviceManagementComponent, canActivate: [VendorGuard] },
+  { path: 'hotel-dashboard/reviews', component: ReviewManagementComponent, canActivate: [VendorGuard] },
+  { path: 'hotel-dashboard/incidents', component: IncidentManagementComponent, canActivate: [VendorGuard] },
   { path: 'restaurant-dashboard', component: RestaurantDashboardComponent, canActivate: [VendorGuard] },
   { path: 'restaurant-dashboard/:page', component: RestaurantDashboardComponent, canActivate: [VendorGuard] },
+  { path: 'restaurant-dashboard/reviews', component: ReviewManagementComponent, canActivate: [VendorGuard] },
+  { path: 'restaurant-dashboard/incidents', component: IncidentManagementComponent, canActivate: [VendorGuard] },
   { path: 'retail-dashboard', component: RetailDashboardComponent, canActivate: [VendorGuard] },
   { path: 'retail-dashboard/:page', component: RetailDashboardComponent, canActivate: [VendorGuard] },
+  { path: 'retail-dashboard/reviews', component: ReviewManagementComponent, canActivate: [VendorGuard] },
+  { path: 'retail-dashboard/incidents', component: IncidentManagementComponent, canActivate: [VendorGuard] },
   { path: 'service-dashboard', component: ServiceDashboardComponent, canActivate: [VendorGuard] },
   { path: 'service-dashboard/:page', component: ServiceDashboardComponent, canActivate: [VendorGuard] },
+  { path: 'service-dashboard/reviews', component: ReviewManagementComponent, canActivate: [VendorGuard] },
+  { path: 'service-dashboard/incidents', component: IncidentManagementComponent, canActivate: [VendorGuard] },
   { path: 'tours-dashboard', component: ToursDashboardComponent, canActivate: [VendorGuard] },
   { path: 'tours-dashboard/:page', component: ToursDashboardComponent, canActivate: [VendorGuard] },
+  { path: 'tours-dashboard/reviews', component: ReviewManagementComponent, canActivate: [VendorGuard] },
+  { path: 'tours-dashboard/incidents', component: IncidentManagementComponent, canActivate: [VendorGuard] },
   { path: 'signup', component: SignupComponent },
   { path: 'tours-signup', component: ToursSignupComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },

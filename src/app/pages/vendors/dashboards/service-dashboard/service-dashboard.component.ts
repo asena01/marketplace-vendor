@@ -278,6 +278,8 @@ export class ServiceDashboardComponent implements OnInit {
     { label: 'Services', icon: '🛠️', route: '/service-dashboard/services', badge: 0 },
     { label: 'Staff', icon: '👔', route: '/service-dashboard/staff', badge: 0 },
     { label: 'Clients', icon: '👥', route: '/service-dashboard/clients', badge: 0 },
+    { label: 'Reviews', icon: '⭐', route: '/service-dashboard/reviews', badge: 2 },
+    { label: 'Incidents', icon: '🚨', route: '/service-dashboard/incidents', badge: 1 },
     { label: 'Reports', icon: '📈', route: '/service-dashboard/reports' },
     { label: 'Settings', icon: '⚙️', route: '/service-dashboard/settings' }
   ];

@@ -361,6 +361,8 @@ export class ToursDashboardComponent implements OnInit {
     { label: 'Bookings', icon: '📅', route: '/tours-dashboard/bookings', badge: 34 },
     { label: 'Guides', icon: '👨‍✈️', route: '/tours-dashboard/guides', badge: 0 },
     { label: 'Itineraries', icon: '📋', route: '/tours-dashboard/itineraries', badge: 0 },
+    { label: 'Reviews', icon: '⭐', route: '/tours-dashboard/reviews', badge: 2 },
+    { label: 'Incidents', icon: '🚨', route: '/tours-dashboard/incidents', badge: 1 },
     { label: 'Reports', icon: '📈', route: '/tours-dashboard/reports' },
     { label: 'Settings', icon: '⚙️', route: '/tours-dashboard/settings' }
   ];
