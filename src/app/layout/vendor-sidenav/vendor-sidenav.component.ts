@@ -300,7 +300,9 @@ export class VendorSidenavComponent implements OnInit {
       items.push(
         { label: 'Rooms', icon: '🏨', route: `${dashboardPath}/rooms`, badge: 0 },
         { label: 'Staff', icon: '👥', route: `${dashboardPath}/staff` },
-        { label: 'Bookings', icon: '📅', route: `${dashboardPath}/bookings` }
+        { label: 'Bookings', icon: '📅', route: `${dashboardPath}/bookings` },
+        { label: 'Notifications', icon: '🔔', route: `${dashboardPath}/notifications`, badge: 0 },
+        { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` }
       );
     } else if (this.vendorType === 'retail') {
       items.push(

@@ -52,12 +52,12 @@ import { forkJoin } from 'rxjs';
         <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-blue-500">
           <p class="text-slate-600 text-sm font-medium mb-1">Occupancy Rate</p>
           <p class="text-3xl font-bold text-slate-900">{{ getOccupancyRate() }}%</p>
-          <p class="mt-2 text-sm text-emerald-600">{{ bookings().length }} of {{ hotelData()?.totalRooms || 156 }} rooms</p>
+          <p class="mt-2 text-sm text-emerald-600">{{ bookings().length }} of {{ totalRoomsCount() || 0 }} rooms</p>
         </div>
 
         <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-blue-500">
           <p class="text-slate-600 text-sm font-medium mb-1">Total Rooms</p>
-          <p class="text-3xl font-bold text-slate-900">{{ hotelData()?.totalRooms || 156 }}</p>
+          <p class="text-3xl font-bold text-slate-900">{{ totalRoomsCount() || 0 }}</p>
           <p class="mt-2 text-sm text-slate-500">{{ bookings().length }} occupied, {{ getAvailableRooms() }} available</p>
         </div>
 
@@ -220,6 +220,7 @@ export class HotelDashboardComponent implements OnInit {
   stats = signal<any>(null);
   staffMembers = signal<any[]>([]);
   roomStatusSummary = signal<any>(null);
+  totalRoomsCount = signal<number>(0);
   isLoading = signal(false);
   errorMessage = signal('');
 
@@ -287,6 +288,7 @@ export class HotelDashboardComponent implements OnInit {
         if (results.rooms.status === 'success' && Array.isArray(results.rooms.data)) {
           const roomSummary = this.calculateRoomStatusSummary(results.rooms.data);
           this.roomStatusSummary.set(roomSummary);
+          this.totalRoomsCount.set(results.rooms.data.length);
           console.log('✅ Room status summary calculated:', roomSummary);
         }
 
@@ -325,8 +327,8 @@ export class HotelDashboardComponent implements OnInit {
   }
 
   getOccupancyRate(): number {
-    if (!this.hotelData()) return 0;
-    const total = this.hotelData().totalRooms || 156;
+    const total = this.totalRoomsCount() || 0;
+    if (total === 0) return 0;
     const occupied = this.bookings().length || 0;
     return Math.round((occupied / total) * 100);
   }
@@ -337,8 +339,7 @@ export class HotelDashboardComponent implements OnInit {
   }
 
   getAvailableRooms(): number {
-    if (!this.hotelData()) return 0;
-    return (this.hotelData().totalRooms || 156) - (this.bookings().length || 0);
+    return (this.totalRoomsCount() || 0) - (this.bookings().length || 0);
   }
 
   getRoomStatusPercentage(status: string): number {

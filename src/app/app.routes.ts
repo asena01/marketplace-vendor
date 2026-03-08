@@ -30,6 +30,8 @@ import { ToursDashboardComponent } from './pages/vendors/dashboards/tours-dashbo
 import { DeviceManagementComponent } from './pages/vendors/dashboards/hotel-dashboard/device-management/device-management.component';
 import { HotelRoomsComponent } from './pages/vendors/dashboards/hotel-dashboard/rooms/rooms.component';
 import { HotelStaffComponent } from './pages/vendors/dashboards/hotel-dashboard/staff/staff.component';
+import { HotelNotificationsComponent } from './pages/vendors/dashboards/hotel-dashboard/notifications/notifications.component';
+import { HotelReviewsComponent } from './pages/vendors/dashboards/hotel-dashboard/reviews/reviews.component';
 import { RestaurantMenuComponent } from './pages/vendors/dashboards/restaurant-dashboard/menu/menu.component';
 import { RestaurantOrdersComponent } from './pages/vendors/dashboards/restaurant-dashboard/orders/orders.component';
 import { DeliveryOrdersComponent } from './pages/vendors/dashboards/restaurant-dashboard/delivery-orders/delivery-orders.component';
@@ -77,7 +79,9 @@ export const routes: Routes = [
       { path: 'devices', component: DeviceManagementComponent },
       { path: 'rooms', component: HotelRoomsComponent },
       { path: 'staff', component: HotelStaffComponent },
-      { path: 'reviews', component: ReviewManagementComponent },
+      { path: 'bookings', component: HotelRoomsComponent },
+      { path: 'notifications', component: HotelNotificationsComponent },
+      { path: 'reviews', component: HotelReviewsComponent },
       { path: 'incidents', component: IncidentManagementComponent },
       { path: 'settings', component: ProfileSettingsComponent }
     ]
