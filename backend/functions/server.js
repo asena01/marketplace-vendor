@@ -40,6 +40,7 @@ import integratedDeliveryRoutes from './routes/integratedDeliveries.js';
 import notificationRoutes from './routes/notifications.js';
 import reviewRoutes from './routes/reviews.js';
 import customerRoutes from './routes/customers.js';
+import financeRoutes from './routes/finance.js';
 
 // Load environment variables
 dotenv.config();
@@ -267,6 +268,9 @@ app.use('/payments', paymentRoutes);
 // Vendor Routes
 app.use('/vendors', vendorRoutes);
 app.use('/vendor-analytics', vendorAnalyticsRoutes);
+
+// Finance Routes
+app.use('/finance', financeRoutes);
 
 // Delivery Management Routes
 app.use('/delivery-admin', deliveryAdminRoutes);

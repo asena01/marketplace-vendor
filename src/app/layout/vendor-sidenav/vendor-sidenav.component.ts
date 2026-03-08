@@ -271,7 +271,8 @@ export class VendorSidenavComponent implements OnInit {
       'Delivery Integrations': 'link',
       'Delivery Tracking': 'location_on',
       'Notifications': 'notifications',
-      'Shipping': 'local_shipping'
+      'Shipping': 'local_shipping',
+      'Finance': 'account_balance'
     };
     return iconMap[label] || 'circle';
   }
@@ -296,7 +297,8 @@ export class VendorSidenavComponent implements OnInit {
         { label: 'Delivery Integrations', icon: '🔗', route: `${dashboardPath}/delivery-integrations` },
         { label: 'Delivery Tracking', icon: '📍', route: `${dashboardPath}/delivery-tracking` },
         { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` },
-        { label: 'Incidents', icon: '⚠️', route: `${dashboardPath}/incidents` }
+        { label: 'Incidents', icon: '⚠️', route: `${dashboardPath}/incidents` },
+        { label: 'Finance', icon: '💼', route: `${dashboardPath}/finance` }
       );
     } else if (this.vendorType === 'hotel') {
       items.push(
@@ -307,7 +309,8 @@ export class VendorSidenavComponent implements OnInit {
         { label: 'Staff', icon: '👥', route: `${dashboardPath}/staff` },
         { label: 'Bookings', icon: '📅', route: `${dashboardPath}/bookings` },
         { label: 'Notifications', icon: '🔔', route: `${dashboardPath}/notifications`, badge: 0 },
-        { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` }
+        { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` },
+        { label: 'Finance', icon: '💼', route: `${dashboardPath}/finance` }
       );
     } else if (this.vendorType === 'retail') {
       items.push(
@@ -321,7 +324,31 @@ export class VendorSidenavComponent implements OnInit {
         { label: 'Shipping', icon: '🚚', route: `${dashboardPath}/shipping` },
         { label: 'Delivery Integrations', icon: '🔗', route: `${dashboardPath}/delivery-integrations` },
         { label: 'Delivery Tracking', icon: '📍', route: `${dashboardPath}/delivery-tracking` },
-        { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` }
+        { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` },
+        { label: 'Finance', icon: '💼', route: `${dashboardPath}/finance` }
+      );
+    } else if (this.vendorType === 'service') {
+      items.push(
+        { label: 'Appointments', icon: '📅', route: `${dashboardPath}/appointments` },
+        { label: 'Services', icon: '🛠️', route: `${dashboardPath}/services` },
+        { label: 'Staff', icon: '👥', route: `${dashboardPath}/staff` },
+        { label: 'Clients', icon: '👤', route: `${dashboardPath}/clients` },
+        { label: 'Reports', icon: '📊', route: `${dashboardPath}/reports` },
+        { label: 'Notifications', icon: '🔔', route: `${dashboardPath}/notifications` },
+        { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` },
+        { label: 'Incidents', icon: '⚠️', route: `${dashboardPath}/incidents` },
+        { label: 'Finance', icon: '💼', route: `${dashboardPath}/finance` }
+      );
+    } else if (this.vendorType === 'tours') {
+      items.push(
+        { label: 'Tours', icon: '🗺️', route: `${dashboardPath}/tours` },
+        { label: 'Bookings', icon: '📅', route: `${dashboardPath}/bookings` },
+        { label: 'Guides', icon: '👨‍✈️', route: `${dashboardPath}/guides` },
+        { label: 'Itineraries', icon: '📋', route: `${dashboardPath}/itineraries` },
+        { label: 'Reports', icon: '📈', route: `${dashboardPath}/reports` },
+        { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` },
+        { label: 'Incidents', icon: '⚠️', route: `${dashboardPath}/incidents` },
+        { label: 'Finance', icon: '💼', route: `${dashboardPath}/finance` }
       );
     }
 

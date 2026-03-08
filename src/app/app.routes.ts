@@ -32,6 +32,7 @@ import { ToursBookingsComponent } from './pages/vendors/dashboards/tours-dashboa
 import { ToursGuidesComponent } from './pages/vendors/dashboards/tours-dashboard/guides/guides.component';
 import { ToursItinerariesComponent } from './pages/vendors/dashboards/tours-dashboard/itineraries/itineraries.component';
 import { ToursReportsComponent } from './pages/vendors/dashboards/tours-dashboard/reports/reports.component';
+import { FinanceComponent } from './pages/vendors/dashboards/shared/finance/finance.component';
 import { HotelDevicesComponent } from './pages/vendors/dashboards/hotel-dashboard/devices/devices.component';
 import { AvailabilityCalendarComponent } from './pages/vendors/dashboards/hotel-dashboard/availability-calendar/availability-calendar.component';
 import { PricingComponent } from './pages/vendors/dashboards/hotel-dashboard/pricing/pricing.component';
@@ -94,6 +95,7 @@ export const routes: Routes = [
       { path: 'notifications', component: HotelNotificationsComponent },
       { path: 'reviews', component: HotelReviewsComponent },
       { path: 'incidents', component: IncidentManagementComponent },
+      { path: 'finance', component: FinanceComponent },
       { path: 'settings', component: HotelProfileComponent }
     ]
   },
@@ -114,6 +116,7 @@ export const routes: Routes = [
       { path: 'delivery-tracking', component: DeliveryTrackingMonitorComponent },
       { path: 'reviews', component: ReviewManagementComponent },
       { path: 'incidents', component: IncidentManagementComponent },
+      { path: 'finance', component: FinanceComponent },
       { path: 'settings', component: ProfileSettingsComponent }
     ]
   },
@@ -135,6 +138,7 @@ export const routes: Routes = [
       { path: 'delivery-tracking', component: RetailDeliveryTrackingComponent },
       { path: 'reviews', component: ReviewManagementComponent },
       { path: 'incidents', component: IncidentManagementComponent },
+      { path: 'finance', component: FinanceComponent },
       { path: 'settings', component: ProfileSettingsComponent }
     ]
   },
@@ -152,6 +156,7 @@ export const routes: Routes = [
       { path: 'incidents', component: IncidentManagementComponent },
       { path: 'reports', component: ServiceReportsComponent },
       { path: 'notifications', component: ServiceNotificationsComponent },
+      { path: 'finance', component: FinanceComponent },
       { path: 'settings', component: ProfileSettingsComponent }
     ]
   },
@@ -168,6 +173,7 @@ export const routes: Routes = [
       { path: 'reports', component: ToursReportsComponent },
       { path: 'reviews', component: ReviewManagementComponent },
       { path: 'incidents', component: IncidentManagementComponent },
+      { path: 'finance', component: FinanceComponent },
       { path: 'settings', component: ProfileSettingsComponent }
     ]
   },
