@@ -52,52 +52,57 @@ import { DeliveryAnalyticsComponent } from '../delivery-analytics/delivery-analy
 
             <button
               (click)="setCurrentPage('overview')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition ' +
+              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
                 (currentPage() === 'overview'
                   ? 'bg-teal-100 text-teal-700 border-l-4 border-teal-600'
                   : 'text-gray-700 hover:bg-gray-100')"
             >
-              📊 Overview
+              <mat-icon class="text-lg">dashboard</mat-icon>
+              <span>Overview</span>
             </button>
 
             <button
               (click)="setCurrentPage('orders')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition ' +
+              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
                 (currentPage() === 'orders'
                   ? 'bg-teal-100 text-teal-700 border-l-4 border-teal-600'
                   : 'text-gray-700 hover:bg-gray-100')"
             >
-              📦 Orders
+              <mat-icon class="text-lg">inventory_2</mat-icon>
+              <span>Orders</span>
             </button>
 
             <button
               (click)="setCurrentPage('tracking')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition ' +
+              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
                 (currentPage() === 'tracking'
                   ? 'bg-teal-100 text-teal-700 border-l-4 border-teal-600'
                   : 'text-gray-700 hover:bg-gray-100')"
             >
-              📍 Live Tracking
+              <mat-icon class="text-lg">my_location</mat-icon>
+              <span>Live Tracking</span>
             </button>
 
             <button
               (click)="setCurrentPage('couriers')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition ' +
+              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
                 (currentPage() === 'couriers'
                   ? 'bg-teal-100 text-teal-700 border-l-4 border-teal-600'
                   : 'text-gray-700 hover:bg-gray-100')"
             >
-              👥 Couriers
+              <mat-icon class="text-lg">people</mat-icon>
+              <span>Couriers</span>
             </button>
 
             <button
               (click)="setCurrentPage('analytics')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition ' +
+              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
                 (currentPage() === 'analytics'
                   ? 'bg-teal-100 text-teal-700 border-l-4 border-teal-600'
                   : 'text-gray-700 hover:bg-gray-100')"
             >
-              📈 Analytics
+              <mat-icon class="text-lg">analytics</mat-icon>
+              <span>Analytics</span>
             </button>
           </nav>
         </aside>
@@ -121,7 +126,7 @@ import { DeliveryAnalyticsComponent } from '../delivery-analytics/delivery-analy
                       <p class="text-4xl font-bold text-gray-800">{{ stats()?.activeOrders || 0 }}</p>
                       <p class="text-xs text-gray-500 mt-1">In delivery</p>
                     </div>
-                    <div class="text-5xl">📦</div>
+                    <mat-icon class="text-6xl text-blue-500">inventory_2</mat-icon>
                   </div>
                 </div>
 
@@ -133,7 +138,7 @@ import { DeliveryAnalyticsComponent } from '../delivery-analytics/delivery-analy
                       <p class="text-4xl font-bold text-gray-800">{{ stats()?.completedDeliveries || 0 }}</p>
                       <p class="text-xs text-gray-500 mt-1">Success rate</p>
                     </div>
-                    <div class="text-5xl">✅</div>
+                    <mat-icon class="text-6xl text-green-500">check_circle</mat-icon>
                   </div>
                 </div>
 
@@ -145,7 +150,7 @@ import { DeliveryAnalyticsComponent } from '../delivery-analytics/delivery-analy
                       <p class="text-4xl font-bold text-gray-800">{{ stats()?.activeCouriers || 0 }}</p>
                       <p class="text-xs text-gray-500 mt-1">Online now</p>
                     </div>
-                    <div class="text-5xl">👥</div>
+                    <mat-icon class="text-6xl text-orange-500">people</mat-icon>
                   </div>
                 </div>
 
@@ -157,7 +162,7 @@ import { DeliveryAnalyticsComponent } from '../delivery-analytics/delivery-analy
                       <p class="text-4xl font-bold text-gray-800">{{ stats()?.completionRate || 0 }}%</p>
                       <p class="text-xs text-gray-500 mt-1">All-time average</p>
                     </div>
-                    <div class="text-5xl">📊</div>
+                    <mat-icon class="text-6xl text-purple-500">analytics</mat-icon>
                   </div>
                 </div>
               </div>
