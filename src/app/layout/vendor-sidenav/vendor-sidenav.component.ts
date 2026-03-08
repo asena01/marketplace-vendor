@@ -225,7 +225,8 @@ export class VendorSidenavComponent implements OnInit {
       'Drivers': 'person_outline',
       'Driver Tracking': 'my_location',
       'Delivery Analytics': 'analytics',
-      'Support Tickets': 'support_agent'
+      'Support Tickets': 'support_agent',
+      'Delivery Integrations': 'link'
     };
     return iconMap[label] || 'circle';
   }
@@ -247,6 +248,7 @@ export class VendorSidenavComponent implements OnInit {
         { label: 'Driver Tracking', icon: '📍', route: `${dashboardPath}/driver-tracking` },
         { label: 'Delivery Analytics', icon: '📊', route: `${dashboardPath}/delivery-analytics` },
         { label: 'Support Tickets', icon: '💬', route: `${dashboardPath}/delivery-support`, badge: 0 },
+        { label: 'Delivery Integrations', icon: '🔗', route: `${dashboardPath}/delivery-integrations` },
         { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` },
         { label: 'Incidents', icon: '⚠️', route: `${dashboardPath}/incidents` }
       );
