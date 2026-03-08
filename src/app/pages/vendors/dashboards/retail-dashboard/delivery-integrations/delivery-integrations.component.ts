@@ -110,19 +110,19 @@ import { ExternalDeliveryService, ExternalDeliveryProvider, BusinessDeliveryInte
 
                     <!-- Features -->
                     <div class="space-y-2 mb-4 text-sm">
-                      @if (provider.features?.realTimeTracking) {
+                      @if (provider.features.realTimeTracking) {
                         <div class="flex items-center gap-2 text-slate-600">
                           <mat-icon class="text-sm text-green-600">check</mat-icon>
                           <span>Real-time Tracking</span>
                         </div>
                       }
-                      @if (provider.features?.insurance) {
+                      @if (provider.features.insurance) {
                         <div class="flex items-center gap-2 text-slate-600">
                           <mat-icon class="text-sm text-green-600">check</mat-icon>
                           <span>Insurance Included</span>
                         </div>
                       }
-                      @if (provider.features?.temperature_control) {
+                      @if (provider.features.temperature_control) {
                         <div class="flex items-center gap-2 text-slate-600">
                           <mat-icon class="text-sm text-green-600">check</mat-icon>
                           <span>Temperature Control</span>
@@ -177,7 +177,7 @@ import { ExternalDeliveryService, ExternalDeliveryProvider, BusinessDeliveryInte
               <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-green-500">
                 <div class="flex justify-between items-start mb-4">
                   <div>
-                    <h3 class="text-lg font-bold text-slate-900">{{ service.provider?.name }}</h3>
+                    <h3 class="text-lg font-bold text-slate-900">{{ service.provider.name }}</h3>
                     <p
                       [ngClass]="{
                         'text-green-600': service.status === 'active',

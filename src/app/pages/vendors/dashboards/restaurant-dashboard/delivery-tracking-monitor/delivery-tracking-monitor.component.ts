@@ -184,11 +184,11 @@ interface IntegratedDelivery {
             </div>
 
             <!-- Current Location -->
-            <div *ngIf="delivery.tracking?.currentLocation && delivery.tracking?.currentLocation?.latitude" class="border-t border-gray-200 pt-4">
+            <div *ngIf="delivery.tracking?.currentLocation && delivery.tracking.currentLocation!.latitude" class="border-t border-gray-200 pt-4">
               <p class="text-xs font-semibold text-gray-700 uppercase mb-2">Current Location</p>
               <p class="text-sm text-gray-600">
-                Lat: {{ delivery.tracking?.currentLocation?.latitude | number:'1.4-4' }},
-                Lng: {{ delivery.tracking?.currentLocation?.longitude | number:'1.4-4' }}
+                Lat: {{ delivery.tracking.currentLocation!.latitude | number:'1.4-4' }},
+                Lng: {{ delivery.tracking.currentLocation!.longitude | number:'1.4-4' }}
               </p>
             </div>
           </div>

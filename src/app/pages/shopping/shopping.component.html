@@ -680,7 +680,7 @@
           <div class="space-y-4">
             <!-- Main Image -->
             <div class="bg-gray-100 rounded-lg aspect-square flex items-center justify-center overflow-hidden border-2 border-gray-200 quick-view-main-image">
-              @if (product!.images && product!.images[selectedImageIndex()] && product!.images[selectedImageIndex()]?.startsWith('http')) {
+              @if (product!.images && product!.images[selectedImageIndex()] && product!.images[selectedImageIndex()].startsWith('http')) {
                 <img [src]="product!.images[selectedImageIndex()]!" [alt]="product!.name" class="w-full h-full object-cover animate-bounce" />
               } @else {
                 <div class="text-9xl animate-bounce">{{ product!.images?.[selectedImageIndex()] || product!.icon || '📦' }}</div>
