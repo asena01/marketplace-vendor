@@ -21,7 +21,7 @@ interface SidenavItem {
       <div class="p-6 border-b border-slate-700">
         <div class="flex items-center gap-3 mb-4">
           <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-            <mat-icon class="text-white text-lg" [matIconFontSet]="'material-icons'">{{ getVendorIconName() }}</mat-icon>
+            <mat-icon class="text-white text-lg">{{ getVendorIconName() }}</mat-icon>
           </div>
           <div>
             <h2 class="font-bold text-lg">MarketHub</h2>
