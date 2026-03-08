@@ -8,25 +8,23 @@ import { NotificationService, Notification } from '../../services/notification.s
   standalone: true,
   imports: [CommonModule, MatIconModule],
   template: `
-    <!-- Notification Bell Icon with Unread Count -->
-    <button
-      (click)="toggleDropdown()"
-      class="fixed top-4 right-4 z-50 relative p-2 rounded-full hover:bg-slate-100 transition-colors bg-white shadow-md"
-    >
-      <mat-icon class="text-2xl">notifications</mat-icon>
-      @if (unreadCount() > 0) {
-        <span class="absolute top-0 right-0 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
-          {{ unreadCount() }}
-        </span>
-      }
-    </button>
-
-    <div class="fixed top-16 right-4 z-40 space-y-3 max-w-md">
-      <!-- Notifications Dropdown (now separate container) -->
+    <div class="fixed top-4 right-4 z-50 pointer-events-none">
+      <!-- Notification Bell Icon with Unread Count -->
+      <button
+        (click)="toggleDropdown()"
+        class="pointer-events-auto relative p-2 rounded-full hover:bg-slate-100 transition-colors bg-white shadow-md"
+      >
+        <mat-icon class="text-2xl">notifications</mat-icon>
+        @if (unreadCount() > 0) {
+          <span class="absolute top-0 right-0 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
+            {{ unreadCount() }}
+          </span>
+        }
+      </button>
 
       <!-- Notifications Dropdown -->
       @if (showDropdown()) {
-        <div class="bg-white rounded-lg shadow-lg border border-slate-200 w-96">
+        <div class="bg-white rounded-lg shadow-lg border border-slate-200 w-96 pointer-events-auto mt-2">
           <!-- Header -->
           <div class="p-4 border-b border-slate-200 flex items-center justify-between">
             <h3 class="font-bold text-slate-900">Notifications</h3>
@@ -116,7 +114,7 @@ import { NotificationService, Notification } from '../../services/notification.s
 
       <!-- Floating Toast Notifications (for new alerts) -->
       @for (notification of toastNotifications; track notification.id) {
-        <div 
+        <div
           [ngClass]="{
             'bg-blue-600': notification.type === 'order',
             'bg-purple-600': notification.type === 'delivery',
@@ -125,7 +123,7 @@ import { NotificationService, Notification } from '../../services/notification.s
             'bg-yellow-600': notification.type === 'warning',
             'bg-slate-600': notification.type === 'info'
           }"
-          class="text-white rounded-lg p-4 shadow-lg flex items-start gap-3 animate-pulse"
+          class="text-white rounded-lg p-4 shadow-lg flex items-start gap-3 animate-pulse pointer-events-auto"
         >
           <div class="flex-1">
             <p class="font-bold">{{ notification.title }}</p>
