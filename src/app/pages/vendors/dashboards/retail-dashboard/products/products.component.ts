@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { ProductService } from '../../../../../services/product.service';
 import { ImageUploadService } from '../../../../../services/image-upload.service';
-import { signal, Component, OnInit } from '@angular/core';
 
 interface Product {
   _id?: string;
@@ -12,17 +11,113 @@ interface Product {
   category: string;
   description: string;
   price: number;
-  originalPrice: number;
+  discountPrice?: number;
+  originalPrice?: number;
+  currency?: string;
   sku?: string;
   stock: number;
   images?: string[];
   thumbnail?: string;
-  rating?: number;
+  rating?: {
+    average: number;
+    count: number;
+    reviews?: any[];
+  };
   sold?: number;
   discount?: number;
   isFeatured?: boolean;
   isActive?: boolean;
   createdAt?: string;
+  updatedAt?: string;
+  features?: string[];
+  vendorId?: string;
+  vendorName?: string;
+  tags?: string[];
+
+  // Furniture specific
+  dimensions?: {
+    width: number;
+    height: number;
+    depth: number;
+    unit: string;
+  };
+  weight?: {
+    value: number;
+    unit: string;
+  };
+  material?: string[];
+  color?: string[];
+  finish?: string;
+  warranty?: {
+    duration: number;
+    type: string;
+  };
+  shipping?: {
+    available: boolean;
+    estimatedDays: number;
+    shippingCost: number;
+    freeShippingAbove: number;
+  };
+  assembly?: {
+    required: boolean;
+    assemblyTime: string;
+    instructions: string;
+  };
+
+  // Gym Equipment specific
+  specifications?: {
+    type: string;
+    material: string[];
+    weight: {
+      value: number;
+      unit: string;
+    };
+    dimensions: {
+      width: number;
+      height: number;
+      depth: number;
+      unit: string;
+    };
+    capacity: {
+      value: number;
+      unit: string;
+    };
+    resistance: string;
+    resistanceLevels: number;
+    color: string[];
+    warranty: {
+      duration: number;
+      coverage: string;
+    };
+  };
+  targetMuscles?: string[];
+  fitnessLevel?: string;
+
+  // Pets & Supplies specific
+  quantity?: {
+    value: number;
+    unit: string;
+  };
+  petSpecification?: {
+    petType: string;
+    suitableFor: string[];
+    ageRange: {
+      min: number;
+      max: number;
+      unit: string;
+    };
+    ingredients: string[];
+    nutritionalInfo: {
+      protein: string;
+      fat: string;
+      fiber: string;
+      moisture: string;
+    };
+    allergienFree: string[];
+    organic: boolean;
+  };
+  brand?: string;
+  manufacturer?: string;
 }
 
 @Component({
@@ -301,6 +396,242 @@ interface Product {
                 ></textarea>
               </div>
 
+              <!-- Category-Specific Fields -->
+              @if (isFurnitureCategory()) {
+                <!-- Furniture Fields -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-4">
+                  <h3 class="font-semibold text-slate-900">Furniture Details</h3>
+
+                  <!-- Material -->
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Material (comma-separated)</label>
+                    <input
+                      type="text"
+                      [(ngModel)]="furnitureData.material"
+                      name="material"
+                      placeholder="e.g., wood, fabric, metal"
+                      class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <!-- Color -->
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Colors (comma-separated)</label>
+                    <input
+                      type="text"
+                      [(ngModel)]="furnitureData.color"
+                      name="color"
+                      placeholder="e.g., black, brown, white"
+                      class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <!-- Dimensions -->
+                  <div class="grid grid-cols-3 gap-3">
+                    <div>
+                      <label class="block text-sm font-medium text-slate-700 mb-2">Width (cm)</label>
+                      <input
+                        type="number"
+                        [(ngModel)]="furnitureData.width"
+                        name="width"
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-slate-700 mb-2">Height (cm)</label>
+                      <input
+                        type="number"
+                        [(ngModel)]="furnitureData.height"
+                        name="height"
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-slate-700 mb-2">Depth (cm)</label>
+                      <input
+                        type="number"
+                        [(ngModel)]="furnitureData.depth"
+                        name="depth"
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Weight -->
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Weight (kg)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      [(ngModel)]="furnitureData.weight"
+                      name="weight"
+                      class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <!-- Finish -->
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Finish</label>
+                    <input
+                      type="text"
+                      [(ngModel)]="furnitureData.finish"
+                      name="finish"
+                      placeholder="e.g., matte, glossy"
+                      class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              }
+
+              @if (isGymEquipmentCategory()) {
+                <!-- Gym Equipment Fields -->
+                <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4 space-y-4">
+                  <h3 class="font-semibold text-slate-900">Equipment Specifications</h3>
+
+                  <!-- Equipment Type -->
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Equipment Type</label>
+                    <select
+                      [(ngModel)]="gymData.specType"
+                      name="specType"
+                      class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select Type</option>
+                      <option value="free-weight">Free Weight</option>
+                      <option value="machine">Machine</option>
+                      <option value="cardio">Cardio</option>
+                      <option value="accessory">Accessory</option>
+                    </select>
+                  </div>
+
+                  <!-- Material -->
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Materials (comma-separated)</label>
+                    <input
+                      type="text"
+                      [(ngModel)]="gymData.material"
+                      name="gymMaterial"
+                      placeholder="e.g., steel, rubber, plastic"
+                      class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <!-- Weight Capacity -->
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Weight Capacity (kg)</label>
+                    <input
+                      type="number"
+                      [(ngModel)]="gymData.capacity"
+                      name="capacity"
+                      class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <!-- Resistance Type -->
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Resistance Type</label>
+                    <select
+                      [(ngModel)]="gymData.resistance"
+                      name="resistance"
+                      class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select Type</option>
+                      <option value="adjustable">Adjustable</option>
+                      <option value="fixed">Fixed</option>
+                    </select>
+                  </div>
+
+                  <!-- Target Muscles -->
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Target Muscles (comma-separated)</label>
+                    <input
+                      type="text"
+                      [(ngModel)]="gymData.targetMuscles"
+                      name="targetMuscles"
+                      placeholder="e.g., biceps, chest, legs"
+                      class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <!-- Fitness Level -->
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Fitness Level</label>
+                    <select
+                      [(ngModel)]="newProduct.fitnessLevel"
+                      name="fitnessLevel"
+                      class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select Level</option>
+                      <option value="beginner">Beginner</option>
+                      <option value="intermediate">Intermediate</option>
+                      <option value="advanced">Advanced</option>
+                      <option value="all-levels">All Levels</option>
+                    </select>
+                  </div>
+                </div>
+              }
+
+              @if (isPetCategory()) {
+                <!-- Pets & Supplies Fields -->
+                <div class="bg-pink-50 border border-pink-200 rounded-lg p-4 space-y-4">
+                  <h3 class="font-semibold text-slate-900">Pet Product Details</h3>
+
+                  <!-- Pet Type -->
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Pet Type</label>
+                    <select
+                      [(ngModel)]="petData.petType"
+                      name="petType"
+                      class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select Pet Type</option>
+                      <option value="dog">Dog</option>
+                      <option value="cat">Cat</option>
+                      <option value="bird">Bird</option>
+                      <option value="rabbit">Rabbit</option>
+                      <option value="fish">Fish</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+
+                  <!-- Suitable For -->
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Suitable For (comma-separated)</label>
+                    <input
+                      type="text"
+                      [(ngModel)]="petData.suitableFor"
+                      name="suitableFor"
+                      placeholder="e.g., small dogs, puppies, senior cats"
+                      class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <!-- Brand -->
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Brand</label>
+                    <input
+                      type="text"
+                      [(ngModel)]="newProduct.brand"
+                      name="brand"
+                      placeholder="Product brand"
+                      class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <!-- Organic -->
+                  <div class="flex items-center">
+                    <input
+                      type="checkbox"
+                      [(ngModel)]="petData.organic"
+                      name="organic"
+                      id="organic"
+                      class="w-4 h-4 text-pink-600 rounded"
+                    />
+                    <label for="organic" class="ml-2 text-sm font-medium text-slate-700">Organic</label>
+                  </div>
+                </div>
+              }
+
               <!-- Image Upload Section -->
               <div>
                 <label class="block text-sm font-medium text-slate-700 mb-2">Product Images</label>
@@ -460,6 +791,31 @@ export class RetailProductsComponent implements OnInit {
   newProduct: Product = this.getEmptyProduct();
   private storeId: string = '';
 
+  // Category-specific data objects
+  furnitureData = {
+    material: '',
+    color: '',
+    width: 0,
+    height: 0,
+    depth: 0,
+    weight: 0,
+    finish: ''
+  };
+
+  gymData = {
+    specType: '',
+    material: '',
+    capacity: 0,
+    resistance: '',
+    targetMuscles: ''
+  };
+
+  petData = {
+    petType: '',
+    suitableFor: '',
+    organic: false
+  };
+
   constructor(
     private productService: ProductService,
     private imageUploadService: ImageUploadService
@@ -540,12 +896,52 @@ export class RetailProductsComponent implements OnInit {
   openAddProductModal() {
     this.isEditing.set(false);
     this.newProduct = this.getEmptyProduct();
+
+    // Reset category-specific data
+    this.furnitureData = {
+      material: '', color: '', width: 0, height: 0, depth: 0, weight: 0, finish: ''
+    };
+    this.gymData = {
+      specType: '', material: '', capacity: 0, resistance: '', targetMuscles: ''
+    };
+    this.petData = {
+      petType: '', suitableFor: '', organic: false
+    };
+
     this.showProductModal.set(true);
   }
 
   editProduct(product: Product) {
     this.isEditing.set(true);
     this.newProduct = { ...product };
+
+    // Load category-specific data
+    if (this.isFurnitureCategory()) {
+      this.furnitureData = {
+        material: product.material?.join(', ') || '',
+        color: product.color?.join(', ') || '',
+        width: product.dimensions?.width || 0,
+        height: product.dimensions?.height || 0,
+        depth: product.dimensions?.depth || 0,
+        weight: product.weight?.value || 0,
+        finish: product.finish || ''
+      };
+    } else if (this.isGymEquipmentCategory()) {
+      this.gymData = {
+        specType: product.specifications?.type || '',
+        material: product.specifications?.material?.join(', ') || '',
+        capacity: product.specifications?.capacity?.value || 0,
+        resistance: product.specifications?.resistance || '',
+        targetMuscles: product.targetMuscles?.join(', ') || ''
+      };
+    } else if (this.isPetCategory()) {
+      this.petData = {
+        petType: product.petSpecification?.petType || '',
+        suitableFor: product.petSpecification?.suitableFor?.join(', ') || '',
+        organic: product.petSpecification?.organic || false
+      };
+    }
+
     this.showProductModal.set(true);
   }
 
@@ -553,6 +949,17 @@ export class RetailProductsComponent implements OnInit {
     this.showProductModal.set(false);
     this.newProduct = this.getEmptyProduct();
     this.isEditing.set(false);
+
+    // Reset category-specific data
+    this.furnitureData = {
+      material: '', color: '', width: 0, height: 0, depth: 0, weight: 0, finish: ''
+    };
+    this.gymData = {
+      specType: '', material: '', capacity: 0, resistance: '', targetMuscles: ''
+    };
+    this.petData = {
+      petType: '', suitableFor: '', organic: false
+    };
   }
 
   saveProduct() {
@@ -561,6 +968,9 @@ export class RetailProductsComponent implements OnInit {
       setTimeout(() => this.errorMessage.set(''), 3000);
       return;
     }
+
+    // Update product with category-specific data
+    this.updateProductWithCategoryData();
 
     if (this.isEditing() && this.newProduct._id) {
       // Update existing product via API
@@ -717,5 +1127,72 @@ export class RetailProductsComponent implements OnInit {
    */
   removeThumbnail() {
     this.newProduct.thumbnail = undefined;
+  }
+
+  /**
+   * Detect category and populate specific form fields
+   */
+  isFurnitureCategory(): boolean {
+    const cat = this.newProduct.category.toLowerCase();
+    return cat.includes('living-room') || cat.includes('bedroom') || cat.includes('kitchen') ||
+           cat.includes('office') || cat.includes('outdoor') || cat.includes('decor') || cat === 'furniture';
+  }
+
+  isGymEquipmentCategory(): boolean {
+    const cat = this.newProduct.category.toLowerCase();
+    return cat.includes('dumbbell') || cat.includes('cardio') || cat.includes('barbell') ||
+           cat.includes('resistance') || cat.includes('bench') || cat.includes('rack') ||
+           cat.includes('machine') || cat.includes('accessory') || cat === 'gym-equipment' || cat === 'gym equipment';
+  }
+
+  isPetCategory(): boolean {
+    const cat = this.newProduct.category.toLowerCase();
+    return cat.includes('dog') || cat.includes('cat') || cat.includes('pet') ||
+           cat.includes('bird') || cat.includes('rabbit') || cat.includes('hamster') ||
+           cat.includes('fish') || cat === 'pets' || cat === 'pet-supplies' || cat === 'pet supplies';
+  }
+
+  /**
+   * Update product with category-specific data when saving
+   */
+  private updateProductWithCategoryData(): void {
+    if (this.isFurnitureCategory()) {
+      this.newProduct.material = this.furnitureData.material ? this.furnitureData.material.split(',').map(m => m.trim()) : [];
+      this.newProduct.color = this.furnitureData.color ? this.furnitureData.color.split(',').map(c => c.trim()) : [];
+      this.newProduct.finish = this.furnitureData.finish;
+      this.newProduct.dimensions = {
+        width: this.furnitureData.width,
+        height: this.furnitureData.height,
+        depth: this.furnitureData.depth,
+        unit: 'cm'
+      };
+      this.newProduct.weight = {
+        value: this.furnitureData.weight,
+        unit: 'kg'
+      };
+    } else if (this.isGymEquipmentCategory()) {
+      this.newProduct.specifications = {
+        type: this.gymData.specType,
+        material: this.gymData.material ? this.gymData.material.split(',').map(m => m.trim()) : [],
+        weight: { value: 0, unit: 'kg' },
+        dimensions: { width: 0, height: 0, depth: 0, unit: 'cm' },
+        capacity: { value: this.gymData.capacity, unit: 'kg' },
+        resistance: this.gymData.resistance,
+        resistanceLevels: 0,
+        color: [],
+        warranty: { duration: 0, coverage: '' }
+      };
+      this.newProduct.targetMuscles = this.gymData.targetMuscles ? this.gymData.targetMuscles.split(',').map(m => m.trim()) : [];
+    } else if (this.isPetCategory()) {
+      this.newProduct.petSpecification = {
+        petType: this.petData.petType,
+        suitableFor: this.petData.suitableFor ? this.petData.suitableFor.split(',').map(s => s.trim()) : [],
+        ageRange: { min: 0, max: 0, unit: 'months' },
+        ingredients: [],
+        nutritionalInfo: { protein: '', fat: '', fiber: '', moisture: '' },
+        allergienFree: [],
+        organic: this.petData.organic
+      };
+    }
   }
 }
