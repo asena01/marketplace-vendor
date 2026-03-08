@@ -221,6 +221,71 @@ export class DeliveryService {
     this.notificationsSubject.next(notification);
   }
 
+  // ==================== DRIVER TRACKING ====================
+
+  // Get driver current location
+  getDriverLocation(driverId: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/${this.restaurantId}/drivers/${driverId}/location`
+    ).pipe(
+      catchError((error) => {
+        console.error('Error fetching driver location:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
+
+  // Update driver location
+  updateDriverLocation(driverId: string, latitude: number, longitude: number): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${this.apiUrl}/${this.restaurantId}/drivers/${driverId}/location`,
+      { latitude, longitude }
+    ).pipe(
+      catchError((error) => {
+        console.error('Error updating driver location:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
+
+  // Get active delivery orders with driver location
+  getActiveDeliveries(): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(
+      `${this.apiUrl}/${this.restaurantId}/orders/active-deliveries`
+    ).pipe(
+      catchError((error) => {
+        console.error('Error fetching active deliveries:', error);
+        return of({ status: 'error', data: [] });
+      })
+    );
+  }
+
+  // ==================== DELIVERY ANALYTICS ====================
+
+  // Get delivery performance stats
+  getDeliveryPerformanceStats(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/${this.restaurantId}/delivery/performance-stats`
+    ).pipe(
+      catchError((error) => {
+        console.error('Error fetching performance stats:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
+
+  // Get driver performance stats
+  getDriverPerformanceStats(driverId: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/${this.restaurantId}/drivers/${driverId}/performance`
+    ).pipe(
+      catchError((error) => {
+        console.error('Error fetching driver performance:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
+
   // Get delivery stats
   getDeliveryStats(): Observable<ApiResponse<any>> {
     return this.http.get<ApiResponse<any>>(
@@ -228,6 +293,105 @@ export class DeliveryService {
     ).pipe(
       catchError((error) => {
         console.error('Error fetching delivery stats:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
+
+  // Get delivery trends (time-based)
+  getDeliveryTrends(days: number = 7): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/${this.restaurantId}/delivery/trends?days=${days}`
+    ).pipe(
+      catchError((error) => {
+        console.error('Error fetching delivery trends:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
+
+  // ==================== CUSTOMER SUPPORT ====================
+
+  // Get all support tickets
+  getSupportTickets(page: number = 1, limit: number = 20, status?: string): Observable<ApiResponse<any[]>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('limit', limit.toString());
+
+    if (status) {
+      params = params.set('status', status);
+    }
+
+    return this.http.get<ApiResponse<any[]>>(
+      `${this.apiUrl}/${this.restaurantId}/support-tickets`,
+      { params }
+    ).pipe(
+      catchError((error) => {
+        console.error('Error fetching support tickets:', error);
+        return of({ status: 'error', data: [] });
+      })
+    );
+  }
+
+  // Create support ticket
+  createSupportTicket(ticketData: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${this.apiUrl}/${this.restaurantId}/support-tickets`,
+      ticketData
+    ).pipe(
+      catchError((error) => {
+        console.error('Error creating support ticket:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
+
+  // Update support ticket
+  updateSupportTicket(ticketId: string, updates: any): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${this.apiUrl}/${this.restaurantId}/support-tickets/${ticketId}`,
+      updates
+    ).pipe(
+      catchError((error) => {
+        console.error('Error updating support ticket:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
+
+  // Add message to support ticket
+  addSupportMessage(ticketId: string, message: string, attachments?: string[]): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${this.apiUrl}/${this.restaurantId}/support-tickets/${ticketId}/messages`,
+      { message, attachments }
+    ).pipe(
+      catchError((error) => {
+        console.error('Error adding support message:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
+
+  // Get support ticket messages
+  getSupportTicketMessages(ticketId: string): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(
+      `${this.apiUrl}/${this.restaurantId}/support-tickets/${ticketId}/messages`
+    ).pipe(
+      catchError((error) => {
+        console.error('Error fetching support messages:', error);
+        return of({ status: 'error', data: [] });
+      })
+    );
+  }
+
+  // Close support ticket
+  closeSupportTicket(ticketId: string, resolution: string): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${this.apiUrl}/${this.restaurantId}/support-tickets/${ticketId}/close`,
+      { resolution }
+    ).pipe(
+      catchError((error) => {
+        console.error('Error closing support ticket:', error);
         return of({ status: 'error', data: null });
       })
     );
