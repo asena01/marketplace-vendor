@@ -2,11 +2,13 @@ import { Component, OnInit, signal, effect, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
+import { MatIconModule } from '@angular/material/icon';
 import { HeaderComponent } from '../../components/header/header.component';
 import { MARKETPLACE_SERVICES } from '../../shared/data/marketplace-data';
 import { CurrencyService } from '../../services/currency.service';
 import { PaymentService } from '../../services/payment.service';
 import { FoodService, Restaurant, MenuItem, CartItem as FoodCartItem } from '../../services/food.service';
+import { DeliveryService, DeliveryServiceDefinition } from '../../services/delivery.service';
 
 interface CartItem {
   id: string;
@@ -42,7 +44,7 @@ interface Order {
 @Component({
   selector: 'app-food',
   standalone: true,
-  imports: [CommonModule, HeaderComponent, FormsModule, HttpClientModule],
+  imports: [CommonModule, HeaderComponent, FormsModule, HttpClientModule, MatIconModule],
   templateUrl: './food.component.html',
   styleUrl: './food.component.css'
 })
@@ -100,6 +102,13 @@ export class FoodComponent implements OnInit {
   mobileMoneyProvider = signal<string>('');
   mobileMoneyPhone = signal<string>('');
   walletId = signal<string>('');
+
+  // Delivery related signals
+  deliveryServices = signal<DeliveryServiceDefinition[]>([]);
+  selectedDeliveryService = signal<DeliveryServiceDefinition | null>(null);
+  estimatedDistance = signal<number>(0);
+  deliveryPrice = signal<number>(0);
+  showDeliveryOptions = signal<boolean>(false);
 
   // Restaurant List
   restaurants = signal<Restaurant[]>([]);
@@ -159,7 +168,8 @@ export class FoodComponent implements OnInit {
   constructor(
     public currencyService: CurrencyService,
     public paymentService: PaymentService,
-    private foodService: FoodService
+    private foodService: FoodService,
+    private deliveryService: DeliveryService
   ) {
     // Prevent body scroll when modal is open
     effect(() => {
@@ -533,6 +543,58 @@ export class FoodComponent implements OnInit {
     return true;
   }
 
+  // ============================================
+  // DELIVERY METHODS FOR RESTAURANTS
+  // ============================================
+
+  loadDeliveryServices(): void {
+    const services = this.deliveryService.getAvailableServices('restaurant');
+    this.deliveryServices.set(services);
+    console.log('✅ Loaded', services.length, 'delivery services for restaurant');
+  }
+
+  selectDeliveryService(service: DeliveryServiceDefinition): void {
+    this.selectedDeliveryService.set(service);
+    this.calculateDeliveryPrice();
+  }
+
+  calculateDeliveryPrice(): void {
+    const service = this.selectedDeliveryService();
+    if (!service) {
+      return;
+    }
+
+    const weight = this.cartItems().length * 0.5; // Food average 0.5kg per item
+    const distance = this.estimatedDistance() || 10;
+    const price = this.deliveryService.calculatePrice(service, distance, weight);
+    this.deliveryPrice.set(price);
+  }
+
+  formatDeliveryTime(service: DeliveryServiceDefinition | null): string {
+    if (!service) return 'N/A';
+    const minutes = service.estimatedDeliveryTime.standard;
+    if (minutes < 60) {
+      return `${minutes} mins`;
+    } else if (minutes < 1440) {
+      const hours = Math.ceil(minutes / 60);
+      return `${hours}h`;
+    } else {
+      const days = Math.ceil(minutes / 1440);
+      return `${days} day${days > 1 ? 's' : ''}`;
+    }
+  }
+
+  openDeliveryOptions(): void {
+    this.showDeliveryOptions.set(true);
+    if (this.deliveryServices().length === 0) {
+      this.loadDeliveryServices();
+    }
+  }
+
+  closeDeliveryOptions(): void {
+    this.showDeliveryOptions.set(false);
+  }
+
   placeOrder(): void {
     if (!this.validatePaymentDetails()) {
       return;
@@ -549,9 +611,19 @@ export class FoodComponent implements OnInit {
     const restaurant = this.selectedRestaurant();
     if (!restaurant) return;
 
+    // Validate delivery info
+    if (!this.selectedDeliveryService()) {
+      this.orderError.set('Please select a delivery service');
+      this.isProcessingOrder.set(false);
+      return;
+    }
+
     const subtotal = this.cartTotal();
     const tax = Math.round(subtotal * 0.08 * 100) / 100;
     const total = subtotal + tax + restaurant.deliveryFee;
+
+    const deliveryFee = this.deliveryPrice() > 0 ? this.deliveryPrice() : restaurant.deliveryFee;
+    const orderTotal = subtotal + tax + deliveryFee;
 
     const orderData = {
       items: this.cartItems().map(item => ({
@@ -562,9 +634,11 @@ export class FoodComponent implements OnInit {
         specialInstructions: item.specialInstructions
       })),
       subtotal,
-      deliveryFee: restaurant.deliveryFee,
+      deliveryFee: deliveryFee,
+      deliveryService: this.selectedDeliveryService()?.name,
+      deliveryDistance: this.estimatedDistance() || 10,
       tax,
-      total,
+      total: orderTotal,
       paymentMethod: this.selectedPaymentMethod(),
       customerName: this.customerName(),
       customerPhone: this.customerPhone(),
@@ -584,9 +658,9 @@ export class FoodComponent implements OnInit {
             restaurantName: restaurant.name,
             items: this.cartItems(),
             subtotal,
-            deliveryFee: restaurant.deliveryFee,
+            deliveryFee: deliveryFee,
             tax,
-            total,
+            total: orderTotal,
             status: 'pending',
             estimatedDelivery: restaurant.deliveryTime,
             customerName: this.customerName(),
