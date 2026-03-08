@@ -9,6 +9,10 @@ import VendorPerformance from '../models/VendorPerformance.js';
 import * as vendorManagementController from '../controllers/vendorManagementController.js';
 import * as vendorKycController from '../controllers/vendorKycController.js';
 import * as vendorPerformanceController from '../controllers/vendorPerformanceController.js';
+import * as settlementController from '../controllers/settlementController.js';
+import * as payoutController from '../controllers/payoutController.js';
+import * as roleController from '../controllers/roleController.js';
+import { verifyAdmin as rbacVerifyAdmin, requirePermission } from '../middleware/rbacMiddleware.js';
 
 const router = express.Router();
 
@@ -944,5 +948,60 @@ router.put('/settings', verifyAdmin, async (req, res) => {
     });
   }
 });
+
+// ============================================
+// SETTLEMENT MANAGEMENT ROUTES
+// ============================================
+
+router.get('/settlements', verifyAdmin, settlementController.getSettlements);
+router.get('/settlements/:settlementId', verifyAdmin, settlementController.getSettlementById);
+router.post('/settlements', verifyAdmin, settlementController.createSettlement);
+router.put('/settlements/:settlementId', verifyAdmin, settlementController.updateSettlement);
+router.patch('/settlements/:settlementId/approve', verifyAdmin, settlementController.approveSettlement);
+router.patch('/settlements/:settlementId/reject', verifyAdmin, settlementController.rejectSettlement);
+router.delete('/settlements/:settlementId', verifyAdmin, settlementController.deleteSettlement);
+router.get('/settlements/stats', verifyAdmin, settlementController.getSettlementStats);
+
+// ============================================
+// PAYOUT MANAGEMENT ROUTES
+// ============================================
+
+router.get('/payouts', verifyAdmin, payoutController.getPayouts);
+router.get('/payouts/:payoutId', verifyAdmin, payoutController.getPayoutById);
+router.post('/payouts', verifyAdmin, payoutController.createPayout);
+router.put('/payouts/:payoutId', verifyAdmin, payoutController.updatePayout);
+router.patch('/payouts/:payoutId/approve', verifyAdmin, payoutController.approvePayout);
+router.patch('/payouts/:payoutId/process', verifyAdmin, payoutController.processPayout);
+router.patch('/payouts/:payoutId/complete', verifyAdmin, payoutController.completePayout);
+router.patch('/payouts/:payoutId/retry', verifyAdmin, payoutController.retryPayout);
+router.patch('/payouts/:payoutId/cancel', verifyAdmin, payoutController.cancelPayout);
+
+// Payout Schedule
+router.get('/payout-schedules/:vendorId', verifyAdmin, payoutController.getPayoutSchedule);
+router.put('/payout-schedules/:vendorId', verifyAdmin, payoutController.updatePayoutSchedule);
+
+// ============================================
+// ROLE & PERMISSION MANAGEMENT ROUTES
+// ============================================
+
+// Permissions
+router.get('/permissions', verifyAdmin, roleController.getPermissions);
+router.post('/permissions', verifyAdmin, roleController.createPermission);
+router.put('/permissions/:permissionId', verifyAdmin, roleController.updatePermission);
+
+// Roles
+router.get('/roles', verifyAdmin, roleController.getRoles);
+router.get('/roles/:roleId', verifyAdmin, roleController.getRoleById);
+router.post('/roles', verifyAdmin, roleController.createRole);
+router.put('/roles/:roleId', verifyAdmin, roleController.updateRole);
+router.delete('/roles/:roleId', verifyAdmin, roleController.deleteRole);
+
+// Role Permissions
+router.post('/roles/:roleId/permissions/:permissionId', verifyAdmin, roleController.addPermissionToRole);
+router.delete('/roles/:roleId/permissions/:permissionId', verifyAdmin, roleController.removePermissionFromRole);
+
+// User Permissions
+router.get('/users/:userId/permissions', verifyAdmin, roleController.getUserPermissions);
+router.post('/check-permission', verifyAdmin, roleController.checkPermission);
 
 export default router;

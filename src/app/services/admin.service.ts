@@ -368,4 +368,126 @@ export class AdminService {
       { headers: this.getAdminHeaders() }
     );
   }
+
+  // ============================================
+  // SETTLEMENT METHODS
+  // ============================================
+
+  getSettlements(page: number = 1, limit: number = 10): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(
+      `${this.apiUrl}/settlements?page=${page}&limit=${limit}`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  getSettlementById(id: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/settlements/${id}`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  createSettlement(data: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${this.apiUrl}/settlements`,
+      data,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  updateSettlement(id: string, data: any): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${this.apiUrl}/settlements/${id}`,
+      data,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  approveSettlement(id: string, notes?: string): Observable<ApiResponse<any>> {
+    return this.http.patch<ApiResponse<any>>(
+      `${this.apiUrl}/settlements/${id}/approve`,
+      { notes },
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  rejectSettlement(id: string, reason: string): Observable<ApiResponse<any>> {
+    return this.http.patch<ApiResponse<any>>(
+      `${this.apiUrl}/settlements/${id}/reject`,
+      { reason },
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  deleteSettlement(id: string): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(
+      `${this.apiUrl}/settlements/${id}`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  getSettlementStats(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/settlements/stats`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  // ============================================
+  // PAYOUT METHODS
+  // ============================================
+
+  getPayouts(page: number = 1, limit: number = 10): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(
+      `${this.apiUrl}/payouts?page=${page}&limit=${limit}`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  getPayoutById(id: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/payouts/${id}`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  createPayout(data: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${this.apiUrl}/payouts`,
+      data,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  processPayout(id: string, data: any): Observable<ApiResponse<any>> {
+    return this.http.patch<ApiResponse<any>>(
+      `${this.apiUrl}/payouts/${id}/process`,
+      data,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  completePayout(id: string): Observable<ApiResponse<any>> {
+    return this.http.patch<ApiResponse<any>>(
+      `${this.apiUrl}/payouts/${id}/complete`,
+      {},
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  retryPayout(id: string): Observable<ApiResponse<any>> {
+    return this.http.patch<ApiResponse<any>>(
+      `${this.apiUrl}/payouts/${id}/retry`,
+      {},
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  cancelPayout(id: string, reason: string): Observable<ApiResponse<any>> {
+    return this.http.patch<ApiResponse<any>>(
+      `${this.apiUrl}/payouts/${id}/cancel`,
+      { reason },
+      { headers: this.getAdminHeaders() }
+    );
+  }
 }

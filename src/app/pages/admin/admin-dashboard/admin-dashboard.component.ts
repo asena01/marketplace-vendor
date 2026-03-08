@@ -14,6 +14,7 @@ import { AdminSettingsComponent } from '../admin-settings/admin-settings.compone
 import { AdminDeliveryComponent } from '../admin-delivery/admin-delivery.component';
 import { AdminProfileComponent } from '../admin-profile/admin-profile.component';
 import { VendorDirectoryComponent } from '../admin-vendors/vendor-directory.component';
+import { SettlementsComponent } from '../admin-settlements/settlements.component';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -28,7 +29,8 @@ import { VendorDirectoryComponent } from '../admin-vendors/vendor-directory.comp
     AdminSettingsComponent,
     AdminDeliveryComponent,
     AdminProfileComponent,
-    VendorDirectoryComponent
+    VendorDirectoryComponent,
+    SettlementsComponent
   ],
   template: `
     <div class="min-h-screen bg-gray-100">
@@ -120,6 +122,17 @@ import { VendorDirectoryComponent } from '../admin-vendors/vendor-directory.comp
             </button>
 
             <button
+              (click)="setCurrentPage('settlements')"
+              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
+                (currentPage() === 'settlements'
+                  ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
+                  : 'text-gray-700 hover:bg-gray-100')"
+            >
+              <span class="material-icons">account_balance_wallet</span>
+              Settlements
+            </button>
+
+            <button
               (click)="setCurrentPage('devices')"
               [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
                 (currentPage() === 'devices'
@@ -177,6 +190,8 @@ import { VendorDirectoryComponent } from '../admin-vendors/vendor-directory.comp
             <app-admin-users></app-admin-users>
           } @else if (currentPage() === 'payments') {
             <app-admin-payments></app-admin-payments>
+          } @else if (currentPage() === 'settlements') {
+            <app-settlements></app-settlements>
           } @else if (currentPage() === 'devices') {
             <app-admin-devices></app-admin-devices>
           } @else if (currentPage() === 'delivery') {
