@@ -8,24 +8,122 @@ export interface Product {
   name: string;
   description: string;
   price: number;
-  originalPrice: number;
+  discountPrice?: number;
+  originalPrice?: number;
+  currency?: string;
   category: string;
-  categoryId: string;
-  images: string[]; // Real image URLs
+  categoryId?: string;
+  images?: string[]; // Real image URLs
   thumbnail?: string; // Main product image
   icon?: string; // Fallback emoji icon
-  rating: number;
-  reviews: number;
-  sold: number;
-  discount: number;
-  inStock: boolean;
-  isFreeShipping: boolean;
+  rating?: {
+    average?: number;
+    count?: number;
+    reviews?: any[];
+  } | number; // Support both old number format and new object format
+  reviews?: number;
+  sold?: number;
+  discount?: number;
+  inStock?: boolean;
+  isFreeShipping?: boolean;
   stock: number;
   sku?: string;
   vendorId?: string;
   vendorType?: string;
   createdAt?: string;
   updatedAt?: string;
+  features?: string[];
+  vendorName?: string;
+  tags?: string[];
+
+  // Furniture specific
+  dimensions?: {
+    width: number;
+    height: number;
+    depth: number;
+    unit: string;
+  };
+  weight?: {
+    value: number;
+    unit: string;
+  };
+  material?: string[];
+  color?: string[];
+  finish?: string;
+  warranty?: {
+    duration: number;
+    type: string;
+  };
+  shipping?: {
+    available: boolean;
+    estimatedDays: number;
+    shippingCost: number;
+    freeShippingAbove: number;
+  };
+  assembly?: {
+    required: boolean;
+    assemblyTime: string;
+    instructions: string;
+  };
+
+  // Gym Equipment specific
+  specifications?: {
+    type: string;
+    material: string[];
+    weight: {
+      value: number;
+      unit: string;
+    };
+    dimensions: {
+      width: number;
+      height: number;
+      depth: number;
+      unit: string;
+    };
+    capacity: {
+      value: number;
+      unit: string;
+    };
+    resistance: string;
+    resistanceLevels: number;
+    color: string[];
+    warranty: {
+      duration: number;
+      coverage: string;
+    };
+  };
+  targetMuscles?: string[];
+  fitnessLevel?: string;
+
+  // Pets & Supplies specific
+  quantity?: {
+    value: number;
+    unit: string;
+  };
+  petSpecification?: {
+    petType: string;
+    suitableFor: string[];
+    ageRange: {
+      min: number;
+      max: number;
+      unit: string;
+    };
+    ingredients: string[];
+    nutritionalInfo: {
+      protein: string;
+      fat: string;
+      fiber: string;
+      moisture: string;
+    };
+    allergienFree: string[];
+    organic: boolean;
+  };
+  brand?: string;
+  manufacturer?: string;
+
+  // Form control
+  isFeatured?: boolean;
+  isActive?: boolean;
 }
 
 export interface ApiResponse<T> {

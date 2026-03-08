@@ -12,16 +12,16 @@ interface Product {
   id: string;
   name: string;
   price: number;
-  originalPrice: number;
+  originalPrice?: number;
   category: string;
   icon?: string;
-  images: string[]; // Multiple product images or URLs
-  rating: number;
-  reviews: number;
-  sold: number;
-  discount: number;
-  inStock: boolean;
-  isFreeShipping: boolean;
+  images?: string[]; // Multiple product images or URLs
+  rating?: number;
+  reviews?: number;
+  sold?: number;
+  discount?: number;
+  inStock?: boolean;
+  isFreeShipping?: boolean;
   description?: string;
   thumbnail?: string;
 }
@@ -140,20 +140,28 @@ export class ShoppingComponent implements OnInit {
 
   // Convert API product to frontend product format
   private convertApiProductToProduct(apiProduct: ApiProduct): Product {
+    // Handle rating which can be an object or number
+    let rating: number | undefined;
+    if (typeof apiProduct.rating === 'object' && apiProduct.rating !== null && 'average' in apiProduct.rating) {
+      rating = (apiProduct.rating as any).average;
+    } else if (typeof apiProduct.rating === 'number') {
+      rating = apiProduct.rating;
+    }
+
     return {
       id: apiProduct._id || apiProduct.id || '',
       name: apiProduct.name,
       price: apiProduct.price,
-      originalPrice: apiProduct.originalPrice || apiProduct.price,
+      originalPrice: apiProduct.originalPrice || apiProduct.price || 0,
       category: apiProduct.category,
       icon: apiProduct.icon || '📦',
       images: apiProduct.images && apiProduct.images.length > 0 ? apiProduct.images : [apiProduct.thumbnail || apiProduct.icon || '📦'],
-      rating: apiProduct.rating,
-      reviews: apiProduct.reviews,
-      sold: apiProduct.sold,
-      discount: apiProduct.discount,
-      inStock: apiProduct.inStock,
-      isFreeShipping: apiProduct.isFreeShipping,
+      rating: rating ?? 0,
+      reviews: apiProduct.reviews ?? 0,
+      sold: apiProduct.sold ?? 0,
+      discount: apiProduct.discount ?? 0,
+      inStock: apiProduct.inStock ?? true,
+      isFreeShipping: apiProduct.isFreeShipping ?? false,
       description: apiProduct.description,
       thumbnail: apiProduct.thumbnail
     };
@@ -196,14 +204,14 @@ export class ShoppingComponent implements OnInit {
         products = [...products].sort((a, b) => b.price - a.price);
         break;
       case 'rating':
-        products = [...products].sort((a, b) => b.rating - a.rating);
+        products = [...products].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
         break;
       case 'newest':
         products = [...products].reverse();
         break;
       default:
         // Popular (by sold)
-        products = [...products].sort((a, b) => b.sold - a.sold);
+        products = [...products].sort((a, b) => (b.sold ?? 0) - (a.sold ?? 0));
     }
 
     return products;
@@ -643,8 +651,8 @@ export class ShoppingComponent implements OnInit {
   /**
    * Format price with current currency
    */
-  formatPrice(amount: number): string {
-    return this.currencyService.formatPrice(amount);
+  formatPrice(amount: number | undefined): string {
+    return this.currencyService.formatPrice(amount ?? 0);
   }
 
   /**

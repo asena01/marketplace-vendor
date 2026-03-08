@@ -975,7 +975,7 @@ export class RetailProductsComponent implements OnInit {
     if (this.isEditing() && this.newProduct._id) {
       // Update existing product via API
       this.isLoading.set(true);
-      this.productService.updateProduct(this.newProduct._id, this.newProduct).subscribe({
+      this.productService.updateProduct(this.newProduct._id, this.newProduct as any).subscribe({
         next: (response: any) => {
           this.isLoading.set(false);
           if (response.success) {
@@ -1005,7 +1005,7 @@ export class RetailProductsComponent implements OnInit {
     } else {
       // Create new product via API
       this.isLoading.set(true);
-      this.productService.createProduct(this.newProduct).subscribe({
+      this.productService.createProduct(this.newProduct as any).subscribe({
         next: (response: any) => {
           this.isLoading.set(false);
           if (response.success && response.data) {
