@@ -1,6 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatIconModule } from '@angular/material/icon';
 import { ProductService } from '../../../../../services/product.service';
 
 interface Product {
@@ -25,7 +26,7 @@ interface Product {
 @Component({
   selector: 'app-retail-products',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatIconModule],
   template: `
     <div class="p-8 space-y-6">
       <!-- Header -->
@@ -36,9 +37,10 @@ interface Product {
         </div>
         <button
           (click)="openAddProductModal()"
-          class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition flex items-center gap-2"
         >
-          ➕ Add Product
+          <mat-icon class="text-lg">add</mat-icon>
+          <span>Add Product</span>
         </button>
       </div>
 
@@ -170,18 +172,22 @@ interface Product {
                         {{ product.stock > 0 ? 'In Stock' : 'Out of Stock' }}
                       </span>
                     </td>
-                    <td class="px-6 py-4 space-x-2">
+                    <td class="px-6 py-4 space-x-2 flex items-center">
                       <button
                         (click)="editProduct(product)"
-                        class="text-blue-600 hover:text-blue-700 font-medium text-sm"
+                        class="text-blue-600 hover:text-blue-700 font-medium text-sm flex items-center gap-1 transition"
+                        title="Edit product"
                       >
-                        Edit
+                        <mat-icon class="text-base">edit</mat-icon>
+                        <span>Edit</span>
                       </button>
                       <button
                         (click)="deleteProduct(product._id)"
-                        class="text-red-600 hover:text-red-700 font-medium text-sm"
+                        class="text-red-600 hover:text-red-700 font-medium text-sm flex items-center gap-1 transition"
+                        title="Delete product"
                       >
-                        Delete
+                        <mat-icon class="text-base">delete</mat-icon>
+                        <span>Delete</span>
                       </button>
                     </td>
                   </tr>
@@ -372,16 +378,24 @@ export class RetailProductsComponent implements OnInit {
   isLoading = signal(false);
 
   newProduct: Product = this.getEmptyProduct();
+  private storeId: string = '';
 
-  constructor(private productService: ProductService) {}
+  constructor(private productService: ProductService) {
+    this.storeId = localStorage.getItem('storeId') || '';
+  }
 
   ngOnInit() {
+    if (!this.storeId) {
+      this.errorMessage.set('Store ID not found. Please login again.');
+      return;
+    }
     this.loadProducts();
   }
 
   loadProducts() {
     this.isLoading.set(true);
-    this.productService.getProducts().subscribe({
+    // Load vendor-specific products
+    this.productService.getVendorProducts(this.storeId, 1, 100).subscribe({
       next: (response: any) => {
         this.isLoading.set(false);
         if (response.success && response.data) {

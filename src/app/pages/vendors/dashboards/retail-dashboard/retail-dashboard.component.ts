@@ -1,13 +1,15 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../../../services/auth.service';
 import { VendorSidenavComponent } from '../../../../layout/vendor-sidenav/vendor-sidenav.component';
+import { ProductService } from '../../../../services/product.service';
 
 @Component({
   selector: 'app-retail-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, VendorSidenavComponent],
+  imports: [CommonModule, RouterModule, MatIconModule, VendorSidenavComponent, ],
   template: `
     <div class="flex h-screen bg-slate-50">
       <!-- Sidenav -->
@@ -48,27 +50,47 @@ import { VendorSidenavComponent } from '../../../../layout/vendor-sidenav/vendor
       <!-- Key Metrics -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-green-500">
-          <p class="text-slate-600 text-sm font-medium mb-1">Today's Sales</p>
-          <p class="text-3xl font-bold text-slate-900">$15,340</p>
-          <p class="mt-2 text-sm text-emerald-600">↑ 18.5% from yesterday</p>
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-slate-600 text-sm font-medium mb-1">Total Sales</p>
+              <p class="text-3xl font-bold text-slate-900">{{ '$' }}{{ totalSales() }}</p>
+            </div>
+            <mat-icon class="text-green-500 text-3xl">trending_up</mat-icon>
+          </div>
+          <p class="mt-2 text-sm text-emerald-600">18.5% from last period</p>
         </div>
 
-        <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-green-500">
-          <p class="text-slate-600 text-sm font-medium mb-1">Transactions</p>
-          <p class="text-3xl font-bold text-slate-900">487</p>
-          <p class="mt-2 text-sm text-emerald-600">↑ 9.2% increase</p>
+        <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-blue-500">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-slate-600 text-sm font-medium mb-1">Transactions</p>
+              <p class="text-3xl font-bold text-slate-900">{{ transactionCount() }}</p>
+            </div>
+            <mat-icon class="text-blue-500 text-3xl">shopping_cart</mat-icon>
+          </div>
+          <p class="mt-2 text-sm text-emerald-600">9.2% increase</p>
         </div>
 
-        <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-green-500">
-          <p class="text-slate-600 text-sm font-medium mb-1">Avg. Transaction</p>
-          <p class="text-3xl font-bold text-slate-900">$31.50</p>
+        <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-orange-500">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-slate-600 text-sm font-medium mb-1">Avg. Transaction</p>
+              <p class="text-3xl font-bold text-slate-900">{{ '$' }}{{ avgTransaction() | number: '1.2-2' }}</p>
+            </div>
+            <mat-icon class="text-orange-500 text-3xl">calculate</mat-icon>
+          </div>
           <p class="mt-2 text-sm text-slate-500">Per customer</p>
         </div>
 
-        <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-green-500">
-          <p class="text-slate-600 text-sm font-medium mb-1">Inventory Items</p>
-          <p class="text-3xl font-bold text-slate-900">3,245</p>
-          <p class="mt-2 text-sm text-yellow-600">24 items low stock</p>
+        <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-purple-500">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-slate-600 text-sm font-medium mb-1">Inventory Items</p>
+              <p class="text-3xl font-bold text-slate-900">{{ totalInventoryItems() }}</p>
+            </div>
+            <mat-icon class="text-purple-500 text-3xl">inventory_2</mat-icon>
+          </div>
+          <p class="mt-2 text-sm text-yellow-600">{{ lowStockCount() }} items low stock</p>
         </div>
       </div>
 
@@ -239,17 +261,21 @@ import { VendorSidenavComponent } from '../../../../layout/vendor-sidenav/vendor
       <div class="bg-white rounded-lg p-6 shadow-md">
         <h3 class="text-lg font-bold text-slate-900 mb-4">Quick Actions</h3>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <button class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm">
-            New Sale
+          <button class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm flex items-center justify-center gap-2">
+            <mat-icon class="text-lg">add_shopping_cart</mat-icon>
+            <span>New Sale</span>
           </button>
-          <button class="bg-slate-100 hover:bg-slate-200 text-slate-900 font-medium py-2 px-4 rounded-lg transition-colors text-sm">
-            Stock Transfer
+          <button class="bg-slate-100 hover:bg-slate-200 text-slate-900 font-medium py-2 px-4 rounded-lg transition-colors text-sm flex items-center justify-center gap-2">
+            <mat-icon class="text-lg">move_item</mat-icon>
+            <span>Stock Transfer</span>
           </button>
-          <button class="bg-slate-100 hover:bg-slate-200 text-slate-900 font-medium py-2 px-4 rounded-lg transition-colors text-sm">
-            Manage Inventory
+          <button class="bg-slate-100 hover:bg-slate-200 text-slate-900 font-medium py-2 px-4 rounded-lg transition-colors text-sm flex items-center justify-center gap-2">
+            <mat-icon class="text-lg">warehouse</mat-icon>
+            <span>Manage Inventory</span>
           </button>
-          <button class="bg-slate-100 hover:bg-slate-200 text-slate-900 font-medium py-2 px-4 rounded-lg transition-colors text-sm">
-            View Reports
+          <button class="bg-slate-100 hover:bg-slate-200 text-slate-900 font-medium py-2 px-4 rounded-lg transition-colors text-sm flex items-center justify-center gap-2">
+            <mat-icon class="text-lg">assessment</mat-icon>
+            <span>View Reports</span>
           </button>
         </div>
       </div>
@@ -271,19 +297,77 @@ export class RetailDashboardComponent implements OnInit {
   errorMessage = signal('');
   currentRoute = signal('');
 
+  // Dashboard metrics signals
+  totalSales = signal<number>(0);
+  transactionCount = signal<number>(0);
+  avgTransaction = signal<number>(0);
+  totalInventoryItems = signal<number>(0);
+  lowStockCount = signal<number>(0);
+  inStockCount = signal<number>(0);
+  totalInventoryValue = signal<number>(0);
+
   retailSidenavItems = [];
+  private storeId: string = '';
 
   constructor(
     private authService: AuthService,
-    private activatedRoute: ActivatedRoute
-  ) {}
+    private activatedRoute: ActivatedRoute,
+    private productService: ProductService
+  ) {
+    this.storeId = localStorage.getItem('storeId') || '';
+  }
 
   ngOnInit(): void {
     this.isLoading.set(false);
+    this.loadDashboardData();
     this.activatedRoute.firstChild?.params.subscribe(() => {
       const firstChild = this.activatedRoute.firstChild;
       if (firstChild) {
         this.currentRoute.set(firstChild.component?.name || 'dashboard');
+      }
+    });
+  }
+
+  loadDashboardData(): void {
+    if (!this.storeId) {
+      this.errorMessage.set('Store ID not found. Please login again.');
+      return;
+    }
+
+    this.isLoading.set(true);
+    // Load vendor-specific products data to calculate metrics
+    this.productService.getVendorProducts(this.storeId, 1, 100).subscribe({
+      next: (response: any) => {
+        if (response.success && response.data) {
+          const products = response.data;
+          this.totalInventoryItems.set(products.length);
+
+          // Calculate metrics
+          const inStock = products.filter((p: any) => p.stock > 0).length;
+          const lowStock = products.filter((p: any) => p.stock > 0 && p.stock < 10).length;
+          const totalValue = products.reduce((sum: number, p: any) => sum + (p.price * (p.stock || 0)), 0);
+
+          this.inStockCount.set(inStock);
+          this.lowStockCount.set(lowStock);
+          this.totalInventoryValue.set(totalValue);
+
+          // Mock transaction data (would come from orders API in real scenario)
+          this.transactionCount.set(Math.floor(Math.random() * 500) + 300);
+          this.totalSales.set(Math.floor(Math.random() * 20000) + 10000);
+          this.avgTransaction.set(this.totalSales() / Math.max(this.transactionCount(), 1));
+        } else {
+          // If no products, show zero metrics
+          this.totalInventoryItems.set(0);
+          this.inStockCount.set(0);
+          this.lowStockCount.set(0);
+          this.totalInventoryValue.set(0);
+        }
+        this.isLoading.set(false);
+      },
+      error: (error: any) => {
+        console.error('Error loading dashboard data:', error);
+        this.errorMessage.set('Failed to load dashboard data. Make sure you have created products first.');
+        this.isLoading.set(false);
       }
     });
   }

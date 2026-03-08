@@ -107,10 +107,20 @@ export class ProductService {
     return this.http.delete<ApiResponse<any>>(`${this.apiUrl}/${id}`, { headers });
   }
 
-  // Get vendor products
-  getVendorProducts(vendorId: string, vendorType: string, page: number = 1, limit: number = 20): Observable<ApiResponse<Product[]>> {
+  // Get vendor's own products (authenticated)
+  getVendorProducts(vendorId: string, page: number = 1, limit: number = 20, category?: string): Observable<ApiResponse<Product[]>> {
+    const headers = this.getVendorHeaders();
+    let url = `${this.apiUrl}/vendor/${vendorId}?page=${page}&limit=${limit}`;
+    if (category) url += `&category=${category}`;
+    return this.http.get<ApiResponse<Product[]>>(url, { headers });
+  }
+
+  // Get vendor's own products with search (authenticated)
+  searchVendorProducts(vendorId: string, query: string, page: number = 1, limit: number = 20): Observable<ApiResponse<Product[]>> {
+    const headers = this.getVendorHeaders();
     return this.http.get<ApiResponse<Product[]>>(
-      `${this.apiUrl}/vendor/${vendorId}?vendorType=${vendorType}&page=${page}&limit=${limit}`
+      `${this.apiUrl}/vendor/${vendorId}?search=${query}&page=${page}&limit=${limit}`,
+      { headers }
     );
   }
 
