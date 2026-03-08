@@ -1,6 +1,7 @@
 import { Component, signal, computed, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatIconModule } from '@angular/material/icon';
 import { HeaderComponent } from '../../components/header/header.component';
 import { DeliveryService } from '../../services/delivery.service';
 import { interval, Subscription } from 'rxjs';
@@ -8,7 +9,7 @@ import { interval, Subscription } from 'rxjs';
 @Component({
   selector: 'app-delivery',
   standalone: true,
-  imports: [CommonModule, FormsModule, HeaderComponent],
+  imports: [CommonModule, FormsModule, MatIconModule, HeaderComponent],
   templateUrl: './delivery.component.html',
   styleUrl: './delivery.component.css'
 })
@@ -148,6 +149,39 @@ export class DeliveryComponent implements OnDestroy {
 
   getVehicleIcon(type: string): string {
     const icons: { [key: string]: string } = {
+      'bike': 'two_wheeler',
+      'scooter': 'two_wheeler',
+      'car': 'directions_car',
+      'van': 'local_shipping',
+      'truck': 'local_shipping'
+    };
+    return icons[type] || 'local_shipping';
+  }
+
+  getSizeIcon(size: string): string {
+    const icons: { [key: string]: string } = {
+      'small': 'inbox',
+      'medium': 'inventory_2',
+      'large': 'checkroom',
+      'extra-large': 'local_shipping'
+    };
+    return icons[size] || 'inventory_2';
+  }
+
+  getServiceIcon(service: string): string {
+    const icons: { [key: string]: string } = {
+      'standard': 'local_shipping',
+      'express': 'flash_on',
+      'same-day': 'speed',
+      'scheduled': 'schedule',
+      'bulk': 'inventory_2'
+    };
+    return icons[service] || 'local_shipping';
+  }
+
+  // Emoji mappings for compatibility
+  getVehicleEmojiIcon(type: string): string {
+    const icons: { [key: string]: string } = {
       'bike': '🚴',
       'scooter': '🛴',
       'car': '🚗',
@@ -155,27 +189,6 @@ export class DeliveryComponent implements OnDestroy {
       'truck': '🚚'
     };
     return icons[type] || '📦';
-  }
-
-  getSizeIcon(size: string): string {
-    const icons: { [key: string]: string } = {
-      'small': '📬',
-      'medium': '📦',
-      'large': '📫',
-      'extra-large': '🎁'
-    };
-    return icons[size] || '📦';
-  }
-
-  getServiceIcon(service: string): string {
-    const icons: { [key: string]: string } = {
-      'standard': '📦',
-      'express': '⚡',
-      'same-day': '🚀',
-      'scheduled': '📅',
-      'bulk': '📦📦📦'
-    };
-    return icons[service] || '📦';
   }
 
   submitOrder(): void {

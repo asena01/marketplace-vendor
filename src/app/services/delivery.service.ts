@@ -596,8 +596,8 @@ export class DeliveryService {
         const service = this.getServiceById(serviceId);
         return of({
           status: service ? 'success' : 'error',
-          data: service || null
-        });
+          data: service as any
+        } as any);
       })
     );
   }
@@ -612,7 +612,7 @@ export class DeliveryService {
     ).pipe(
       catchError((error) => {
         console.error('Error creating delivery service:', error);
-        return of({ status: 'error', data: null });
+        return of({ status: 'error', data: {} } as any);
       })
     );
   }
@@ -627,7 +627,7 @@ export class DeliveryService {
     ).pipe(
       catchError((error) => {
         console.error('Error updating delivery service:', error);
-        return of({ status: 'error', data: null });
+        return of({ status: 'error', data: {} } as any);
       })
     );
   }
@@ -671,7 +671,7 @@ export class DeliveryService {
             data: { price, breakdown: { service: service.name, distance, weight } }
           });
         }
-        return of({ status: 'error', data: null });
+        return of({ status: 'error', data: { price: 0, breakdown: {} } } as any);
       })
     );
   }

@@ -169,4 +169,16 @@ export class DeliveryNewComponent implements OnInit {
   getPerKgRate(): string {
     return this.formatCurrency(this.selectedService()?.pricing.perKgRate || 0);
   }
+
+  getStandardDeliveryTime(): number {
+    return this.selectedService()?.estimatedDeliveryTime?.standard || 0;
+  }
+
+  getRushDeliveryTime(): number {
+    return this.selectedService()?.estimatedDeliveryTime?.rush || 0;
+  }
+
+  hasRushOption(): boolean {
+    return !!this.selectedService()?.estimatedDeliveryTime?.rush;
+  }
 }

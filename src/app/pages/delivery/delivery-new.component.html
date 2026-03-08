@@ -119,14 +119,14 @@
           <!-- Service Options -->
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-2">Delivery Type</label>
-            <select 
+            <select
               formControlName="deliveryType"
               (change)="calculatePrice()"
               class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
             >
-              <option value="standard">Standard - {{ selectedService()?.estimatedDeliveryTime.standard }} min</option>
-              @if (selectedService()?.estimatedDeliveryTime.rush) {
-                <option value="rush">Rush - {{ selectedService()?.estimatedDeliveryTime.rush }} min (+${{ getRushFee() }})</option>
+              <option value="standard">Standard - {{ getStandardDeliveryTime() }} min</option>
+              @if (hasRushOption()) {
+                <option value="rush">Rush - {{ getRushDeliveryTime() }} min (+${{ getRushFee() }})</option>
               }
             </select>
           </div>
@@ -156,13 +156,13 @@
             @if (deliveryForm.get('distance')?.value) {
               <div class="flex justify-between">
                 <span class="text-slate-700">Distance ({{ deliveryForm.get('distance')?.value }}km × ${{ getPerKmRate() }})</span>
-                <span class="font-medium">${{ formatCurrency((deliveryForm.get('distance')?.value || 0) * (selectedService()?.pricing.perKmRate || 0)) }}</span>
+                <span class="font-medium">${{ formatCurrency((deliveryForm.get('distance')?.value || 0) * ((selectedService()?.pricing?.perKmRate) || 0)) }}</span>
               </div>
             }
             @if (deliveryForm.get('weight')?.value) {
               <div class="flex justify-between">
                 <span class="text-slate-700">Weight ({{ deliveryForm.get('weight')?.value }}kg × ${{ getPerKgRate() }})</span>
-                <span class="font-medium">${{ formatCurrency((deliveryForm.get('weight')?.value || 0) * (selectedService()?.pricing.perKgRate || 0)) }}</span>
+                <span class="font-medium">${{ formatCurrency((deliveryForm.get('weight')?.value || 0) * ((selectedService()?.pricing?.perKgRate) || 0)) }}</span>
               </div>
             }
             @if (isRushDelivery()) {
