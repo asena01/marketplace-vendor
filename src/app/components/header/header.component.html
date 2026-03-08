@@ -35,13 +35,13 @@
       <!-- Right Actions -->
       <div class="hidden lg:flex items-center gap-3">
         @if (!isLoggedIn()) {
-          <a routerLink="/login" class="nav-signin-btn px-6 py-2.5 border-2 border-primary text-primary font-semibold rounded-lg transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md active:scale-95 flex items-center gap-2 cursor-pointer">
+          <button (click)="openLogin()" class="nav-signin-btn px-6 py-2.5 border-2 border-primary text-primary font-semibold rounded-lg transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md active:scale-95 flex items-center gap-2 cursor-pointer">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3v-1"></path>
             </svg>
             Sign In
-          </a>
-          <a routerLink="/signup" class="nav-signup-btn px-7 py-2.5 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-primary/40 transition-all duration-300 active:scale-95 relative overflow-hidden group flex items-center gap-2 cursor-pointer">
+          </button>
+          <button (click)="openSignup()" class="nav-signup-btn px-7 py-2.5 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-primary/40 transition-all duration-300 active:scale-95 relative overflow-hidden group flex items-center gap-2 cursor-pointer">
             <span class="relative z-10 flex items-center gap-2">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
@@ -49,7 +49,7 @@
               Sign Up
             </span>
             <span class="absolute inset-0 bg-gradient-to-r from-secondary to-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-0"></span>
-          </a>
+          </button>
         } @else {
           <button
             (click)="navigateToDashboard()"
@@ -95,19 +95,19 @@
         </div>
         <div class="flex flex-col gap-2 mt-4 pt-4 border-t">
           @if (!isLoggedIn()) {
-            <a routerLink="/login" (click)="closeMenu()" class="nav-signin-btn w-full px-4 py-3 border-2 border-primary text-primary font-semibold rounded-lg transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md active:scale-95 flex items-center justify-center gap-2">
+            <button (click)="openLogin()" class="nav-signin-btn w-full px-4 py-3 border-2 border-primary text-primary font-semibold rounded-lg transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md active:scale-95 flex items-center justify-center gap-2">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3v-1"></path>
               </svg>
               Sign In
-            </a>
-            <a routerLink="/signup" (click)="closeMenu()" class="nav-signup-btn w-full px-4 py-3 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-primary/40 transition-all duration-300 active:scale-95 flex items-center justify-center gap-2 relative overflow-hidden group">
+            </button>
+            <button (click)="openSignup()" class="nav-signup-btn w-full px-4 py-3 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-primary/40 transition-all duration-300 active:scale-95 flex items-center justify-center gap-2 relative overflow-hidden group">
               <svg class="w-4 h-4 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
               </svg>
               <span class="relative z-10">Sign Up</span>
               <span class="absolute inset-0 bg-gradient-to-r from-secondary to-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-0"></span>
-            </a>
+            </button>
           } @else {
             <button
               (click)="navigateToDashboard()"

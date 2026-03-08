@@ -252,4 +252,12 @@
       <p class="text-center text-sm">&#169; 2024 MarketHub. All rights reserved.</p>
     </div>
   </footer>
+
+  <!-- Auth Overlays -->
+  @if (authModalService.isLoginOpen()) {
+    <app-login-overlay></app-login-overlay>
+  }
+  @if (authModalService.isSignupOpen()) {
+    <app-signup-overlay></app-signup-overlay>
+  }
 </div>
