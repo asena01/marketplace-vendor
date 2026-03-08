@@ -396,4 +396,132 @@ export class DeliveryService {
       })
     );
   }
+
+  // ==================== LEGACY DELIVERY METHODS ====================
+  // These methods support the old delivery pages and will be replaced
+  // when the delivery dashboard is redesigned
+
+  // Get service statistics (legacy)
+  getServiceStats(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/${this.restaurantId}/delivery/stats`
+    ).pipe(
+      catchError((error) => {
+        console.error('Error fetching service stats:', error);
+        return of({ status: 'error', data: {} });
+      })
+    );
+  }
+
+  // Get couriers list (legacy)
+  getCouriers(page: number = 1, limit: number = 20): Observable<ApiResponse<any[]>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('limit', limit.toString());
+
+    return this.http.get<ApiResponse<any[]>>(
+      `${this.apiUrl}/${this.restaurantId}/delivery/couriers`,
+      { params }
+    ).pipe(
+      catchError((error) => {
+        console.error('Error fetching couriers:', error);
+        return of({ status: 'error', data: [] });
+      })
+    );
+  }
+
+  // Update courier status (legacy)
+  updateCourierStatus(courierId: string, status: string): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${this.apiUrl}/${this.restaurantId}/delivery/couriers/${courierId}`,
+      { status }
+    ).pipe(
+      catchError((error) => {
+        console.error('Error updating courier status:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
+
+  // Get orders (legacy - different from getDeliveryOrders)
+  getOrders(page: number = 1, limit: number = 20, status?: string): Observable<ApiResponse<any[]>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('limit', limit.toString());
+
+    if (status) {
+      params = params.set('status', status);
+    }
+
+    return this.http.get<ApiResponse<any[]>>(
+      `${this.apiUrl}/${this.restaurantId}/delivery/orders`,
+      { params }
+    ).pipe(
+      catchError((error) => {
+        console.error('Error fetching orders:', error);
+        return of({ status: 'error', data: [] });
+      })
+    );
+  }
+
+  // Get delivery methods (legacy)
+  getDeliveryMethods(): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(
+      `${this.apiUrl}/${this.restaurantId}/delivery/methods`
+    ).pipe(
+      catchError((error) => {
+        console.error('Error fetching delivery methods:', error);
+        return of({ status: 'error', data: [] });
+      })
+    );
+  }
+
+  // Get service types (legacy)
+  getServiceTypes(): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(
+      `${this.apiUrl}/${this.restaurantId}/delivery/service-types`
+    ).pipe(
+      catchError((error) => {
+        console.error('Error fetching service types:', error);
+        return of({ status: 'error', data: [] });
+      })
+    );
+  }
+
+  // Get package sizes (legacy)
+  getPackageSizes(): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(
+      `${this.apiUrl}/${this.restaurantId}/delivery/package-sizes`
+    ).pipe(
+      catchError((error) => {
+        console.error('Error fetching package sizes:', error);
+        return of({ status: 'error', data: [] });
+      })
+    );
+  }
+
+  // Create delivery (legacy)
+  createDelivery(deliveryData: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${this.apiUrl}/${this.restaurantId}/delivery/create`,
+      deliveryData
+    ).pipe(
+      catchError((error) => {
+        console.error('Error creating delivery:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
+
+  // Get delivery by ID (legacy)
+  getDeliveryById(deliveryId: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/${this.restaurantId}/delivery/${deliveryId}`
+    ).pipe(
+      catchError((error) => {
+        console.error('Error fetching delivery:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
 }

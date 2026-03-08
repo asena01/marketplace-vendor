@@ -115,9 +115,35 @@ export class DeliveryComponent implements OnDestroy {
   }
 
   loadDeliveryOptions(): void {
-    this.deliveryMethods = this.deliveryService.getDeliveryMethods();
-    this.serviceTypes = this.deliveryService.getServiceTypes();
-    this.packageSizes = this.deliveryService.getPackageSizes();
+    this.deliveryService.getDeliveryMethods().subscribe({
+      next: (response) => {
+        this.deliveryMethods = response.data || [];
+      },
+      error: (error) => {
+        console.error('Error loading delivery methods:', error);
+        this.deliveryMethods = [];
+      }
+    });
+
+    this.deliveryService.getServiceTypes().subscribe({
+      next: (response) => {
+        this.serviceTypes = response.data || [];
+      },
+      error: (error) => {
+        console.error('Error loading service types:', error);
+        this.serviceTypes = [];
+      }
+    });
+
+    this.deliveryService.getPackageSizes().subscribe({
+      next: (response) => {
+        this.packageSizes = response.data || [];
+      },
+      error: (error) => {
+        console.error('Error loading package sizes:', error);
+        this.packageSizes = [];
+      }
+    });
   }
 
   getVehicleIcon(type: string): string {
