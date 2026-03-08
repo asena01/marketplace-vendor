@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { ProductService } from '../../../../../services/product.service';
+import { ImageUploadService } from '../../../../../services/image-upload.service';
+import { signal, Component, OnInit } from '@angular/core';
 
 interface Product {
   _id?: string;
@@ -299,6 +301,83 @@ interface Product {
                 ></textarea>
               </div>
 
+              <!-- Image Upload Section -->
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">Product Images</label>
+                <div class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center bg-slate-50 hover:bg-slate-100 transition cursor-pointer"
+                     (click)="imageInput.click()">
+                  <input
+                    #imageInput
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    (change)="onImageSelected($event)"
+                    style="display: none"
+                  />
+                  <mat-icon class="text-4xl text-slate-400 mb-2 block">image</mat-icon>
+                  <p class="text-slate-700 font-medium">Click or drag images here</p>
+                  <p class="text-slate-500 text-sm">Supported formats: JPG, PNG, GIF</p>
+                </div>
+
+                <!-- Thumbnail Preview -->
+                @if (newProduct.thumbnail) {
+                  <div class="mt-4">
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Thumbnail Preview</label>
+                    <div class="relative inline-block">
+                      <img
+                        [src]="newProduct.thumbnail"
+                        alt="Thumbnail"
+                        class="w-32 h-32 object-cover rounded-lg border border-slate-300"
+                      />
+                      <button
+                        type="button"
+                        (click)="removeThumbnail()"
+                        class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 transform translate-x-2 -translate-y-2 hover:bg-red-600"
+                      >
+                        <mat-icon class="text-sm">close</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                }
+
+                <!-- Uploaded Images List -->
+                @if (newProduct.images && newProduct.images.length > 0) {
+                  <div class="mt-4">
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Uploaded Images</label>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      @for (image of newProduct.images; track image) {
+                        <div class="relative group">
+                          <img
+                            [src]="image"
+                            alt="Product image"
+                            class="w-full h-24 object-cover rounded-lg border border-slate-300 group-hover:opacity-75 transition"
+                          />
+                          <button
+                            type="button"
+                            (click)="removeImage(image)"
+                            class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white opacity-0 group-hover:opacity-100 transition rounded-lg"
+                          >
+                            <mat-icon>delete</mat-icon>
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+
+                <!-- Upload Progress -->
+                @if (isUploadingImages()) {
+                  <div class="mt-4">
+                    <div class="flex items-center gap-3">
+                      <div class="animate-spin">
+                        <mat-icon class="text-blue-600">hourglass_empty</mat-icon>
+                      </div>
+                      <span class="text-slate-700">Uploading images...</span>
+                    </div>
+                  </div>
+                }
+              </div>
+
               <!-- Featured & Active -->
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="flex items-center">
@@ -376,11 +455,15 @@ export class RetailProductsComponent implements OnInit {
   successMessage = signal('');
   errorMessage = signal('');
   isLoading = signal(false);
+  isUploadingImages = signal(false);
 
   newProduct: Product = this.getEmptyProduct();
   private storeId: string = '';
 
-  constructor(private productService: ProductService) {
+  constructor(
+    private productService: ProductService,
+    private imageUploadService: ImageUploadService
+  ) {
     this.storeId = localStorage.getItem('storeId') || '';
   }
 
@@ -575,5 +658,64 @@ export class RetailProductsComponent implements OnInit {
       isFeatured: false,
       isActive: true
     };
+  }
+
+  /**
+   * Handle image selection and upload
+   */
+  onImageSelected(event: any) {
+    const files: File[] = Array.from(event.target.files || []);
+    if (!files.length) return;
+
+    this.isUploadingImages.set(true);
+
+    // Upload images to Firebase Storage
+    const uploadPath = `products/${this.newProduct._id || 'new'}`;
+
+    this.imageUploadService.uploadMultipleImages(files, uploadPath).subscribe({
+      next: (imageUrls: string[]) => {
+        if (!this.newProduct.images) {
+          this.newProduct.images = [];
+        }
+
+        // Add new images to existing ones
+        this.newProduct.images = [...this.newProduct.images, ...imageUrls];
+
+        // Set first image as thumbnail if not set
+        if (!this.newProduct.thumbnail && imageUrls.length > 0) {
+          this.newProduct.thumbnail = imageUrls[0];
+        }
+
+        this.isUploadingImages.set(false);
+        this.successMessage.set(`${imageUrls.length} image(s) uploaded successfully!`);
+        setTimeout(() => this.successMessage.set(''), 3000);
+      },
+      error: (error: any) => {
+        this.isUploadingImages.set(false);
+        this.errorMessage.set('Failed to upload images. Please try again.');
+        console.error('Image upload error:', error);
+      }
+    });
+  }
+
+  /**
+   * Remove image from list
+   */
+  removeImage(imageUrl: string) {
+    if (!this.newProduct.images) return;
+
+    this.newProduct.images = this.newProduct.images.filter(img => img !== imageUrl);
+
+    // If removed image was thumbnail, set new thumbnail
+    if (this.newProduct.thumbnail === imageUrl) {
+      this.newProduct.thumbnail = this.newProduct.images.length > 0 ? this.newProduct.images[0] : undefined;
+    }
+  }
+
+  /**
+   * Remove thumbnail
+   */
+  removeThumbnail() {
+    this.newProduct.thumbnail = undefined;
   }
 }

@@ -1,7 +1,9 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatIconModule } from '@angular/material/icon';
 import { FoodService } from '../../../../../services/food.service';
+import { ImageUploadService } from '../../../../../services/image-upload.service';
 
 interface MenuItem {
   _id?: string;
@@ -19,7 +21,7 @@ interface MenuItem {
 @Component({
   selector: 'app-restaurant-menu',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatIconModule],
   template: `
     <div class="p-8 space-y-6">
       <!-- Header -->
@@ -247,6 +249,57 @@ interface MenuItem {
                 ></textarea>
               </div>
 
+              <!-- Image Upload -->
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">Menu Item Image</label>
+                <div class="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center bg-orange-50 hover:bg-orange-100 transition cursor-pointer"
+                     (click)="imageInput.click()">
+                  <input
+                    #imageInput
+                    type="file"
+                    accept="image/*"
+                    (change)="onMenuImageSelected($event)"
+                    style="display: none"
+                  />
+                  <mat-icon class="text-4xl text-orange-400 mb-2 block">image</mat-icon>
+                  <p class="text-slate-700 font-medium">Click or drag image here</p>
+                  <p class="text-slate-500 text-sm">Supported formats: JPG, PNG, GIF</p>
+                </div>
+
+                <!-- Image Preview -->
+                @if (newMenuItem.image) {
+                  <div class="mt-4">
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Image Preview</label>
+                    <div class="relative inline-block">
+                      <img
+                        [src]="newMenuItem.image"
+                        alt="Menu item"
+                        class="w-40 h-32 object-cover rounded-lg border-2 border-orange-300"
+                      />
+                      <button
+                        type="button"
+                        (click)="removeMenuImage()"
+                        class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 transform translate-x-2 -translate-y-2 hover:bg-red-600"
+                      >
+                        <mat-icon class="text-sm">close</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                }
+
+                <!-- Upload Progress -->
+                @if (isUploadingMenuImage()) {
+                  <div class="mt-4">
+                    <div class="flex items-center gap-3">
+                      <div class="animate-spin">
+                        <mat-icon class="text-orange-600">hourglass_empty</mat-icon>
+                      </div>
+                      <span class="text-slate-700">Uploading image...</span>
+                    </div>
+                  </div>
+                }
+              </div>
+
               <!-- Availability & Special -->
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="flex items-center">
@@ -325,10 +378,14 @@ export class RestaurantMenuComponent implements OnInit {
   isLoading = signal(false);
 
   restaurantId = signal<string>('');
+  isUploadingMenuImage = signal(false);
 
   newMenuItem: MenuItem = this.getEmptyMenuItem();
 
-  constructor(private foodService: FoodService) {}
+  constructor(
+    private foodService: FoodService,
+    private imageUploadService: ImageUploadService
+  ) {}
 
   ngOnInit() {
     // Get restaurant ID from localStorage (set during login)
@@ -521,6 +578,32 @@ export class RestaurantMenuComponent implements OnInit {
         }
       });
     }
+  }
+
+  onMenuImageSelected(event: any) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    this.isUploadingMenuImage.set(true);
+    const uploadPath = `menu-items/${this.newMenuItem._id || 'new'}`;
+
+    this.imageUploadService.uploadImage(file, uploadPath).subscribe({
+      next: (imageUrl: string) => {
+        this.newMenuItem.image = imageUrl;
+        this.isUploadingMenuImage.set(false);
+        this.successMessage.set('Image uploaded successfully!');
+        setTimeout(() => this.successMessage.set(''), 3000);
+      },
+      error: (error: any) => {
+        this.isUploadingMenuImage.set(false);
+        this.errorMessage.set('Failed to upload image. Please try again.');
+        console.error('Image upload error:', error);
+      }
+    });
+  }
+
+  removeMenuImage() {
+    this.newMenuItem.image = undefined;
   }
 
   private getEmptyMenuItem(): MenuItem {
