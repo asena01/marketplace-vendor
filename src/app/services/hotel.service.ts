@@ -718,4 +718,55 @@ export class HotelService {
   deleteHotel(hotelId: string): Observable<ApiResponse<any>> {
     return this.http.delete<ApiResponse<any>>(`${API_URL}/hotels/${hotelId}`);
   }
+
+  // ==================== NOTIFICATIONS ====================
+  getNotifications(page = 1, limit = 20): Observable<ApiResponse<any[]>> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('limit', limit.toString());
+
+    return this.http.get<ApiResponse<any[]>>(`${API_URL}/hotels/${this.hotelId}/notifications`, { params }).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch notifications:', error);
+        return of({ status: 'error', data: [], message: error.message });
+      })
+    );
+  }
+
+  getUnreadNotificationsCount(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/notifications/unread-count`).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch unread count:', error);
+        return of({ status: 'error', data: { count: 0 }, message: error.message });
+      })
+    );
+  }
+
+  markNotificationAsRead(notificationId: string): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/notifications/${notificationId}/read`, {}).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to mark notification as read:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  markAllNotificationsAsRead(): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/notifications/mark-all-read`, {}).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to mark all notifications as read:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  // ==================== ROOM STATUS SUMMARY ====================
+  getRoomStatusSummary(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/rooms/status-summary`).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch room status summary:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
 }
