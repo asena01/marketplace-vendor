@@ -336,6 +336,7 @@ export class HotelRoomsComponent implements OnInit {
   selectedStatus = signal('');
   successMessage = signal('');
   errorMessage = signal('');
+  isLoading = signal(false);
 
   newRoom: Room = this.getEmptyRoom();
 
@@ -352,42 +353,32 @@ export class HotelRoomsComponent implements OnInit {
   }
 
   loadRooms() {
-    // TODO: Load rooms from hotelService
-    // For now, using mock data
-    const mockRooms: Room[] = [
-      {
-        _id: '1',
-        roomNumber: '101',
-        roomType: 'single',
-        floor: 1,
-        capacity: 1,
-        pricePerNight: 50,
-        status: 'available',
-        description: 'Cozy single room with city view'
+    if (!this.hotelId) {
+      this.errorMessage.set('Hotel ID not found');
+      return;
+    }
+
+    this.isLoading.set(true);
+    this.hotelService.getRooms().subscribe({
+      next: (response: any) => {
+        this.isLoading.set(false);
+        if (response.status === 'success' && response.data) {
+          this.rooms.set(response.data);
+          this.filterRooms();
+        } else {
+          // Fallback to empty array if no data
+          this.rooms.set([]);
+          this.filterRooms();
+        }
       },
-      {
-        _id: '2',
-        roomNumber: '102',
-        roomType: 'double',
-        floor: 1,
-        capacity: 2,
-        pricePerNight: 80,
-        status: 'occupied',
-        description: 'Spacious double room'
-      },
-      {
-        _id: '3',
-        roomNumber: '103',
-        roomType: 'suite',
-        floor: 1,
-        capacity: 4,
-        pricePerNight: 150,
-        status: 'available',
-        description: 'Luxury suite with living area'
+      error: (error: any) => {
+        this.isLoading.set(false);
+        console.error('Error loading rooms:', error);
+        this.errorMessage.set('Failed to load rooms. Please try again later.');
+        // Keep existing rooms in case of error
+        this.filterRooms();
       }
-    ];
-    this.rooms.set(mockRooms);
-    this.filterRooms();
+    });
   }
 
   filterRooms() {
@@ -439,35 +430,87 @@ export class HotelRoomsComponent implements OnInit {
       return;
     }
 
-    if (this.isEditing()) {
-      // Update existing room
-      const index = this.rooms().findIndex(r => r._id === this.newRoom._id);
-      if (index !== -1) {
-        const updated = [...this.rooms()];
-        updated[index] = this.newRoom;
-        this.rooms.set(updated);
-      }
-      this.successMessage.set('Room updated successfully!');
+    if (this.isEditing() && this.newRoom._id) {
+      // Update existing room via API
+      this.isLoading.set(true);
+      this.hotelService.updateRoom(this.newRoom._id, this.newRoom).subscribe({
+        next: (response: any) => {
+          this.isLoading.set(false);
+          if (response.status === 'success') {
+            const index = this.rooms().findIndex(r => r._id === this.newRoom._id);
+            if (index !== -1) {
+              const updated = [...this.rooms()];
+              updated[index] = response.data || this.newRoom;
+              this.rooms.set(updated);
+            }
+            this.successMessage.set('Room updated successfully!');
+          } else {
+            this.errorMessage.set('Failed to update room');
+          }
+          this.filterRooms();
+          this.closeRoomModal();
+          setTimeout(() => {
+            this.successMessage.set('');
+            this.errorMessage.set('');
+          }, 3000);
+        },
+        error: (error: any) => {
+          this.isLoading.set(false);
+          this.errorMessage.set(error.error?.message || 'Failed to update room');
+          console.error('Error updating room:', error);
+        }
+      });
     } else {
-      // Add new room
-      this.newRoom._id = Date.now().toString();
-      this.rooms.set([...this.rooms(), this.newRoom]);
-      this.successMessage.set('Room created successfully!');
+      // Create new room via API
+      this.isLoading.set(true);
+      this.hotelService.createRoom(this.newRoom).subscribe({
+        next: (response: any) => {
+          this.isLoading.set(false);
+          if (response.status === 'success' && response.data) {
+            this.rooms.set([...this.rooms(), response.data]);
+            this.successMessage.set('Room created successfully!');
+          } else {
+            this.errorMessage.set('Failed to create room');
+          }
+          this.filterRooms();
+          this.closeRoomModal();
+          setTimeout(() => {
+            this.successMessage.set('');
+            this.errorMessage.set('');
+          }, 3000);
+        },
+        error: (error: any) => {
+          this.isLoading.set(false);
+          this.errorMessage.set(error.error?.message || 'Failed to create room');
+          console.error('Error creating room:', error);
+        }
+      });
     }
-
-    this.filterRooms();
-    this.closeRoomModal();
-    setTimeout(() => this.successMessage.set(''), 3000);
   }
 
   deleteRoom(roomId?: string) {
     if (!roomId) return;
 
     if (confirm('Are you sure you want to delete this room?')) {
-      this.rooms.set(this.rooms().filter(r => r._id !== roomId));
-      this.filterRooms();
-      this.successMessage.set('Room deleted successfully!');
-      setTimeout(() => this.successMessage.set(''), 3000);
+      this.isLoading.set(true);
+      this.hotelService.deleteRoom(roomId).subscribe({
+        next: (response: any) => {
+          this.isLoading.set(false);
+          if (response.status === 'success') {
+            this.rooms.set(this.rooms().filter(r => r._id !== roomId));
+            this.filterRooms();
+            this.successMessage.set('Room deleted successfully!');
+            setTimeout(() => this.successMessage.set(''), 3000);
+          } else {
+            this.errorMessage.set('Failed to delete room');
+          }
+        },
+        error: (error: any) => {
+          this.isLoading.set(false);
+          this.errorMessage.set(error.error?.message || 'Failed to delete room');
+          console.error('Error deleting room:', error);
+        }
+      });
     }
   }
 

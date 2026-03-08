@@ -225,4 +225,14 @@ export class FoodService {
       })
     );
   }
+
+  // DELETE order
+  deleteOrder(restaurantId: string, orderId: string): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(`${this.apiUrl}/${restaurantId}/orders/${orderId}`).pipe(
+      catchError((error) => {
+        console.error('Error deleting order:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
 }

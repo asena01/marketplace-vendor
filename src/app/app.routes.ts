@@ -34,6 +34,7 @@ import { RestaurantOrdersComponent } from './pages/vendors/dashboards/restaurant
 import { RetailProductsComponent } from './pages/vendors/dashboards/retail-dashboard/products/products.component';
 import { ReviewManagementComponent } from './pages/vendors/dashboards/shared/review-management/review-management.component';
 import { IncidentManagementComponent } from './pages/vendors/dashboards/shared/incident-management/incident-management.component';
+import { ProfileSettingsComponent } from './pages/vendors/dashboards/shared/profile-settings/profile-settings.component';
 import { VendorGuard } from './guards/vendor.guard';
 import { AdminGuard } from './guards/admin.guard';
 
@@ -54,7 +55,8 @@ export const routes: Routes = [
       { path: 'rooms', component: HotelRoomsComponent },
       { path: 'staff', component: HotelStaffComponent },
       { path: 'reviews', component: ReviewManagementComponent },
-      { path: 'incidents', component: IncidentManagementComponent }
+      { path: 'incidents', component: IncidentManagementComponent },
+      { path: 'settings', component: ProfileSettingsComponent }
     ]
   },
   // Restaurant Dashboard Routes
@@ -66,7 +68,8 @@ export const routes: Routes = [
       { path: 'menu', component: RestaurantMenuComponent },
       { path: 'orders', component: RestaurantOrdersComponent },
       { path: 'reviews', component: ReviewManagementComponent },
-      { path: 'incidents', component: IncidentManagementComponent }
+      { path: 'incidents', component: IncidentManagementComponent },
+      { path: 'settings', component: ProfileSettingsComponent }
     ]
   },
   // Retail Dashboard Routes
@@ -77,7 +80,8 @@ export const routes: Routes = [
     children: [
       { path: 'products', component: RetailProductsComponent },
       { path: 'reviews', component: ReviewManagementComponent },
-      { path: 'incidents', component: IncidentManagementComponent }
+      { path: 'incidents', component: IncidentManagementComponent },
+      { path: 'settings', component: ProfileSettingsComponent }
     ]
   },
   // Service Dashboard Routes
@@ -87,7 +91,8 @@ export const routes: Routes = [
     canActivate: [VendorGuard],
     children: [
       { path: 'reviews', component: ReviewManagementComponent },
-      { path: 'incidents', component: IncidentManagementComponent }
+      { path: 'incidents', component: IncidentManagementComponent },
+      { path: 'settings', component: ProfileSettingsComponent }
     ]
   },
   // Tours Dashboard Routes
@@ -97,7 +102,8 @@ export const routes: Routes = [
     canActivate: [VendorGuard],
     children: [
       { path: 'reviews', component: ReviewManagementComponent },
-      { path: 'incidents', component: IncidentManagementComponent }
+      { path: 'incidents', component: IncidentManagementComponent },
+      { path: 'settings', component: ProfileSettingsComponent }
     ]
   },
   { path: 'signup', component: SignupComponent },

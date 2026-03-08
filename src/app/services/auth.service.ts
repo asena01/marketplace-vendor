@@ -298,4 +298,32 @@ export class AuthService {
       })
     );
   }
+
+  /**
+   * Update user profile information
+   */
+  updateProfile(userId: string, profileData: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/users/${userId}`, profileData, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      tap((response: any) => {
+        if (response.success && response.data) {
+          this.setUser(response.data);
+          this.updateAuthState(response.data);
+        }
+      })
+    );
+  }
+
+  /**
+   * Change user password
+   */
+  changePassword(userId: string, oldPassword: string, newPassword: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/users/${userId}/change-password`, {
+      oldPassword,
+      newPassword
+    }, {
+      headers: this.getAuthHeaders()
+    });
+  }
 }

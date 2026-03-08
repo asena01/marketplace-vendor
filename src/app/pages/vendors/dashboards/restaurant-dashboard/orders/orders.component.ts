@@ -373,46 +373,53 @@ export class RestaurantOrdersComponent implements OnInit {
   selectedType = signal('');
   successMessage = signal('');
   errorMessage = signal('');
+  isLoading = signal(false);
+
+  restaurantId = signal<string>('');
 
   newOrder: Order = this.getEmptyOrder();
 
   constructor(private foodService: FoodService) {}
 
   ngOnInit() {
-    this.loadOrders();
+    // Get restaurant ID from localStorage (set during login)
+    const restaurantId = localStorage.getItem('restaurantId');
+    if (restaurantId) {
+      this.restaurantId.set(restaurantId);
+      this.loadOrders();
+    } else {
+      this.errorMessage.set('Restaurant ID not found. Please log in again.');
+    }
   }
 
   loadOrders() {
-    const mockOrders: Order[] = [
-      {
-        _id: '1',
-        orderNumber: 'ORD-001',
-        customerName: 'James Wilson',
-        tableNumber: '5',
-        items: [
-          { itemName: 'Caesar Salad', quantity: 2, price: 12.99 },
-          { itemName: 'Grilled Chicken', quantity: 1, price: 24.99 }
-        ],
-        totalAmount: 50.97,
-        status: 'pending',
-        orderType: 'dine-in',
-        createdAt: new Date().toISOString()
+    const restaurantId = this.restaurantId();
+    if (!restaurantId) {
+      this.errorMessage.set('Restaurant ID not found');
+      return;
+    }
+
+    this.isLoading.set(true);
+    this.foodService.getRestaurantOrders(restaurantId).subscribe({
+      next: (response: any) => {
+        this.isLoading.set(false);
+        if (response.status === 'success' && response.data) {
+          this.orders.set(response.data);
+          this.filterOrders();
+        } else {
+          // Fallback to empty array if no data
+          this.orders.set([]);
+          this.filterOrders();
+        }
       },
-      {
-        _id: '2',
-        orderNumber: 'ORD-002',
-        customerName: 'Sarah Johnson',
-        items: [
-          { itemName: 'Burger Combo', quantity: 2, price: 15.99 }
-        ],
-        totalAmount: 31.98,
-        status: 'preparing',
-        orderType: 'takeout',
-        createdAt: new Date().toISOString()
+      error: (error: any) => {
+        this.isLoading.set(false);
+        console.error('Error loading orders:', error);
+        this.errorMessage.set('Failed to load orders. Please try again later.');
+        // Keep existing orders in case of error
+        this.filterOrders();
       }
-    ];
-    this.orders.set(mockOrders);
-    this.filterOrders();
+    });
   }
 
   filterOrders() {
@@ -478,36 +485,96 @@ export class RestaurantOrdersComponent implements OnInit {
       return;
     }
 
-    this.newOrder.totalAmount = this.calculateTotal();
-
-    if (this.isEditing()) {
-      const index = this.orders().findIndex(o => o._id === this.newOrder._id);
-      if (index !== -1) {
-        const updated = [...this.orders()];
-        updated[index] = this.newOrder;
-        this.orders.set(updated);
-      }
-      this.successMessage.set('Order updated successfully!');
-    } else {
-      this.newOrder._id = Date.now().toString();
-      this.newOrder.orderNumber = `ORD-${String(this.orders().length + 1).padStart(3, '0')}`;
-      this.orders.set([...this.orders(), this.newOrder]);
-      this.successMessage.set('Order created successfully!');
+    const restaurantId = this.restaurantId();
+    if (!restaurantId) {
+      this.errorMessage.set('Restaurant ID not found');
+      return;
     }
 
-    this.filterOrders();
-    this.closeOrderModal();
-    setTimeout(() => this.successMessage.set(''), 3000);
+    this.newOrder.totalAmount = this.calculateTotal();
+
+    if (this.isEditing() && this.newOrder._id) {
+      // Update existing order via API
+      this.isLoading.set(true);
+      this.foodService.getOrderById(restaurantId, this.newOrder._id).subscribe({
+        next: (response: any) => {
+          this.isLoading.set(false);
+          // The component will update the local state
+          const index = this.orders().findIndex(o => o._id === this.newOrder._id);
+          if (index !== -1) {
+            const updated = [...this.orders()];
+            updated[index] = this.newOrder;
+            this.orders.set(updated);
+          }
+          this.successMessage.set('Order updated successfully!');
+          this.filterOrders();
+          this.closeOrderModal();
+          setTimeout(() => this.successMessage.set(''), 3000);
+        },
+        error: (error: any) => {
+          this.isLoading.set(false);
+          this.errorMessage.set('Failed to update order');
+          console.error('Error updating order:', error);
+        }
+      });
+    } else {
+      // Create new order via API
+      this.isLoading.set(true);
+      this.foodService.createOrder(restaurantId, this.newOrder).subscribe({
+        next: (response: any) => {
+          this.isLoading.set(false);
+          if (response.status === 'success' && response.data) {
+            // Add the created order to the list
+            this.orders.set([...this.orders(), response.data]);
+            this.successMessage.set('Order created successfully!');
+          } else {
+            this.errorMessage.set('Failed to create order');
+          }
+          this.filterOrders();
+          this.closeOrderModal();
+          setTimeout(() => {
+            this.successMessage.set('');
+            this.errorMessage.set('');
+          }, 3000);
+        },
+        error: (error: any) => {
+          this.isLoading.set(false);
+          this.errorMessage.set(error.error?.message || 'Failed to create order');
+          console.error('Error creating order:', error);
+        }
+      });
+    }
   }
 
   deleteOrder(orderId?: string) {
     if (!orderId) return;
 
+    const restaurantId = this.restaurantId();
+    if (!restaurantId) {
+      this.errorMessage.set('Restaurant ID not found');
+      return;
+    }
+
     if (confirm('Are you sure you want to delete this order?')) {
-      this.orders.set(this.orders().filter(o => o._id !== orderId));
-      this.filterOrders();
-      this.successMessage.set('Order deleted successfully!');
-      setTimeout(() => this.successMessage.set(''), 3000);
+      this.isLoading.set(true);
+      this.foodService.deleteOrder(restaurantId, orderId).subscribe({
+        next: (response: any) => {
+          this.isLoading.set(false);
+          if (response.status === 'success') {
+            this.orders.set(this.orders().filter(o => o._id !== orderId));
+            this.filterOrders();
+            this.successMessage.set('Order deleted successfully!');
+            setTimeout(() => this.successMessage.set(''), 3000);
+          } else {
+            this.errorMessage.set('Failed to delete order');
+          }
+        },
+        error: (error: any) => {
+          this.isLoading.set(false);
+          this.errorMessage.set(error.error?.message || 'Failed to delete order');
+          console.error('Error deleting order:', error);
+        }
+      });
     }
   }
 

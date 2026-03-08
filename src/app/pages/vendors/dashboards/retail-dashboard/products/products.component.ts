@@ -369,6 +369,7 @@ export class RetailProductsComponent implements OnInit {
   maxPrice: number = 9999;
   successMessage = signal('');
   errorMessage = signal('');
+  isLoading = signal(false);
 
   newProduct: Product = this.getEmptyProduct();
 
@@ -379,52 +380,27 @@ export class RetailProductsComponent implements OnInit {
   }
 
   loadProducts() {
-    const mockProducts: Product[] = [
-      {
-        _id: '1',
-        name: 'Blue Cotton T-Shirt',
-        category: 'Clothing',
-        description: '100% cotton, comfortable and breathable',
-        price: 24.99,
-        originalPrice: 34.99,
-        sku: 'TSH-BLU-001',
-        stock: 45,
-        sold: 120,
-        rating: 4.5,
-        isFeatured: true,
-        isActive: true
+    this.isLoading.set(true);
+    this.productService.getProducts().subscribe({
+      next: (response: any) => {
+        this.isLoading.set(false);
+        if (response.success && response.data) {
+          this.products.set(response.data);
+          this.filterProducts();
+        } else {
+          // Fallback to empty array if no data
+          this.products.set([]);
+          this.filterProducts();
+        }
       },
-      {
-        _id: '2',
-        name: 'Leather Wallet',
-        category: 'Accessories',
-        description: 'Premium leather wallet with RFID protection',
-        price: 49.99,
-        originalPrice: 59.99,
-        sku: 'WAL-LEA-001',
-        stock: 18,
-        sold: 85,
-        rating: 4.7,
-        isFeatured: false,
-        isActive: true
-      },
-      {
-        _id: '3',
-        name: 'Running Shoes',
-        category: 'Footwear',
-        description: 'Comfortable running shoes with memory foam',
-        price: 89.99,
-        originalPrice: 129.99,
-        sku: 'SHO-RUN-001',
-        stock: 0,
-        sold: 250,
-        rating: 4.6,
-        isFeatured: true,
-        isActive: true
+      error: (error: any) => {
+        this.isLoading.set(false);
+        console.error('Error loading products:', error);
+        this.errorMessage.set('Failed to load products. Please try again later.');
+        // Keep existing products in case of error
+        this.filterProducts();
       }
-    ];
-    this.products.set(mockProducts);
-    this.filterProducts();
+    });
   }
 
   filterProducts() {
@@ -489,33 +465,87 @@ export class RetailProductsComponent implements OnInit {
       return;
     }
 
-    if (this.isEditing()) {
-      const index = this.products().findIndex(p => p._id === this.newProduct._id);
-      if (index !== -1) {
-        const updated = [...this.products()];
-        updated[index] = this.newProduct;
-        this.products.set(updated);
-      }
-      this.successMessage.set('Product updated successfully!');
+    if (this.isEditing() && this.newProduct._id) {
+      // Update existing product via API
+      this.isLoading.set(true);
+      this.productService.updateProduct(this.newProduct._id, this.newProduct).subscribe({
+        next: (response: any) => {
+          this.isLoading.set(false);
+          if (response.success) {
+            const index = this.products().findIndex(p => p._id === this.newProduct._id);
+            if (index !== -1) {
+              const updated = [...this.products()];
+              updated[index] = response.data || this.newProduct;
+              this.products.set(updated);
+            }
+            this.successMessage.set('Product updated successfully!');
+          } else {
+            this.errorMessage.set('Failed to update product');
+          }
+          this.filterProducts();
+          this.closeProductModal();
+          setTimeout(() => {
+            this.successMessage.set('');
+            this.errorMessage.set('');
+          }, 3000);
+        },
+        error: (error: any) => {
+          this.isLoading.set(false);
+          this.errorMessage.set(error.error?.message || 'Failed to update product');
+          console.error('Error updating product:', error);
+        }
+      });
     } else {
-      this.newProduct._id = Date.now().toString();
-      this.products.set([...this.products(), this.newProduct]);
-      this.successMessage.set('Product added successfully!');
+      // Create new product via API
+      this.isLoading.set(true);
+      this.productService.createProduct(this.newProduct).subscribe({
+        next: (response: any) => {
+          this.isLoading.set(false);
+          if (response.success && response.data) {
+            this.products.set([...this.products(), response.data]);
+            this.successMessage.set('Product added successfully!');
+          } else {
+            this.errorMessage.set('Failed to add product');
+          }
+          this.filterProducts();
+          this.closeProductModal();
+          setTimeout(() => {
+            this.successMessage.set('');
+            this.errorMessage.set('');
+          }, 3000);
+        },
+        error: (error: any) => {
+          this.isLoading.set(false);
+          this.errorMessage.set(error.error?.message || 'Failed to add product');
+          console.error('Error adding product:', error);
+        }
+      });
     }
-
-    this.filterProducts();
-    this.closeProductModal();
-    setTimeout(() => this.successMessage.set(''), 3000);
   }
 
   deleteProduct(productId?: string) {
     if (!productId) return;
 
     if (confirm('Are you sure you want to delete this product?')) {
-      this.products.set(this.products().filter(p => p._id !== productId));
-      this.filterProducts();
-      this.successMessage.set('Product deleted successfully!');
-      setTimeout(() => this.successMessage.set(''), 3000);
+      this.isLoading.set(true);
+      this.productService.deleteProduct(productId).subscribe({
+        next: (response: any) => {
+          this.isLoading.set(false);
+          if (response.success) {
+            this.products.set(this.products().filter(p => p._id !== productId));
+            this.filterProducts();
+            this.successMessage.set('Product deleted successfully!');
+            setTimeout(() => this.successMessage.set(''), 3000);
+          } else {
+            this.errorMessage.set('Failed to delete product');
+          }
+        },
+        error: (error: any) => {
+          this.isLoading.set(false);
+          this.errorMessage.set(error.error?.message || 'Failed to delete product');
+          console.error('Error deleting product:', error);
+        }
+      });
     }
   }
 

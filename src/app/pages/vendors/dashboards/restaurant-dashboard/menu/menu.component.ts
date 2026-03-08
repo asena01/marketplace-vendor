@@ -322,56 +322,53 @@ export class RestaurantMenuComponent implements OnInit {
   selectedAvailability = signal('');
   successMessage = signal('');
   errorMessage = signal('');
+  isLoading = signal(false);
+
+  restaurantId = signal<string>('');
 
   newMenuItem: MenuItem = this.getEmptyMenuItem();
 
   constructor(private foodService: FoodService) {}
 
   ngOnInit() {
-    this.loadMenuItems();
+    // Get restaurant ID from localStorage (set during login)
+    const restaurantId = localStorage.getItem('restaurantId');
+    if (restaurantId) {
+      this.restaurantId.set(restaurantId);
+      this.loadMenuItems();
+    } else {
+      this.errorMessage.set('Restaurant ID not found. Please log in again.');
+    }
   }
 
   loadMenuItems() {
-    const mockItems: MenuItem[] = [
-      {
-        _id: '1',
-        name: 'Caesar Salad',
-        category: 'appetizers',
-        description: 'Fresh romaine lettuce with Caesar dressing and croutons',
-        price: 12.99,
-        prepTime: 10,
-        isAvailable: true
+    const restaurantId = this.restaurantId();
+    if (!restaurantId) {
+      this.errorMessage.set('Restaurant ID not found');
+      return;
+    }
+
+    this.isLoading.set(true);
+    this.foodService.getRestaurantMenus(restaurantId).subscribe({
+      next: (response: any) => {
+        this.isLoading.set(false);
+        if (response.status === 'success' && response.data) {
+          this.menuItems.set(response.data);
+          this.filterMenuItems();
+        } else {
+          // Fallback to empty array if no data
+          this.menuItems.set([]);
+          this.filterMenuItems();
+        }
       },
-      {
-        _id: '2',
-        name: 'Grilled Salmon',
-        category: 'main-course',
-        description: 'Fresh salmon fillet with lemon butter sauce',
-        price: 34.99,
-        prepTime: 25,
-        isAvailable: true,
-        isSpecial: true
-      },
-      {
-        _id: '3',
-        name: 'Chocolate Cake',
-        category: 'desserts',
-        description: 'Rich chocolate cake with vanilla ice cream',
-        price: 8.99,
-        prepTime: 5,
-        isAvailable: true
-      },
-      {
-        _id: '4',
-        name: 'Fresh Orange Juice',
-        category: 'beverages',
-        description: 'Freshly squeezed orange juice',
-        price: 5.99,
-        prepTime: 3,
-        isAvailable: false
+      error: (error: any) => {
+        this.isLoading.set(false);
+        console.error('Error loading menu items:', error);
+        this.errorMessage.set('Failed to load menu items. Please try again later.');
+        // Keep existing menu items in case of error
+        this.filterMenuItems();
       }
-    ];
-    this.menuItems.set(mockItems);
+    });
     this.filterMenuItems();
   }
 
@@ -430,33 +427,99 @@ export class RestaurantMenuComponent implements OnInit {
       return;
     }
 
-    if (this.isEditing()) {
-      const index = this.menuItems().findIndex(m => m._id === this.newMenuItem._id);
-      if (index !== -1) {
-        const updated = [...this.menuItems()];
-        updated[index] = this.newMenuItem;
-        this.menuItems.set(updated);
-      }
-      this.successMessage.set('Menu item updated successfully!');
-    } else {
-      this.newMenuItem._id = Date.now().toString();
-      this.menuItems.set([...this.menuItems(), this.newMenuItem]);
-      this.successMessage.set('Menu item added successfully!');
+    const restaurantId = this.restaurantId();
+    if (!restaurantId) {
+      this.errorMessage.set('Restaurant ID not found');
+      return;
     }
 
-    this.filterMenuItems();
-    this.closeMenuModal();
-    setTimeout(() => this.successMessage.set(''), 3000);
+    if (this.isEditing() && this.newMenuItem._id) {
+      // Update existing menu item via API
+      this.isLoading.set(true);
+      this.foodService.updateMenuItem(restaurantId, this.newMenuItem._id, this.newMenuItem).subscribe({
+        next: (response: any) => {
+          this.isLoading.set(false);
+          if (response.status === 'success') {
+            const index = this.menuItems().findIndex(m => m._id === this.newMenuItem._id);
+            if (index !== -1) {
+              const updated = [...this.menuItems()];
+              updated[index] = response.data || this.newMenuItem;
+              this.menuItems.set(updated);
+            }
+            this.successMessage.set('Menu item updated successfully!');
+          } else {
+            this.errorMessage.set('Failed to update menu item');
+          }
+          this.filterMenuItems();
+          this.closeMenuModal();
+          setTimeout(() => {
+            this.successMessage.set('');
+            this.errorMessage.set('');
+          }, 3000);
+        },
+        error: (error: any) => {
+          this.isLoading.set(false);
+          this.errorMessage.set(error.error?.message || 'Failed to update menu item');
+          console.error('Error updating menu item:', error);
+        }
+      });
+    } else {
+      // Create new menu item via API
+      this.isLoading.set(true);
+      this.foodService.addMenuItem(restaurantId, this.newMenuItem).subscribe({
+        next: (response: any) => {
+          this.isLoading.set(false);
+          if (response.status === 'success' && response.data) {
+            this.menuItems.set([...this.menuItems(), response.data]);
+            this.successMessage.set('Menu item added successfully!');
+          } else {
+            this.errorMessage.set('Failed to add menu item');
+          }
+          this.filterMenuItems();
+          this.closeMenuModal();
+          setTimeout(() => {
+            this.successMessage.set('');
+            this.errorMessage.set('');
+          }, 3000);
+        },
+        error: (error: any) => {
+          this.isLoading.set(false);
+          this.errorMessage.set(error.error?.message || 'Failed to add menu item');
+          console.error('Error adding menu item:', error);
+        }
+      });
+    }
   }
 
   deleteMenuItem(itemId?: string) {
     if (!itemId) return;
 
+    const restaurantId = this.restaurantId();
+    if (!restaurantId) {
+      this.errorMessage.set('Restaurant ID not found');
+      return;
+    }
+
     if (confirm('Are you sure you want to delete this menu item?')) {
-      this.menuItems.set(this.menuItems().filter(m => m._id !== itemId));
-      this.filterMenuItems();
-      this.successMessage.set('Menu item deleted successfully!');
-      setTimeout(() => this.successMessage.set(''), 3000);
+      this.isLoading.set(true);
+      this.foodService.deleteMenuItem(restaurantId, itemId).subscribe({
+        next: (response: any) => {
+          this.isLoading.set(false);
+          if (response.status === 'success') {
+            this.menuItems.set(this.menuItems().filter(m => m._id !== itemId));
+            this.filterMenuItems();
+            this.successMessage.set('Menu item deleted successfully!');
+            setTimeout(() => this.successMessage.set(''), 3000);
+          } else {
+            this.errorMessage.set('Failed to delete menu item');
+          }
+        },
+        error: (error: any) => {
+          this.isLoading.set(false);
+          this.errorMessage.set(error.error?.message || 'Failed to delete menu item');
+          console.error('Error deleting menu item:', error);
+        }
+      });
     }
   }
 

@@ -330,6 +330,7 @@ export class HotelStaffComponent implements OnInit {
   selectedStatus = signal('');
   successMessage = signal('');
   errorMessage = signal('');
+  isLoading = signal(false);
 
   newStaff: Staff = this.getEmptyStaff();
 
@@ -340,43 +341,27 @@ export class HotelStaffComponent implements OnInit {
   }
 
   loadStaff() {
-    const mockStaff: Staff[] = [
-      {
-        _id: '1',
-        name: 'Sarah Johnson',
-        email: 'sarah&#64;hotel.com',
-        phone: '+1234567890',
-        position: 'manager',
-        department: 'Management',
-        salary: 5000,
-        hireDate: '2020-01-15',
-        status: 'active'
+    this.isLoading.set(true);
+    this.hotelService.getStaff().subscribe({
+      next: (response: any) => {
+        this.isLoading.set(false);
+        if (response.status === 'success' && response.data) {
+          this.staff.set(response.data);
+          this.filterStaff();
+        } else {
+          // Fallback to empty array if no data
+          this.staff.set([]);
+          this.filterStaff();
+        }
       },
-      {
-        _id: '2',
-        name: 'Mike Chen',
-        email: 'mike&#64;hotel.com',
-        phone: '+1234567891',
-        position: 'receptionist',
-        department: 'Front Desk',
-        salary: 2000,
-        hireDate: '2021-06-20',
-        status: 'active'
-      },
-      {
-        _id: '3',
-        name: 'Emma Davis',
-        email: 'emma&#64;hotel.com',
-        phone: '+1234567892',
-        position: 'housekeeper',
-        department: 'Housekeeping',
-        salary: 1800,
-        hireDate: '2022-03-10',
-        status: 'on-leave'
+      error: (error: any) => {
+        this.isLoading.set(false);
+        console.error('Error loading staff:', error);
+        this.errorMessage.set('Failed to load staff. Please try again later.');
+        // Keep existing staff in case of error
+        this.filterStaff();
       }
-    ];
-    this.staff.set(mockStaff);
-    this.filterStaff();
+    });
   }
 
   filterStaff() {
@@ -428,33 +413,87 @@ export class HotelStaffComponent implements OnInit {
       return;
     }
 
-    if (this.isEditing()) {
-      const index = this.staff().findIndex(s => s._id === this.newStaff._id);
-      if (index !== -1) {
-        const updated = [...this.staff()];
-        updated[index] = this.newStaff;
-        this.staff.set(updated);
-      }
-      this.successMessage.set('Staff member updated successfully!');
+    if (this.isEditing() && this.newStaff._id) {
+      // Update existing staff member via API
+      this.isLoading.set(true);
+      this.hotelService.updateStaff(this.newStaff._id, this.newStaff).subscribe({
+        next: (response: any) => {
+          this.isLoading.set(false);
+          if (response.status === 'success') {
+            const index = this.staff().findIndex(s => s._id === this.newStaff._id);
+            if (index !== -1) {
+              const updated = [...this.staff()];
+              updated[index] = response.data || this.newStaff;
+              this.staff.set(updated);
+            }
+            this.successMessage.set('Staff member updated successfully!');
+          } else {
+            this.errorMessage.set('Failed to update staff member');
+          }
+          this.filterStaff();
+          this.closeStaffModal();
+          setTimeout(() => {
+            this.successMessage.set('');
+            this.errorMessage.set('');
+          }, 3000);
+        },
+        error: (error: any) => {
+          this.isLoading.set(false);
+          this.errorMessage.set(error.error?.message || 'Failed to update staff member');
+          console.error('Error updating staff member:', error);
+        }
+      });
     } else {
-      this.newStaff._id = Date.now().toString();
-      this.staff.set([...this.staff(), this.newStaff]);
-      this.successMessage.set('Staff member added successfully!');
+      // Create new staff member via API
+      this.isLoading.set(true);
+      this.hotelService.createStaff(this.newStaff).subscribe({
+        next: (response: any) => {
+          this.isLoading.set(false);
+          if (response.status === 'success' && response.data) {
+            this.staff.set([...this.staff(), response.data]);
+            this.successMessage.set('Staff member added successfully!');
+          } else {
+            this.errorMessage.set('Failed to add staff member');
+          }
+          this.filterStaff();
+          this.closeStaffModal();
+          setTimeout(() => {
+            this.successMessage.set('');
+            this.errorMessage.set('');
+          }, 3000);
+        },
+        error: (error: any) => {
+          this.isLoading.set(false);
+          this.errorMessage.set(error.error?.message || 'Failed to add staff member');
+          console.error('Error adding staff member:', error);
+        }
+      });
     }
-
-    this.filterStaff();
-    this.closeStaffModal();
-    setTimeout(() => this.successMessage.set(''), 3000);
   }
 
   deleteStaff(staffId?: string) {
     if (!staffId) return;
 
     if (confirm('Are you sure you want to remove this staff member?')) {
-      this.staff.set(this.staff().filter(s => s._id !== staffId));
-      this.filterStaff();
-      this.successMessage.set('Staff member deleted successfully!');
-      setTimeout(() => this.successMessage.set(''), 3000);
+      this.isLoading.set(true);
+      this.hotelService.deleteStaff(staffId).subscribe({
+        next: (response: any) => {
+          this.isLoading.set(false);
+          if (response.status === 'success') {
+            this.staff.set(this.staff().filter(s => s._id !== staffId));
+            this.filterStaff();
+            this.successMessage.set('Staff member deleted successfully!');
+            setTimeout(() => this.successMessage.set(''), 3000);
+          } else {
+            this.errorMessage.set('Failed to delete staff member');
+          }
+        },
+        error: (error: any) => {
+          this.isLoading.set(false);
+          this.errorMessage.set(error.error?.message || 'Failed to delete staff member');
+          console.error('Error deleting staff member:', error);
+        }
+      });
     }
   }
 
