@@ -344,11 +344,7 @@ export class CustomerHotelBookingsComponent implements OnInit {
       notes: ''
     };
 
-    this.customerService.orderRoomService(
-      this.selectedBooking()?._id || '',
-      this.selectedBooking()?._id || '',
-      orderData
-    ).subscribe(
+    this.customerService.orderRoomService(orderData).subscribe(
       (response: any) => {
         if (response.success) {
           alert('✓ Room service order placed successfully!');

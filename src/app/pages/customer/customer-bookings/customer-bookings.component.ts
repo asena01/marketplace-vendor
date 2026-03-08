@@ -128,14 +128,14 @@ export class CustomerBookingsComponent implements OnInit {
     this.error.set('');
 
     this.customerService.getCustomerBookings(1, 100).subscribe({
-      next: (response) => {
+      next: (response: any) => {
         if (response.success) {
           this.bookings.set(response.data || []);
           console.log('✅ Bookings loaded:', response.data?.length);
         }
         this.isLoading.set(false);
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('❌ Error loading bookings:', error);
         this.error.set(error.error?.message || 'Failed to load bookings');
         this.isLoading.set(false);

@@ -154,24 +154,38 @@ export class NotificationsComponent implements OnInit {
   constructor(private notificationService: NotificationService) {}
 
   ngOnInit(): void {
-    // Subscribe to notification service
-    this.notifications = this.notificationService.notifications;
-    this.unreadCount = this.notificationService.unreadCount;
+    // Load notifications from service
+    this.loadNotifications();
 
     // Show toast notifications for important types
     setInterval(() => {
-      const unshownNotifications = this.notificationService.notifications()
-        .filter(n => n.type === 'order' || n.type === 'delivery' || n.type === 'error')
-        .filter(n => !this.toastNotifications.find(t => t.id === n.id));
-      
-      unshownNotifications.forEach(n => {
+      const currentNotifications = this.notifications();
+      const unshownNotifications = currentNotifications
+        .filter((n: any) => n.type === 'order' || n.type === 'delivery' || n.type === 'error')
+        .filter((n: any) => !this.toastNotifications.find(t => t._id === n._id || t.id === n.id));
+
+      unshownNotifications.forEach((n: any) => {
         this.toastNotifications.push(n);
         // Auto-remove after 5 seconds
         setTimeout(() => {
-          this.removeToastNotification(n.id!);
+          this.removeToastNotification(n._id || n.id);
         }, 5000);
       });
     }, 500);
+  }
+
+  loadNotifications(): void {
+    this.notificationService.getNotifications(1, 50).subscribe({
+      next: (response: any) => {
+        if (response.success && response.data) {
+          this.notifications.set(response.data);
+          this.unreadCount.set(response.data.filter((n: any) => !n.isRead).length);
+        }
+      },
+      error: (error: any) => {
+        console.error('Error loading notifications:', error);
+      }
+    });
   }
 
   toggleDropdown(): void {
@@ -194,14 +208,14 @@ export class NotificationsComponent implements OnInit {
   }
 
   removeToastNotification(id: string): void {
-    this.toastNotifications = this.toastNotifications.filter(n => n.id !== id);
+    this.toastNotifications = this.toastNotifications.filter(n => (n._id !== id && n.id !== id));
   }
 
   clearAll(): void {
     this.notificationService.clearAll();
   }
 
-  formatTime(date?: Date): string {
+  formatTime(date?: Date | string): string {
     if (!date) return '';
     const now = new Date();
     const diff = now.getTime() - new Date(date).getTime();

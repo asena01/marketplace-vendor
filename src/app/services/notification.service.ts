@@ -4,10 +4,11 @@ import { Observable } from 'rxjs';
 
 export interface Notification {
   _id?: string;
+  id?: string;
   userId: string;
   businessId: string;
   businessType: string;
-  type: 'sale' | 'low_stock' | 'review' | 'order' | 'delivery' | 'system';
+  type: 'sale' | 'low_stock' | 'review' | 'order' | 'delivery' | 'system' | 'success' | 'error' | 'warning' | 'info';
   title: string;
   message: string;
   priority: 'low' | 'medium' | 'high';
@@ -15,8 +16,10 @@ export interface Notification {
   relatedId?: string;
   relatedModel?: string;
   isRead: boolean;
+  read?: boolean;
   readAt?: string;
   createdAt: string;
+  timestamp?: string;
 }
 
 export interface NotificationResponse<T> {
@@ -119,5 +122,15 @@ export class NotificationService {
 
   info(title: string, message: string): void {
     console.info(`ℹ ${title}: ${message}`);
+  }
+
+  removeNotification(notificationId: string): Observable<NotificationResponse<any>> {
+    return this.http.delete<NotificationResponse<any>>(
+      `${this.apiUrl}/${notificationId}`
+    );
+  }
+
+  clearAll(): void {
+    console.log('All notifications cleared');
   }
 }
