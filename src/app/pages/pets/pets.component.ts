@@ -200,7 +200,7 @@ export class PetsComponent implements OnInit {
         if (response.status === 'success' && response.data?.sessionId) {
           // Redirect to Stripe checkout
           this.paymentService.redirectToCheckout(response.data.sessionId)
-            .catch(error => {
+            .catch((error: any) => {
               this.paymentError.set(error.message || 'Failed to redirect to checkout');
               this.isProcessingPayment.set(false);
             });

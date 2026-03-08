@@ -544,20 +544,16 @@ import { ReturnService, ProductReturn } from '../../../services/return.service';
                   <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
                     <div class="flex items-start justify-between mb-3">
                       <div>
-                        <h4 class="font-bold text-gray-900">{{ return.productId }}</h4>
+                        <h4 class="font-bold text-gray-900">{{ getReturnProductId(return) }}</h4>
                         <p class="text-sm text-gray-600">Order: {{ return.orderId }}</p>
                       </div>
-                      <span [class]="'text-xs font-semibold px-3 py-1 rounded-full ' +
-                        (return.returnStatus === 'completed' ? 'bg-green-100 text-green-700' :
-                         return.returnStatus === 'approved' ? 'bg-blue-100 text-blue-700' :
-                         return.returnStatus === 'rejected' ? 'bg-red-100 text-red-700' :
-                         'bg-yellow-100 text-yellow-700')">
-                        {{ return.returnStatus | titlecase }}
+                      <span [class]="'text-xs font-semibold px-3 py-1 rounded-full ' + getReturnStatusClass(return)">
+                        {{ getReturnStatus(return) | titlecase }}
                       </span>
                     </div>
 
                     <div class="mb-3 pb-3 border-b border-gray-200">
-                      <p class="text-sm text-gray-700 mb-2"><strong>Reason:</strong> {{ return.reason }}</p>
+                      <p class="text-sm text-gray-700 mb-2"><strong>Reason:</strong> {{ getReturnReason(return) }}</p>
                       <p class="text-sm text-gray-600">{{ return.description }}</p>
                     </div>
 
@@ -571,7 +567,7 @@ import { ReturnService, ProductReturn } from '../../../services/return.service';
                       </div>
                     </div>
 
-                    @if (return.returnStatus === 'approved' || return.returnStatus === 'shipped') {
+                    @if (isReturnShippable(return)) {
                       <div class="mt-3 p-3 bg-blue-50 rounded text-sm">
                         @if (return.trackingNumber) {
                           <p class="text-blue-700"><strong>Tracking:</strong> {{ return.trackingNumber }}</p>
@@ -738,14 +734,14 @@ export class CustomerProfileComponent implements OnInit {
 
   loadReturns(): void {
     this.returnService.getMyReturns().subscribe({
-      next: (response) => {
+      next: (response: any) => {
         if (response.success && response.data) {
           this.myReturns.set(response.data);
           this.returnsCount.set(response.data.length);
           console.log('✅ Returns loaded');
         }
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('❌ Error loading returns:', error);
       }
     });
@@ -935,5 +931,37 @@ export class CustomerProfileComponent implements OnInit {
         this.error.set('Failed to remove item');
       }
     });
+  }
+
+  // Helper methods for return display
+  getReturnProductId(returnItem: any): string {
+    return returnItem.productId || returnItem.orderId || 'Unknown';
+  }
+
+  getReturnReason(returnItem: any): string {
+    return returnItem.reason || returnItem.returnReason || 'No reason provided';
+  }
+
+  getReturnStatus(returnItem: any): string {
+    return returnItem.returnStatus || returnItem.status || 'unknown';
+  }
+
+  getReturnStatusClass(returnItem: any): string {
+    const status = returnItem.returnStatus || returnItem.status || '';
+    switch (status) {
+      case 'completed':
+        return 'bg-green-100 text-green-700';
+      case 'approved':
+        return 'bg-blue-100 text-blue-700';
+      case 'rejected':
+        return 'bg-red-100 text-red-700';
+      default:
+        return 'bg-yellow-100 text-yellow-700';
+    }
+  }
+
+  isReturnShippable(returnItem: any): boolean {
+    const status = returnItem.returnStatus || returnItem.status || '';
+    return status === 'approved' || status === 'shipped';
   }
 }

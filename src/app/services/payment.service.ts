@@ -36,10 +36,55 @@ export interface Refund {
   updatedAt?: string;
 }
 
+export interface PaymentMethod {
+  id: string;
+  type?: 'credit_card' | 'debit_card' | 'bank_transfer' | 'mobile_money' | 'wallet';
+  name: string;
+  icon?: string;
+  description?: string;
+  last4?: string;
+  expiryDate?: string;
+  isDefault?: boolean;
+}
+
+export interface PaymentRequest {
+  orderId: string;
+  amount: number;
+  currency: string;
+  paymentMethod: PaymentMethod | string;
+  description?: string;
+  metadata?: any;
+  items?: any[];
+  cardDetails?: {
+    cardNumber: string;
+    cardholderName: string;
+    expiryMonth: string;
+    expiryYear: string;
+    cvv: string;
+  };
+  bankDetails?: {
+    bankName: string;
+    accountNumber: string;
+    accountName: string;
+    bankCode?: string;
+  };
+  mobileMoneyDetails?: {
+    provider: string;
+    phoneNumber: string;
+  };
+  walletDetails?: {
+    walletProvider?: string;
+    walletId: string;
+  };
+  [key: string]: any; // Allow additional properties
+}
+
 export interface PaymentResponse {
   success: boolean;
   message: string;
   data?: PaymentTransaction | PaymentTransaction[] | Refund | Refund[];
+  transactionId?: string;
+  amount?: number;
   pagination?: {
     total: number;
     page: number;
@@ -219,6 +264,48 @@ export class PaymentService {
   rejectRefund(refundId: string, reason: string): Observable<PaymentResponse> {
     return this.http.patch<PaymentResponse>(`${this.refundsUrl}/${refundId}/reject`, {
       reason
+    });
+  }
+
+  // ==================== ADDITIONAL PAYMENT METHODS ====================
+
+  /**
+   * Get available payment methods
+   */
+  getPaymentMethods(): Observable<PaymentResponse> {
+    return this.http.get<PaymentResponse>(`${this.apiUrl}/methods`);
+  }
+
+  /**
+   * Process payment
+   */
+  processPayment(paymentRequest: PaymentRequest): Observable<PaymentResponse> {
+    return this.http.post<PaymentResponse>(`${this.apiUrl}/process`, paymentRequest);
+  }
+
+  /**
+   * Create checkout session (for Stripe/external payment gateways)
+   */
+  createCheckoutSession(checkoutData: any): Observable<PaymentResponse> {
+    return this.http.post<PaymentResponse>(`${this.apiUrl}/checkout-session`, checkoutData);
+  }
+
+  /**
+   * Redirect to checkout (for external payment gateways)
+   */
+  redirectToCheckout(sessionId: string): Promise<void> {
+    // This would typically redirect to an external checkout page
+    return new Promise((resolve, reject) => {
+      try {
+        if (typeof window !== 'undefined') {
+          window.location.href = `${this.apiUrl}/checkout/${sessionId}`;
+          resolve();
+        } else {
+          reject(new Error('Window object not available'));
+        }
+      } catch (error) {
+        reject(error);
+      }
     });
   }
 

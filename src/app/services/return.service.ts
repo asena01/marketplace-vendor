@@ -18,8 +18,11 @@ export interface Return {
   customerId: string;
   customerName: string;
   customerEmail: string;
+  productId: string;
   items: ReturnItem[];
   returnReason: string;
+  reason: string; // Alias for returnReason
+  returnStatus: string; // Alias for status - mirrors the 'status' field
   description?: string;
   status: 'pending' | 'approved' | 'rejected' | 'shipped' | 'received' | 'completed' | 'closed';
   refundAmount: number;
@@ -35,6 +38,8 @@ export interface Return {
   createdAt?: string;
   updatedAt?: string;
 }
+
+export type ProductReturn = Return;
 
 export interface ReturnReason {
   _id?: string;
@@ -60,6 +65,7 @@ export interface ReturnResponse {
 @Injectable({
   providedIn: 'root'
 })
+// Updated interface with additional properties for customer profile display
 export class ReturnService {
   private apiUrl = 'http://localhost:5001/returns';
   private reasonsUrl = 'http://localhost:5001/return-reasons';
@@ -255,5 +261,12 @@ export class ReturnService {
    */
   getCommonReturnReasons(vendorId: string): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/vendor/${vendorId}/common-reasons`);
+  }
+
+  /**
+   * Get my returns for current customer
+   */
+  getMyReturns(): Observable<ReturnResponse> {
+    return this.http.get<ReturnResponse>(`${this.apiUrl}/my-returns`);
   }
 }
