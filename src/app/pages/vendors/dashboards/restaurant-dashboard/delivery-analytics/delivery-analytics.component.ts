@@ -240,22 +240,29 @@ export class DeliveryAnalyticsComponent implements OnInit {
             inTransit: response.data.inTransit || 18,
             failed: response.data.failed || 8
           });
+        } else {
+          // API returned error status or no data, use mock data
+          this.setMockData();
         }
       },
       error: (error: any) => {
         this.isLoading.set(false);
         console.error('Error loading analytics:', error);
         // Set mock data for demonstration
-        this.stats.set({
-          totalDeliveries: 171,
-          successRate: 92,
-          avgDeliveryTime: 28,
-          totalRevenue: 4250,
-          completed: 145,
-          inTransit: 18,
-          failed: 8
-        });
+        this.setMockData();
       }
+    });
+  }
+
+  private setMockData(): void {
+    this.stats.set({
+      totalDeliveries: 171,
+      successRate: 92,
+      avgDeliveryTime: 28,
+      totalRevenue: 4250,
+      completed: 145,
+      inTransit: 18,
+      failed: 8
     });
   }
 
