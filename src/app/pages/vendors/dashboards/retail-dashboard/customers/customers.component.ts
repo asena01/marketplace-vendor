@@ -2,6 +2,7 @@ import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
+import { CustomerService } from '../../../../../services/customer.service';
 
 interface Customer {
   _id?: string;
@@ -48,11 +49,29 @@ interface Customer {
         </div>
       }
 
+      <!-- Loading State -->
+      @if (isLoading()) {
+        <div class="bg-blue-50 border border-blue-300 text-blue-700 px-4 py-3 rounded-lg">
+          <p class="font-semibold flex items-center gap-2">
+            <mat-icon class="text-lg animate-spin">refresh</mat-icon>
+            Loading customers...
+          </p>
+        </div>
+      }
+
+      <!-- Error State -->
+      @if (errorMessage()) {
+        <div class="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
+          <mat-icon class="text-lg">error</mat-icon>
+          <p class="font-semibold">{{ errorMessage() }}</p>
+        </div>
+      }
+
       <!-- Customer Stats -->
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div class="bg-white rounded-lg p-4 shadow-md border-l-4 border-blue-500">
           <p class="text-slate-600 text-sm font-medium">Total Customers</p>
-          <p class="text-2xl font-bold text-slate-900">{{ customers().length }}</p>
+          <p class="text-2xl font-bold text-slate-900">{{ totalCustomers() }}</p>
         </div>
         <div class="bg-white rounded-lg p-4 shadow-md border-l-4 border-green-500">
           <p class="text-slate-600 text-sm font-medium">Active Customers</p>
@@ -76,7 +95,7 @@ interface Customer {
             <input
               type="text"
               [ngModel]="searchQuery()"
-              (ngModelChange)="searchQuery.set($event); filterCustomers()"
+              (ngModelChange)="searchQuery.set($event); onSearchChange()"
               placeholder="Search by name or email..."
               class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -85,7 +104,7 @@ interface Customer {
             <label class="block text-sm font-medium text-slate-700 mb-2">Status</label>
             <select
               [ngModel]="filterStatus"
-              (ngModelChange)="filterStatus = $event; filterCustomers()"
+              (ngModelChange)="filterStatus = $event; onFilterChange()"
               class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">All Customers</option>
@@ -98,7 +117,7 @@ interface Customer {
             <label class="block text-sm font-medium text-slate-700 mb-2">Sort By</label>
             <select
               [ngModel]="sortBy"
-              (ngModelChange)="sortBy = $event; filterCustomers()"
+              (ngModelChange)="sortBy = $event; onSortChange()"
               class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="recent">Recently Active</option>
@@ -148,7 +167,11 @@ interface Customer {
                     <td class="px-6 py-4 font-medium text-slate-900">{{ customer.totalPurchases }}</td>
                     <td class="px-6 py-4 font-medium text-slate-900"><span>$</span>{{ customer.totalSpent.toFixed(2) }}</td>
                     <td class="px-6 py-4 text-slate-600 text-sm">
-                      {{ customer.lastPurchaseDate ? (customer.lastPurchaseDate | date: 'short') : 'No purchases' }}
+                      @if (customer.lastPurchaseDate) {
+                        {{ customer.lastPurchaseDate | date: 'short' }}
+                      } @else {
+                        <span class="text-slate-400">No purchases</span>
+                      }
                     </td>
                     <td class="px-6 py-4">
                       <span
@@ -204,7 +227,7 @@ interface Customer {
                   }
                 </div>
                 <p class="font-bold text-slate-900 mb-1">{{ customer.name }}</p>
-                <p class="text-sm text-slate-600 mb-3">{{ customer.email }}</p>
+                <p class="text-sm text-slate-600 mb-3">{{ customer.email || 'No email' }}</p>
                 <div class="border-t border-slate-200 pt-2">
                   <p class="text-xs text-slate-600">Total Spent</p>
                   <p class="text-xl font-bold text-slate-900"><span>$</span>{{ customer.totalSpent.toFixed(2) }}</p>
@@ -223,101 +246,98 @@ interface Customer {
   `]
 })
 export class RetailCustomersComponent implements OnInit {
-  customers = signal<Customer[]>([
-    {
-      _id: '1',
-      name: 'John Smith',
-      email: 'john@example.com',
-      phone: '+1-234-567-8900',
-      address: '123 Main St, City',
-      totalPurchases: 15,
-      totalSpent: 1250.00,
-      joinDate: new Date(2023, 0, 15).toISOString(),
-      lastPurchaseDate: new Date(2024, 2, 5).toISOString(),
-      status: 'vip'
-    },
-    {
-      _id: '2',
-      name: 'Sarah Johnson',
-      email: 'sarah@example.com',
-      phone: '+1-234-567-8901',
-      address: '456 Oak Ave, Town',
-      totalPurchases: 8,
-      totalSpent: 645.50,
-      joinDate: new Date(2023, 6, 22).toISOString(),
-      lastPurchaseDate: new Date(2024, 2, 1).toISOString(),
-      status: 'active'
-    },
-    {
-      _id: '3',
-      name: 'Michael Chen',
-      email: 'michael@example.com',
-      phone: '+1-234-567-8902',
-      address: '789 Pine Rd, Village',
-      totalPurchases: 3,
-      totalSpent: 180.75,
-      joinDate: new Date(2024, 1, 10).toISOString(),
-      lastPurchaseDate: new Date(2024, 2, 3).toISOString(),
-      status: 'active'
-    },
-    {
-      _id: '4',
-      name: 'Emma Wilson',
-      email: 'emma@example.com',
-      phone: '+1-234-567-8903',
-      totalPurchases: 12,
-      totalSpent: 980.00,
-      joinDate: new Date(2023, 3, 5).toISOString(),
-      lastPurchaseDate: new Date(2024, 1, 28).toISOString(),
-      status: 'active'
-    },
-    {
-      _id: '5',
-      name: 'David Brown',
-      email: 'david@example.com',
-      phone: '+1-234-567-8904',
-      totalPurchases: 2,
-      totalSpent: 92.00,
-      joinDate: new Date(2024, 0, 20).toISOString(),
-      lastPurchaseDate: new Date(2024, 1, 15).toISOString(),
-      status: 'inactive'
-    }
-  ]);
-  
+  customers = signal<Customer[]>([]);
   filteredCustomers = signal<Customer[]>([]);
+  topCustomers = signal<Customer[]>([]);
   searchQuery = signal('');
   filterStatus = '';
   sortBy = 'recent';
   isLoading = signal(false);
   errorMessage = signal('');
 
-  // Computed signals
-  activeCount = computed(() =>
-    this.customers().filter(c => c.status === 'active' || c.status === 'vip').length
-  );
-  vipCount = computed(() =>
-    this.customers().filter(c => c.status === 'vip').length
-  );
-  totalRevenue = computed(() =>
-    this.customers().reduce((sum, c) => sum + c.totalSpent, 0).toFixed(2)
-  );
-  topCustomers = computed(() =>
-    [...this.customers()].sort((a, b) => b.totalSpent - a.totalSpent).slice(0, 3)
-  );
+  // Stats from API
+  totalCustomers = signal(0);
+  activeCount = signal(0);
+  vipCount = signal(0);
+  totalRevenue = signal('0.00');
+
+  private storeId: string = '';
+  private businessType: string = 'retail';
+
+  constructor(private customerService: CustomerService) {
+    this.storeId = localStorage.getItem('storeId') || '';
+  }
 
   ngOnInit(): void {
-    this.filterCustomers();
+    if (!this.storeId) {
+      this.errorMessage.set('Store ID not found');
+      return;
+    }
+    this.loadCustomers();
+    this.loadTopCustomers();
+  }
+
+  loadCustomers(): void {
+    this.isLoading.set(true);
+    this.customerService.getBusinessCustomers(
+      this.storeId,
+      this.businessType,
+      1,
+      100,
+      this.filterStatus || undefined,
+      this.sortBy,
+      this.searchQuery() || undefined
+    ).subscribe({
+      next: (response: any) => {
+        if (response.success && response.data) {
+          this.customers.set(response.data);
+          this.filterCustomers();
+
+          // Update stats from API response
+          if (response.stats) {
+            this.totalCustomers.set(response.stats.totalCustomers || 0);
+            this.activeCount.set(response.stats.activeCount || 0);
+            this.vipCount.set(response.stats.vipCount || 0);
+            this.totalRevenue.set((response.stats.totalRevenue || 0).toFixed(2));
+          }
+        } else {
+          this.customers.set([]);
+          this.filteredCustomers.set([]);
+        }
+        this.isLoading.set(false);
+      },
+      error: (error: any) => {
+        console.error('Error loading customers:', error);
+        this.errorMessage.set('Failed to load customers');
+        this.customers.set([]);
+        this.filteredCustomers.set([]);
+        this.isLoading.set(false);
+      }
+    });
+  }
+
+  loadTopCustomers(): void {
+    this.customerService.getTopCustomers(this.storeId, this.businessType, 3).subscribe({
+      next: (response: any) => {
+        if (response.success && response.data) {
+          this.topCustomers.set(response.data);
+        }
+      },
+      error: (error: any) => {
+        console.error('Error loading top customers:', error);
+      }
+    });
   }
 
   filterCustomers(): void {
     let filtered = this.customers();
 
-    // Filter by search query
+    // Filter by search query (local filtering after API fetch)
     if (this.searchQuery()) {
       const query = this.searchQuery().toLowerCase();
       filtered = filtered.filter(c =>
         c.name.toLowerCase().includes(query) ||
-        c.email.toLowerCase().includes(query)
+        (c.email && c.email.toLowerCase().includes(query))
       );
     }
 
@@ -332,14 +352,32 @@ export class RetailCustomersComponent implements OnInit {
     } else if (this.sortBy === 'purchases') {
       filtered.sort((a, b) => b.totalPurchases - a.totalPurchases);
     } else if (this.sortBy === 'joined') {
-      filtered.sort((a, b) => new Date(b.joinDate).getTime() - new Date(a.joinDate).getTime());
+      filtered.sort((a, b) => {
+        const dateA = new Date(b.firstPurchaseDate || 0).getTime();
+        const dateB = new Date(a.firstPurchaseDate || 0).getTime();
+        return dateA - dateB;
+      });
     } else {
       // Default: recent purchases
-      filtered.sort((a, b) => 
-        new Date(b.lastPurchaseDate || 0).getTime() - new Date(a.lastPurchaseDate || 0).getTime()
-      );
+      filtered.sort((a, b) => {
+        const dateA = new Date(b.lastPurchaseDate || 0).getTime();
+        const dateB = new Date(a.lastPurchaseDate || 0).getTime();
+        return dateA - dateB;
+      });
     }
 
     this.filteredCustomers.set(filtered);
+  }
+
+  onSearchChange(): void {
+    this.loadCustomers();
+  }
+
+  onFilterChange(): void {
+    this.loadCustomers();
+  }
+
+  onSortChange(): void {
+    this.loadCustomers();
   }
 }

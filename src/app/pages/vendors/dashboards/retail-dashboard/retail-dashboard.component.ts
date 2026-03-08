@@ -342,7 +342,7 @@ export class RetailDashboardComponent implements OnInit {
           const products = response.data;
           this.totalInventoryItems.set(products.length);
 
-          // Calculate metrics
+          // Calculate metrics from actual data
           const inStock = products.filter((p: any) => p.stock > 0).length;
           const lowStock = products.filter((p: any) => p.stock > 0 && p.stock < 10).length;
           const totalValue = products.reduce((sum: number, p: any) => sum + (p.price * (p.stock || 0)), 0);
@@ -351,22 +351,34 @@ export class RetailDashboardComponent implements OnInit {
           this.lowStockCount.set(lowStock);
           this.totalInventoryValue.set(totalValue);
 
-          // Mock transaction data (would come from orders API in real scenario)
-          this.transactionCount.set(Math.floor(Math.random() * 500) + 300);
-          this.totalSales.set(Math.floor(Math.random() * 20000) + 10000);
-          this.avgTransaction.set(this.totalSales() / Math.max(this.transactionCount(), 1));
+          // Set default values for sales metrics (would need orders API for real data)
+          // For now, show 0 until orders are created
+          this.transactionCount.set(0);
+          this.totalSales.set(0);
+          this.avgTransaction.set(0);
         } else {
           // If no products, show zero metrics
           this.totalInventoryItems.set(0);
           this.inStockCount.set(0);
           this.lowStockCount.set(0);
           this.totalInventoryValue.set(0);
+          this.transactionCount.set(0);
+          this.totalSales.set(0);
+          this.avgTransaction.set(0);
         }
         this.isLoading.set(false);
       },
       error: (error: any) => {
         console.error('Error loading dashboard data:', error);
-        this.errorMessage.set('Failed to load dashboard data. Make sure you have created products first.');
+        this.errorMessage.set('Failed to load dashboard data');
+        // Set all metrics to 0 on error
+        this.totalInventoryItems.set(0);
+        this.inStockCount.set(0);
+        this.lowStockCount.set(0);
+        this.totalInventoryValue.set(0);
+        this.transactionCount.set(0);
+        this.totalSales.set(0);
+        this.avgTransaction.set(0);
         this.isLoading.set(false);
       }
     });

@@ -39,6 +39,7 @@ import deliveryProviderServiceRoutes from './routes/deliveryProviderServices.js'
 import integratedDeliveryRoutes from './routes/integratedDeliveries.js';
 import notificationRoutes from './routes/notifications.js';
 import reviewRoutes from './routes/reviews.js';
+import customerRoutes from './routes/customers.js';
 
 // Load environment variables
 dotenv.config();
@@ -276,9 +277,10 @@ app.use('/delivery-providers', deliveryProviderServiceRoutes);
 // Integrated Deliveries Routes (for restaurants using delivery providers)
 app.use('/integrated-deliveries', integratedDeliveryRoutes);
 
-// Notification and Review Routes
+// Notification, Review, and Customer Routes
 app.use('/notifications', notificationRoutes);
 app.use('/reviews', reviewRoutes);
+app.use('/customers', customerRoutes);
 
 app.use('/devices', deviceRoutes);
 
