@@ -300,7 +300,7 @@ export class AdminOrganizationsComponent implements OnInit {
         }
         this.isLoading.set(false);
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('❌ Error loading organizations:', error);
         this.error.set(error.error?.message || 'Failed to load organizations');
         this.isLoading.set(false);
@@ -361,7 +361,7 @@ export class AdminOrganizationsComponent implements OnInit {
           this.loadOrganizations();
         }
       },
-      error: (error) => {
+      error: (error: any) => {
         this.error.set(error.error?.message || 'Failed to create organization');
       }
     });
@@ -375,7 +375,7 @@ export class AdminOrganizationsComponent implements OnInit {
           this.loadOrganizations();
         }
       },
-      error: (error) => {
+      error: (error: any) => {
         this.error.set(error.error?.message || 'Failed to verify organization');
       }
     });
@@ -392,7 +392,7 @@ export class AdminOrganizationsComponent implements OnInit {
           this.loadOrganizations();
         }
       },
-      error: (error) => {
+      error: (error: any) => {
         this.error.set(error.error?.message || 'Failed to suspend organization');
       }
     });

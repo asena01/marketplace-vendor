@@ -152,19 +152,29 @@ export const recordReview = async (req, res) => {
       });
     }
 
+    // Initialize rating if needed
+    if (!performance.rating || !performance.rating.distribution) {
+      performance.rating = { average: 0, count: 0, distribution: {} };
+    }
+
     // Update rating distribution
     performance.rating.distribution[rating] = (performance.rating.distribution[rating] || 0) + 1;
 
     // Recalculate average rating
-    const totalRatingPoints = Object.entries(performance.rating.distribution).reduce((sum, [rating, count]) => {
-      return sum + (parseInt(rating) * count);
-    }, 0);
+    let totalRatingPoints = 0;
+    let totalRatings = 0;
 
-    const totalRatings = Object.values(performance.rating.distribution).reduce((sum, count) => sum + count, 0);
+    Object.entries(performance.rating.distribution).forEach(([ratingKey, count]) => {
+      totalRatingPoints += parseInt(ratingKey) * count;
+      totalRatings += count;
+    });
     performance.rating.average = totalRatings > 0 ? (totalRatingPoints / totalRatings).toFixed(1) : 0;
     performance.rating.count = totalRatings;
 
     // Update reviews
+    if (!performance.reviews) {
+      performance.reviews = { total: 0, positive: 0, neutral: 0, negative: 0 };
+    }
     performance.reviews.total++;
     if (sentiment === 'positive') {
       performance.reviews.positive++;
@@ -175,6 +185,9 @@ export const recordReview = async (req, res) => {
     }
 
     // Update badges
+    if (!performance.badges || !Array.isArray(performance.badges)) {
+      performance.badges = [];
+    }
     if (performance.rating.average >= 4.8 && performance.rating.count >= 50) {
       if (!performance.badges.includes('highly-rated')) {
         performance.badges.push('highly-rated');
@@ -383,6 +396,9 @@ function updatePerformanceLevel(performance) {
   // Superhost criteria
   if (rating >= 4.8 && responseRate >= 90 && cancellationRate <= 5) {
     performance.performanceLevel = 'superhost';
+    if (!performance.badges || !Array.isArray(performance.badges)) {
+      performance.badges = [];
+    }
     if (!performance.badges.includes('superhost')) {
       performance.badges.push('superhost');
     }

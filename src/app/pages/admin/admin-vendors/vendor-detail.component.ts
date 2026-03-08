@@ -549,7 +549,7 @@ export class VendorDetailComponent implements OnInit {
           this.loadKycAndPerformance();
         }
       },
-      error: (error) => console.error('Error loading vendor:', error)
+      error: (error: any) => console.error('Error loading vendor:', error)
     });
   }
 
@@ -560,7 +560,7 @@ export class VendorDetailComponent implements OnInit {
           this.kyc.set(response.data);
         }
       },
-      error: (error) => console.error('Error loading KYC:', error)
+      error: (error: any) => console.error('Error loading KYC:', error)
     });
 
     this.adminService.getVendorPerformance(this.vendorId).subscribe({
@@ -569,7 +569,7 @@ export class VendorDetailComponent implements OnInit {
           this.performance.set(response.data);
         }
       },
-      error: (error) => console.error('Error loading performance:', error)
+      error: (error: any) => console.error('Error loading performance:', error)
     });
   }
 
@@ -582,7 +582,7 @@ export class VendorDetailComponent implements OnInit {
   }
 
   getStatusClass(status: string): string {
-    const classes: { [key: string]: string } = {
+    const classes: Record<string, string> = {
       pending: 'bg-yellow-100 text-yellow-800',
       verified: 'bg-blue-100 text-blue-800',
       active: 'bg-green-100 text-green-800',
@@ -593,7 +593,7 @@ export class VendorDetailComponent implements OnInit {
   }
 
   getStatusIcon(status: string): string {
-    const icons: { [key: string]: string } = {
+    const icons: Record<string, string> = {
       pending: 'schedule',
       verified: 'verified',
       active: 'check_circle',
@@ -604,7 +604,7 @@ export class VendorDetailComponent implements OnInit {
   }
 
   getKycStatusClass(status: string): string {
-    const classes: { [key: string]: string } = {
+    const classes: Record<string, string> = {
       pending: 'bg-yellow-100 text-yellow-800',
       'under-review': 'bg-blue-100 text-blue-800',
       approved: 'bg-green-100 text-green-800',
@@ -615,7 +615,7 @@ export class VendorDetailComponent implements OnInit {
   }
 
   getKycStatusIcon(status: string): string {
-    const icons: { [key: string]: string } = {
+    const icons: Record<string, string> = {
       pending: 'schedule',
       'under-review': 'search',
       approved: 'verified_user',
@@ -626,7 +626,7 @@ export class VendorDetailComponent implements OnInit {
   }
 
   getRiskClass(level: string): string {
-    const classes: { [key: string]: string } = {
+    const classes: Record<string, string> = {
       low: 'bg-green-100 text-green-800',
       medium: 'bg-yellow-100 text-yellow-800',
       high: 'bg-orange-100 text-orange-800',
@@ -636,7 +636,7 @@ export class VendorDetailComponent implements OnInit {
   }
 
   getAmlClass(status?: string): string {
-    const classes: { [key: string]: string } = {
+    const classes: Record<string, string> = {
       pending: 'bg-yellow-100 text-yellow-800',
       passed: 'bg-green-100 text-green-800',
       failed: 'bg-red-100 text-red-800'
@@ -645,7 +645,7 @@ export class VendorDetailComponent implements OnInit {
   }
 
   getAmlIcon(status?: string): string {
-    const icons: { [key: string]: string } = {
+    const icons: Record<string, string> = {
       pending: 'schedule',
       passed: 'check_circle',
       failed: 'cancel'
@@ -654,7 +654,7 @@ export class VendorDetailComponent implements OnInit {
   }
 
   getDocumentStatusClass(status: string): string {
-    const classes: { [key: string]: string } = {
+    const classes: Record<string, string> = {
       pending: 'bg-yellow-100 text-yellow-800',
       verified: 'bg-green-100 text-green-800',
       rejected: 'bg-red-100 text-red-800'
@@ -669,7 +669,7 @@ export class VendorDetailComponent implements OnInit {
           console.log('KYC approved successfully');
           this.loadKycAndPerformance();
         },
-        error: (error) => console.error('Error approving KYC:', error)
+        error: (error: any) => console.error('Error approving KYC:', error)
       });
     }
   }
@@ -682,7 +682,7 @@ export class VendorDetailComponent implements OnInit {
           console.log('KYC rejected successfully');
           this.loadKycAndPerformance();
         },
-        error: (error) => console.error('Error rejecting KYC:', error)
+        error: (error: any) => console.error('Error rejecting KYC:', error)
       });
     }
   }
@@ -694,7 +694,7 @@ export class VendorDetailComponent implements OnInit {
           console.log('Vendor approved successfully');
           this.loadVendorData();
         },
-        error: (error) => console.error('Error approving vendor:', error)
+        error: (error: any) => console.error('Error approving vendor:', error)
       });
     }
   }
@@ -707,7 +707,7 @@ export class VendorDetailComponent implements OnInit {
           console.log('Vendor suspended successfully');
           this.loadVendorData();
         },
-        error: (error) => console.error('Error suspending vendor:', error)
+        error: (error: any) => console.error('Error suspending vendor:', error)
       });
     }
   }
@@ -720,7 +720,7 @@ export class VendorDetailComponent implements OnInit {
           console.log('Vendor blocked successfully');
           this.loadVendorData();
         },
-        error: (error) => console.error('Error blocking vendor:', error)
+        error: (error: any) => console.error('Error blocking vendor:', error)
       });
     }
   }

@@ -192,7 +192,7 @@ export class AdminUsersComponent implements OnInit {
         }
         this.isLoading.set(false);
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('❌ Error loading users:', error);
         this.error.set(error.error?.message || 'Failed to load users');
         this.isLoading.set(false);
@@ -246,7 +246,7 @@ export class AdminUsersComponent implements OnInit {
           }
         }
       },
-      error: (error) => {
+      error: (error: any) => {
         this.error.set(error.error?.message || 'Failed to suspend user');
       }
     });
@@ -269,7 +269,7 @@ export class AdminUsersComponent implements OnInit {
           }
         }
       },
-      error: (error) => {
+      error: (error: any) => {
         this.error.set(error.error?.message || 'Failed to delete user');
       }
     });

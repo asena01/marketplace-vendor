@@ -140,7 +140,7 @@ export class AdminOverviewComponent implements OnInit {
         }
         this.isLoading.set(false);
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('❌ Error loading stats:', error);
         this.error.set(error.error?.message || 'Failed to load statistics');
         this.isLoading.set(false);

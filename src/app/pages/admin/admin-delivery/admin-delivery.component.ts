@@ -670,7 +670,7 @@ export class AdminDeliveryComponent implements OnInit {
           this.partners.set(response.data);
         }
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Error loading delivery partners:', err);
       }
     });
@@ -686,7 +686,7 @@ export class AdminDeliveryComponent implements OnInit {
           this.enabledZoneNames.set(enabledNames);
         }
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Error loading delivery zones:', err);
       }
     });
@@ -701,7 +701,7 @@ export class AdminDeliveryComponent implements OnInit {
         }
         this.loadingPresets.set(false);
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Error loading default zone templates:', err);
         this.loadingPresets.set(false);
       }
@@ -728,7 +728,7 @@ export class AdminDeliveryComponent implements OnInit {
           alert(`✅ ${preset.name} zone enabled successfully!`);
         }
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Error enabling zone preset:', err);
         alert('❌ Error enabling zone preset');
       }
@@ -753,7 +753,7 @@ export class AdminDeliveryComponent implements OnInit {
           alert('✅ Delivery partner added successfully');
         }
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Error adding partner:', err);
         alert('❌ Error adding delivery partner');
       }
@@ -774,7 +774,7 @@ export class AdminDeliveryComponent implements OnInit {
           alert('✅ Delivery zone added successfully');
         }
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Error adding zone:', err);
         alert('❌ Error adding delivery zone');
       }
@@ -789,7 +789,7 @@ export class AdminDeliveryComponent implements OnInit {
           alert('✅ Delivery partner verified successfully');
         }
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Error verifying partner:', err);
         alert('❌ Error verifying delivery partner');
       }

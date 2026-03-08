@@ -285,7 +285,7 @@ export class AdminSettingsComponent implements OnInit {
         }
         this.isLoading.set(false);
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('❌ Error loading settings:', error);
         this.error.set(error.error?.message || 'Failed to load settings');
         this.isLoading.set(false);
@@ -308,7 +308,7 @@ export class AdminSettingsComponent implements OnInit {
         }
         this.isSaving.set(false);
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('❌ Error saving settings:', error);
         this.error.set(error.error?.message || 'Failed to save settings');
         this.isSaving.set(false);

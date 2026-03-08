@@ -214,17 +214,17 @@ export class AdminPaymentsComponent implements OnInit {
   constructor(private adminService: AdminService) {}
 
   get completedCount(): () => number {
-    return () => this.payments().filter(p => p.status === 'completed').length;
+    return () => this.payments().filter((p: any) => p.status === 'completed').length;
   }
 
   get pendingCount(): () => number {
-    return () => this.payments().filter(p => p.status === 'pending').length;
+    return () => this.payments().filter((p: any) => p.status === 'pending').length;
   }
 
   get totalCommission(): () => number {
     return () => this.payments()
-      .filter(p => p.status === 'completed')
-      .reduce((sum, p) => sum + (p.platformCommission || 0), 0);
+      .filter((p: any) => p.status === 'completed')
+      .reduce((sum: number, p: any) => sum + (p.platformCommission || 0), 0);
   }
 
   ngOnInit(): void {
@@ -251,7 +251,7 @@ export class AdminPaymentsComponent implements OnInit {
         }
         this.isLoading.set(false);
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('❌ Error loading payments:', error);
         this.error.set(error.error?.message || 'Failed to load payments');
         this.isLoading.set(false);
@@ -306,7 +306,7 @@ export class AdminPaymentsComponent implements OnInit {
           }
         }
       },
-      error: (error) => {
+      error: (error: any) => {
         this.error.set(error.error?.message || 'Failed to refund payment');
       }
     });

@@ -445,7 +445,7 @@ export class VendorDirectoryComponent implements OnInit {
       next: (response: any) => {
         if (response.status === 'success' && response.data) {
           const vendors = Array.isArray(response.data) ? response.data : [response.data];
-          const enrichedVendors = vendors.map(v => ({
+          const enrichedVendors = vendors.map((v: any) => ({
             ...v,
             selected: false
           }));
@@ -453,7 +453,7 @@ export class VendorDirectoryComponent implements OnInit {
           this.filteredVendors.set(enrichedVendors);
         }
       },
-      error: (error) => console.error('Error loading vendors:', error)
+      error: (error: any) => console.error('Error loading vendors:', error)
     });
   }
 
@@ -462,7 +462,7 @@ export class VendorDirectoryComponent implements OnInit {
 
     if (this.searchQuery) {
       const query = this.searchQuery.toLowerCase();
-      filtered = filtered.filter(v =>
+      filtered = filtered.filter((v: any) =>
         v.name?.toLowerCase().includes(query) ||
         v.email?.toLowerCase().includes(query) ||
         v._id?.includes(query)
@@ -470,27 +470,27 @@ export class VendorDirectoryComponent implements OnInit {
     }
 
     if (this.selectedType) {
-      filtered = filtered.filter(v => v.vendorType === this.selectedType);
+      filtered = filtered.filter((v: any) => v.vendorType === this.selectedType);
     }
 
     if (this.selectedStatus) {
-      filtered = filtered.filter(v => v.status === this.selectedStatus);
+      filtered = filtered.filter((v: any) => v.status === this.selectedStatus);
     }
 
     if (this.selectedKyc) {
-      filtered = filtered.filter(v => v.kycStatus === this.selectedKyc);
+      filtered = filtered.filter((v: any) => v.kycStatus === this.selectedKyc);
     }
 
     if (this.minRevenue > 0) {
-      filtered = filtered.filter(v => (v.monthlyRevenue || 0) >= this.minRevenue);
+      filtered = filtered.filter((v: any) => (v.monthlyRevenue || 0) >= this.minRevenue);
     }
 
     if (this.maxRevenue > 0) {
-      filtered = filtered.filter(v => (v.monthlyRevenue || 0) <= this.maxRevenue);
+      filtered = filtered.filter((v: any) => (v.monthlyRevenue || 0) <= this.maxRevenue);
     }
 
     if (this.minRating > 0) {
-      filtered = filtered.filter(v => (v.rating || 0) >= this.minRating);
+      filtered = filtered.filter((v: any) => (v.rating || 0) >= this.minRating);
     }
 
     this.filteredVendors.set(filtered);
@@ -510,7 +510,7 @@ export class VendorDirectoryComponent implements OnInit {
   }
 
   toggleSelectAll(): void {
-    this.filteredVendors().forEach(v => {
+    this.filteredVendors().forEach((v: any) => {
       v.selected = this.selectAll;
     });
   }
@@ -533,7 +533,7 @@ export class VendorDirectoryComponent implements OnInit {
 
   getPageNumbers(): number[] {
     const totalPages = Math.ceil(this.filteredVendors().length / this.pageSize);
-    const pages = [];
+    const pages: number[] = [];
     const startPage = Math.max(1, this.currentPage() - 2);
     const endPage = Math.min(totalPages, this.currentPage() + 2);
 
@@ -544,7 +544,7 @@ export class VendorDirectoryComponent implements OnInit {
   }
 
   getTypeClass(type: string): string {
-    const classes: { [key: string]: string } = {
+    const classes: Record<string, string> = {
       hotel: 'bg-blue-100 text-blue-800',
       restaurant: 'bg-orange-100 text-orange-800',
       retail: 'bg-purple-100 text-purple-800',
@@ -555,7 +555,7 @@ export class VendorDirectoryComponent implements OnInit {
   }
 
   getStatusClass(status: string): string {
-    const classes: { [key: string]: string } = {
+    const classes: Record<string, string> = {
       pending: 'bg-yellow-100 text-yellow-800',
       verified: 'bg-blue-100 text-blue-800',
       active: 'bg-green-100 text-green-800',
@@ -566,7 +566,7 @@ export class VendorDirectoryComponent implements OnInit {
   }
 
   getStatusIcon(status: string): string {
-    const icons: { [key: string]: string } = {
+    const icons: Record<string, string> = {
       pending: 'schedule',
       verified: 'verified',
       active: 'check_circle',
@@ -577,7 +577,7 @@ export class VendorDirectoryComponent implements OnInit {
   }
 
   getKycClass(status: string): string {
-    const classes: { [key: string]: string } = {
+    const classes: Record<string, string> = {
       pending: 'bg-yellow-100 text-yellow-800',
       approved: 'bg-green-100 text-green-800',
       rejected: 'bg-red-100 text-red-800'
@@ -586,7 +586,7 @@ export class VendorDirectoryComponent implements OnInit {
   }
 
   getKycIcon(status: string): string {
-    const icons: { [key: string]: string } = {
+    const icons: Record<string, string> = {
       pending: 'schedule',
       approved: 'verified_user',
       rejected: 'cancel'
@@ -609,7 +609,7 @@ export class VendorDirectoryComponent implements OnInit {
           this.loadVendors();
           console.log('Vendor deleted successfully');
         },
-        error: (error) => console.error('Error deleting vendor:', error)
+        error: (error: any) => console.error('Error deleting vendor:', error)
       });
     }
   }
