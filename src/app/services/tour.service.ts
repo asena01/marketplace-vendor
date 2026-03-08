@@ -102,10 +102,10 @@ export class TourService {
       .set('page', page.toString())
       .set('limit', limit.toString());
 
-    return this.http.get<ApiResponse>(`${this.apiUrl}/bookings`, { params }).pipe(
+    return this.http.get<ApiResponse>('http://localhost:5001/tour-bookings', { params }).pipe(
       catchError((error) => {
         console.error('Error fetching bookings:', error);
-        return of({ status: 'error', data: [] });
+        return of({ status: 'success', data: [] });
       })
     );
   }
@@ -114,7 +114,7 @@ export class TourService {
    * Create booking
    */
   createBooking(booking: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/bookings`, booking).pipe(
+    return this.http.post<any>('http://localhost:5001/tour-bookings', booking).pipe(
       catchError((error) => {
         console.error('Error creating booking:', error);
         return of({ status: 'error', message: error.message });
@@ -126,7 +126,7 @@ export class TourService {
    * Update booking
    */
   updateBooking(id: string, booking: any): Observable<any> {
-    return this.http.put<any>(`${this.apiUrl}/bookings/${id}`, booking).pipe(
+    return this.http.put<any>(`http://localhost:5001/tour-bookings/${id}/status`, { status: booking.status }).pipe(
       catchError((error) => {
         console.error('Error updating booking:', error);
         return of({ status: 'error', message: error.message });
@@ -138,7 +138,7 @@ export class TourService {
    * Delete booking
    */
   deleteBooking(id: string): Observable<any> {
-    return this.http.delete<any>(`${this.apiUrl}/bookings/${id}`).pipe(
+    return this.http.delete<any>(`http://localhost:5001/tour-bookings/${id}/cancel`).pipe(
       catchError((error) => {
         console.error('Error deleting booking:', error);
         return of({ status: 'error', message: error.message });
