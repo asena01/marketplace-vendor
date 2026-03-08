@@ -11,17 +11,9 @@ import { HotelService } from '../../../../../services/hotel.service';
     <div class="p-8 space-y-6">
       <!-- Header -->
       <div class="bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl p-8 text-white shadow-lg">
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-3xl font-bold mb-2">Devices Management</h1>
-            <p class="text-purple-100">Manage IoT devices and monitor their status</p>
-          </div>
-          <button
-            (click)="showAddDeviceModal()"
-            class="bg-white text-purple-600 font-bold py-2 px-6 rounded-lg hover:bg-purple-50 transition"
-          >
-            ➕ Add Device
-          </button>
+        <div>
+          <h1 class="text-3xl font-bold mb-2">Devices Management</h1>
+          <p class="text-purple-100">View IoT devices and monitor their status (Devices are added by admin only)</p>
         </div>
       </div>
 
@@ -146,12 +138,6 @@ import { HotelService } from '../../../../../services/hotel.service';
                           View
                         </button>
                         <button
-                          (click)="editDevice(device)"
-                          class="text-yellow-600 hover:text-yellow-700 font-medium"
-                        >
-                          Edit
-                        </button>
-                        <button
                           (click)="deleteDevice(device._id)"
                           class="text-red-600 hover:text-red-700 font-medium"
                         >
@@ -166,87 +152,6 @@ import { HotelService } from '../../../../../services/hotel.service';
           </div>
         }
       </div>
-
-      <!-- Add/Edit Device Modal -->
-      @if (showModal()) {
-        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div class="bg-white rounded-xl shadow-lg p-8 w-full max-w-2xl max-h-96 overflow-y-auto">
-            <h2 class="text-2xl font-bold text-slate-900 mb-6">
-              {{ isEditing() ? '✏️ Edit Device' : '➕ Add New Device' }}
-            </h2>
-
-            <div class="space-y-4">
-              <!-- Device ID -->
-              <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-2">Device ID (required)</label>
-                <input
-                  type="text"
-                  [(ngModel)]="formData.deviceId"
-                  [disabled]="isEditing()"
-                  placeholder="e.g., bf31d7c0e123456"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-600 disabled:bg-slate-100"
-                />
-              </div>
-
-              <!-- Device Type -->
-              <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-2">Device Type</label>
-                <select
-                  [(ngModel)]="formData.deviceType"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-600"
-                >
-                  <option value="motion_sensor">Motion Sensor</option>
-                  <option value="door_sensor">Door Sensor</option>
-                  <option value="temperature_sensor">Temperature Sensor</option>
-                  <option value="smart_lock">Smart Lock</option>
-                  <option value="smart_light">Smart Light</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-
-              <!-- Room Number -->
-              <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-2">Room Number</label>
-                <input
-                  type="text"
-                  [(ngModel)]="formData.roomNumber"
-                  placeholder="e.g., 101"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-600"
-                />
-              </div>
-
-              <!-- Status -->
-              <div class="flex items-center">
-                <input
-                  type="checkbox"
-                  [(ngModel)]="formData.status"
-                  id="device-status"
-                  class="w-4 h-4 text-purple-600"
-                />
-                <label for="device-status" class="ml-2 text-sm font-medium text-slate-700">
-                  Active
-                </label>
-              </div>
-            </div>
-
-            <!-- Buttons -->
-            <div class="flex gap-4 mt-6">
-              <button
-                (click)="saveDevice()"
-                class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition"
-              >
-                {{ isEditing() ? 'Update Device' : 'Create Device' }}
-              </button>
-              <button
-                (click)="closeModal()"
-                class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-900 font-bold py-2 px-4 rounded-lg transition"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      }
 
       <!-- View Device Details Modal -->
       @if (showViewModal()) {
@@ -312,9 +217,7 @@ export class HotelDevicesComponent implements OnInit {
   filteredDevices = signal<any[]>([]);
   isLoading = signal(false);
   errorMessage = signal('');
-  showModal = signal(false);
   showViewModal = signal(false);
-  isEditing = signal(false);
 
   deviceStatusMap = signal<{ [key: string]: string }>({});
   selectedDevice = signal<any>(null);
@@ -323,13 +226,6 @@ export class HotelDevicesComponent implements OnInit {
   searchQuery = '';
   filterDeviceType = '';
   filterStatus = '';
-
-  formData: any = {
-    deviceId: '',
-    deviceType: 'motion_sensor',
-    roomNumber: '',
-    status: true
-  };
 
   constructor(private hotelService: HotelService) {}
 
@@ -414,18 +310,6 @@ export class HotelDevicesComponent implements OnInit {
     return labels[type] || type;
   }
 
-  showAddDeviceModal(): void {
-    this.isEditing.set(false);
-    this.resetFormData();
-    this.showModal.set(true);
-  }
-
-  editDevice(device: any): void {
-    this.isEditing.set(true);
-    this.formData = { ...device };
-    this.showModal.set(true);
-  }
-
   viewDevice(device: any): void {
     this.selectedDevice.set(device);
     this.selectedDeviceTuyaStatus.set(null);
@@ -442,37 +326,6 @@ export class HotelDevicesComponent implements OnInit {
     });
   }
 
-  saveDevice(): void {
-    if (!this.formData.deviceId) {
-      alert('Please enter device ID');
-      return;
-    }
-
-    if (this.isEditing()) {
-      this.hotelService.updateDevice(this.formData._id, this.formData).subscribe({
-        next: () => {
-          this.loadDevices();
-          this.closeModal();
-        },
-        error: (error: any) => {
-          console.error('Error updating device:', error);
-          alert('Failed to update device');
-        }
-      });
-    } else {
-      this.hotelService.createDevice(this.formData).subscribe({
-        next: () => {
-          this.loadDevices();
-          this.closeModal();
-        },
-        error: (error: any) => {
-          console.error('Error creating device:', error);
-          alert('Failed to create device');
-        }
-      });
-    }
-  }
-
   deleteDevice(deviceId: string): void {
     if (!confirm('Are you sure you want to delete this device?')) return;
 
@@ -487,24 +340,10 @@ export class HotelDevicesComponent implements OnInit {
     });
   }
 
-  closeModal(): void {
-    this.showModal.set(false);
-    this.resetFormData();
-  }
-
   closeViewModal(): void {
     this.showViewModal.set(false);
     this.selectedDevice.set(null);
     this.selectedDeviceTuyaStatus.set(null);
-  }
-
-  resetFormData(): void {
-    this.formData = {
-      deviceId: '',
-      deviceType: 'motion_sensor',
-      roomNumber: '',
-      status: true
-    };
   }
 
   formatDate(dateString: string): string {
