@@ -54,8 +54,7 @@ export const routes: Routes = [
       { path: 'rooms', component: HotelRoomsComponent },
       { path: 'staff', component: HotelStaffComponent },
       { path: 'reviews', component: ReviewManagementComponent },
-      { path: 'incidents', component: IncidentManagementComponent },
-      { path: '', component: HotelDashboardComponent }
+      { path: 'incidents', component: IncidentManagementComponent }
     ]
   },
   // Restaurant Dashboard Routes
@@ -67,8 +66,7 @@ export const routes: Routes = [
       { path: 'menu', component: RestaurantMenuComponent },
       { path: 'orders', component: RestaurantOrdersComponent },
       { path: 'reviews', component: ReviewManagementComponent },
-      { path: 'incidents', component: IncidentManagementComponent },
-      { path: '', component: RestaurantDashboardComponent }
+      { path: 'incidents', component: IncidentManagementComponent }
     ]
   },
   // Retail Dashboard Routes
@@ -79,8 +77,7 @@ export const routes: Routes = [
     children: [
       { path: 'products', component: RetailProductsComponent },
       { path: 'reviews', component: ReviewManagementComponent },
-      { path: 'incidents', component: IncidentManagementComponent },
-      { path: '', component: RetailDashboardComponent }
+      { path: 'incidents', component: IncidentManagementComponent }
     ]
   },
   // Service Dashboard Routes
@@ -90,8 +87,7 @@ export const routes: Routes = [
     canActivate: [VendorGuard],
     children: [
       { path: 'reviews', component: ReviewManagementComponent },
-      { path: 'incidents', component: IncidentManagementComponent },
-      { path: '', component: ServiceDashboardComponent }
+      { path: 'incidents', component: IncidentManagementComponent }
     ]
   },
   // Tours Dashboard Routes
@@ -101,8 +97,7 @@ export const routes: Routes = [
     canActivate: [VendorGuard],
     children: [
       { path: 'reviews', component: ReviewManagementComponent },
-      { path: 'incidents', component: IncidentManagementComponent },
-      { path: '', component: ToursDashboardComponent }
+      { path: 'incidents', component: IncidentManagementComponent }
     ]
   },
   { path: 'signup', component: SignupComponent },
