@@ -1,8 +1,11 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../services/auth.service';
+import { FoodService } from '../../services/food.service';
+import { HotelService } from '../../services/hotel.service';
+import { ProductService } from '../../services/product.service';
 
 interface SidenavItem {
   label: string;
@@ -102,16 +105,22 @@ interface SidenavItem {
     }
   `]
 })
-export class VendorSidenavComponent {
+export class VendorSidenavComponent implements OnInit {
   @Input() vendorType: string = 'hotel';
   @Input() sidenavItems: SidenavItem[] = [];
   @Output() logout = new EventEmitter<void>();
 
   vendorTypeIcon: string = '🏨';
+  ordersBadge = signal(0);
+  roomsBadge = signal(0);
+  productsBadge = signal(0);
 
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private foodService: FoodService,
+    private hotelService: HotelService,
+    private productService: ProductService
   ) {
     this.setVendorIcon();
   }
@@ -119,6 +128,50 @@ export class VendorSidenavComponent {
   ngOnInit() {
     if (!this.sidenavItems || this.sidenavItems.length === 0) {
       this.sidenavItems = this.getDefaultItems();
+    }
+    this.loadBadgeData();
+  }
+
+  loadBadgeData(): void {
+    const vendorId = localStorage.getItem(`${this.vendorType}Id`);
+
+    if (this.vendorType === 'restaurant' && vendorId) {
+      // Load pending orders count
+      this.foodService.getRestaurantOrders(vendorId).subscribe({
+        next: (response: any) => {
+          if (response.status === 'success' && response.data) {
+            const pendingCount = response.data.filter((order: any) => order.status === 'pending').length;
+            this.ordersBadge.set(pendingCount);
+            // Update badge in sidenavItems
+            const ordersItem = this.sidenavItems.find(item => item.label === 'Orders');
+            if (ordersItem) ordersItem.badge = pendingCount;
+          }
+        }
+      });
+    } else if (this.vendorType === 'hotel' && vendorId) {
+      // Load rooms and staff counts
+      this.hotelService.getRooms(vendorId).subscribe({
+        next: (response: any) => {
+          if (response.status === 'success' && response.data) {
+            const availableRooms = response.data.filter((room: any) => room.status === 'available').length;
+            this.roomsBadge.set(availableRooms);
+            const roomsItem = this.sidenavItems.find(item => item.label === 'Rooms');
+            if (roomsItem) roomsItem.badge = availableRooms;
+          }
+        }
+      });
+    } else if (this.vendorType === 'retail' && vendorId) {
+      // Load products count
+      this.productService.getProducts(vendorId).subscribe({
+        next: (response: any) => {
+          if (response.status === 'success' && response.data) {
+            const lowStockCount = response.data.filter((product: any) => product.stock < 10).length;
+            this.productsBadge.set(lowStockCount);
+            const productsItem = this.sidenavItems.find(item => item.label === 'Products');
+            if (productsItem) productsItem.badge = lowStockCount;
+          }
+        }
+      });
     }
   }
 
@@ -172,14 +225,37 @@ export class VendorSidenavComponent {
   }
 
   getDefaultItems(): SidenavItem[] {
-    return [
-      { label: 'Dashboard', icon: '📊', route: `/dashboard` },
-      { label: 'Bookings', icon: '📅', route: `/bookings`, badge: 5 },
-      { label: 'Inventory', icon: '📦', route: `/inventory` },
-      { label: 'Customers', icon: '👥', route: `/customers` },
-      { label: 'Reports', icon: '📈', route: `/reports` },
-      { label: 'Settings', icon: '⚙️', route: `/settings` }
-    ];
+    const dashboardPath = this.vendorType === 'restaurant' ? '/restaurant-dashboard' :
+                          this.vendorType === 'hotel' ? '/hotel-dashboard' :
+                          this.vendorType === 'retail' ? '/retail-dashboard' : '/dashboard';
+
+    const items: SidenavItem[] = [{ label: 'Dashboard', icon: '📊', route: dashboardPath }];
+
+    // Add vendor-specific items
+    if (this.vendorType === 'restaurant') {
+      items.push(
+        { label: 'Orders', icon: '📋', route: `${dashboardPath}/orders`, badge: 0 },
+        { label: 'Menu', icon: '📖', route: `${dashboardPath}/menu`, badge: 0 },
+        { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` },
+        { label: 'Incidents', icon: '⚠️', route: `${dashboardPath}/incidents` }
+      );
+    } else if (this.vendorType === 'hotel') {
+      items.push(
+        { label: 'Rooms', icon: '🏨', route: `${dashboardPath}/rooms`, badge: 0 },
+        { label: 'Staff', icon: '👥', route: `${dashboardPath}/staff` },
+        { label: 'Bookings', icon: '📅', route: `${dashboardPath}/bookings` }
+      );
+    } else if (this.vendorType === 'retail') {
+      items.push(
+        { label: 'Products', icon: '📦', route: `${dashboardPath}/products`, badge: 0 },
+        { label: 'Inventory', icon: '📊', route: `${dashboardPath}/inventory` },
+        { label: 'Customers', icon: '👥', route: `${dashboardPath}/customers` }
+      );
+    }
+
+    items.push({ label: 'Settings', icon: '⚙️', route: `${dashboardPath}/settings` });
+
+    return items;
   }
 
   getCurrentUserName(): string {
