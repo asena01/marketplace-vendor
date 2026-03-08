@@ -204,7 +204,9 @@ export class ReviewManagementComponent implements OnInit {
   }
 
   getAverageRating(): string {
-    const avg = this.reviews().reduce((sum, r) => sum + r.rating, 0) / this.reviews().length;
+    const reviews = this.reviews();
+    if (reviews.length === 0) return '0.0';
+    const avg = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
     return avg.toFixed(1);
   }
 
@@ -213,8 +215,10 @@ export class ReviewManagementComponent implements OnInit {
   }
 
   getRatingPercentage(rating: number): number {
+    const reviews = this.reviews();
+    if (reviews.length === 0) return 0;
     const count = this.getReviewsByRating(rating).length;
-    return Math.round((count / this.reviews().length) * 100);
+    return Math.round((count / reviews.length) * 100);
   }
 
   getFilteredReviews(): Review[] {

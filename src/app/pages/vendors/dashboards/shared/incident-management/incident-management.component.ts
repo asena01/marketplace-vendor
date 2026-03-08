@@ -283,8 +283,9 @@ export class IncidentManagementComponent implements OnInit {
   }
 
   getResolutionRate(): number {
-    const resolved = this.getResolvedIncidents();
     const total = this.incidents().length;
+    if (total === 0) return 0;
+    const resolved = this.getResolvedIncidents();
     return Math.round((resolved / total) * 100);
   }
 
