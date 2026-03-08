@@ -181,6 +181,13 @@ export class CustomerService {
     );
   }
 
+  // Bookings
+  getCustomerBookings(page: number = 1, limit: number = 20): Observable<CustomerResponse<any>> {
+    return this.http.get<CustomerResponse<any>>(
+      `${this.apiUrl}/bookings?page=${page}&limit=${limit}`
+    );
+  }
+
   // Tour bookings
   getMyTourBookings(): Observable<CustomerResponse<any>> {
     return this.http.get<CustomerResponse<any>>(`${this.apiUrl}/tour-bookings`);
@@ -200,8 +207,12 @@ export class CustomerService {
     return this.http.get<CustomerResponse<any>>(`${this.apiUrl}/vendor-chats`);
   }
 
-  startVendorChat(vendorId: string): Observable<CustomerResponse<any>> {
-    return this.http.post<CustomerResponse<any>>(`${this.apiUrl}/vendor-chats`, { vendorId });
+  startVendorChat(vendorType?: string, bookingId?: string, vendorName?: string): Observable<CustomerResponse<any>> {
+    return this.http.post<CustomerResponse<any>>(`${this.apiUrl}/vendor-chats`, {
+      vendorType,
+      bookingId,
+      vendorName
+    });
   }
 
   sendVendorChatMessage(chatId: string, message: string): Observable<CustomerResponse<any>> {
