@@ -28,9 +28,10 @@ export class HomeComponent {
   constructor(public authModalService: AuthModalService) {}
 
   // Main services (Services and Delivery)
+  // NOTE: Delivery service is commented out for now
   mainServices = [
     this.services.find(s => s.id === 'services'),
-    this.services.find(s => s.id === 'delivery')
+    // this.services.find(s => s.id === 'delivery')
   ].filter(s => s !== undefined) as Service[];
 
   // Specialized services (all other services)
