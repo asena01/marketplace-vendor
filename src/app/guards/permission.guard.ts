@@ -33,7 +33,7 @@ export class PermissionGuard implements CanActivate {
     }
 
     console.warn(`Access denied: Permission '${requiredPermission}' required for route '${state.url}'`);
-    this.router.navigate(['/admin-dashboard']);
+    this.router.navigate(['/']);
     return false;
   }
 }
@@ -78,7 +78,7 @@ export class PermissionsGuard implements CanActivate {
     }
 
     console.warn(`Access denied: Permissions ${JSON.stringify(requiredPermissions)} required for route '${state.url}'`);
-    this.router.navigate(['/admin-dashboard']);
+    this.router.navigate(['/']);
     return false;
   }
 }
@@ -109,12 +109,20 @@ export class RoleGuard implements CanActivate {
       return true;
     }
 
+    // Check if user has the required role via PermissionService
     if (this.permissionService.hasRole(requiredRole)) {
       return true;
     }
 
+    // Fallback: Check localStorage if permission service hasn't loaded yet
+    // This is needed right after login before async permission loading completes
+    const adminRole = localStorage.getItem('adminRole');
+    if (adminRole === requiredRole) {
+      return true;
+    }
+
     console.warn(`Access denied: Role '${requiredRole}' required for route '${state.url}'`);
-    this.router.navigate(['/admin-dashboard']);
+    this.router.navigate(['/']);
     return false;
   }
 }
@@ -145,12 +153,19 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
+    // Check if user has any of the required roles via PermissionService
     if (this.permissionService.hasAnyRole(...requiredRoles)) {
       return true;
     }
 
+    // Fallback: Check localStorage if permission service hasn't loaded yet
+    const adminRole = localStorage.getItem('adminRole');
+    if (adminRole && requiredRoles.includes(adminRole)) {
+      return true;
+    }
+
     console.warn(`Access denied: One of these roles required for route '${state.url}': ${requiredRoles.join(', ')}`);
-    this.router.navigate(['/admin-dashboard']);
+    this.router.navigate(['/']);
     return false;
   }
 }
