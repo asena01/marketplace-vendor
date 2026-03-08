@@ -52,6 +52,11 @@ import { ReturnsComponent } from './pages/vendors/dashboards/retail-dashboard/re
 import { ReviewManagementComponent } from './pages/vendors/dashboards/shared/review-management/review-management.component';
 import { IncidentManagementComponent } from './pages/vendors/dashboards/shared/incident-management/incident-management.component';
 import { ProfileSettingsComponent } from './pages/vendors/dashboards/shared/profile-settings/profile-settings.component';
+import { ServiceAppointmentsComponent } from './pages/vendors/dashboards/service-dashboard/appointments/appointments.component';
+import { ServiceServicesComponent } from './pages/vendors/dashboards/service-dashboard/services/services.component';
+import { ServiceStaffComponent } from './pages/vendors/dashboards/service-dashboard/staff/staff.component';
+import { ServiceClientsComponent } from './pages/vendors/dashboards/service-dashboard/clients/clients.component';
+import { ServiceReportsComponent } from './pages/vendors/dashboards/service-dashboard/reports/reports.component';
 import { VendorGuard } from './guards/vendor.guard';
 import { AdminGuard } from './guards/admin.guard';
 
@@ -123,8 +128,13 @@ export const routes: Routes = [
     component: ServiceDashboardComponent,
     canActivate: [VendorGuard],
     children: [
+      { path: 'appointments', component: ServiceAppointmentsComponent },
+      { path: 'services', component: ServiceServicesComponent },
+      { path: 'staff', component: ServiceStaffComponent },
+      { path: 'clients', component: ServiceClientsComponent },
       { path: 'reviews', component: ReviewManagementComponent },
       { path: 'incidents', component: IncidentManagementComponent },
+      { path: 'reports', component: ServiceReportsComponent },
       { path: 'settings', component: ProfileSettingsComponent }
     ]
   },

@@ -176,6 +176,30 @@ export class VendorSidenavComponent implements OnInit {
           error: (error) => console.log('Error loading products:', error)
         });
       }
+    } else if (this.vendorType === 'service') {
+      // Load dynamic badge counts for service provider
+      // This is a simple implementation - in production, you would fetch actual data from APIs
+      this.updateServiceBadges();
+    }
+  }
+
+  private updateServiceBadges(): void {
+    // Update Appointments badge - simulating upcoming appointments
+    const appointmentsItem = this.sidenavItems.find(item => item.label === 'Appointments');
+    if (appointmentsItem) {
+      appointmentsItem.badge = Math.floor(Math.random() * 10); // TODO: Load from actual API
+    }
+
+    // Update Reviews badge
+    const reviewsItem = this.sidenavItems.find(item => item.label === 'Reviews');
+    if (reviewsItem) {
+      reviewsItem.badge = Math.floor(Math.random() * 5); // TODO: Load from actual API
+    }
+
+    // Update Incidents badge
+    const incidentsItem = this.sidenavItems.find(item => item.label === 'Incidents');
+    if (incidentsItem) {
+      incidentsItem.badge = Math.floor(Math.random() * 3); // TODO: Load from actual API
     }
   }
 
