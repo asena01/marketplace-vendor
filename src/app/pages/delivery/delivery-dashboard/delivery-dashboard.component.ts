@@ -10,6 +10,7 @@ import { DeliveryOrdersComponent } from '../delivery-orders/delivery-orders.comp
 import { DeliveryCouriersComponent } from '../delivery-couriers/delivery-couriers.component';
 import { DeliveryTrackingComponent } from '../delivery-tracking/delivery-tracking.component';
 import { DeliveryAnalyticsComponent } from '../delivery-analytics/delivery-analytics.component';
+import { DeliveryServicesComponent } from '../delivery-services/delivery-services.component';
 
 @Component({
   selector: 'app-delivery-dashboard',
@@ -20,7 +21,8 @@ import { DeliveryAnalyticsComponent } from '../delivery-analytics/delivery-analy
     DeliveryOrdersComponent,
     DeliveryCouriersComponent,
     DeliveryTrackingComponent,
-    DeliveryAnalyticsComponent
+    DeliveryAnalyticsComponent,
+    DeliveryServicesComponent
   ],
   template: `
     <div class="min-h-screen bg-gray-100">
@@ -104,6 +106,17 @@ import { DeliveryAnalyticsComponent } from '../delivery-analytics/delivery-analy
               <mat-icon class="text-lg">analytics</mat-icon>
               <span>Analytics</span>
             </button>
+
+            <button
+              (click)="setCurrentPage('services')"
+              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
+                (currentPage() === 'services'
+                  ? 'bg-teal-100 text-teal-700 border-l-4 border-teal-600'
+                  : 'text-gray-700 hover:bg-gray-100')"
+            >
+              <mat-icon class="text-lg">local_shipping</mat-icon>
+              <span>My Services</span>
+            </button>
           </nav>
         </aside>
 
@@ -175,6 +188,8 @@ import { DeliveryAnalyticsComponent } from '../delivery-analytics/delivery-analy
             <app-delivery-couriers></app-delivery-couriers>
           } @else if (currentPage() === 'analytics') {
             <app-delivery-analytics></app-delivery-analytics>
+          } @else if (currentPage() === 'services') {
+            <app-delivery-services></app-delivery-services>
           }
         </main>
       </div>

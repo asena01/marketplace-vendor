@@ -711,4 +711,67 @@ export class DeliveryService {
       })
     );
   }
+
+  /**
+   * ==================== DELIVERY PROVIDER SERVICES ====================
+   * Methods for managing services offered by delivery providers
+   */
+
+  /**
+   * Get all services offered by a delivery provider
+   */
+  getDeliveryProviderServices(deliveryId: string): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(
+      `${this.apiUrl}/delivery-providers/${deliveryId}/services`
+    ).pipe(
+      catchError((error) => {
+        console.error('Error fetching provider services:', error);
+        return of({ status: 'error', data: [] });
+      })
+    );
+  }
+
+  /**
+   * Create a new service for delivery provider
+   */
+  createDeliveryProviderService(deliveryId: string, serviceData: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${this.apiUrl}/delivery-providers/${deliveryId}/services`,
+      serviceData
+    ).pipe(
+      catchError((error) => {
+        console.error('Error creating provider service:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
+
+  /**
+   * Update a service offered by delivery provider
+   */
+  updateDeliveryProviderService(deliveryId: string, serviceId: string, updates: any): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${this.apiUrl}/delivery-providers/${deliveryId}/services/${serviceId}`,
+      updates
+    ).pipe(
+      catchError((error) => {
+        console.error('Error updating provider service:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
+
+  /**
+   * Delete a service offered by delivery provider
+   */
+  deleteDeliveryProviderService(deliveryId: string, serviceId: string): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(
+      `${this.apiUrl}/delivery-providers/${deliveryId}/services/${serviceId}`
+    ).pipe(
+      catchError((error) => {
+        console.error('Error deleting provider service:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
 }
