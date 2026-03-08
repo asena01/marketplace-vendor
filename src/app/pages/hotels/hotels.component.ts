@@ -270,7 +270,7 @@ export class HotelsComponent implements OnInit {
             location: hotel.location || hotel.address || '',
             rating: hotel.rating || 4.0,
             reviews: hotel.reviews || hotel.reviewCount || 0,
-            icon: hotel.icon || '🏨',
+            icon: hotel.icon || 'hotel',
             type: hotel.type || hotel.hotelType || 'Hotels',
             price: hotel.basePrice || hotel.price || 0,
             discount: hotel.discount || 0,
@@ -278,12 +278,12 @@ export class HotelsComponent implements OnInit {
             description: hotel.description || '',
             imageUrl: hotel.imageUrl || hotel.image || '',
             thumbnail: hotel.thumbnail || '',
-            // Convert image URLs to array or use fallback emojis
+            // Convert image URLs to array
             images: hotel.images && hotel.images.length > 0
               ? hotel.images.map((img: any) => typeof img === 'string'
                   ? { url: img, thumbnail: hotel.thumbnail || img, alt: hotel.name }
                   : img)
-              : ['🏨', '🛏️', '🍽️', '🏊', '✨'], // Fallback emojis
+              : [],
             rooms: hotel.rooms && hotel.rooms.length > 0
               ? hotel.rooms.map((room: any) => ({
                   id: room._id || room.id,
@@ -296,7 +296,7 @@ export class HotelsComponent implements OnInit {
                   amenities: room.amenities || [],
                   rating: room.rating || 4.0,
                   reviews: room.reviews || room.reviewCount || 0,
-                  icon: room.icon || '🛏️'
+                  icon: room.icon || 'bed'
                 }))
               : []
           }));
@@ -304,133 +304,17 @@ export class HotelsComponent implements OnInit {
           console.log('✅ DISPLAYING HOTELS FROM API:', apiHotels);
           this.hotels.set(apiHotels);
         } else {
-          console.log('⚠️ API returned no data. Showing fallback dummy hotels...');
-          this.hotelError.set('API returned no hotels. Showing sample data.');
-          this.loadFallbackHotels();
+          console.log('⚠️ API returned no data. No hotels available.');
+          this.hotelError.set('No data available');
         }
         this.isLoadingHotels.set(false);
       },
       error: (error) => {
-        console.error('❌ API CALL FAILED - Using fallback dummy data instead:', error);
-        this.hotelError.set('Using sample data. Backend API not available.');
-        this.loadFallbackHotels();
+        console.error('❌ API CALL FAILED:', error);
+        this.hotelError.set('No data available');
         this.isLoadingHotels.set(false);
       }
     });
-  }
-
-  loadFallbackHotels(): void {
-    const defaultHotels: Hotel[] = [
-      {
-        id: 'hotel-1',
-        name: 'Luxury 5-Star Hotel',
-        location: 'New York, USA',
-        rating: 4.8,
-        reviews: 2345,
-        icon: '🏨',
-        type: 'Luxury Hotels',
-        price: 299,
-        discount: 15,
-        images: ['🏨', '🛏️', '🍽️', '🏊', '✨'],
-        amenities: ['WiFi', 'Pool', 'Gym', 'Restaurant', 'Spa', 'Parking', 'Concierge'],
-        rooms: [
-          { id: 'room-1', type: 'Standard Room', bedType: 'Single', capacity: 1, price: 299, originalPrice: 399, amenities: ['WiFi', 'AC'], maxGuests: 1, rating: 4.6, reviews: 456, icon: '🛏️' },
-          { id: 'room-2', type: 'Double Room', bedType: 'Double', capacity: 2, price: 349, originalPrice: 499, amenities: ['WiFi', 'AC', 'TV'], maxGuests: 2, rating: 4.8, reviews: 678, icon: '🛏️' },
-          { id: 'room-3', type: 'Deluxe Suite', bedType: 'King', capacity: 4, price: 499, originalPrice: 699, amenities: ['WiFi', 'AC', 'TV', 'Hot Tub'], maxGuests: 4, rating: 4.9, reviews: 890, icon: '👑' },
-        ]
-      },
-      {
-        id: 'hotel-2',
-        name: 'Modern Boutique Hotel',
-        location: 'San Francisco, USA',
-        rating: 4.7,
-        reviews: 1890,
-        icon: '✨',
-        type: 'Boutique Hotels',
-        price: 249,
-        discount: 20,
-        images: ['✨', '🏢', '☕', '🌃', '🎨'],
-        amenities: ['WiFi', 'Gym', 'Restaurant', 'Rooftop Bar', 'Library'],
-        rooms: [
-          { id: 'room-4', type: 'Compact Room', bedType: 'Single', capacity: 1, price: 179, originalPrice: 279, amenities: ['WiFi', 'AC'], maxGuests: 1, rating: 4.5, reviews: 345, icon: '🚪' },
-          { id: 'room-5', type: 'Standard Room', bedType: 'Double', capacity: 2, price: 249, originalPrice: 399, amenities: ['WiFi', 'AC', 'TV'], maxGuests: 2, rating: 4.7, reviews: 567, icon: '🛏️' },
-          { id: 'room-6', type: 'Premium Suite', bedType: 'King', capacity: 3, price: 399, originalPrice: 549, amenities: ['WiFi', 'AC', 'TV', 'Views'], maxGuests: 3, rating: 4.8, reviews: 489, icon: '👑' },
-        ]
-      },
-      {
-        id: 'hotel-3',
-        name: 'Beach Resort Hotel',
-        location: 'Miami, USA',
-        rating: 4.9,
-        reviews: 3456,
-        icon: '🏖️',
-        type: 'Resort Hotels',
-        price: 399,
-        discount: 10,
-        images: ['🏖️', '🌊', '🏝️', '⛱️', '🌅'],
-        amenities: ['WiFi', 'Beach Access', 'Pool', 'Restaurant', 'Spa', 'Water Sports'],
-        rooms: [
-          { id: 'room-7', type: 'Ocean View Room', bedType: 'Double', capacity: 2, price: 399, originalPrice: 549, amenities: ['WiFi', 'AC', 'TV', 'Ocean View'], maxGuests: 2, rating: 4.8, reviews: 789, icon: '🌊' },
-          { id: 'room-8', type: 'Suite with Terrace', bedType: 'King', capacity: 4, price: 599, originalPrice: 799, amenities: ['WiFi', 'AC', 'TV', 'Terrace', 'Spa Bath'], maxGuests: 4, rating: 4.9, reviews: 1234, icon: '👑' },
-          { id: 'room-9', type: 'Beach Bungalow', bedType: 'King', capacity: 2, price: 699, originalPrice: 999, amenities: ['WiFi', 'AC', 'Hot Tub', 'Direct Beach Access'], maxGuests: 2, rating: 4.9, reviews: 567, icon: '🏝️' },
-        ]
-      },
-      {
-        id: 'hotel-4',
-        name: 'Budget-Friendly Inn',
-        location: 'Seattle, USA',
-        rating: 4.4,
-        reviews: 1200,
-        icon: '🛏️',
-        type: 'Budget Hotels',
-        price: 69,
-        discount: 25,
-        images: ['🛏️', '🏠', '☕', '📺', '🚿'],
-        amenities: ['WiFi', 'Parking', 'Front Desk 24/7'],
-        rooms: [
-          { id: 'room-10', type: 'Basic Room', bedType: 'Single', capacity: 1, price: 69, originalPrice: 99, amenities: ['WiFi'], maxGuests: 1, rating: 4.3, reviews: 234, icon: '🛏️' },
-          { id: 'room-11', type: 'Basic Double', bedType: 'Double', capacity: 2, price: 89, originalPrice: 129, amenities: ['WiFi', 'TV'], maxGuests: 2, rating: 4.4, reviews: 345, icon: '🛏️' },
-          { id: 'room-12', type: 'Twin Room', bedType: 'Twin Beds', capacity: 2, price: 99, originalPrice: 149, amenities: ['WiFi', 'TV', 'AC'], maxGuests: 2, rating: 4.5, reviews: 267, icon: '🛏️' },
-        ]
-      },
-      {
-        id: 'hotel-5',
-        name: 'Luxury Apartment Complex',
-        location: 'Los Angeles, USA',
-        rating: 4.6,
-        reviews: 987,
-        icon: '🏢',
-        type: 'Apartments',
-        price: 189,
-        discount: 30,
-        images: ['🏢', '🏠', '🛋️', '🍳', '🌆'],
-        amenities: ['WiFi', 'Kitchen', 'Washer', 'Gym', 'Parking'],
-        rooms: [
-          { id: 'room-13', type: '1-Bedroom Apt', bedType: 'Double', capacity: 2, price: 189, originalPrice: 299, amenities: ['WiFi', 'Kitchen', 'Washer'], maxGuests: 2, rating: 4.6, reviews: 456, icon: '🏠' },
-          { id: 'room-14', type: '2-Bedroom Apt', bedType: 'King', capacity: 4, price: 279, originalPrice: 399, amenities: ['WiFi', 'Kitchen', 'Washer', 'Balcony'], maxGuests: 4, rating: 4.7, reviews: 567, icon: '🏠' },
-          { id: 'room-15', type: 'Studio Apt', bedType: 'Single', capacity: 1, price: 129, originalPrice: 199, amenities: ['WiFi', 'Kitchen'], maxGuests: 1, rating: 4.5, reviews: 312, icon: '🏘️' },
-        ]
-      },
-      {
-        id: 'hotel-6',
-        name: 'Mountain View Resort',
-        location: 'Denver, USA',
-        rating: 4.7,
-        reviews: 2100,
-        icon: '⛰️',
-        type: 'Resort Hotels',
-        price: 279,
-        discount: 15,
-        images: ['⛰️', '🏔️', '🌲', '🔥', '❄️'],
-        amenities: ['WiFi', 'Fireplace', 'Mountain Views', 'Hiking', 'Restaurant'],
-        rooms: [
-          { id: 'room-16', type: 'Standard Mountain Room', bedType: 'Double', capacity: 2, price: 199, originalPrice: 299, amenities: ['WiFi', 'Fireplace'], maxGuests: 2, rating: 4.6, reviews: 234, icon: '⛰️' },
-          { id: 'room-17', type: 'Deluxe Mountain Suite', bedType: 'King', capacity: 4, price: 379, originalPrice: 499, amenities: ['WiFi', 'Fireplace', 'Hot Tub', 'Views'], maxGuests: 4, rating: 4.8, reviews: 456, icon: '👑' },
-        ]
-      },
-    ];
-
-    this.hotels.set(defaultHotels);
   }
 
   search(): void {
