@@ -15,7 +15,7 @@
               class="w-full px-4 py-2 rounded-full bg-gray-100 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500"
             />
             <button class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
-              🔍
+              <mat-icon class="text-lg">search</mat-icon>
             </button>
           </div>
         </div>
@@ -38,7 +38,7 @@
           (click)="showCart.set(!showCart())"
           class="relative bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full font-semibold transition flex items-center gap-2"
         >
-          🛒
+          <mat-icon>shopping_cart</mat-icon>
           @if (cartItemsCount > 0) {
             <span class="bg-white text-red-500 text-xs font-bold rounded-full px-2 py-1">
               {{ cartItemsCount }}
@@ -131,8 +131,9 @@
 
       <!-- Error Message -->
       @if (errorMessage()) {
-        <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p class="text-red-700 font-semibold">⚠️ {{ errorMessage() }}</p>
+        <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+          <mat-icon class="text-red-700 mt-1">error</mat-icon>
+          <p class="text-red-700 font-semibold">{{ errorMessage() }}</p>
         </div>
       }
 
@@ -140,7 +141,9 @@
       @if (isLoading()) {
         <div class="flex justify-center items-center py-20">
           <div class="text-center">
-            <div class="text-5xl mb-4 animate-pulse">🔄</div>
+            <div class="mb-4 flex justify-center">
+              <mat-icon class="text-5xl text-blue-500 animate-spin">sync</mat-icon>
+            </div>
             <p class="text-gray-600 font-semibold">Loading products...</p>
           </div>
         </div>
@@ -156,15 +159,16 @@
               } @else if (product.images && product.images[0] && product.images[0].startsWith('http')) {
                 <img [src]="product.images[0]" [alt]="product.name" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
               } @else {
-                <div class="text-5xl group-hover:scale-110 transition-transform duration-300">
-                  {{ product.images?.[0] || product.icon || '📦' }}
+                <div class="flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <mat-icon class="text-6xl text-gray-400">{{ product.icon || 'inventory_2' }}</mat-icon>
                 </div>
               }
 
               <!-- Discount Badge -->
               @if ((product.discount ?? 0) > 0) {
-                <div class="absolute top-2 right-2 bg-red-500 text-white font-bold text-xs px-2 py-1 rounded">
-                  -{{ product.discount }}%
+                <div class="absolute top-2 right-2 bg-red-500 text-white font-bold text-xs px-2 py-1 rounded flex items-center gap-1">
+                  <mat-icon class="text-xs">local_offer</mat-icon>
+                  <span>-{{ product.discount }}%</span>
                 </div>
               }
 
@@ -174,22 +178,24 @@
                 class="absolute top-2 left-2 bg-white rounded-full p-2 hover:bg-gray-100 transition"
               >
                 @if (isInWishlist(product.id)) {
-                  ❤️
+                  <mat-icon class="text-red-500">favorite</mat-icon>
                 } @else {
-                  🤍
+                  <mat-icon>favorite_border</mat-icon>
                 }
               </button>
 
               <!-- Free Shipping Badge -->
               @if (product.isFreeShipping) {
-                <div class="absolute bottom-2 left-2 bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded">
-                  FREE SHIP
+                <div class="absolute bottom-2 left-2 bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded flex items-center gap-1">
+                  <mat-icon class="text-xs">local_shipping</mat-icon>
+                  <span>FREE</span>
                 </div>
               }
 
               <!-- Sold Count -->
-              <div class="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                {{ product.sold }} sold
+              <div class="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
+                <mat-icon class="text-xs">shopping_bag</mat-icon>
+                <span>{{ product.sold }}</span>
               </div>
             </div>
 
@@ -202,7 +208,7 @@
 
               <!-- Rating -->
               <div class="flex items-center gap-1 mb-2">
-                <span class="text-yellow-500">⭐</span>
+                <mat-icon class="text-yellow-500 text-xs">star</mat-icon>
                 <span class="text-xs font-semibold text-gray-900">{{ product.rating }}</span>
                 <span class="text-xs text-gray-500">({{ product.reviews }})</span>
               </div>
@@ -220,9 +226,10 @@
               <!-- Quick View Button -->
               <button
                 (click)="openQuickView(product)"
-                class="w-full bg-red-500 hover:bg-red-600 active:bg-red-700 text-white font-bold py-2 px-3 rounded-lg transition text-sm shadow-md"
+                class="w-full bg-red-500 hover:bg-red-600 active:bg-red-700 text-white font-bold py-2 px-3 rounded-lg transition text-sm shadow-md flex items-center justify-center gap-2"
               >
-                👁️ Quick View
+                <mat-icon class="text-sm">visibility</mat-icon>
+                Quick View
               </button>
             </div>
           </div>
@@ -230,11 +237,19 @@
       </div>
 
       <!-- No Results -->
-      @if (filteredProducts.length === 0) {
+      @if (filteredProducts.length === 0 && !isLoading()) {
         <div class="text-center py-20">
-          <div class="text-6xl mb-4">🔍</div>
+          <div class="mb-4 flex justify-center">
+            <mat-icon class="text-6xl text-gray-400">search_off</mat-icon>
+          </div>
           <h3 class="text-2xl font-bold text-gray-900 mb-2">No products found</h3>
-          <p class="text-gray-600">Try adjusting your search or filters</p>
+          <p class="text-gray-600">
+            @if (errorMessage()) {
+              {{ errorMessage() }}
+            } @else {
+              Try adjusting your search or filters
+            }
+          </p>
         </div>
       }
       }
@@ -247,8 +262,13 @@
         <!-- Cart Header -->
         <div class="sticky top-0 bg-white z-10 px-6 py-4 border-b border-gray-200">
           <div class="flex items-center justify-between">
-            <h2 class="text-2xl font-bold text-gray-900">🛒 Cart</h2>
-            <button (click)="showCart.set(false)" class="text-3xl font-bold text-gray-500 hover:text-gray-700 w-8 h-8 flex items-center justify-center">✕</button>
+            <div class="flex items-center gap-2">
+              <mat-icon>shopping_cart</mat-icon>
+              <h2 class="text-2xl font-bold text-gray-900">Cart</h2>
+            </div>
+            <button (click)="showCart.set(false)" class="text-gray-500 hover:text-gray-700">
+              <mat-icon>close</mat-icon>
+            </button>
           </div>
         </div>
 
@@ -257,7 +277,9 @@
 
         @if (cart().length === 0) {
           <div class="flex-1 flex flex-col items-center justify-center text-center">
-            <div class="text-5xl mb-4">🛒</div>
+            <div class="mb-4">
+              <mat-icon class="text-6xl text-gray-400">shopping_cart</mat-icon>
+            </div>
             <p class="text-gray-600 mb-4">Your cart is empty</p>
             <button
               (click)="showCart.set(false)"
@@ -271,7 +293,13 @@
           <div class="flex-1 space-y-3 mb-6 overflow-y-auto pr-2">
             @for (item of cart(); track item.product.id) {
               <div class="flex gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:shadow-md transition">
-                <div class="text-4xl flex-shrink-0">{{ item.product.icon }}</div>
+                <div class="flex items-center justify-center w-12 h-12 flex-shrink-0 bg-gray-100 rounded">
+                  @if (item.product.icon) {
+                    <mat-icon class="text-4xl text-gray-600">{{ item.product.icon }}</mat-icon>
+                  } @else {
+                    <mat-icon class="text-4xl text-gray-400">inventory_2</mat-icon>
+                  }
+                </div>
                 <div class="flex-1 min-w-0">
                   <h4 class="font-bold text-gray-900 text-xs line-clamp-2">{{ item.product.name }}</h4>
                   <p class="text-red-500 font-bold mt-1 text-sm">{{ formatPrice(item.product.price * item.quantity) }}</p>
@@ -279,22 +307,22 @@
                   <div class="flex items-center gap-2 mt-2">
                     <button
                       (click)="updateCartQuantity(item.product.id, item.quantity - 1)"
-                      class="bg-gray-100 hover:bg-gray-200 border border-gray-300 w-6 h-6 rounded text-xs flex items-center justify-center font-bold"
+                      class="bg-gray-100 hover:bg-gray-200 border border-gray-300 w-6 h-6 rounded flex items-center justify-center"
                     >
-                      −
+                      <mat-icon class="text-sm">remove</mat-icon>
                     </button>
                     <span class="font-bold text-gray-900 w-4 text-center text-sm">{{ item.quantity }}</span>
                     <button
                       (click)="updateCartQuantity(item.product.id, item.quantity + 1)"
-                      class="bg-gray-100 hover:bg-gray-200 border border-gray-300 w-6 h-6 rounded text-xs flex items-center justify-center font-bold"
+                      class="bg-gray-100 hover:bg-gray-200 border border-gray-300 w-6 h-6 rounded flex items-center justify-center"
                     >
-                      +
+                      <mat-icon class="text-sm">add</mat-icon>
                     </button>
                     <button
                       (click)="removeFromCart(item.product.id)"
-                      class="ml-auto text-red-500 hover:text-red-600 text-xs font-semibold"
+                      class="ml-auto text-red-500 hover:text-red-600"
                     >
-                      ✕
+                      <mat-icon class="text-sm">delete</mat-icon>
                     </button>
                   </div>
                 </div>
@@ -335,15 +363,17 @@
 
             <button
               (click)="openPaymentModal()"
-              class="w-full bg-red-500 hover:bg-red-600 active:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition shadow-lg"
+              class="w-full bg-red-500 hover:bg-red-600 active:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition shadow-lg flex items-center justify-center gap-2"
             >
+              <mat-icon class="text-lg">payment</mat-icon>
               Proceed to Payment
             </button>
 
             <button
               (click)="showCart.set(false)"
-              class="w-full bg-white border-2 border-gray-300 hover:border-gray-400 text-gray-900 font-bold py-3 px-4 rounded-lg transition"
+              class="w-full bg-white border-2 border-gray-300 hover:border-gray-400 text-gray-900 font-bold py-3 px-4 rounded-lg transition flex items-center justify-center gap-2"
             >
+              <mat-icon class="text-sm">shopping_bag</mat-icon>
               Continue Shopping
             </button>
           </div>
@@ -360,8 +390,13 @@
         <!-- Payment Modal Header -->
         <div class="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 border-b border-blue-800">
           <div class="flex items-center justify-between">
-            <h2 class="text-2xl font-bold">💳 Payment Options</h2>
-            <button (click)="closePaymentModal()" class="text-3xl font-bold hover:text-blue-100">✕</button>
+            <div class="flex items-center gap-2">
+              <mat-icon>payment</mat-icon>
+              <h2 class="text-2xl font-bold">Payment Options</h2>
+            </div>
+            <button (click)="closePaymentModal()" class="hover:text-blue-100">
+              <mat-icon>close</mat-icon>
+            </button>
           </div>
           <p class="text-blue-100 mt-1">Order Total: <span class="font-bold text-lg">{{ formatPrice(cartTotal) }}</span></p>
         </div>
@@ -380,7 +415,13 @@
                       ? 'border-blue-600 bg-blue-50'
                       : 'border-gray-200 bg-white hover:border-blue-300')"
                 >
-                  <div class="text-3xl mb-2">{{ method.icon }}</div>
+                  <div class="mb-2 flex">
+                    @if (method.icon && (method.icon.length === 1 || method.icon.charCodeAt(0) > 127)) {
+                      <span class="text-3xl">{{ method.icon }}</span>
+                    } @else {
+                      <mat-icon class="text-3xl text-gray-700">{{ method.icon || 'payment' }}</mat-icon>
+                    }
+                  </div>
                   <h4 class="font-bold text-gray-900">{{ method.name }}</h4>
                   <p class="text-xs text-gray-600">{{ method.description }}</p>
                 </button>
@@ -390,15 +431,17 @@
 
           <!-- Error Message -->
           @if (paymentError()) {
-            <div class="mb-4 p-4 bg-red-50 border border-red-300 text-red-700 rounded-lg text-sm">
-              ❌ {{ paymentError() }}
+            <div class="mb-4 p-4 bg-red-50 border border-red-300 text-red-700 rounded-lg text-sm flex items-start gap-3">
+              <mat-icon class="text-red-700 mt-1">error</mat-icon>
+              <span>{{ paymentError() }}</span>
             </div>
           }
 
           <!-- Success Message -->
           @if (paymentSuccess()) {
-            <div class="mb-4 p-4 bg-green-50 border border-green-300 text-green-700 rounded-lg text-sm">
-              ✅ Payment approved! Transaction ID: {{ transactionId() }}
+            <div class="mb-4 p-4 bg-green-50 border border-green-300 text-green-700 rounded-lg text-sm flex items-start gap-3">
+              <mat-icon class="text-green-700 mt-1">check_circle</mat-icon>
+              <span>Payment approved! Transaction ID: {{ transactionId() }}</span>
             </div>
           }
 
@@ -648,9 +691,15 @@
             <button
               (click)="submitPayment()"
               [disabled]="isProcessingPayment() || !selectedPaymentMethod()"
-              class="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded-lg transition"
+              class="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded-lg transition flex items-center justify-center gap-2"
             >
-              {{ isProcessingPayment() ? '⏳ Processing...' : '✓ Pay ' + formatPrice(cartTotal) }}
+              @if (isProcessingPayment()) {
+                <mat-icon class="animate-spin">sync</mat-icon>
+                <span>Processing...</span>
+              } @else {
+                <mat-icon>check_circle</mat-icon>
+                <span>Pay {{ formatPrice(cartTotal) }}</span>
+              }
             </button>
             <button
               (click)="closePaymentModal()"
@@ -672,7 +721,9 @@
       <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
         <div class="flex items-center justify-between bg-white border-b border-gray-200 p-6">
           <h2 class="text-xl font-bold text-gray-900">Product Details</h2>
-          <button (click)="closeQuickView()" class="text-2xl text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg p-1 transition">✕</button>
+          <button (click)="closeQuickView()" class="text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg p-1 transition">
+            <mat-icon>close</mat-icon>
+          </button>
         </div>
 
         <div class="grid md:grid-cols-2 gap-6 p-6">
@@ -683,7 +734,9 @@
               @if (product!.images && product!.images[selectedImageIndex()] && product!.images[selectedImageIndex()].startsWith('http')) {
                 <img [src]="product!.images[selectedImageIndex()]!" [alt]="product!.name" class="w-full h-full object-cover animate-bounce" />
               } @else {
-                <div class="text-9xl animate-bounce">{{ product!.images?.[selectedImageIndex()] || product!.icon || '📦' }}</div>
+                <div class="animate-bounce">
+                  <mat-icon class="text-9xl text-gray-400">{{ product!.icon || 'inventory_2' }}</mat-icon>
+                </div>
               }
             </div>
 
@@ -697,7 +750,7 @@
                   @if (image && image.startsWith('http')) {
                     <img [src]="image" [alt]="'Product variant ' + idx" class="w-full h-full object-cover" />
                   } @else {
-                    <div class="text-4xl">{{ image || product!.icon || '📦' }}</div>
+                    <mat-icon class="text-4xl text-gray-400">{{ product!.icon || 'inventory_2' }}</mat-icon>
                   }
                 </button>
               }
@@ -715,7 +768,7 @@
             <!-- Rating -->
             <div class="flex items-center gap-3 text-sm">
               <div class="flex items-center gap-1">
-                <span class="text-yellow-500">⭐</span>
+                <mat-icon class="text-yellow-500 text-sm">star</mat-icon>
                 <span class="font-bold text-gray-900">{{ product!.rating }}</span>
               </div>
               <div class="text-gray-600">
@@ -731,14 +784,15 @@
               <div class="flex items-baseline gap-3 mb-2">
                 <span class="text-3xl font-bold text-red-500">{{ formatPrice(product!.price) }}</span>
                 @if ((product!.originalPrice ?? product!.price) > product!.price) {
-                  <span class="text-base text-gray-500 line-through">{{ formatPrice(product!.originalPrice) }}</span>
-                }
-              </div>
-              @if ((product!.discount ?? 0) > 0) {
-                <div class="inline-block bg-red-500 text-white font-bold px-2 py-1 rounded text-sm">
-                  Save {{ product!.discount }}%
-                </div>
+                <span class="text-base text-gray-500 line-through">{{ formatPrice(product!.originalPrice) }}</span>
               }
+            </div>
+            @if ((product!.discount ?? 0) > 0) {
+              <div class="inline-block bg-red-500 text-white font-bold px-2 py-1 rounded text-sm flex items-center gap-1">
+                <mat-icon class="text-sm">local_offer</mat-icon>
+                <span>Save {{ product!.discount }}%</span>
+              </div>
+            }
             </div>
 
             <!-- Description -->
@@ -753,12 +807,14 @@
             <div class="space-y-2">
               @if (product!.isFreeShipping) {
                 <div class="flex items-center gap-2 text-green-600 font-medium text-sm">
-                  ✓ FREE SHIPPING
+                  <mat-icon class="text-sm">local_shipping</mat-icon>
+                  FREE SHIPPING
                 </div>
               }
               @if (product!.inStock) {
                 <div class="flex items-center gap-2 text-green-600 font-medium text-sm">
-                  ✓ IN STOCK
+                  <mat-icon class="text-sm">check_circle</mat-icon>
+                  IN STOCK
                 </div>
               }
             </div>
@@ -766,20 +822,23 @@
             <!-- Add to Cart Button -->
             <button
               (click)="addQuickViewToCart()"
-              class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-lg transition text-base"
+              class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-lg transition text-base flex items-center justify-center gap-2"
             >
+              <mat-icon>add_shopping_cart</mat-icon>
               Add to Cart
             </button>
 
             <!-- Wishlist Button -->
             <button
               (click)="toggleWishlist(product!.id)"
-              [class]="'w-full font-bold py-3 px-4 rounded-lg transition border-2 text-base ' + (isInWishlist(product!.id) ? 'bg-red-50 border-red-500 text-red-500 hover:bg-red-100' : 'border-gray-300 text-gray-700 hover:border-red-500')"
+              [class]="'w-full font-bold py-3 px-4 rounded-lg transition border-2 text-base flex items-center justify-center gap-2 ' + (isInWishlist(product!.id) ? 'bg-red-50 border-red-500 text-red-500 hover:bg-red-100' : 'border-gray-300 text-gray-700 hover:border-red-500')"
             >
               @if (isInWishlist(product!.id)) {
-                ❤️ Added to Wishlist
+                <mat-icon>favorite</mat-icon>
+                Added to Wishlist
               } @else {
-                🤍 Add to Wishlist
+                <mat-icon>favorite_border</mat-icon>
+                Add to Wishlist
               }
             </button>
           </div>
@@ -791,9 +850,10 @@
             <h3 class="text-lg font-bold text-gray-900">Customer Reviews</h3>
             <button
               (click)="showReviewForm.set(!showReviewForm())"
-              class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-3 py-2 rounded-lg transition text-sm"
+              class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-3 py-2 rounded-lg transition text-sm flex items-center gap-2"
             >
-              ✍️ Write Review
+              <mat-icon class="text-sm">edit</mat-icon>
+              Write Review
             </button>
           </div>
 
@@ -809,9 +869,9 @@
                   @for (star of [1, 2, 3, 4, 5]; track star) {
                     <button
                       (click)="reviewRating.set(star)"
-                      [class]="'text-2xl transition ' + (star <= reviewRating() ? 'opacity-100' : 'opacity-30 hover:opacity-60')"
+                      [class]="'transition ' + (star <= reviewRating() ? 'opacity-100 text-yellow-500' : 'opacity-30 hover:opacity-60 text-gray-400')"
                     >
-                      ⭐
+                      <mat-icon>{{ star <= reviewRating() ? 'star' : 'star_outline' }}</mat-icon>
                     </button>
                   }
                 </div>
@@ -844,12 +904,14 @@
                 <button
                   (click)="submitReview()"
                   [disabled]="submittingReview()"
-                  class="flex-1 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded-lg transition text-sm"
+                  class="flex-1 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded-lg transition text-sm flex items-center justify-center gap-2"
                 >
                   @if (submittingReview()) {
-                    Submitting...
+                    <mat-icon class="text-sm animate-spin">sync</mat-icon>
+                    <span>Submitting...</span>
                   } @else {
-                    Submit Review
+                    <mat-icon class="text-sm">send</mat-icon>
+                    <span>Submit Review</span>
                   }
                 </button>
                 <button
@@ -873,12 +935,15 @@
                       <div class="flex items-center gap-2 mb-1">
                         <span class="font-semibold text-sm text-gray-900">{{ review.customerName }}</span>
                         @if (review.verified) {
-                          <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">✓ Verified</span>
+                          <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded flex items-center gap-1">
+                            <mat-icon class="text-xs">check_circle</mat-icon>
+                            Verified
+                          </span>
                         }
                       </div>
                       <div class="flex items-center gap-1">
                         @for (star of [1, 2, 3, 4, 5]; track star) {
-                          <span [class]="'text-sm ' + (star <= review.rating ? 'text-yellow-500' : 'text-gray-300')">⭐</span>
+                          <mat-icon [class]="'text-sm ' + (star <= review.rating ? 'text-yellow-500' : 'text-gray-300')">{{ star <= review.rating ? 'star' : 'star_outline' }}</mat-icon>
                         }
                       </div>
                     </div>
@@ -891,13 +956,19 @@
 
                   <!-- Helpful Button -->
                   <div class="flex items-center gap-4 text-xs">
-                    <button class="text-gray-600 hover:text-blue-600">👍 Helpful ({{ review.helpful }})</button>
+                    <button class="text-gray-600 hover:text-blue-600 flex items-center gap-1">
+                      <mat-icon class="text-sm">thumb_up</mat-icon>
+                      Helpful ({{ review.helpful }})
+                    </button>
                   </div>
                 </div>
               }
             </div>
           } @else {
             <div class="text-center py-6 text-gray-500 text-sm">
+              <div class="mb-3 flex justify-center">
+                <mat-icon class="text-4xl text-gray-400">rate_review</mat-icon>
+              </div>
               <p>No reviews yet. Be the first to review this product!</p>
             </div>
           }

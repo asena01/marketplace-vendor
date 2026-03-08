@@ -1,6 +1,7 @@
 import { Component, signal, effect, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatIconModule } from '@angular/material/icon';
 import { HeaderComponent } from '../../components/header/header.component';
 import { MARKETPLACE_SERVICES } from '../../shared/data/marketplace-data';
 import { ProductService, Product as ApiProduct } from '../../services/product.service';
@@ -34,7 +35,7 @@ interface CartItem {
 @Component({
   selector: 'app-shopping',
   standalone: true,
-  imports: [CommonModule, HeaderComponent, FormsModule],
+  imports: [CommonModule, HeaderComponent, FormsModule, MatIconModule],
   templateUrl: './shopping.component.html',
   styleUrl: './shopping.component.css'
 })
@@ -123,17 +124,17 @@ export class ShoppingComponent implements OnInit {
           this.allProducts.set(products);
           console.log('✅ Loaded', products.length, 'products from API');
         } else {
-          console.log('⚠️ API returned no products, loading sample data');
-          this.loadSampleProducts();
+          console.log('⚠️ API returned no products');
+          this.allProducts.set([]);
+          this.errorMessage.set('No products available at the moment. Please check back later.');
         }
         this.isLoading.set(false);
       },
       error: (error) => {
         console.error('Failed to load products from API:', error);
-        // Fallback to sample data
-        this.loadSampleProducts();
+        this.allProducts.set([]);
+        this.errorMessage.set('Unable to load products. Please check your internet connection and try again.');
         this.isLoading.set(false);
-        console.log('✅ Loaded', this.allProducts().length, 'sample products (fallback)');
       }
     });
   }
@@ -148,14 +149,24 @@ export class ShoppingComponent implements OnInit {
       rating = apiProduct.rating;
     }
 
+    // Map category to default Material icon
+    const getCategoryIcon = (category: string): string => {
+      const categoryLower = category.toLowerCase();
+      if (categoryLower.includes('wear') || categoryLower.includes('cloth')) return 'shopping_bag';
+      if (categoryLower.includes('shoe') || categoryLower.includes('sneaker')) return 'shoe';
+      if (categoryLower.includes('jewel') || categoryLower.includes('accessory')) return 'diamond';
+      if (categoryLower.includes('super') || categoryLower.includes('grocery') || categoryLower.includes('food')) return 'shopping_cart';
+      return 'inventory_2';
+    };
+
     return {
       id: apiProduct._id || apiProduct.id || '',
       name: apiProduct.name,
       price: apiProduct.price,
       originalPrice: apiProduct.originalPrice || apiProduct.price || 0,
       category: apiProduct.category,
-      icon: apiProduct.icon || '📦',
-      images: apiProduct.images && apiProduct.images.length > 0 ? apiProduct.images : [apiProduct.thumbnail || apiProduct.icon || '📦'],
+      icon: apiProduct.icon || getCategoryIcon(apiProduct.category),
+      images: apiProduct.images && apiProduct.images.length > 0 ? apiProduct.images : [apiProduct.thumbnail || ''],
       rating: rating ?? 0,
       reviews: apiProduct.reviews ?? 0,
       sold: apiProduct.sold ?? 0,
@@ -167,18 +178,6 @@ export class ShoppingComponent implements OnInit {
     };
   }
 
-  // Load fallback sample products if backend fails
-  private loadSampleProducts(): void {
-    const sampleProducts: Product[] = [
-      { id: '1', name: 'Premium Winter Jacket', price: 45.99, originalPrice: 89.99, category: 'Adult Wears', icon: '🧥', images: ['🧥', '🧥‍♂️', '🧤'], rating: 4.8, reviews: 2345, sold: 5200, discount: 49, inStock: true, isFreeShipping: true, description: 'Premium quality winter jacket with warm lining. Perfect for cold weather.' },
-      { id: '2', name: 'Trendy Kids Sneakers', price: 32.99, originalPrice: 59.99, category: 'Children Wears', icon: '👟', images: ['👟', '👞', '🩴'], rating: 4.7, reviews: 1890, sold: 4100, discount: 45, inStock: true, isFreeShipping: true, description: 'Comfortable and stylish sneakers for kids.' },
-      { id: '3', name: 'Gold Necklace Set', price: 18.99, originalPrice: 89.99, category: 'Jewelry', icon: '⛓️', images: ['⛓️', '💍', '👑'], rating: 4.9, reviews: 3456, sold: 6700, discount: 79, inStock: true, isFreeShipping: true, description: 'Elegant gold necklace set with matching pendant.' },
-      { id: '4', name: 'Organic Fresh Box', price: 22.99, originalPrice: 45.99, category: 'Supermarkets', icon: '🥬', images: ['🥬', '🥕', '🌽'], rating: 4.6, reviews: 1200, sold: 3400, discount: 50, inStock: true, isFreeShipping: false, description: 'Fresh organic vegetables delivered to your door.' },
-      { id: '5', name: 'Casual Summer Dress', price: 28.99, originalPrice: 69.99, category: 'Adult Wears', icon: '👗', images: ['👗', '👔', '👠'], rating: 4.8, reviews: 2678, sold: 5890, discount: 59, inStock: true, isFreeShipping: true, description: 'Light and comfortable summer dress.' },
-      { id: '6', name: 'Fun Toy Set Pack', price: 21.99, originalPrice: 49.99, category: 'Children Wears', icon: '🧸', images: ['🧸', '🎮', '🚂'], rating: 4.7, reviews: 987, sold: 2340, discount: 56, inStock: true, isFreeShipping: true, description: 'Entertaining toy set for children.' },
-    ];
-    this.allProducts.set(sampleProducts);
-  }
 
   get filteredProducts(): Product[] {
     let products = this.allProducts();
