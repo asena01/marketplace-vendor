@@ -1,9 +1,11 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatIconModule } from '@angular/material/icon';
 import { HeaderComponent } from '../../components/header/header.component';
 import { HairService } from '../../services/hair.service';
 import { PaymentService } from '../../services/payment.service';
+import { DeliveryService, DeliveryServiceDefinition } from '../../services/delivery.service';
 
 @Component({
   selector: 'app-hair',
