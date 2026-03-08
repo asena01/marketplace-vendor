@@ -804,4 +804,204 @@ export class HotelService {
     );
   }
 
+  // ==================== AVAILABILITY CALENDAR ====================
+  updateRoomAvailability(roomId: string, date: Date, status: string): Observable<ApiResponse<any>> {
+    const dateStr = date.toISOString().split('T')[0];
+    return this.http.put<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/rooms/${roomId}/availability`,
+      { date: dateStr, status }
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to update room availability:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  bulkUpdateAvailability(updates: any[]): Observable<ApiResponse<any>> {
+    const formattedUpdates = updates.map(u => ({
+      roomId: u.roomId,
+      date: u.date.toISOString().split('T')[0],
+      status: u.status
+    }));
+
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/availability/bulk-update`,
+      { updates: formattedUpdates }
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to bulk update availability:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  getAvailabilityCalendar(month: number, year: number): Observable<ApiResponse<any>> {
+    const params = new HttpParams()
+      .set('month', month.toString())
+      .set('year', year.toString());
+
+    return this.http.get<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/availability/calendar`,
+      { params }
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch calendar:', error);
+        return of({ status: 'error', data: [], message: error.message });
+      })
+    );
+  }
+
+  // ==================== PRICING MANAGEMENT ====================
+  getPricingRates(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/pricing`
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch pricing rates:', error);
+        return of({ status: 'error', data: { baseRates: [], seasonalRates: [], discounts: [], specialOffers: [] }, message: error.message });
+      })
+    );
+  }
+
+  createBaseRate(rateData: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/pricing/base-rates`,
+      rateData
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to create base rate:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  updateBaseRate(rateId: string, rateData: any): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/pricing/base-rates/${rateId}`,
+      rateData
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to update base rate:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  deleteRate(rateId: string): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/pricing/base-rates/${rateId}`
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to delete rate:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  createSeasonalRate(seasonData: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/pricing/seasonal`,
+      seasonData
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to create seasonal rate:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  updateSeasonalRate(seasonId: string, seasonData: any): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/pricing/seasonal/${seasonId}`,
+      seasonData
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to update seasonal rate:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  deleteSeason(seasonId: string): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/pricing/seasonal/${seasonId}`
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to delete seasonal rate:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  createDiscount(discountData: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/pricing/discounts`,
+      discountData
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to create discount:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  updateDiscount(discountId: string, discountData: any): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/pricing/discounts/${discountId}`,
+      discountData
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to update discount:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  deleteDiscount(discountId: string): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/pricing/discounts/${discountId}`
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to delete discount:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  createSpecialOffer(offerData: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/pricing/special-offers`,
+      offerData
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to create special offer:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  updateSpecialOffer(offerId: string, offerData: any): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/pricing/special-offers/${offerId}`,
+      offerData
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to update special offer:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  deleteSpecial(specialId: string): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/pricing/special-offers/${specialId}`
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to delete special offer:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
 }

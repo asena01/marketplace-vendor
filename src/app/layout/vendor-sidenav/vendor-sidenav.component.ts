@@ -247,6 +247,8 @@ export class VendorSidenavComponent implements OnInit {
       'Dashboard': 'dashboard',
       'Orders': 'assignment',
       'Menu': 'menu_book',
+      'Calendar': 'calendar_month',
+      'Pricing': 'sell',
       'Rooms': 'hotel',
       'Staff': 'people',
       'Products': 'inventory_2',
@@ -298,6 +300,8 @@ export class VendorSidenavComponent implements OnInit {
       );
     } else if (this.vendorType === 'hotel') {
       items.push(
+        { label: 'Calendar', icon: '📅', route: `${dashboardPath}/calendar` },
+        { label: 'Pricing', icon: '💰', route: `${dashboardPath}/pricing` },
         { label: 'Rooms', icon: '🏨', route: `${dashboardPath}/rooms`, badge: 0 },
         { label: 'Devices', icon: '📱', route: `${dashboardPath}/devices` },
         { label: 'Staff', icon: '👥', route: `${dashboardPath}/staff` },
