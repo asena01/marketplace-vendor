@@ -3,6 +3,12 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
+import {
+  DeliveryServiceDefinition,
+  getDeliveryServicesForBusinessType,
+  calculateDeliveryPrice,
+  getDeliveryServiceById
+} from './delivery-service-definitions';
 
 export interface Driver {
   _id?: string;
@@ -69,6 +75,34 @@ export class DeliveryService {
         this.restaurantId = storedId;
       }
     }
+  }
+
+  // ==================== DELIVERY SERVICE DEFINITIONS ====================
+
+  /**
+   * Get available delivery services for a business type
+   * @param businessType The type of business (restaurant, retail, hotel, etc.)
+   */
+  getAvailableServices(businessType: 'restaurant' | 'retail' | 'hotel' | 'service' | 'tours' | 'warehouse'): DeliveryServiceDefinition[] {
+    return getDeliveryServicesForBusinessType(businessType);
+  }
+
+  /**
+   * Calculate delivery price based on service and distance/weight
+   * @param service The delivery service definition
+   * @param distance Distance in kilometers
+   * @param weight Weight in kilograms
+   */
+  calculatePrice(service: DeliveryServiceDefinition, distance: number, weight: number): number {
+    return calculateDeliveryPrice(service, distance, weight);
+  }
+
+  /**
+   * Get delivery service by ID
+   * @param serviceId The service ID
+   */
+  getServiceById(serviceId: string): DeliveryServiceDefinition | undefined {
+    return getDeliveryServiceById(serviceId);
   }
 
   // ==================== DELIVERY ORDERS ====================
