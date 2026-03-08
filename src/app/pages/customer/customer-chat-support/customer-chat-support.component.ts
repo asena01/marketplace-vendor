@@ -1,6 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatIconModule } from '@angular/material/icon';
 import { CustomerService } from '../../../services/customer.service';
 
 interface ChatMessage {
@@ -30,12 +31,15 @@ interface VendorChat {
 @Component({
   selector: 'app-customer-chat-support',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatIconModule],
   template: `
     <div class="space-y-6">
       <!-- Header -->
       <div>
-        <h2 class="text-2xl font-bold text-gray-800">💬 Chat with Vendors</h2>
+        <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+          <mat-icon>chat</mat-icon>
+          <span>Chat with Vendors</span>
+        </h2>
         <p class="text-gray-600 text-sm mt-1">Chat directly with vendors about your bookings and orders</p>
       </div>
 
@@ -44,7 +48,8 @@ interface VendorChat {
         <!-- Conversations List -->
         <div class="lg:col-span-1 bg-white rounded-lg shadow-md overflow-hidden">
           <div class="bg-blue-600 text-white p-4 font-bold flex items-center gap-2">
-            💬 Chats ({{ conversations().length }})
+            <mat-icon>chat_bubble</mat-icon>
+            <span>Chats ({{ conversations().length }})</span>
           </div>
           <div class="divide-y max-h-[600px] overflow-y-auto">
             @if (conversations().length > 0) {
@@ -93,8 +98,8 @@ interface VendorChat {
               </div>
               @if (selectedChat()!.status !== 'closed') {
                 <div class="flex items-center gap-2 mt-3 text-xs opacity-75">
-                  <span class="w-2 h-2 bg-green-400 rounded-full"></span>
-                  Active chat
+                  <mat-icon class="text-xs" style="width: 12px; height: 12px;">check_circle</mat-icon>
+                  <span>Active chat</span>
                 </div>
               }
             </div>
@@ -136,26 +141,31 @@ interface VendorChat {
                   <button
                     (click)="sendMessage()"
                     [disabled]="!newMessage().trim() || isSending()"
-                    class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
-                    {{ isSending() ? '⏳' : '📤 Send' }}
+                    <mat-icon class="text-sm">{{ isSending() ? 'schedule' : 'send' }}</mat-icon>
+                    <span>{{ isSending() ? 'Sending...' : 'Send' }}</span>
                   </button>
                 </div>
                 @if (error()) {
-                  <div class="bg-red-50 border border-red-300 text-red-700 px-3 py-2 rounded-lg text-sm mt-2">
-                    ❌ {{ error() }}
+                  <div class="bg-red-50 border border-red-300 text-red-700 px-3 py-2 rounded-lg text-sm mt-2 flex items-center gap-2">
+                    <mat-icon class="text-sm">error</mat-icon>
+                    <span>{{ error() }}</span>
                   </div>
                 }
               </div>
             } @else {
-              <div class="border-t p-4 bg-gray-100 text-center text-gray-600 text-sm font-semibold">
-                🔒 This chat is closed
+              <div class="border-t p-4 bg-gray-100 text-center text-gray-600 text-sm font-semibold flex items-center justify-center gap-2">
+                <mat-icon class="text-sm">lock</mat-icon>
+                <span>This chat is closed</span>
               </div>
             }
           } @else {
             <div class="flex-1 flex items-center justify-center">
               <div class="text-center text-gray-500">
-                <p class="text-4xl mb-3">💬</p>
+                <div class="flex justify-center mb-3">
+                  <mat-icon class="text-5xl text-gray-400">chat_bubble_outline</mat-icon>
+                </div>
                 <p class="text-lg font-semibold">Select a chat to start messaging</p>
                 <p class="text-sm mt-2 text-gray-400">Or make a booking/order to open vendor chat</p>
               </div>
@@ -166,21 +176,25 @@ interface VendorChat {
 
       <!-- Bookings with Chat Option -->
       <div class="mt-8">
-        <h3 class="text-xl font-bold text-gray-800 mb-4">📞 Start Chat with Vendor</h3>
+        <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+          <mat-icon>phone</mat-icon>
+          <span>Start Chat with Vendor</span>
+        </h3>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <!-- Hotels -->
           @if (hotelBookings().length > 0) {
             @for (booking of hotelBookings(); track booking._id) {
               <div class="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition">
                 <div class="flex items-center gap-2 mb-2">
-                  <span class="text-2xl">🏨</span>
+                  <mat-icon>hotel</mat-icon>
                   <h4 class="font-bold text-gray-800">{{ booking.hotelName }}</h4>
                 </div>
                 <p class="text-sm text-gray-600 mb-3">{{ booking.roomType }} - {{ booking.nights }} nights</p>
                 <button
                   (click)="startVendorChat('hotel', booking._id, booking.hotelName)"
-                  class="w-full bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition">
-                  💬 Chat
+                  class="w-full bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition flex items-center justify-center gap-2">
+                  <mat-icon class="text-sm">chat</mat-icon>
+                  <span>Chat</span>
                 </button>
               </div>
             }
@@ -191,14 +205,15 @@ interface VendorChat {
             @for (order of foodOrders(); track order._id) {
               <div class="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition">
                 <div class="flex items-center gap-2 mb-2">
-                  <span class="text-2xl">🍕</span>
+                  <mat-icon>restaurant</mat-icon>
                   <h4 class="font-bold text-gray-800">{{ order.restaurantName }}</h4>
                 </div>
                 <p class="text-sm text-gray-600 mb-3">{{ order.items.length }} items - ₦{{ order.totalPrice.toLocaleString() }}</p>
                 <button
                   (click)="startVendorChat('restaurant', order._id, order.restaurantName)"
-                  class="w-full bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition">
-                  💬 Chat
+                  class="w-full bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition flex items-center justify-center gap-2">
+                  <mat-icon class="text-sm">chat</mat-icon>
+                  <span>Chat</span>
                 </button>
               </div>
             }
@@ -209,14 +224,15 @@ interface VendorChat {
             @for (tour of tourBookings(); track tour._id) {
               <div class="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition">
                 <div class="flex items-center gap-2 mb-2">
-                  <span class="text-2xl">✈️</span>
+                  <mat-icon>flight</mat-icon>
                   <h4 class="font-bold text-gray-800">{{ tour.agency }}</h4>
                 </div>
                 <p class="text-sm text-gray-600 mb-3">{{ tour.tourName }} - {{ tour.duration }} days</p>
                 <button
                   (click)="startVendorChat('tour', tour._id, tour.agency)"
-                  class="w-full bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition">
-                  💬 Chat
+                  class="w-full bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition flex items-center justify-center gap-2">
+                  <mat-icon class="text-sm">chat</mat-icon>
+                  <span>Chat</span>
                 </button>
               </div>
             }
@@ -227,14 +243,15 @@ interface VendorChat {
             @for (delivery of deliveryOrders(); track delivery._id) {
               <div class="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition">
                 <div class="flex items-center gap-2 mb-2">
-                  <span class="text-2xl">🚚</span>
+                  <mat-icon>local_shipping</mat-icon>
                   <h4 class="font-bold text-gray-800">Delivery Service</h4>
                 </div>
                 <p class="text-sm text-gray-600 mb-3">{{ delivery.itemName }} - {{ delivery.status }}</p>
                 <button
                   (click)="startVendorChat('delivery', delivery._id, 'Delivery Service')"
-                  class="w-full bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition">
-                  💬 Chat
+                  class="w-full bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition flex items-center justify-center gap-2">
+                  <mat-icon class="text-sm">chat</mat-icon>
+                  <span>Chat</span>
                 </button>
               </div>
             }
@@ -250,7 +267,13 @@ interface VendorChat {
       </div>
     </div>
   `,
-  styles: []
+  styles: [`
+    ::ng-deep mat-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+  `]
 })
 export class CustomerChatSupportComponent implements OnInit {
   conversations = signal<VendorChat[]>([]);
@@ -407,9 +430,9 @@ export class CustomerChatSupportComponent implements OnInit {
 
   getStatusBadge(status: string): string {
     const badges: { [key: string]: string } = {
-      open: '🟢 Open',
-      pending: '🟡 Pending',
-      closed: '⚪ Closed'
+      open: 'Open',
+      pending: 'Pending',
+      closed: 'Closed'
     };
     return badges[status] || status;
   }

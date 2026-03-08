@@ -107,7 +107,13 @@ interface FoodOrder {
       }
     </div>
   `,
-  styles: []
+  styles: [`
+    ::ng-deep mat-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+  `]
 })
 export class CustomerFoodOrdersComponent implements OnInit {
   foodOrders = signal<FoodOrder[]>([]);
@@ -153,12 +159,12 @@ export class CustomerFoodOrdersComponent implements OnInit {
 
   getStatusBadge(status: string): string {
     const badges: { [key: string]: string } = {
-      pending: '⏳ Pending',
-      confirmed: '✓ Confirmed',
-      preparing: '👨‍🍳 Preparing',
-      ready: '📦 Ready',
-      delivered: '✓ Delivered',
-      cancelled: '✕ Cancelled'
+      pending: 'Pending',
+      confirmed: 'Confirmed',
+      preparing: 'Preparing',
+      ready: 'Ready',
+      delivered: 'Delivered',
+      cancelled: 'Cancelled'
     };
     return badges[status] || status;
   }

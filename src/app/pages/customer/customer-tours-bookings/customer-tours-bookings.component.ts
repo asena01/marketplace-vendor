@@ -1,5 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
 import { CustomerService } from '../../../services/customer.service';
 
 interface TourBooking {
@@ -19,7 +20,7 @@ interface TourBooking {
 @Component({
   selector: 'app-customer-tours-bookings',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MatIconModule],
   template: `
     <div class="space-y-6">
       <!-- Summary Cards -->
@@ -52,7 +53,10 @@ interface TourBooking {
                 <div class="flex justify-between items-start">
                   <div>
                     <h3 class="text-lg font-bold">{{ booking.tourName }}</h3>
-                    <p class="text-sm opacity-90">📍 {{ booking.destination }}</p>
+                    <p class="text-sm opacity-90 flex items-center gap-1">
+                      <mat-icon class="text-sm">location_on</mat-icon>
+                      <span>{{ booking.destination }}</span>
+                    </p>
                   </div>
                   <span [class]="getStatusBadgeClass(booking.status)">
                     {{ getStatusBadge(booking.status) }}
@@ -74,14 +78,20 @@ interface TourBooking {
                 </div>
 
                 <div class="border-t pt-3">
-                  <p class="text-xs text-gray-600 font-semibold mb-2">📅 Dates</p>
+                  <p class="text-xs text-gray-600 font-semibold mb-2 flex items-center gap-1">
+                    <mat-icon class="text-xs">calendar_today</mat-icon>
+                    <span>Dates</span>
+                  </p>
                   <p class="text-sm text-gray-700">
                     {{ formatDate(booking.startDate) }} - {{ formatDate(booking.endDate) }}
                   </p>
                 </div>
 
                 <div class="border-t pt-3">
-                  <p class="text-xs text-gray-600 font-semibold mb-2">🎯 Highlights</p>
+                  <p class="text-xs text-gray-600 font-semibold mb-2 flex items-center gap-1">
+                    <mat-icon class="text-xs">star</mat-icon>
+                    <span>Highlights</span>
+                  </p>
                   <div class="flex flex-wrap gap-2">
                     @for (highlight of booking.highlights.slice(0, 3); track highlight) {
                       <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
@@ -105,23 +115,26 @@ interface TourBooking {
 
               <!-- Actions -->
               <div class="bg-gray-50 px-4 py-3 flex gap-2">
-                <button 
+                <button
                   (click)="viewBookingDetails(booking)"
-                  class="flex-1 text-blue-600 hover:text-blue-800 font-semibold text-sm py-2 hover:bg-blue-50 rounded transition">
-                  View Details
+                  class="flex-1 text-blue-600 hover:text-blue-800 font-semibold text-sm py-2 hover:bg-blue-50 rounded transition flex items-center justify-center gap-1">
+                  <mat-icon class="text-sm">visibility</mat-icon>
+                  <span>View Details</span>
                 </button>
                 @if (booking.status === 'pending') {
-                  <button 
+                  <button
                     (click)="cancelBooking(booking)"
-                    class="flex-1 text-red-600 hover:text-red-800 font-semibold text-sm py-2 hover:bg-red-50 rounded transition">
-                    Cancel
+                    class="flex-1 text-red-600 hover:text-red-800 font-semibold text-sm py-2 hover:bg-red-50 rounded transition flex items-center justify-center gap-1">
+                    <mat-icon class="text-sm">cancel</mat-icon>
+                    <span>Cancel</span>
                   </button>
                 }
                 @if (booking.status === 'completed') {
-                  <button 
+                  <button
                     (click)="rateExperience(booking)"
-                    class="flex-1 text-yellow-600 hover:text-yellow-800 font-semibold text-sm py-2 hover:bg-yellow-50 rounded transition">
-                    ⭐ Rate
+                    class="flex-1 text-yellow-600 hover:text-yellow-800 font-semibold text-sm py-2 hover:bg-yellow-50 rounded transition flex items-center justify-center gap-1">
+                    <mat-icon class="text-sm">star</mat-icon>
+                    <span>Rate</span>
                   </button>
                 }
               </div>
@@ -130,13 +143,22 @@ interface TourBooking {
         </div>
       } @else {
         <div class="bg-white rounded-lg shadow p-12 text-center">
-          <p class="text-gray-500 text-lg mb-4">✈️ No tour bookings yet</p>
+          <div class="flex justify-center mb-4">
+            <mat-icon class="text-5xl text-gray-400">flight</mat-icon>
+          </div>
+          <p class="text-gray-500 text-lg mb-2 font-semibold">No tour bookings yet</p>
           <p class="text-gray-400 text-sm">Explore amazing destinations and book your next adventure!</p>
         </div>
       }
     </div>
   `,
-  styles: []
+  styles: [`
+    ::ng-deep mat-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+  `]
 })
 export class CustomerToursBookingsComponent implements OnInit {
   tourBookings = signal<TourBooking[]>([]);
@@ -186,11 +208,11 @@ export class CustomerToursBookingsComponent implements OnInit {
 
   getStatusBadge(status: string): string {
     const badges: { [key: string]: string } = {
-      pending: '⏳ Pending',
-      confirmed: '✓ Confirmed',
-      'in-progress': '🚀 Ongoing',
-      completed: '✓ Completed',
-      cancelled: '✕ Cancelled'
+      pending: 'Pending',
+      confirmed: 'Confirmed',
+      'in-progress': 'Ongoing',
+      completed: 'Completed',
+      cancelled: 'Cancelled'
     };
     return badges[status] || status;
   }

@@ -1,11 +1,12 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
 import { CustomerService } from '../../../services/customer.service';
 
 @Component({
   selector: 'app-customer-orders',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MatIconModule],
   template: `
     <div class="space-y-6">
       <!-- Header -->
@@ -69,12 +70,14 @@ import { CustomerService } from '../../../services/customer.service';
                     </span>
                   </td>
                   <td class="px-6 py-4 text-sm space-x-2">
-                    <button class="text-blue-600 hover:text-blue-800 font-semibold">
-                      👁️ View
+                    <button class="text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1 inline-flex">
+                      <mat-icon class="text-sm">visibility</mat-icon>
+                      <span>View</span>
                     </button>
                     @if (order.status === 'pending') {
-                      <button class="text-red-600 hover:text-red-800 font-semibold">
-                        ❌ Cancel
+                      <button class="text-red-600 hover:text-red-800 font-semibold flex items-center gap-1 inline-flex">
+                        <mat-icon class="text-sm">cancel</mat-icon>
+                        <span>Cancel</span>
                       </button>
                     }
                   </td>
@@ -84,12 +87,16 @@ import { CustomerService } from '../../../services/customer.service';
           </table>
         } @else if (isLoading()) {
           <div class="p-12 text-center">
-            <div class="inline-block animate-spin text-4xl mb-4">⏳</div>
+            <div class="flex justify-center mb-4">
+              <mat-icon class="text-5xl text-gray-400 animate-spin">schedule</mat-icon>
+            </div>
             <p class="text-gray-600">Loading orders...</p>
           </div>
         } @else {
           <div class="p-12 text-center text-gray-600">
-            <p class="text-2xl mb-2">📦</p>
+            <div class="flex justify-center mb-2">
+              <mat-icon class="text-5xl text-gray-400">local_shipping</mat-icon>
+            </div>
             <p class="text-lg font-semibold">No orders yet</p>
             <p class="text-sm mt-2">Start shopping to see your orders here</p>
           </div>
@@ -99,13 +106,22 @@ import { CustomerService } from '../../../services/customer.service';
       <!-- Error Message -->
       @if (error()) {
         <div class="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg">
-          <p class="font-semibold">❌ Error</p>
+          <div class="flex items-center gap-2 font-semibold">
+            <mat-icon class="text-sm">error</mat-icon>
+            <span>Error</span>
+          </div>
           <p class="text-sm mt-1">{{ error() }}</p>
         </div>
       }
     </div>
   `,
-  styles: []
+  styles: [`
+    ::ng-deep mat-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+  `]
 })
 export class CustomerOrdersComponent implements OnInit {
   orders = signal<any[]>([]);
@@ -152,11 +168,11 @@ export class CustomerOrdersComponent implements OnInit {
 
   getStatusLabel(status: string): string {
     const labels: { [key: string]: string } = {
-      'pending': '⏳ Pending',
-      'processing': '📦 Processing',
-      'shipped': '🚚 Shipped',
-      'delivered': '✅ Delivered',
-      'cancelled': '❌ Cancelled'
+      'pending': 'Pending',
+      'processing': 'Processing',
+      'shipped': 'Shipped',
+      'delivered': 'Delivered',
+      'cancelled': 'Cancelled'
     };
     return labels[status] || status;
   }
