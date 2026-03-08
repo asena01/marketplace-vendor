@@ -118,4 +118,95 @@ export class CustomerService {
       `${this.apiUrl}/${customerId}`
     );
   }
+
+  // Customer profile methods
+  getProfile(): Observable<CustomerResponse<any>> {
+    return this.http.get<CustomerResponse<any>>(`${this.apiUrl}/profile`);
+  }
+
+  updateProfile(profileData: any): Observable<CustomerResponse<any>> {
+    return this.http.put<CustomerResponse<any>>(`${this.apiUrl}/profile`, profileData);
+  }
+
+  changePassword(currentPassword: string, newPassword: string): Observable<CustomerResponse<any>> {
+    return this.http.post<CustomerResponse<any>>(`${this.apiUrl}/change-password`, {
+      currentPassword,
+      newPassword
+    });
+  }
+
+  // Wishlist methods
+  getWishlist(): Observable<CustomerResponse<any>> {
+    return this.http.get<CustomerResponse<any>>(`${this.apiUrl}/wishlist`);
+  }
+
+  removeFromWishlist(itemId: string): Observable<CustomerResponse<any>> {
+    return this.http.delete<CustomerResponse<any>>(`${this.apiUrl}/wishlist/${itemId}`);
+  }
+
+  // Orders methods
+  getCustomerOrders(page: number = 1, limit: number = 20): Observable<CustomerResponse<any>> {
+    return this.http.get<CustomerResponse<any>>(
+      `${this.apiUrl}/orders?page=${page}&limit=${limit}`
+    );
+  }
+
+  // Food orders
+  getFoodOrders(): Observable<CustomerResponse<any>> {
+    return this.http.get<CustomerResponse<any>>(`${this.apiUrl}/food-orders`);
+  }
+
+  // Shopping orders
+  getShoppingOrders(): Observable<CustomerResponse<any>> {
+    return this.http.get<CustomerResponse<any>>(`${this.apiUrl}/shopping-orders`);
+  }
+
+  // Hotel bookings
+  getMyHotelBookings(): Observable<CustomerResponse<any>> {
+    return this.http.get<CustomerResponse<any>>(`${this.apiUrl}/hotel-bookings`);
+  }
+
+  orderRoomService(roomServiceData: any): Observable<CustomerResponse<any>> {
+    return this.http.post<CustomerResponse<any>>(`${this.apiUrl}/room-service`, roomServiceData);
+  }
+
+  // Service bookings
+  getServiceBookings(): Observable<CustomerResponse<any>> {
+    return this.http.get<CustomerResponse<any>>(`${this.apiUrl}/service-bookings`);
+  }
+
+  getCustomerServices(page: number = 1, limit: number = 20): Observable<CustomerResponse<any>> {
+    return this.http.get<CustomerResponse<any>>(
+      `${this.apiUrl}/services?page=${page}&limit=${limit}`
+    );
+  }
+
+  // Tour bookings
+  getMyTourBookings(): Observable<CustomerResponse<any>> {
+    return this.http.get<CustomerResponse<any>>(`${this.apiUrl}/tour-bookings`);
+  }
+
+  // Reviews
+  getMyReviews(): Observable<CustomerResponse<any>> {
+    return this.http.get<CustomerResponse<any>>(`${this.apiUrl}/reviews`);
+  }
+
+  // Chat support methods
+  getDeliveryOrders(): Observable<CustomerResponse<any>> {
+    return this.http.get<CustomerResponse<any>>(`${this.apiUrl}/delivery-orders`);
+  }
+
+  getVendorChats(): Observable<CustomerResponse<any>> {
+    return this.http.get<CustomerResponse<any>>(`${this.apiUrl}/vendor-chats`);
+  }
+
+  startVendorChat(vendorId: string): Observable<CustomerResponse<any>> {
+    return this.http.post<CustomerResponse<any>>(`${this.apiUrl}/vendor-chats`, { vendorId });
+  }
+
+  sendVendorChatMessage(chatId: string, message: string): Observable<CustomerResponse<any>> {
+    return this.http.post<CustomerResponse<any>>(`${this.apiUrl}/vendor-chats/${chatId}/message`, {
+      message
+    });
+  }
 }
