@@ -248,12 +248,12 @@ export class ExternalDeliveryService {
     businessType: string,
     integrationId: string
   ): Observable<ApiResponse<any>> {
-    return this.http.delete(
+    return this.http.delete<ApiResponse<any>>(
       `${this.apiUrl}/${businessType}/${businessId}/delivery-integrations/${integrationId}`
     ).pipe(
       catchError((error) => {
         console.error('Error deactivating integration:', error);
-        return of({ status: 'error', data: null });
+        return of({ status: 'error', data: null } as ApiResponse<any>);
       })
     );
   }
