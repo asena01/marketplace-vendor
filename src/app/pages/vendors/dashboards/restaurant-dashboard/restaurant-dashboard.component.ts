@@ -1,7 +1,8 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, ActivatedRoute } from '@angular/router';
+import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../../services/auth.service';
+import { FoodService } from '../../../../services/food.service';
 import { VendorSidenavComponent } from '../../../../layout/vendor-sidenav/vendor-sidenav.component';
 
 @Component({
@@ -48,106 +49,56 @@ import { VendorSidenavComponent } from '../../../../layout/vendor-sidenav/vendor
       <!-- Key Metrics -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-orange-500">
-          <p class="text-slate-600 text-sm font-medium mb-1">Today's Orders</p>
-          <p class="text-3xl font-bold text-slate-900">187</p>
-          <p class="mt-2 text-sm text-emerald-600">↑ 12.3% from yesterday</p>
+          <p class="text-slate-600 text-sm font-medium mb-1">Total Orders</p>
+          <p class="text-3xl font-bold text-slate-900">{{ orders().length }}</p>
+          <p class="mt-2 text-sm text-slate-500">All time orders</p>
         </div>
 
         <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-orange-500">
-          <p class="text-slate-600 text-sm font-medium mb-1">Daily Revenue</p>
-          <p class="text-3xl font-bold text-slate-900">$8,945</p>
-          <p class="mt-2 text-sm text-emerald-600">↑ 7.5% increase</p>
+          <p class="text-slate-600 text-sm font-medium mb-1">Pending Orders</p>
+          <p class="text-3xl font-bold text-slate-900">{{ countOrdersByStatus('pending') }}</p>
+          <p class="mt-2 text-sm text-slate-500">Waiting to prepare</p>
         </div>
 
         <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-orange-500">
-          <p class="text-slate-600 text-sm font-medium mb-1">Avg. Order Value</p>
-          <p class="text-3xl font-bold text-slate-900">$47.85</p>
-          <p class="mt-2 text-sm text-slate-500">Per customer order</p>
+          <p class="text-slate-600 text-sm font-medium mb-1">Menu Items</p>
+          <p class="text-3xl font-bold text-slate-900">{{ menuItems().length }}</p>
+          <p class="mt-2 text-sm text-slate-500">Available items</p>
         </div>
 
         <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-orange-500">
-          <p class="text-slate-600 text-sm font-medium mb-1">Active Tables</p>
-          <p class="text-3xl font-bold text-slate-900">23/40</p>
-          <p class="mt-2 text-sm text-slate-500">57.5% occupancy</p>
+          <p class="text-slate-600 text-sm font-medium mb-1">Ready Orders</p>
+          <p class="text-3xl font-bold text-slate-900">{{ countOrdersByStatus('ready') }}</p>
+          <p class="mt-2 text-sm text-slate-500">Ready to serve</p>
         </div>
       </div>
 
-      <!-- Orders & Reservations -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Recent Orders -->
-        <div class="bg-white rounded-lg p-6 shadow-md">
-          <h3 class="text-lg font-bold text-slate-900 mb-6">Recent Orders</h3>
-          <div class="space-y-3">
-            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
-              <div>
-                <p class="font-medium text-slate-900">Order #1001</p>
-                <p class="text-sm text-slate-600">Table 5 - 3 items</p>
-              </div>
-              <span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">Ready</span>
-            </div>
-
-            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
-              <div>
-                <p class="font-medium text-slate-900">Order #1002</p>
-                <p class="text-sm text-slate-600">Table 12 - 5 items</p>
-              </div>
-              <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">Cooking</span>
-            </div>
-
-            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
-              <div>
-                <p class="font-medium text-slate-900">Order #1003</p>
-                <p class="text-sm text-slate-600">Takeout - 2 items</p>
-              </div>
-              <span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">Preparing</span>
-            </div>
-
-            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
-              <div>
-                <p class="font-medium text-slate-900">Order #1004</p>
-                <p class="text-sm text-slate-600">Table 8 - 4 items</p>
-              </div>
-              <span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">Served</span>
-            </div>
-          </div>
+      <!-- Recent Orders -->
+      <div class="bg-white rounded-lg p-6 shadow-md">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-lg font-bold text-slate-900">Recent Orders</h3>
+          <a href="/restaurant-dashboard/orders" class="text-orange-600 hover:text-orange-700 text-sm font-medium">View All</a>
         </div>
-
-        <!-- Reservations -->
-        <div class="bg-white rounded-lg p-6 shadow-md">
-          <h3 class="text-lg font-bold text-slate-900 mb-6">Today's Reservations</h3>
-          <div class="space-y-3">
+        <div class="space-y-3">
+          @if (orders().length === 0) {
+            <p class="text-slate-500 text-center py-4">No orders yet</p>
+          }
+          @for (order of orders().slice(0, 4); track order._id) {
             <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
               <div>
-                <p class="font-medium text-slate-900">Michael Harris</p>
-                <p class="text-sm text-slate-600">Table for 4 at 6:30 PM</p>
+                <p class="font-medium text-slate-900">{{ order.orderNumber }}</p>
+                <p class="text-sm text-slate-600">{{ order.customerName }} - {{ order.items.length }} items</p>
               </div>
-              <span class="text-xs font-medium text-slate-600">Confirmed</span>
+              <span [ngClass]="{
+                'bg-emerald-100 text-emerald-700': order.status === 'ready',
+                'bg-blue-100 text-blue-700': order.status === 'preparing',
+                'bg-yellow-100 text-yellow-700': order.status === 'pending',
+                'bg-slate-100 text-slate-700': order.status === 'completed'
+              }" class="px-3 py-1 rounded-full text-xs font-medium">
+                {{ order.status | uppercase }}
+              </span>
             </div>
-
-            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
-              <div>
-                <p class="font-medium text-slate-900">Emma Wilson</p>
-                <p class="text-sm text-slate-600">Table for 2 at 8:00 PM</p>
-              </div>
-              <span class="text-xs font-medium text-slate-600">Confirmed</span>
-            </div>
-
-            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
-              <div>
-                <p class="font-medium text-slate-900">David Lee</p>
-                <p class="text-sm text-slate-600">Table for 6 at 7:15 PM</p>
-              </div>
-              <span class="text-xs font-medium text-slate-600">Pending</span>
-            </div>
-
-            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
-              <div>
-                <p class="font-medium text-slate-900">Jessica Brown</p>
-                <p class="text-sm text-slate-600">Table for 3 at 9:00 PM</p>
-              </div>
-              <span class="text-xs font-medium text-slate-600">Confirmed</span>
-            </div>
-          </div>
+          }
         </div>
       </div>
 
@@ -195,49 +146,49 @@ import { VendorSidenavComponent } from '../../../../layout/vendor-sidenav/vendor
         <div class="bg-white rounded-lg p-6 shadow-md">
           <h3 class="text-lg font-bold text-slate-900 mb-6">Inventory Status</h3>
           <div class="space-y-3">
-            <div class="flex items-center justify-between p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
-              <span class="text-slate-700 font-medium">Fresh Salmon</span>
-              <span class="text-emerald-700 font-bold">High</span>
-            </div>
-
-            <div class="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <span class="text-slate-700 font-medium">Organic Lettuce</span>
-              <span class="text-yellow-700 font-bold">Medium</span>
-            </div>
-
-            <div class="flex items-center justify-between p-3 bg-red-50 border border-red-200 rounded-lg">
-              <span class="text-slate-700 font-medium">Prime Beef</span>
-              <span class="text-red-700 font-bold">Low</span>
-            </div>
-
-            <div class="flex items-center justify-between p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
-              <span class="text-slate-700 font-medium">Olive Oil</span>
-              <span class="text-emerald-700 font-bold">High</span>
-            </div>
-
-            <div class="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <span class="text-slate-700 font-medium">Fresh Herbs</span>
-              <span class="text-yellow-700 font-bold">Medium</span>
-            </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Menu Items -->
+      <div class="bg-white rounded-lg p-6 shadow-md">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-lg font-bold text-slate-900">Menu Items ({{ menuItems().length }})</h3>
+          <a (click)="goToMenu()" class="text-orange-600 hover:text-orange-700 text-sm font-medium cursor-pointer">View All</a>
+        </div>
+        <div class="space-y-3">
+          @if (menuItems().length === 0) {
+            <p class="text-slate-500 text-center py-4">No menu items yet</p>
+          }
+          @for (item of menuItems().slice(0, 5); track item._id) {
+            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+              <div>
+                <p class="font-medium text-slate-900">{{ item.name }}</p>
+                <p class="text-sm text-slate-600">{{ item.category }} • Prep: {{ item.prepTime }}min</p>
+              </div>
+              <div class="text-right">
+                <p class="font-bold text-slate-900"><span class="currency-prefix">$</span>{{ item.price }}</p>
+                <span [ngClass]="item.isAvailable ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'" class="text-xs font-medium px-2 py-1 rounded">
+                  {{ item.isAvailable ? 'Available' : 'Unavailable' }}
+                </span>
+              </div>
+            </div>
+          }
         </div>
       </div>
 
       <!-- Quick Actions -->
       <div class="bg-white rounded-lg p-6 shadow-md">
         <h3 class="text-lg font-bold text-slate-900 mb-4">Quick Actions</h3>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <button class="bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm">
-            New Order
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <button (click)="goToOrders()" class="bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm">
+            📝 New Order
           </button>
-          <button class="bg-slate-100 hover:bg-slate-200 text-slate-900 font-medium py-2 px-4 rounded-lg transition-colors text-sm">
-            Add Reservation
+          <button (click)="goToMenu()" class="bg-slate-100 hover:bg-slate-200 text-slate-900 font-medium py-2 px-4 rounded-lg transition-colors text-sm">
+            🍔 Manage Menu
           </button>
-          <button class="bg-slate-100 hover:bg-slate-200 text-slate-900 font-medium py-2 px-4 rounded-lg transition-colors text-sm">
-            Manage Menu
-          </button>
-          <button class="bg-slate-100 hover:bg-slate-200 text-slate-900 font-medium py-2 px-4 rounded-lg transition-colors text-sm">
-            View Reports
+          <button (click)="goToReviews()" class="bg-slate-100 hover:bg-slate-200 text-slate-900 font-medium py-2 px-4 rounded-lg transition-colors text-sm">
+            ⭐ Reviews
           </button>
         </div>
       </div>
@@ -252,12 +203,17 @@ import { VendorSidenavComponent } from '../../../../layout/vendor-sidenav/vendor
       height: 100vh;
       overflow: hidden;
     }
+    .currency-prefix {
+      margin-right: 2px;
+    }
   `]
 })
 export class RestaurantDashboardComponent implements OnInit {
   isLoading = signal(false);
   errorMessage = signal('');
   currentRoute = signal('');
+  orders = signal<any[]>([]);
+  menuItems = signal<any[]>([]);
 
   restaurantSidenavItems = [
     { label: 'Dashboard', icon: '🍽️', route: '/restaurant-dashboard' },
@@ -268,19 +224,75 @@ export class RestaurantDashboardComponent implements OnInit {
     { label: 'Settings', icon: '⚙️', route: '/restaurant-dashboard/settings' }
   ];
 
+  private restaurantId: string = '';
+
   constructor(
     private authService: AuthService,
-    private activatedRoute: ActivatedRoute
+    private activatedRoute: ActivatedRoute,
+    private foodService: FoodService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
-    this.isLoading.set(false);
+    this.restaurantId = localStorage.getItem('restaurantId') || '';
+    this.loadDashboardData();
     this.activatedRoute.firstChild?.params.subscribe(() => {
       const firstChild = this.activatedRoute.firstChild;
       if (firstChild) {
         this.currentRoute.set(firstChild.component?.name || 'dashboard');
       }
     });
+  }
+
+  loadDashboardData(): void {
+    if (!this.restaurantId) {
+      this.errorMessage.set('Restaurant ID not found');
+      return;
+    }
+
+    this.isLoading.set(true);
+
+    // Load orders
+    this.foodService.getRestaurantOrders(this.restaurantId).subscribe({
+      next: (response: any) => {
+        if (response.status === 'success' && response.data) {
+          this.orders.set(response.data);
+        }
+      },
+      error: (error: any) => {
+        console.error('Error loading orders:', error);
+      }
+    });
+
+    // Load menu items
+    this.foodService.getRestaurantMenus(this.restaurantId).subscribe({
+      next: (response: any) => {
+        this.isLoading.set(false);
+        if (response.status === 'success' && response.data) {
+          this.menuItems.set(response.data);
+        }
+      },
+      error: (error: any) => {
+        this.isLoading.set(false);
+        console.error('Error loading menu:', error);
+      }
+    });
+  }
+
+  countOrdersByStatus(status: string): number {
+    return this.orders().filter(o => o.status === status).length;
+  }
+
+  goToOrders(): void {
+    this.router.navigate(['/restaurant-dashboard/orders']);
+  }
+
+  goToMenu(): void {
+    this.router.navigate(['/restaurant-dashboard/menu']);
+  }
+
+  goToReviews(): void {
+    this.router.navigate(['/restaurant-dashboard/reviews']);
   }
 
   hasChildRoute(): boolean {
