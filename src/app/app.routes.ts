@@ -31,6 +31,8 @@ import { HotelRoomsComponent } from './pages/vendors/dashboards/hotel-dashboard/
 import { HotelStaffComponent } from './pages/vendors/dashboards/hotel-dashboard/staff/staff.component';
 import { RestaurantMenuComponent } from './pages/vendors/dashboards/restaurant-dashboard/menu/menu.component';
 import { RestaurantOrdersComponent } from './pages/vendors/dashboards/restaurant-dashboard/orders/orders.component';
+import { DeliveryOrdersComponent } from './pages/vendors/dashboards/restaurant-dashboard/delivery-orders/delivery-orders.component';
+import { DriversComponent } from './pages/vendors/dashboards/restaurant-dashboard/drivers/drivers.component';
 import { RetailProductsComponent } from './pages/vendors/dashboards/retail-dashboard/products/products.component';
 import { ReviewManagementComponent } from './pages/vendors/dashboards/shared/review-management/review-management.component';
 import { IncidentManagementComponent } from './pages/vendors/dashboards/shared/incident-management/incident-management.component';
@@ -67,6 +69,8 @@ export const routes: Routes = [
     children: [
       { path: 'menu', component: RestaurantMenuComponent },
       { path: 'orders', component: RestaurantOrdersComponent },
+      { path: 'delivery-orders', component: DeliveryOrdersComponent },
+      { path: 'drivers', component: DriversComponent },
       { path: 'reviews', component: ReviewManagementComponent },
       { path: 'incidents', component: IncidentManagementComponent },
       { path: 'settings', component: ProfileSettingsComponent }

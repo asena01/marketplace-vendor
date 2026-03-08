@@ -4,13 +4,17 @@ import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../../services/auth.service';
 import { FoodService } from '../../../../services/food.service';
 import { VendorSidenavComponent } from '../../../../layout/vendor-sidenav/vendor-sidenav.component';
+import { NotificationsComponent } from '../../../../layout/notifications/notifications.component';
 
 @Component({
   selector: 'app-restaurant-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, VendorSidenavComponent],
+  imports: [CommonModule, RouterModule, VendorSidenavComponent, NotificationsComponent],
   template: `
     <div class="flex h-screen bg-slate-50">
+      <!-- Notifications -->
+      <app-notifications></app-notifications>
+
       <!-- Sidenav -->
       <app-vendor-sidenav
         vendorType="restaurant"

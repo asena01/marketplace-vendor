@@ -1,179 +1,235 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, BehaviorSubject } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
-export interface DeliveryPartner {
-  _id: string;
+export interface Driver {
+  _id?: string;
+  id?: string;
   name: string;
-  email: string;
   phone: string;
-  description?: string;
-  status: 'active' | 'inactive' | 'suspended' | 'pending-verification';
-  isVerified: boolean;
-  activeProviders: number;
-  logo?: string;
-  capabilities?: {
-    maxWeight?: { value: number; unit: string };
-    refrigerated?: boolean;
-    fragileItemsHandling?: boolean;
-  };
+  email?: string;
+  vehicleType: 'bike' | 'car' | 'truck';
+  vehicleNumber?: string;
+  rating: number;
+  totalDeliveries: number;
+  isActive: boolean;
+  currentOrders?: number;
+  joinDate?: string;
 }
 
-export interface DeliveryConfiguration {
+export interface DeliveryOrder {
   _id?: string;
-  providerId: string;
-  providerType: string;
-  businessName: string;
-  selectedDeliveryPartners?: Array<{
-    partnerId: string | { _id: string; name: string; email: string; phone: string; status: string };
-    isDefault: boolean;
-    priority: number;
-    addedAt: string;
-  }>;
-  offerDelivery: boolean;
-  deliveryOptions?: Array<{
-    name: string;
-    enabled: boolean;
-    deliveryTimeMin: number;
-    deliveryTimeMax: number;
-    timeUnit: string;
-    priceMultiplier: number;
-  }>;
-  serviceCoverage?: Array<{
-    areaName: string;
-    zoneId: string;
-    enabled: boolean;
-    minDeliveryTime: number;
-    maxDeliveryTime: number;
-    customPricing?: number;
-  }>;
-  businessAddress?: {
-    street: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-  };
-  policies?: {
-    minOrderValue?: number;
-    maxOrderValue?: number;
-    freeDeliveryAbove?: number;
-  };
-  stats?: {
-    totalDeliveries: number;
-    successfulDeliveries: number;
-    averageDeliveryTime: number;
-    customerSatisfactionRating: number;
-  };
+  id?: string;
+  orderNumber: string;
+  customerName: string;
+  customerPhone: string;
+  deliveryAddress: string;
+  items: any[];
+  totalAmount: number;
+  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'out_for_delivery' | 'delivered' | 'cancelled';
+  deliveryType: 'delivery' | 'pickup';
+  assignedDriver?: Driver | string;
+  driverId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  estimatedDeliveryTime?: number;
+  actualDeliveryTime?: string;
+}
+
+export interface ApiResponse<T> {
+  status: string;
+  data: T;
+  message?: string;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class DeliveryService {
-  // ⚠️ REPLACED: Firebase Cloud Functions endpoint with local backend API
-  // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api/delivery-admin'
-  // NEW: Local Node.js/Express backend
-  private apiUrl = 'http://localhost:5001/delivery-admin';
+  private apiUrl = 'http://localhost:5001/restaurants';
+  private restaurantId: string = '';
+  
+  // Observable for real-time notifications
+  private notificationsSubject = new BehaviorSubject<any>(null);
+  public notifications$ = this.notificationsSubject.asObservable();
 
-  constructor(private http: HttpClient) {}
-
-  // Get all active delivery partners
-  getDeliveryPartners(): Observable<{ success: boolean; data: DeliveryPartner[] }> {
-    return this.http.get<{ success: boolean; data: DeliveryPartner[] }>(`${this.apiUrl}/partners?status=active`);
+  constructor(private http: HttpClient) {
+    this.setRestaurantId();
   }
 
-  // Get vendor's delivery configuration
-  getDeliveryConfig(providerId: string): Observable<{ success: boolean; data: DeliveryConfiguration }> {
-    return this.http.get<{ success: boolean; data: DeliveryConfiguration }>(`${this.apiUrl}/config/${providerId}`);
+  setRestaurantId(id?: string) {
+    if (id) {
+      this.restaurantId = id;
+      localStorage.setItem('restaurantId', id);
+    } else {
+      const storedId = localStorage.getItem('restaurantId');
+      if (storedId) {
+        this.restaurantId = storedId;
+      }
+    }
   }
 
-  // Update vendor's delivery configuration
-  updateDeliveryConfig(providerId: string, config: Partial<DeliveryConfiguration>): Observable<{ success: boolean; data: DeliveryConfiguration }> {
-    return this.http.put<{ success: boolean; data: DeliveryConfiguration }>(`${this.apiUrl}/config/${providerId}`, config);
-  }
+  // ==================== DELIVERY ORDERS ====================
+  
+  // Get all delivery orders
+  getDeliveryOrders(page: number = 1, limit: number = 20, status?: string): Observable<ApiResponse<DeliveryOrder[]>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('limit', limit.toString())
+      .set('deliveryType', 'delivery');
 
-  // Add delivery partner to vendor's list
-  selectDeliveryPartner(providerId: string, deliveryPartnerId: string, isDefault: boolean = false): Observable<{ success: boolean; data: DeliveryConfiguration }> {
-    return this.http.post<{ success: boolean; data: DeliveryConfiguration }>(
-      `${this.apiUrl}/config/${providerId}/select-partner`,
-      { deliveryPartnerId, isDefault }
+    if (status) {
+      params = params.set('status', status);
+    }
+
+    return this.http.get<ApiResponse<DeliveryOrder[]>>(
+      `${this.apiUrl}/${this.restaurantId}/orders`,
+      { params }
+    ).pipe(
+      catchError((error) => {
+        console.error('Error fetching delivery orders:', error);
+        return of({ status: 'error', data: [] });
+      })
     );
   }
 
-  // Remove delivery partner from vendor's list
-  removeDeliveryPartner(providerId: string, partnerId: string): Observable<{ success: boolean; data: DeliveryConfiguration }> {
-    return this.http.delete<{ success: boolean; data: DeliveryConfiguration }>(
-      `${this.apiUrl}/config/${providerId}/partner/${partnerId}`
+  // Get single delivery order
+  getDeliveryOrder(orderId: string): Observable<ApiResponse<DeliveryOrder>> {
+    return this.http.get<ApiResponse<DeliveryOrder>>(
+      `${this.apiUrl}/${this.restaurantId}/orders/${orderId}`
+    ).pipe(
+      catchError((error) => {
+        console.error('Error fetching delivery order:', error);
+        return of({ status: 'error', data: null as any });
+      })
     );
   }
 
-  // Set default delivery partner
-  setDefaultDeliveryPartner(providerId: string, partnerId: string): Observable<{ success: boolean; data: DeliveryConfiguration }> {
-    return this.http.patch<{ success: boolean; data: DeliveryConfiguration }>(
-      `${this.apiUrl}/config/${providerId}/default-partner/${partnerId}`,
-      {}
+  // Update delivery order status
+  updateDeliveryOrderStatus(orderId: string, status: string): Observable<ApiResponse<DeliveryOrder>> {
+    return this.http.put<ApiResponse<DeliveryOrder>>(
+      `${this.apiUrl}/${this.restaurantId}/orders/${orderId}/status`,
+      { status }
+    ).pipe(
+      catchError((error) => {
+        console.error('Error updating order status:', error);
+        return of({ status: 'error', data: null as any });
+      })
     );
   }
 
-  // Calculate delivery cost
-  calculateDeliveryCost(request: {
-    zoneId: string;
-    distance: number;
-    weight: number;
-    itemCount: number;
-    deliveryType: string;
-    providerId: string;
-  }): Observable<{ success: boolean; data: any }> {
-    return this.http.post<{ success: boolean; data: any }>(`${this.apiUrl}/calculate-cost`, request);
+  // Assign driver to delivery order
+  assignDriverToOrder(orderId: string, driverId: string): Observable<ApiResponse<DeliveryOrder>> {
+    return this.http.put<ApiResponse<DeliveryOrder>>(
+      `${this.apiUrl}/${this.restaurantId}/orders/${orderId}/assign-driver`,
+      { driverId }
+    ).pipe(
+      catchError((error) => {
+        console.error('Error assigning driver:', error);
+        return of({ status: 'error', data: null as any });
+      })
+    );
   }
 
-  // Get delivery zones
-  getDeliveryZones(): Observable<{ success: boolean; data: any[] }> {
-    return this.http.get<{ success: boolean; data: any[] }>(`${this.apiUrl}/zones`);
-  }
+  // ==================== DRIVERS ====================
 
-  // ============================================
-  // LEGACY DELIVERY SERVICE METHODS (for old pages)
-  // ============================================
-
-  getDeliveryMethods(): any {
-    return [];
-  }
-
-  getServiceTypes(): any {
-    return [];
-  }
-
-  getPackageSizes(): any {
-    return [];
-  }
-
-  createDelivery(orderData: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/deliveries`, orderData);
-  }
-
-  getDeliveryById(deliveryId: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/deliveries/${deliveryId}`);
-  }
-
-  getOrders(page: number, limit: number, status?: string): Observable<any> {
+  // Get all drivers
+  getDrivers(page: number = 1, limit: number = 20): Observable<ApiResponse<Driver[]>> {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('limit', limit.toString());
-    if (status) params = params.set('status', status);
-    return this.http.get(`${this.apiUrl}/deliveries`, { params });
+
+    return this.http.get<ApiResponse<Driver[]>>(
+      `${this.apiUrl}/${this.restaurantId}/drivers`,
+      { params }
+    ).pipe(
+      catchError((error) => {
+        console.error('Error fetching drivers:', error);
+        return of({ status: 'error', data: [] });
+      })
+    );
   }
 
-  getServiceStats(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/analytics`);
+  // Get single driver
+  getDriver(driverId: string): Observable<ApiResponse<Driver>> {
+    return this.http.get<ApiResponse<Driver>>(
+      `${this.apiUrl}/${this.restaurantId}/drivers/${driverId}`
+    ).pipe(
+      catchError((error) => {
+        console.error('Error fetching driver:', error);
+        return of({ status: 'error', data: null as any });
+      })
+    );
   }
 
-  getCouriers(page: number, limit: number): Observable<any> {
-    return this.http.get(`${this.apiUrl}/couriers?page=${page}&limit=${limit}`);
+  // Create driver
+  createDriver(driverData: Partial<Driver>): Observable<ApiResponse<Driver>> {
+    return this.http.post<ApiResponse<Driver>>(
+      `${this.apiUrl}/${this.restaurantId}/drivers`,
+      driverData
+    ).pipe(
+      catchError((error) => {
+        console.error('Error creating driver:', error);
+        return of({ status: 'error', data: null as any });
+      })
+    );
   }
 
-  updateCourierStatus(courierId: string, status: string): Observable<any> {
-    return this.http.patch(`${this.apiUrl}/couriers/${courierId}/status`, { status });
+  // Update driver
+  updateDriver(driverId: string, updates: Partial<Driver>): Observable<ApiResponse<Driver>> {
+    return this.http.put<ApiResponse<Driver>>(
+      `${this.apiUrl}/${this.restaurantId}/drivers/${driverId}`,
+      updates
+    ).pipe(
+      catchError((error) => {
+        console.error('Error updating driver:', error);
+        return of({ status: 'error', data: null as any });
+      })
+    );
+  }
+
+  // Delete driver
+  deleteDriver(driverId: string): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(
+      `${this.apiUrl}/${this.restaurantId}/drivers/${driverId}`
+    ).pipe(
+      catchError((error) => {
+        console.error('Error deleting driver:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
+
+  // Get driver stats
+  getDriverStats(driverId: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/${this.restaurantId}/drivers/${driverId}/stats`
+    ).pipe(
+      catchError((error) => {
+        console.error('Error fetching driver stats:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
+
+  // ==================== NOTIFICATIONS ====================
+
+  // Emit notification
+  emitNotification(notification: any) {
+    this.notificationsSubject.next(notification);
+  }
+
+  // Get delivery stats
+  getDeliveryStats(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/${this.restaurantId}/delivery/stats`
+    ).pipe(
+      catchError((error) => {
+        console.error('Error fetching delivery stats:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
   }
 }

@@ -237,6 +237,8 @@ export class VendorSidenavComponent implements OnInit {
       items.push(
         { label: 'Orders', icon: '📋', route: `${dashboardPath}/orders`, badge: 0 },
         { label: 'Menu', icon: '📖', route: `${dashboardPath}/menu`, badge: 0 },
+        { label: 'Delivery Orders', icon: '🚚', route: `${dashboardPath}/delivery-orders`, badge: 0 },
+        { label: 'Drivers', icon: '👨‍💼', route: `${dashboardPath}/drivers` },
         { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` },
         { label: 'Incidents', icon: '⚠️', route: `${dashboardPath}/incidents` }
       );
