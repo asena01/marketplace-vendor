@@ -430,10 +430,10 @@
                       >
                         <div class="flex justify-between items-start mb-1">
                           <span class="font-semibold text-gray-900 text-sm">{{ service.name }}</span>
-                          <span class="text-blue-600 font-bold text-xs">{{ formatPrice(service.basePrice) }}</span>
+                          <span class="text-blue-600 font-bold text-xs">{{ formatPrice(service.pricing.basePrice) }}</span>
                         </div>
                         <p class="text-xs text-gray-600">{{ service.description }}</p>
-                        <p class="text-xs text-gray-500 mt-1">Est. {{ service.estimatedDays }}-{{ service.estimatedDays + 1 }} days</p>
+                        <p class="text-xs text-gray-500 mt-1">Est. {{ formatDeliveryTime(service) }}</p>
                       </button>
                     }
                   </div>

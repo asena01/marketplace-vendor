@@ -515,7 +515,7 @@ export class ShoppingComponent implements OnInit {
         serviceName: this.selectedDeliveryService()?.name,
         address: this.deliveryAddress(),
         distance: this.estimatedDistance() || 10,
-        estimatedDays: this.selectedDeliveryService()?.estimatedDays,
+        estimatedTime: this.selectedDeliveryService()?.estimatedDeliveryTime.standard,
         price: this.deliveryPrice()
       } as any
     };
@@ -688,6 +688,23 @@ export class ShoppingComponent implements OnInit {
    */
   formatPrice(amount: number | undefined): string {
     return this.currencyService.formatPrice(amount ?? 0);
+  }
+
+  /**
+   * Format delivery time from minutes to readable format
+   */
+  formatDeliveryTime(service: DeliveryServiceDefinition | null): string {
+    if (!service) return 'N/A';
+    const minutes = service.estimatedDeliveryTime.standard;
+    if (minutes < 60) {
+      return `${minutes} mins`;
+    } else if (minutes < 1440) { // Less than 24 hours
+      const hours = Math.ceil(minutes / 60);
+      return `${hours}h`;
+    } else {
+      const days = Math.ceil(minutes / 1440);
+      return `${days} day${days > 1 ? 's' : ''}`;
+    }
   }
 
   /**

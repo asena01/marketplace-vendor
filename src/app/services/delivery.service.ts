@@ -10,6 +10,8 @@ import {
   getDeliveryServiceById
 } from './delivery-service-definitions';
 
+export type { DeliveryServiceDefinition };
+
 export interface Driver {
   _id?: string;
   id?: string;
