@@ -157,9 +157,9 @@ export class ForgotPasswordComponent {
       this.isLoading.set(false);
       this.successMessage.set(`Password reset link sent to ${email}. Check your inbox and follow the instructions.`);
 
-      // Redirect to login after 3 seconds
+      // Redirect to home after 3 seconds
       setTimeout(() => {
-        this.router.navigate(['/login']);
+        this.router.navigate(['/']);
       }, 3000);
     }, 1500);
   }

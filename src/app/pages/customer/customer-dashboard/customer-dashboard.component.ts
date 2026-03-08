@@ -1,6 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
 import { CustomerService } from '../../../services/customer.service';
 import { AuthService } from '../../../services/auth.service';
 
@@ -19,6 +20,7 @@ import { CustomerChatSupportComponent } from '../customer-chat-support/customer-
   standalone: true,
   imports: [
     CommonModule,
+    MatIconModule,
     CustomerProfileComponent,
     CustomerHotelBookingsComponent,
     CustomerFoodOrdersComponent,
@@ -31,138 +33,155 @@ import { CustomerChatSupportComponent } from '../customer-chat-support/customer-
   template: `
     <div class="min-h-screen bg-gray-50">
       <!-- Header -->
-      <header class="bg-white shadow-sm border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
-          <div class="flex items-center gap-4">
-            <button
-              (click)="goBack()"
-              class="text-gray-600 hover:text-gray-900 hover:bg-gray-100 p-2 rounded-lg transition"
-              title="Back to home"
-            >
-              ← Back
-            </button>
-            <div class="text-4xl">👤</div>
-            <div>
-              <h1 class="text-3xl font-bold text-gray-800">My Dashboard</h1>
-              <p class="text-gray-600 text-sm">Hotels, Food, Shopping, Services, Tours, Delivery & Support</p>
+      <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-6">
+          <div class="flex items-center justify-between">
+            <!-- Left Section -->
+            <div class="flex items-center gap-4">
+              <button
+                (click)="goBack()"
+                class="text-white hover:bg-blue-500 p-2 rounded-lg transition"
+                title="Back to home"
+              >
+                <mat-icon>arrow_back</mat-icon>
+              </button>
+              <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <mat-icon class="text-xl">person</mat-icon>
+              </div>
+              <div>
+                <h1 class="text-2xl font-bold">Customer Dashboard</h1>
+                <p class="text-blue-100 text-sm">Welcome back! Manage all your bookings and orders</p>
+              </div>
             </div>
-          </div>
-          <div class="flex items-center gap-3">
-            <button
-              (click)="goHome()"
-              class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition"
-              title="Go to home page"
-            >
-              🏠 Home
-            </button>
-            <button
-              (click)="logout()"
-              class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition"
-            >
-              🚪 Logout
-            </button>
+
+            <!-- Right Section -->
+            <div class="flex items-center gap-2">
+              <button
+                (click)="goHome()"
+                class="bg-blue-500 hover:bg-blue-400 text-white px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2"
+                title="Go to home page"
+              >
+                <mat-icon class="text-lg">home</mat-icon>
+                <span class="hidden sm:inline">Home</span>
+              </button>
+              <button
+                (click)="logout()"
+                class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2"
+              >
+                <mat-icon class="text-lg">logout</mat-icon>
+                <span class="hidden sm:inline">Logout</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
       <!-- Navigation Tabs -->
-      <div class="bg-white border-b border-gray-200 overflow-x-auto">
+      <div class="bg-white border-b border-gray-200 overflow-x-auto sticky top-0 z-10">
         <div class="max-w-7xl mx-auto px-4">
-          <nav class="flex gap-4 md:gap-8 min-w-max md:min-w-full" role="tablist">
+          <nav class="flex gap-2 md:gap-6 min-w-max md:min-w-full overflow-x-auto" role="tablist">
             <button
               (click)="setActiveTab('hotels')"
-              [class]="'py-4 font-semibold transition-colors border-b-2 whitespace-nowrap ' +
+              [class]="'py-4 font-semibold transition-colors border-b-2 whitespace-nowrap flex items-center gap-2 ' +
                 (activeTab() === 'hotels'
                   ? 'border-blue-600 text-blue-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900')"
               role="tab"
               [attr.aria-selected]="activeTab() === 'hotels'"
             >
-              🏨 Hotels
+              <mat-icon class="text-lg">hotel</mat-icon>
+              <span>Hotels</span>
             </button>
 
             <button
               (click)="setActiveTab('food')"
-              [class]="'py-4 font-semibold transition-colors border-b-2 whitespace-nowrap ' +
+              [class]="'py-4 font-semibold transition-colors border-b-2 whitespace-nowrap flex items-center gap-2 ' +
                 (activeTab() === 'food'
                   ? 'border-blue-600 text-blue-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900')"
               role="tab"
               [attr.aria-selected]="activeTab() === 'food'"
             >
-              🍕 Food
+              <mat-icon class="text-lg">restaurant</mat-icon>
+              <span>Food</span>
             </button>
 
             <button
               (click)="setActiveTab('shopping')"
-              [class]="'py-4 font-semibold transition-colors border-b-2 whitespace-nowrap ' +
+              [class]="'py-4 font-semibold transition-colors border-b-2 whitespace-nowrap flex items-center gap-2 ' +
                 (activeTab() === 'shopping'
                   ? 'border-blue-600 text-blue-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900')"
               role="tab"
               [attr.aria-selected]="activeTab() === 'shopping'"
             >
-              🛍️ Shopping
+              <mat-icon class="text-lg">shopping_bag</mat-icon>
+              <span>Shopping</span>
             </button>
 
             <button
               (click)="setActiveTab('services')"
-              [class]="'py-4 font-semibold transition-colors border-b-2 whitespace-nowrap ' +
+              [class]="'py-4 font-semibold transition-colors border-b-2 whitespace-nowrap flex items-center gap-2 ' +
                 (activeTab() === 'services'
                   ? 'border-blue-600 text-blue-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900')"
               role="tab"
               [attr.aria-selected]="activeTab() === 'services'"
             >
-              💇 Services
+              <mat-icon class="text-lg">miscellaneous_services</mat-icon>
+              <span>Services</span>
             </button>
 
             <button
               (click)="setActiveTab('tours')"
-              [class]="'py-4 font-semibold transition-colors border-b-2 whitespace-nowrap ' +
+              [class]="'py-4 font-semibold transition-colors border-b-2 whitespace-nowrap flex items-center gap-2 ' +
                 (activeTab() === 'tours'
                   ? 'border-blue-600 text-blue-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900')"
               role="tab"
               [attr.aria-selected]="activeTab() === 'tours'"
             >
-              ✈️ Tours
+              <mat-icon class="text-lg">flight</mat-icon>
+              <span>Tours</span>
             </button>
 
             <button
               (click)="setActiveTab('delivery')"
-              [class]="'py-4 font-semibold transition-colors border-b-2 whitespace-nowrap ' +
+              [class]="'py-4 font-semibold transition-colors border-b-2 whitespace-nowrap flex items-center gap-2 ' +
                 (activeTab() === 'delivery'
                   ? 'border-blue-600 text-blue-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900')"
               role="tab"
               [attr.aria-selected]="activeTab() === 'delivery'"
             >
-              🚚 Delivery
+              <mat-icon class="text-lg">local_shipping</mat-icon>
+              <span>Delivery</span>
             </button>
 
             <button
               (click)="setActiveTab('chat')"
-              [class]="'py-4 font-semibold transition-colors border-b-2 whitespace-nowrap ' +
+              [class]="'py-4 font-semibold transition-colors border-b-2 whitespace-nowrap flex items-center gap-2 ' +
                 (activeTab() === 'chat'
                   ? 'border-blue-600 text-blue-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900')"
               role="tab"
               [attr.aria-selected]="activeTab() === 'chat'"
             >
-              💬 Support
+              <mat-icon class="text-lg">chat</mat-icon>
+              <span>Support</span>
             </button>
 
             <button
               (click)="setActiveTab('profile')"
-              [class]="'py-4 font-semibold transition-colors border-b-2 whitespace-nowrap ' +
+              [class]="'py-4 font-semibold transition-colors border-b-2 whitespace-nowrap flex items-center gap-2 ' +
                 (activeTab() === 'profile'
                   ? 'border-blue-600 text-blue-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900')"
               role="tab"
               [attr.aria-selected]="activeTab() === 'profile'"
             >
-              ⚙️ Profile
+              <mat-icon class="text-lg">settings</mat-icon>
+              <span>Profile</span>
             </button>
           </nav>
         </div>
@@ -190,7 +209,13 @@ import { CustomerChatSupportComponent } from '../customer-chat-support/customer-
       </main>
     </div>
   `,
-  styles: []
+  styles: [`
+    mat-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+  `]
 })
 export class CustomerDashboardComponent implements OnInit {
   activeTab = signal<'hotels' | 'food' | 'shopping' | 'services' | 'tours' | 'delivery' | 'chat' | 'profile'>('hotels');
@@ -204,8 +229,8 @@ export class CustomerDashboardComponent implements OnInit {
   ngOnInit(): void {
     // Check if user is customer
     if (!this.authService.isCustomer()) {
-      console.log('❌ User is not a customer - redirecting to login');
-      this.router.navigate(['/login']);
+      console.log('❌ User is not a customer - redirecting to home');
+      this.router.navigate(['/']);
       return;
     }
 
@@ -218,7 +243,7 @@ export class CustomerDashboardComponent implements OnInit {
 
   logout(): void {
     this.authService.logout();
-    this.router.navigate(['/login']);
+    this.router.navigate(['/']);
   }
 
   goBack(): void {

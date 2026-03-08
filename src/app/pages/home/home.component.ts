@@ -2,6 +2,9 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HeaderComponent } from '../../components/header/header.component';
+import { LoginOverlayComponent } from '../../components/auth-overlay/login-overlay.component';
+import { SignupOverlayComponent } from '../../components/auth-overlay/signup-overlay.component';
+import { AuthModalService } from '../../services/auth-modal.service';
 import { MARKETPLACE_SERVICES } from '../../shared/data/marketplace-data';
 import { Service } from '../../shared/models/marketplace.model';
 
@@ -15,17 +18,20 @@ interface TrendingItem {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterLink, HeaderComponent],
+  imports: [CommonModule, RouterLink, HeaderComponent, LoginOverlayComponent, SignupOverlayComponent],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css'
 })
 export class HomeComponent {
   services: Service[] = MARKETPLACE_SERVICES;
 
+  constructor(public authModalService: AuthModalService) {}
+
   // Main services (Services and Delivery)
+  // NOTE: Delivery service is commented out for now
   mainServices = [
     this.services.find(s => s.id === 'services'),
-    this.services.find(s => s.id === 'delivery')
+    // this.services.find(s => s.id === 'delivery')
   ].filter(s => s !== undefined) as Service[];
 
   // Specialized services (all other services)

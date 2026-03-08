@@ -1,27 +1,29 @@
 import { Component, signal, effect, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatIconModule } from '@angular/material/icon';
 import { HeaderComponent } from '../../components/header/header.component';
 import { MARKETPLACE_SERVICES } from '../../shared/data/marketplace-data';
 import { ProductService, Product as ApiProduct } from '../../services/product.service';
 import { ReviewService, ProductReview } from '../../services/review.service';
 import { PaymentService, PaymentMethod, PaymentRequest, PaymentResponse } from '../../services/payment.service';
 import { CurrencyService } from '../../services/currency.service';
+import { DeliveryService, DeliveryServiceDefinition } from '../../services/delivery.service';
 
 interface Product {
   id: string;
   name: string;
   price: number;
-  originalPrice: number;
+  originalPrice?: number;
   category: string;
   icon?: string;
-  images: string[]; // Multiple product images or URLs
-  rating: number;
-  reviews: number;
-  sold: number;
-  discount: number;
-  inStock: boolean;
-  isFreeShipping: boolean;
+  images?: string[]; // Multiple product images or URLs
+  rating?: number;
+  reviews?: number;
+  sold?: number;
+  discount?: number;
+  inStock?: boolean;
+  isFreeShipping?: boolean;
   description?: string;
   thumbnail?: string;
 }
@@ -34,9 +36,17 @@ interface CartItem {
 @Component({
   selector: 'app-shopping',
   standalone: true,
-  imports: [CommonModule, HeaderComponent, FormsModule],
+  imports: [CommonModule, HeaderComponent, FormsModule, MatIconModule],
   templateUrl: './shopping.component.html',
-  styleUrl: './shopping.component.css'
+  styleUrl: './shopping.component.css',
+  styles: [`
+    ::ng-deep mat-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      vertical-align: middle;
+    }
+  `]
 })
 export class ShoppingComponent implements OnInit {
   shoppingService = MARKETPLACE_SERVICES.find(s => s.id === 'shopping')!;
@@ -87,11 +97,23 @@ export class ShoppingComponent implements OnInit {
   mobileMoneyProvider = signal<string>('');
   phoneNumber = signal<string>('');
 
+  // Delivery related signals
+  deliveryServices = signal<DeliveryServiceDefinition[]>([]);
+  selectedDeliveryService = signal<DeliveryServiceDefinition | null>(null);
+  deliveryAddress = signal<string>('');
+  estimatedDistance = signal<number>(0);
+  estimatedWeight = signal<number>(0);
+  deliveryPrice = signal<number>(0);
+  isCalculatingDelivery = signal<boolean>(false);
+  showDeliveryOptions = signal<boolean>(false);
+  deliveryError = signal<string>('');
+
   constructor(
     private productService: ProductService,
     private reviewService: ReviewService,
     private paymentService: PaymentService,
-    public currencyService: CurrencyService
+    public currencyService: CurrencyService,
+    private deliveryService: DeliveryService
   ) {
     // Prevent body scroll when cart is open
     effect(() => {
@@ -123,54 +145,60 @@ export class ShoppingComponent implements OnInit {
           this.allProducts.set(products);
           console.log('✅ Loaded', products.length, 'products from API');
         } else {
-          console.log('⚠️ API returned no products, loading sample data');
-          this.loadSampleProducts();
+          console.log('⚠️ API returned no products');
+          this.allProducts.set([]);
+          this.errorMessage.set('No products available at the moment. Please check back later.');
         }
         this.isLoading.set(false);
       },
       error: (error) => {
         console.error('Failed to load products from API:', error);
-        // Fallback to sample data
-        this.loadSampleProducts();
+        this.allProducts.set([]);
+        this.errorMessage.set('Unable to load products. Please check your internet connection and try again.');
         this.isLoading.set(false);
-        console.log('✅ Loaded', this.allProducts().length, 'sample products (fallback)');
       }
     });
   }
 
   // Convert API product to frontend product format
   private convertApiProductToProduct(apiProduct: ApiProduct): Product {
+    // Handle rating which can be an object or number
+    let rating: number | undefined;
+    if (typeof apiProduct.rating === 'object' && apiProduct.rating !== null && 'average' in apiProduct.rating) {
+      rating = (apiProduct.rating as any).average;
+    } else if (typeof apiProduct.rating === 'number') {
+      rating = apiProduct.rating;
+    }
+
+    // Map category to default Material icon
+    const getCategoryIcon = (category: string): string => {
+      const categoryLower = category.toLowerCase();
+      if (categoryLower.includes('wear') || categoryLower.includes('cloth')) return 'shopping_bag';
+      if (categoryLower.includes('shoe') || categoryLower.includes('sneaker')) return 'shoe';
+      if (categoryLower.includes('jewel') || categoryLower.includes('accessory')) return 'diamond';
+      if (categoryLower.includes('super') || categoryLower.includes('grocery') || categoryLower.includes('food')) return 'shopping_cart';
+      return 'inventory_2';
+    };
+
     return {
       id: apiProduct._id || apiProduct.id || '',
       name: apiProduct.name,
       price: apiProduct.price,
-      originalPrice: apiProduct.originalPrice || apiProduct.price,
+      originalPrice: apiProduct.originalPrice || apiProduct.price || 0,
       category: apiProduct.category,
-      icon: apiProduct.icon || '📦',
-      images: apiProduct.images && apiProduct.images.length > 0 ? apiProduct.images : [apiProduct.thumbnail || apiProduct.icon || '📦'],
-      rating: apiProduct.rating,
-      reviews: apiProduct.reviews,
-      sold: apiProduct.sold,
-      discount: apiProduct.discount,
-      inStock: apiProduct.inStock,
-      isFreeShipping: apiProduct.isFreeShipping,
+      icon: apiProduct.icon || getCategoryIcon(apiProduct.category),
+      images: apiProduct.images && apiProduct.images.length > 0 ? apiProduct.images : [apiProduct.thumbnail || ''],
+      rating: rating ?? 0,
+      reviews: apiProduct.reviews ?? 0,
+      sold: apiProduct.sold ?? 0,
+      discount: apiProduct.discount ?? 0,
+      inStock: apiProduct.inStock ?? true,
+      isFreeShipping: apiProduct.isFreeShipping ?? false,
       description: apiProduct.description,
       thumbnail: apiProduct.thumbnail
     };
   }
 
-  // Load fallback sample products if backend fails
-  private loadSampleProducts(): void {
-    const sampleProducts: Product[] = [
-      { id: '1', name: 'Premium Winter Jacket', price: 45.99, originalPrice: 89.99, category: 'Adult Wears', icon: '🧥', images: ['🧥', '🧥‍♂️', '🧤'], rating: 4.8, reviews: 2345, sold: 5200, discount: 49, inStock: true, isFreeShipping: true, description: 'Premium quality winter jacket with warm lining. Perfect for cold weather.' },
-      { id: '2', name: 'Trendy Kids Sneakers', price: 32.99, originalPrice: 59.99, category: 'Children Wears', icon: '👟', images: ['👟', '👞', '🩴'], rating: 4.7, reviews: 1890, sold: 4100, discount: 45, inStock: true, isFreeShipping: true, description: 'Comfortable and stylish sneakers for kids.' },
-      { id: '3', name: 'Gold Necklace Set', price: 18.99, originalPrice: 89.99, category: 'Jewelry', icon: '⛓️', images: ['⛓️', '💍', '👑'], rating: 4.9, reviews: 3456, sold: 6700, discount: 79, inStock: true, isFreeShipping: true, description: 'Elegant gold necklace set with matching pendant.' },
-      { id: '4', name: 'Organic Fresh Box', price: 22.99, originalPrice: 45.99, category: 'Supermarkets', icon: '🥬', images: ['🥬', '🥕', '🌽'], rating: 4.6, reviews: 1200, sold: 3400, discount: 50, inStock: true, isFreeShipping: false, description: 'Fresh organic vegetables delivered to your door.' },
-      { id: '5', name: 'Casual Summer Dress', price: 28.99, originalPrice: 69.99, category: 'Adult Wears', icon: '👗', images: ['👗', '👔', '👠'], rating: 4.8, reviews: 2678, sold: 5890, discount: 59, inStock: true, isFreeShipping: true, description: 'Light and comfortable summer dress.' },
-      { id: '6', name: 'Fun Toy Set Pack', price: 21.99, originalPrice: 49.99, category: 'Children Wears', icon: '🧸', images: ['🧸', '🎮', '🚂'], rating: 4.7, reviews: 987, sold: 2340, discount: 56, inStock: true, isFreeShipping: true, description: 'Entertaining toy set for children.' },
-    ];
-    this.allProducts.set(sampleProducts);
-  }
 
   get filteredProducts(): Product[] {
     let products = this.allProducts();
@@ -196,14 +224,14 @@ export class ShoppingComponent implements OnInit {
         products = [...products].sort((a, b) => b.price - a.price);
         break;
       case 'rating':
-        products = [...products].sort((a, b) => b.rating - a.rating);
+        products = [...products].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
         break;
       case 'newest':
         products = [...products].reverse();
         break;
       default:
         // Popular (by sold)
-        products = [...products].sort((a, b) => b.sold - a.sold);
+        products = [...products].sort((a, b) => (b.sold ?? 0) - (a.sold ?? 0));
     }
 
     return products;
@@ -376,6 +404,12 @@ export class ShoppingComponent implements OnInit {
       return;
     }
 
+    if (!this.validateDeliveryInfo()) {
+      alert(this.deliveryError());
+      this.showDeliveryOptions.set(true);
+      return;
+    }
+
     this.showPaymentModal.set(true);
     this.loadPaymentMethods();
     this.paymentError.set('');
@@ -421,11 +455,11 @@ export class ShoppingComponent implements OnInit {
 
   private loadDefaultPaymentMethods(): void {
     const defaultMethods: PaymentMethod[] = [
-      { id: 'credit_card', name: 'Credit Card', icon: '💳', description: 'Visa, Mastercard, Amex' },
-      { id: 'debit_card', name: 'Debit Card', icon: '🏦', description: 'Bank Debit Card' },
-      { id: 'bank_transfer', name: 'Bank Transfer', icon: '🏪', description: 'Direct bank transfer' },
-      { id: 'mobile_money', name: 'Mobile Money', icon: '📱', description: 'MTN, Airtel, Vodafone' },
-      { id: 'wallet', name: 'Digital Wallet', icon: '💰', description: 'Use your wallet balance' }
+      { id: 'credit_card', name: 'Credit Card', icon: 'credit_card', description: 'Visa, Mastercard, Amex' },
+      { id: 'debit_card', name: 'Debit Card', icon: 'account_balance', description: 'Bank Debit Card' },
+      { id: 'bank_transfer', name: 'Bank Transfer', icon: 'business', description: 'Direct bank transfer' },
+      { id: 'mobile_money', name: 'Mobile Money', icon: 'phone_android', description: 'MTN, Airtel, Vodafone' },
+      { id: 'wallet', name: 'Digital Wallet', icon: 'account_balance_wallet', description: 'Use your wallet balance' }
     ];
     this.paymentMethods.set(defaultMethods);
   }
@@ -456,10 +490,10 @@ export class ShoppingComponent implements OnInit {
     const userEmail = localStorage.getItem('userEmail') || 'customer@example.com';
     const userName = localStorage.getItem('userName') || 'Customer';
 
-    // Create payment request with cart items
+    // Create payment request with cart items and delivery
     const paymentRequest: PaymentRequest = {
       orderId: `ORD-${Date.now()}`,
-      amount: this.cartTotal,
+      amount: this.getTotalWithDelivery(), // Include delivery cost in total
       currency: 'NGN',
       paymentMethod: paymentMethod,
       // Add customer and cart info
@@ -469,12 +503,21 @@ export class ShoppingComponent implements OnInit {
         price: item.product.price,
         quantity: item.quantity,
         category: item.product.category,
-        image: item.product.icon || item.product.images?.[0] || '📦'
+        image: item.product.icon || item.product.images?.[0] || 'inventory_2'
       })),
       userId: userId,
       userEmail: userEmail,
       customerName: userName,
-      storeName: 'MarketHub Shopping'
+      storeName: 'MarketHub Shopping',
+      // Add delivery information
+      deliveryInfo: {
+        serviceId: this.selectedDeliveryService()?.id,
+        serviceName: this.selectedDeliveryService()?.name,
+        address: this.deliveryAddress(),
+        distance: this.estimatedDistance() || 10,
+        estimatedTime: this.selectedDeliveryService()?.estimatedDeliveryTime.standard,
+        price: this.deliveryPrice()
+      } as any
     };
 
     // Add payment details based on method
@@ -643,8 +686,25 @@ export class ShoppingComponent implements OnInit {
   /**
    * Format price with current currency
    */
-  formatPrice(amount: number): string {
-    return this.currencyService.formatPrice(amount);
+  formatPrice(amount: number | undefined): string {
+    return this.currencyService.formatPrice(amount ?? 0);
+  }
+
+  /**
+   * Format delivery time from minutes to readable format
+   */
+  formatDeliveryTime(service: DeliveryServiceDefinition | null): string {
+    if (!service) return 'N/A';
+    const minutes = service.estimatedDeliveryTime.standard;
+    if (minutes < 60) {
+      return `${minutes} mins`;
+    } else if (minutes < 1440) { // Less than 24 hours
+      const hours = Math.ceil(minutes / 60);
+      return `${hours}h`;
+    } else {
+      const days = Math.ceil(minutes / 1440);
+      return `${days} day${days > 1 ? 's' : ''}`;
+    }
   }
 
   /**
@@ -653,5 +713,103 @@ export class ShoppingComponent implements OnInit {
   changeCurrency(event: any): void {
     const currencyCode = event.target?.value || event;
     this.currencyService.setCurrency(currencyCode);
+  }
+
+  // ============================================
+  // DELIVERY METHODS
+  // ============================================
+
+  /**
+   * Load available delivery services for retail
+   */
+  loadDeliveryServices(): void {
+    const services = this.deliveryService.getAvailableServices('retail');
+    this.deliveryServices.set(services);
+    console.log('✅ Loaded', services.length, 'delivery services');
+  }
+
+  /**
+   * Select a delivery service and calculate price
+   */
+  selectDeliveryService(service: DeliveryServiceDefinition): void {
+    this.selectedDeliveryService.set(service);
+    console.log('📦 Selected delivery service:', service.name);
+    this.calculateDeliveryPrice();
+  }
+
+  /**
+   * Calculate delivery price based on selected service and cart weight/distance
+   */
+  calculateDeliveryPrice(): void {
+    const service = this.selectedDeliveryService();
+    if (!service) {
+      this.deliveryError.set('Please select a delivery service');
+      return;
+    }
+
+    if (!this.deliveryAddress()) {
+      this.deliveryError.set('Please enter a delivery address');
+      return;
+    }
+
+    this.isCalculatingDelivery.set(true);
+    this.deliveryError.set('');
+
+    // Calculate estimated weight from cart items (assume 0.5kg per item)
+    const weight = this.cartItemsCount * 0.5;
+
+    // Estimate distance (default to 10km if not specified)
+    const distance = this.estimatedDistance() || 10;
+
+    console.log(`📊 Calculating delivery: service=${service.id}, distance=${distance}km, weight=${weight}kg`);
+
+    // Calculate price
+    const price = this.deliveryService.calculatePrice(service, distance, weight);
+    this.deliveryPrice.set(price);
+
+    console.log(`✅ Delivery price calculated: ${this.formatPrice(price)}`);
+
+    this.isCalculatingDelivery.set(false);
+  }
+
+  /**
+   * Get total with delivery cost
+   */
+  getTotalWithDelivery(): number {
+    return this.cartTotal + this.deliveryPrice();
+  }
+
+  /**
+   * Validate delivery information before checkout
+   */
+  validateDeliveryInfo(): boolean {
+    if (!this.deliveryAddress()) {
+      this.deliveryError.set('Please enter a delivery address');
+      return false;
+    }
+
+    if (!this.selectedDeliveryService()) {
+      this.deliveryError.set('Please select a delivery service');
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Open delivery options panel
+   */
+  openDeliveryOptions(): void {
+    this.showDeliveryOptions.set(true);
+    if (this.deliveryServices().length === 0) {
+      this.loadDeliveryServices();
+    }
+  }
+
+  /**
+   * Close delivery options panel
+   */
+  closeDeliveryOptions(): void {
+    this.showDeliveryOptions.set(false);
   }
 }

@@ -1,6 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatIconModule } from '@angular/material/icon';
 import { CustomerService } from '../../../services/customer.service';
 import { AuthService } from '../../../services/auth.service';
 import { ReturnService, ProductReturn } from '../../../services/return.service';
@@ -8,7 +9,7 @@ import { ReturnService, ProductReturn } from '../../../services/return.service';
 @Component({
   selector: 'app-customer-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatIconModule],
   template: `
     <div class="space-y-6">
       <!-- Header -->
@@ -19,7 +20,9 @@ import { ReturnService, ProductReturn } from '../../../services/return.service';
 
       @if (isLoading()) {
         <div class="text-center py-12">
-          <div class="inline-block animate-spin text-4xl mb-4">⏳</div>
+          <div class="flex justify-center mb-4">
+            <mat-icon class="text-5xl text-gray-400 animate-spin">schedule</mat-icon>
+          </div>
           <p class="text-gray-600">Loading profile...</p>
         </div>
       } @else if (profile()) {
@@ -28,57 +31,63 @@ import { ReturnService, ProductReturn } from '../../../services/return.service';
           <div class="flex gap-2 p-4 border-b overflow-x-auto">
             <button
               (click)="activeSection.set('profile')"
-              [class]="'px-4 py-2 font-semibold rounded-lg transition whitespace-nowrap ' +
+              [class]="'px-4 py-2 font-semibold rounded-lg transition whitespace-nowrap flex items-center gap-2 ' +
                 (activeSection() === 'profile'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200')"
             >
-              👤 Profile
+              <mat-icon class="text-lg">person</mat-icon>
+              <span>Profile</span>
             </button>
             <button
               (click)="viewWishlist()"
-              [class]="'px-4 py-2 font-semibold rounded-lg transition whitespace-nowrap ' +
+              [class]="'px-4 py-2 font-semibold rounded-lg transition whitespace-nowrap flex items-center gap-2 ' +
                 (activeSection() === 'wishlist'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200')"
             >
-              ❤️ Wishlist ({{ wishlistCount() }})
+              <mat-icon class="text-lg">favorite</mat-icon>
+              <span>Wishlist ({{ wishlistCount() }})</span>
             </button>
             <button
               (click)="viewReviews()"
-              [class]="'px-4 py-2 font-semibold rounded-lg transition whitespace-nowrap ' +
+              [class]="'px-4 py-2 font-semibold rounded-lg transition whitespace-nowrap flex items-center gap-2 ' +
                 (activeSection() === 'reviews'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200')"
             >
-              ⭐ Reviews ({{ reviewsCount() }})
+              <mat-icon class="text-lg">star</mat-icon>
+              <span>Reviews ({{ reviewsCount() }})</span>
             </button>
             <button
               (click)="editPreferences()"
-              [class]="'px-4 py-2 font-semibold rounded-lg transition whitespace-nowrap ' +
+              [class]="'px-4 py-2 font-semibold rounded-lg transition whitespace-nowrap flex items-center gap-2 ' +
                 (activeSection() === 'preferences'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200')"
             >
-              ⚙️ Preferences
+              <mat-icon class="text-lg">settings</mat-icon>
+              <span>Preferences</span>
             </button>
             <button
               (click)="activeSection.set('password')"
-              [class]="'px-4 py-2 font-semibold rounded-lg transition whitespace-nowrap ' +
+              [class]="'px-4 py-2 font-semibold rounded-lg transition whitespace-nowrap flex items-center gap-2 ' +
                 (activeSection() === 'password'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200')"
             >
-              🔒 Password
+              <mat-icon class="text-lg">lock</mat-icon>
+              <span>Password</span>
             </button>
             <button
               (click)="viewReturns()"
-              [class]="'px-4 py-2 font-semibold rounded-lg transition whitespace-nowrap ' +
+              [class]="'px-4 py-2 font-semibold rounded-lg transition whitespace-nowrap flex items-center gap-2 ' +
                 (activeSection() === 'returns'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200')"
             >
-              📦 Returns ({{ returnsCount() }})
+              <mat-icon class="text-lg">local_shipping</mat-icon>
+              <span>Returns ({{ returnsCount() }})</span>
             </button>
           </div>
         </div>
@@ -89,8 +98,8 @@ import { ReturnService, ProductReturn } from '../../../services/return.service';
             <!-- Profile Avatar & Info -->
             <div class="lg:col-span-1">
               <div class="bg-white rounded-lg shadow-md p-6 text-center">
-                <div class="w-24 h-24 mx-auto mb-4 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-4xl">
-                  👤
+                <div class="w-24 h-24 mx-auto mb-4 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
+                  <mat-icon class="text-4xl text-white">person</mat-icon>
                 </div>
                 <h3 class="text-xl font-bold text-gray-800">{{ profile().name }}</h3>
                 <p class="text-sm text-gray-600 mt-1">{{ profile().email }}</p>
@@ -186,21 +195,24 @@ import { ReturnService, ProductReturn } from '../../../services/return.service';
                   <button
                     (click)="saveProfile()"
                     [disabled]="isSaving()"
-                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition disabled:opacity-50"
+                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition disabled:opacity-50 flex items-center justify-center gap-2"
                   >
-                    {{ isSaving() ? '💾 Saving...' : '💾 Save Changes' }}
+                    <mat-icon class="text-lg">{{ isSaving() ? 'schedule' : 'save' }}</mat-icon>
+                    <span>{{ isSaving() ? 'Saving...' : 'Save Changes' }}</span>
                   </button>
                 </div>
 
                 @if (successMessage()) {
-                  <div class="bg-green-50 border border-green-300 text-green-700 px-4 py-3 rounded-lg text-sm">
-                    ✅ {{ successMessage() }}
+                  <div class="bg-green-50 border border-green-300 text-green-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+                    <mat-icon class="text-lg">check_circle</mat-icon>
+                    <span>{{ successMessage() }}</span>
                   </div>
                 }
 
                 @if (error()) {
-                  <div class="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg text-sm">
-                    ❌ {{ error() }}
+                  <div class="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+                    <mat-icon class="text-lg">error</mat-icon>
+                    <span>{{ error() }}</span>
                   </div>
                 }
               </div>
@@ -211,7 +223,10 @@ import { ReturnService, ProductReturn } from '../../../services/return.service';
         <!-- WISHLIST SECTION -->
         @if (activeSection() === 'wishlist') {
           <div class="bg-white rounded-lg shadow-md p-6">
-            <h3 class="text-2xl font-bold text-gray-800 mb-6">❤️ My Wishlist</h3>
+            <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+              <mat-icon>favorite</mat-icon>
+              <span>My Wishlist</span>
+            </h3>
             @if (wishlist().length > 0) {
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 @for (item of wishlist(); track item._id) {
@@ -231,7 +246,12 @@ import { ReturnService, ProductReturn } from '../../../services/return.service';
                 }
               </div>
             } @else {
-              <p class="text-gray-500 text-center py-12">❤️ No items in your wishlist yet</p>
+              <div class="text-gray-500 text-center py-12">
+                <div class="flex justify-center mb-4">
+                  <mat-icon class="text-5xl text-gray-400">favorite_border</mat-icon>
+                </div>
+                <p>No items in your wishlist yet</p>
+              </div>
             }
           </div>
         }
@@ -239,16 +259,23 @@ import { ReturnService, ProductReturn } from '../../../services/return.service';
         <!-- REVIEWS SECTION -->
         @if (activeSection() === 'reviews') {
           <div class="bg-white rounded-lg shadow-md p-6">
-            <h3 class="text-2xl font-bold text-gray-800 mb-6">⭐ My Reviews</h3>
+            <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+              <mat-icon>star</mat-icon>
+              <span>My Reviews</span>
+            </h3>
             @if (reviews().length > 0) {
               <div class="space-y-4">
                 @for (review of reviews(); track review._id) {
                   <div class="border rounded-lg p-4 hover:shadow-md transition">
                     <div class="flex justify-between items-start mb-2">
                       <h4 class="font-bold text-gray-800">{{ review.entityName || 'Product/Service' }}</h4>
-                      <div class="text-yellow-400 text-lg">
+                      <div class="text-yellow-400 text-lg flex items-center gap-0">
                         @for (star of [1,2,3,4,5]; track star) {
-                          {{ star <= review.rating ? '⭐' : '☆' }}
+                          @if (star <= review.rating) {
+                            <mat-icon class="text-lg">star</mat-icon>
+                          } @else {
+                            <mat-icon class="text-lg">star_border</mat-icon>
+                          }
                         }
                       </div>
                     </div>
@@ -258,7 +285,12 @@ import { ReturnService, ProductReturn } from '../../../services/return.service';
                 }
               </div>
             } @else {
-              <p class="text-gray-500 text-center py-12">⭐ No reviews yet</p>
+              <div class="text-gray-500 text-center py-12">
+                <div class="flex justify-center mb-4">
+                  <mat-icon class="text-5xl text-gray-400">star_border</mat-icon>
+                </div>
+                <p>No reviews yet</p>
+              </div>
             }
           </div>
         }
@@ -266,7 +298,10 @@ import { ReturnService, ProductReturn } from '../../../services/return.service';
         <!-- PREFERENCES SECTION -->
         @if (activeSection() === 'preferences') {
           <div class="bg-white rounded-lg shadow-md p-6 max-w-2xl">
-            <h3 class="text-2xl font-bold text-gray-800 mb-6">⚙️ Preferences</h3>
+            <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+              <mat-icon>settings</mat-icon>
+              <span>Preferences</span>
+            </h3>
             <div class="space-y-6">
               <!-- Notifications -->
               <div class="border-b pb-6">
@@ -327,9 +362,10 @@ import { ReturnService, ProductReturn } from '../../../services/return.service';
                 <button
                   (click)="savePreferences()"
                   [disabled]="isSaving()"
-                  class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition disabled:opacity-50"
+                  class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  {{ isSaving() ? '💾 Saving...' : '💾 Save Preferences' }}
+                  <mat-icon class="text-lg">{{ isSaving() ? 'schedule' : 'save' }}</mat-icon>
+                  <span>{{ isSaving() ? 'Saving...' : 'Save Preferences' }}</span>
                 </button>
                 <button
                   (click)="activeSection.set('profile')"
@@ -340,8 +376,9 @@ import { ReturnService, ProductReturn } from '../../../services/return.service';
               </div>
 
               @if (successMessage()) {
-                <div class="bg-green-50 border border-green-300 text-green-700 px-4 py-3 rounded-lg text-sm">
-                  ✅ {{ successMessage() }}
+                <div class="bg-green-50 border border-green-300 text-green-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+                  <mat-icon class="text-lg">check_circle</mat-icon>
+                  <span>{{ successMessage() }}</span>
                 </div>
               }
             </div>
@@ -351,7 +388,10 @@ import { ReturnService, ProductReturn } from '../../../services/return.service';
         <!-- PASSWORD CHANGE SECTION -->
         @if (activeSection() === 'password') {
           <div class="bg-white rounded-lg shadow-md p-6 max-w-2xl">
-            <h3 class="text-2xl font-bold text-gray-800 mb-6">🔒 Change Password</h3>
+            <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+              <mat-icon>lock</mat-icon>
+              <span>Change Password</span>
+            </h3>
             <div class="space-y-4">
               <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-2">Current Password</label>
@@ -388,9 +428,10 @@ import { ReturnService, ProductReturn } from '../../../services/return.service';
                 <button
                   (click)="changePassword()"
                   [disabled]="isSaving()"
-                  class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition disabled:opacity-50"
+                  class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  {{ isSaving() ? '⏳ Changing...' : '✓ Change Password' }}
+                  <mat-icon class="text-lg">{{ isSaving() ? 'schedule' : 'check' }}</mat-icon>
+                  <span>{{ isSaving() ? 'Changing...' : 'Change Password' }}</span>
                 </button>
                 <button
                   (click)="activeSection.set('profile')"
@@ -401,14 +442,16 @@ import { ReturnService, ProductReturn } from '../../../services/return.service';
               </div>
 
               @if (passwordSuccess()) {
-                <div class="bg-green-50 border border-green-300 text-green-700 px-4 py-3 rounded-lg text-sm">
-                  ✅ {{ passwordSuccess() }}
+                <div class="bg-green-50 border border-green-300 text-green-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+                  <mat-icon class="text-lg">check_circle</mat-icon>
+                  <span>{{ passwordSuccess() }}</span>
                 </div>
               }
 
               @if (passwordError()) {
-                <div class="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg text-sm">
-                  ❌ {{ passwordError() }}
+                <div class="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+                  <mat-icon class="text-lg">error</mat-icon>
+                  <span>{{ passwordError() }}</span>
                 </div>
               }
             </div>
@@ -419,12 +462,16 @@ import { ReturnService, ProductReturn } from '../../../services/return.service';
         @if (activeSection() === 'returns') {
           <div class="bg-white rounded-lg shadow-md p-6">
             <div class="flex items-center justify-between mb-6">
-              <h3 class="text-2xl font-bold text-gray-800">📦 Product Returns</h3>
+              <h3 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                <mat-icon>local_shipping</mat-icon>
+                <span>Product Returns</span>
+              </h3>
               <button
                 (click)="openReturnForm()"
-                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2"
               >
-                + Request Return
+                <mat-icon class="text-lg">add</mat-icon>
+                <span>Request Return</span>
               </button>
             </div>
 
@@ -494,14 +541,16 @@ import { ReturnService, ProductReturn } from '../../../services/return.service';
 
                     <!-- Error/Success Messages -->
                     @if (returnSubmitError()) {
-                      <div class="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg text-sm">
-                        ❌ {{ returnSubmitError() }}
+                      <div class="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+                        <mat-icon class="text-lg">error</mat-icon>
+                        <span>{{ returnSubmitError() }}</span>
                       </div>
                     }
 
                     @if (returnSubmitSuccess()) {
-                      <div class="bg-green-50 border border-green-300 text-green-700 px-4 py-3 rounded-lg text-sm">
-                        ✅ {{ returnSubmitSuccess() }}
+                      <div class="bg-green-50 border border-green-300 text-green-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+                        <mat-icon class="text-lg">check_circle</mat-icon>
+                        <span>{{ returnSubmitSuccess() }}</span>
                       </div>
                     }
 
@@ -510,9 +559,10 @@ import { ReturnService, ProductReturn } from '../../../services/return.service';
                       <button
                         (click)="submitReturnRequest()"
                         [disabled]="isSubmittingReturn()"
-                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition disabled:opacity-50"
+                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition disabled:opacity-50 flex items-center justify-center gap-2"
                       >
-                        {{ isSubmittingReturn() ? '⏳ Submitting...' : '✓ Submit Return Request' }}
+                        <mat-icon class="text-lg">{{ isSubmittingReturn() ? 'schedule' : 'check' }}</mat-icon>
+                        <span>{{ isSubmittingReturn() ? 'Submitting...' : 'Submit Return Request' }}</span>
                       </button>
                       <button
                         (click)="closeReturnForm()"
@@ -544,20 +594,16 @@ import { ReturnService, ProductReturn } from '../../../services/return.service';
                   <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
                     <div class="flex items-start justify-between mb-3">
                       <div>
-                        <h4 class="font-bold text-gray-900">{{ return.productId }}</h4>
+                        <h4 class="font-bold text-gray-900">{{ getReturnProductId(return) }}</h4>
                         <p class="text-sm text-gray-600">Order: {{ return.orderId }}</p>
                       </div>
-                      <span [class]="'text-xs font-semibold px-3 py-1 rounded-full ' +
-                        (return.returnStatus === 'completed' ? 'bg-green-100 text-green-700' :
-                         return.returnStatus === 'approved' ? 'bg-blue-100 text-blue-700' :
-                         return.returnStatus === 'rejected' ? 'bg-red-100 text-red-700' :
-                         'bg-yellow-100 text-yellow-700')">
-                        {{ return.returnStatus | titlecase }}
+                      <span [class]="'text-xs font-semibold px-3 py-1 rounded-full ' + getReturnStatusClass(return)">
+                        {{ getReturnStatus(return) | titlecase }}
                       </span>
                     </div>
 
                     <div class="mb-3 pb-3 border-b border-gray-200">
-                      <p class="text-sm text-gray-700 mb-2"><strong>Reason:</strong> {{ return.reason }}</p>
+                      <p class="text-sm text-gray-700 mb-2"><strong>Reason:</strong> {{ getReturnReason(return) }}</p>
                       <p class="text-sm text-gray-600">{{ return.description }}</p>
                     </div>
 
@@ -571,7 +617,7 @@ import { ReturnService, ProductReturn } from '../../../services/return.service';
                       </div>
                     </div>
 
-                    @if (return.returnStatus === 'approved' || return.returnStatus === 'shipped') {
+                    @if (isReturnShippable(return)) {
                       <div class="mt-3 p-3 bg-blue-50 rounded text-sm">
                         @if (return.trackingNumber) {
                           <p class="text-blue-700"><strong>Tracking:</strong> {{ return.trackingNumber }}</p>
@@ -588,7 +634,9 @@ import { ReturnService, ProductReturn } from '../../../services/return.service';
               </div>
             } @else if (!showReturnForm()) {
               <div class="text-center py-12 text-gray-500">
-                <div class="text-5xl mb-3">📦</div>
+                <div class="flex justify-center mb-3">
+                  <mat-icon class="text-5xl text-gray-400">local_shipping</mat-icon>
+                </div>
                 <p>No returns yet</p>
                 <p class="text-sm">You can request a return by clicking the "Request Return" button above</p>
               </div>
@@ -598,7 +646,13 @@ import { ReturnService, ProductReturn } from '../../../services/return.service';
       }
     </div>
   `,
-  styles: []
+  styles: [`
+    ::ng-deep mat-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+  `]
 })
 export class CustomerProfileComponent implements OnInit {
   profile = signal<any>(null);
@@ -738,14 +792,14 @@ export class CustomerProfileComponent implements OnInit {
 
   loadReturns(): void {
     this.returnService.getMyReturns().subscribe({
-      next: (response) => {
+      next: (response: any) => {
         if (response.success && response.data) {
           this.myReturns.set(response.data);
           this.returnsCount.set(response.data.length);
           console.log('✅ Returns loaded');
         }
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('❌ Error loading returns:', error);
       }
     });
@@ -935,5 +989,37 @@ export class CustomerProfileComponent implements OnInit {
         this.error.set('Failed to remove item');
       }
     });
+  }
+
+  // Helper methods for return display
+  getReturnProductId(returnItem: any): string {
+    return returnItem.productId || returnItem.orderId || 'Unknown';
+  }
+
+  getReturnReason(returnItem: any): string {
+    return returnItem.reason || returnItem.returnReason || 'No reason provided';
+  }
+
+  getReturnStatus(returnItem: any): string {
+    return returnItem.returnStatus || returnItem.status || 'unknown';
+  }
+
+  getReturnStatusClass(returnItem: any): string {
+    const status = returnItem.returnStatus || returnItem.status || '';
+    switch (status) {
+      case 'completed':
+        return 'bg-green-100 text-green-700';
+      case 'approved':
+        return 'bg-blue-100 text-blue-700';
+      case 'rejected':
+        return 'bg-red-100 text-red-700';
+      default:
+        return 'bg-yellow-100 text-yellow-700';
+    }
+  }
+
+  isReturnShippable(returnItem: any): boolean {
+    const status = returnItem.returnStatus || returnItem.status || '';
+    return status === 'approved' || status === 'shipped';
   }
 }

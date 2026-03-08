@@ -58,7 +58,10 @@ export interface ApiResponse {
   providedIn: 'root'
 })
 export class ServiceService {
-  private apiUrl = 'https://us-central1-uni-backend01.cloudfunctions.net/api/services';
+  // ⚠️ REPLACED: Firebase Cloud Functions endpoint with local backend API
+  // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api/services'
+  // NEW: Local Node.js/Express backend
+  private apiUrl = 'http://localhost:5001/services';
 
   constructor(private http: HttpClient) {}
 

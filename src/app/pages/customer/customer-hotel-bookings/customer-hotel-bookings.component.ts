@@ -1,5 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
 import { CustomerService } from '../../../services/customer.service';
 
 interface HotelBooking {
@@ -26,7 +27,7 @@ interface RoomServiceItem {
 @Component({
   selector: 'app-customer-hotel-bookings',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MatIconModule],
   template: `
     <div class="space-y-6">
       <!-- Summary Cards -->
@@ -80,16 +81,18 @@ interface RoomServiceItem {
                     </span>
                   </td>
                   <td class="px-6 py-3 text-sm space-x-2">
-                    <button 
+                    <button
                       (click)="viewBookingDetails(booking)"
-                      class="text-blue-600 hover:text-blue-800 font-semibold">
-                      View
+                      class="text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1 inline-flex">
+                      <mat-icon class="text-sm">visibility</mat-icon>
+                      <span>View</span>
                     </button>
                     @if (booking.status === 'checked-in' || booking.status === 'confirmed') {
-                      <button 
+                      <button
                         (click)="orderRoomService(booking)"
-                        class="text-green-600 hover:text-green-800 font-semibold">
-                        🍽️ Room Service
+                        class="text-green-600 hover:text-green-800 font-semibold flex items-center gap-1 inline-flex">
+                        <mat-icon class="text-sm">room_service</mat-icon>
+                        <span>Room Service</span>
                       </button>
                     }
                   </td>
@@ -100,7 +103,10 @@ interface RoomServiceItem {
         </div>
       } @else {
         <div class="bg-white rounded-lg shadow p-12 text-center">
-          <p class="text-gray-500 text-lg mb-4">🏨 No hotel bookings yet</p>
+          <div class="flex justify-center mb-4">
+            <mat-icon class="text-5xl text-gray-400">hotel</mat-icon>
+          </div>
+          <p class="text-gray-500 text-lg mb-2 font-semibold">No hotel bookings yet</p>
           <p class="text-gray-400 text-sm">Start exploring hotels and make your first booking!</p>
         </div>
       }
@@ -110,11 +116,14 @@ interface RoomServiceItem {
         <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div class="sticky top-0 bg-gray-50 border-b px-6 py-4 flex items-center justify-between">
-              <h3 class="text-lg font-semibold">🍽️ Room Service & Drinks</h3>
-              <button 
+              <div class="flex items-center gap-2">
+                <mat-icon class="text-blue-600">room_service</mat-icon>
+                <h3 class="text-lg font-semibold">Room Service & Drinks</h3>
+              </div>
+              <button
                 (click)="showRoomServiceModal.set(false)"
-                class="text-gray-500 hover:text-gray-700 text-2xl">
-                ✕
+                class="text-gray-500 hover:text-gray-700">
+                <mat-icon>close</mat-icon>
               </button>
             </div>
 
@@ -169,15 +178,17 @@ interface RoomServiceItem {
 
               <!-- Action Buttons -->
               <div class="flex gap-3 mt-6">
-                <button 
+                <button
                   (click)="submitRoomServiceOrder()"
-                  class="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold transition">
-                  Place Order
+                  class="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold transition flex items-center justify-center gap-2">
+                  <mat-icon class="text-lg">check_circle</mat-icon>
+                  <span>Place Order</span>
                 </button>
-                <button 
+                <button
                   (click)="showRoomServiceModal.set(false)"
-                  class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 px-4 py-2 rounded-lg font-semibold transition">
-                  Cancel
+                  class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 px-4 py-2 rounded-lg font-semibold transition flex items-center justify-center gap-2">
+                  <mat-icon class="text-lg">cancel</mat-icon>
+                  <span>Cancel</span>
                 </button>
               </div>
             </div>
@@ -186,7 +197,14 @@ interface RoomServiceItem {
       }
     </div>
   `,
-  styles: []
+  styles: [`
+    mat-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      vertical-align: middle;
+    }
+  `]
 })
 export class CustomerHotelBookingsComponent implements OnInit {
   bookings = signal<HotelBooking[]>([]);
@@ -240,12 +258,12 @@ export class CustomerHotelBookingsComponent implements OnInit {
 
   getStatusBadge(status: string): string {
     const badges: { [key: string]: string } = {
-      confirmed: '✓ Confirmed',
-      pending: '⏳ Pending',
-      'checked-in': '🔓 Checked In',
-      'checked-out': '🔒 Checked Out',
-      completed: '✓ Completed',
-      cancelled: '✕ Cancelled'
+      confirmed: 'Confirmed',
+      pending: 'Pending',
+      'checked-in': 'Checked In',
+      'checked-out': 'Checked Out',
+      completed: 'Completed',
+      cancelled: 'Cancelled'
     };
     return badges[status] || status;
   }
@@ -344,11 +362,7 @@ export class CustomerHotelBookingsComponent implements OnInit {
       notes: ''
     };
 
-    this.customerService.orderRoomService(
-      this.selectedBooking()?._id || '',
-      this.selectedBooking()?._id || '',
-      orderData
-    ).subscribe(
+    this.customerService.orderRoomService(orderData).subscribe(
       (response: any) => {
         if (response.success) {
           alert('✓ Room service order placed successfully!');

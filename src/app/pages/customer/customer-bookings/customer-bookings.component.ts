@@ -1,11 +1,12 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
 import { CustomerService } from '../../../services/customer.service';
 
 @Component({
   selector: 'app-customer-bookings',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MatIconModule],
   template: `
     <div class="space-y-6">
       <!-- Header -->
@@ -74,12 +75,14 @@ import { CustomerService } from '../../../services/customer.service';
                     </span>
                   </td>
                   <td class="px-6 py-4 text-sm space-x-2">
-                    <button class="text-blue-600 hover:text-blue-800 font-semibold">
-                      👁️ View
+                    <button class="text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1 inline-flex">
+                      <mat-icon class="text-sm">visibility</mat-icon>
+                      <span>View</span>
                     </button>
                     @if (booking.status === 'confirmed' && isUpcoming(booking.checkInDate)) {
-                      <button class="text-red-600 hover:text-red-800 font-semibold">
-                        ❌ Cancel
+                      <button class="text-red-600 hover:text-red-800 font-semibold flex items-center gap-1 inline-flex">
+                        <mat-icon class="text-sm">cancel</mat-icon>
+                        <span>Cancel</span>
                       </button>
                     }
                   </td>
@@ -89,12 +92,16 @@ import { CustomerService } from '../../../services/customer.service';
           </table>
         } @else if (isLoading()) {
           <div class="p-12 text-center">
-            <div class="inline-block animate-spin text-4xl mb-4">⏳</div>
+            <div class="flex justify-center mb-4">
+              <mat-icon class="text-5xl text-gray-400 animate-spin">schedule</mat-icon>
+            </div>
             <p class="text-gray-600">Loading bookings...</p>
           </div>
         } @else {
           <div class="p-12 text-center text-gray-600">
-            <p class="text-2xl mb-2">🏨</p>
+            <div class="flex justify-center mb-2">
+              <mat-icon class="text-5xl text-gray-400">hotel</mat-icon>
+            </div>
             <p class="text-lg font-semibold">No bookings yet</p>
             <p class="text-sm mt-2">Book a hotel, restaurant table, or service to see your bookings here</p>
           </div>
@@ -104,13 +111,22 @@ import { CustomerService } from '../../../services/customer.service';
       <!-- Error Message -->
       @if (error()) {
         <div class="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg">
-          <p class="font-semibold">❌ Error</p>
+          <div class="flex items-center gap-2 font-semibold">
+            <mat-icon class="text-sm">error</mat-icon>
+            <span>Error</span>
+          </div>
           <p class="text-sm mt-1">{{ error() }}</p>
         </div>
       }
     </div>
   `,
-  styles: []
+  styles: [`
+    ::ng-deep mat-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+  `]
 })
 export class CustomerBookingsComponent implements OnInit {
   bookings = signal<any[]>([]);
@@ -128,14 +144,14 @@ export class CustomerBookingsComponent implements OnInit {
     this.error.set('');
 
     this.customerService.getCustomerBookings(1, 100).subscribe({
-      next: (response) => {
+      next: (response: any) => {
         if (response.success) {
           this.bookings.set(response.data || []);
           console.log('✅ Bookings loaded:', response.data?.length);
         }
         this.isLoading.set(false);
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('❌ Error loading bookings:', error);
         this.error.set(error.error?.message || 'Failed to load bookings');
         this.isLoading.set(false);
@@ -162,12 +178,12 @@ export class CustomerBookingsComponent implements OnInit {
 
   getStatusLabel(status: string): string {
     const labels: { [key: string]: string } = {
-      'confirmed': '✅ Confirmed',
-      'pending': '⏳ Pending',
-      'checked-in': '🔓 Checked In',
-      'checked-out': '🔐 Checked Out',
-      'completed': '✔️ Completed',
-      'cancelled': '❌ Cancelled'
+      'confirmed': 'Confirmed',
+      'pending': 'Pending',
+      'checked-in': 'Checked In',
+      'checked-out': 'Checked Out',
+      'completed': 'Completed',
+      'cancelled': 'Cancelled'
     };
     return labels[status] || status;
   }

@@ -33,7 +33,10 @@ export interface GymResponse {
   providedIn: 'root'
 })
 export class GymEquipmentService {
-  private apiUrl = 'https://us-central1-uni-backend01.cloudfunctions.net/api/gym-equipment';
+  // ⚠️ REPLACED: Firebase Cloud Functions endpoint with local backend API
+  // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api/gym-equipment'
+  // NEW: Local Node.js/Express backend
+  private apiUrl = 'http://localhost:5001/gym-equipment';
 
   constructor(private http: HttpClient) {}
 

@@ -2,65 +2,93 @@ import mongoose from 'mongoose';
 
 const reviewSchema = new mongoose.Schema(
   {
-    productId: {
-      type: String,
-      required: true
+    businessId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
     },
-    vendorId: {
+    businessType: {
       type: String,
-      required: true
+      enum: ['restaurant', 'retail', 'hotel', 'service', 'delivery', 'tours'],
+      required: true,
     },
     customerId: {
-      type: String,
-      required: true
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
     },
     customerName: {
       type: String,
-      required: true
+      required: true,
     },
     customerEmail: {
       type: String,
-      required: true
+      default: null,
+    },
+    orderId: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
+    },
+    productId: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
+    },
+    productName: {
+      type: String,
+      default: null,
     },
     rating: {
       type: Number,
+      required: true,
       min: 1,
       max: 5,
-      required: true
     },
     title: {
       type: String,
-      required: true
+      required: true,
     },
     comment: {
       type: String,
-      required: true
+      required: true,
     },
     images: [String],
-    helpful: {
-      type: Number,
-      default: 0
+    status: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
     },
-    unhelpful: {
-      type: Number,
-      default: 0
-    },
-    verified: {
+    isVerifiedPurchase: {
       type: Boolean,
-      default: false
+      default: false,
     },
-    response: {
-      text: String,
-      respondedAt: Date
-    }
+    helpfulCount: {
+      type: Number,
+      default: 0,
+    },
+    unHelpfulCount: {
+      type: Number,
+      default: 0,
+    },
+    vendorResponse: {
+      text: {
+        type: String,
+        default: null,
+      },
+      respondedAt: {
+        type: Date,
+        default: null,
+      },
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
   },
   { timestamps: true }
 );
 
-reviewSchema.index({ vendorId: 1 });
-reviewSchema.index({ productId: 1 });
-reviewSchema.index({ rating: 1 });
+// Index for faster queries
+reviewSchema.index({ businessId: 1, status: 1, createdAt: -1 });
+reviewSchema.index({ businessId: 1, rating: 1 });
+reviewSchema.index({ productId: 1, status: 1 });
 
-const Review = mongoose.model('Review', reviewSchema);
-
-export default Review;
+export default mongoose.model('Review', reviewSchema);

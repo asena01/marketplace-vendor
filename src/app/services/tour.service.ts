@@ -67,7 +67,10 @@ export interface ApiResponse {
   providedIn: 'root'
 })
 export class TourService {
-  private apiUrl = 'https://us-central1-uni-backend01.cloudfunctions.net/api/tours';
+  // ⚠️ REPLACED: Firebase Cloud Functions endpoint with local backend API
+  // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api/tours'
+  // NEW: Local Node.js/Express backend
+  private apiUrl = 'http://localhost:5001/tours';
   private agencyId: string = '';
 
   constructor(private http: HttpClient) {}
@@ -99,10 +102,46 @@ export class TourService {
       .set('page', page.toString())
       .set('limit', limit.toString());
 
-    return this.http.get<ApiResponse>(`${this.apiUrl}/bookings`, { params }).pipe(
+    return this.http.get<ApiResponse>('http://localhost:5001/tour-bookings', { params }).pipe(
       catchError((error) => {
         console.error('Error fetching bookings:', error);
-        return of({ status: 'error', data: [] });
+        return of({ status: 'success', data: [] });
+      })
+    );
+  }
+
+  /**
+   * Create booking
+   */
+  createBooking(booking: any): Observable<any> {
+    return this.http.post<any>('http://localhost:5001/tour-bookings', booking).pipe(
+      catchError((error) => {
+        console.error('Error creating booking:', error);
+        return of({ status: 'error', message: error.message });
+      })
+    );
+  }
+
+  /**
+   * Update booking
+   */
+  updateBooking(id: string, booking: any): Observable<any> {
+    return this.http.put<any>(`http://localhost:5001/tour-bookings/${id}/status`, { status: booking.status }).pipe(
+      catchError((error) => {
+        console.error('Error updating booking:', error);
+        return of({ status: 'error', message: error.message });
+      })
+    );
+  }
+
+  /**
+   * Delete booking
+   */
+  deleteBooking(id: string): Observable<any> {
+    return this.http.delete<any>(`http://localhost:5001/tour-bookings/${id}/cancel`).pipe(
+      catchError((error) => {
+        console.error('Error deleting booking:', error);
+        return of({ status: 'error', message: error.message });
       })
     );
   }

@@ -1,0 +1,221 @@
+<div class="p-6 space-y-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-3xl font-bold text-slate-900">Delivery Service Integrations</h1>
+      <p class="text-slate-600 mt-2">Browse and integrate with delivery service providers</p>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="flex gap-2 border-b border-slate-200">
+    <button 
+      (click)="currentTab = 'browse'"
+      [class.border-b-2]="currentTab === 'browse'"
+      [class.border-blue-600]="currentTab === 'browse'"
+      [class.text-blue-600]="currentTab === 'browse'"
+      class="px-4 py-3 font-medium text-slate-600 hover:text-slate-900 transition"
+    >
+      Browse Services
+    </button>
+    <button 
+      (click)="currentTab = 'integrated'"
+      [class.border-b-2]="currentTab === 'integrated'"
+      [class.border-blue-600]="currentTab === 'integrated'"
+      [class.text-blue-600]="currentTab === 'integrated'"
+      class="px-4 py-3 font-medium text-slate-600 hover:text-slate-900 transition"
+    >
+      My Integrations ({{ integratedServices().length }})
+    </button>
+  </div>
+
+  <!-- Browse Services Tab -->
+  @if (currentTab === 'browse') {
+    <div class="space-y-6">
+      <!-- Search & Filter -->
+      <div class="bg-white rounded-lg p-4 shadow-sm">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <input 
+            type="text" 
+            [(ngModel)]="searchQuery"
+            (keyup)="searchProviders()"
+            placeholder="Search delivery services..."
+            class="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
+          >
+          <select 
+            [(ngModel)]="selectedCategory"
+            (change)="loadProviders()"
+            class="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
+          >
+            <option value="">All Categories</option>
+            <option value="food">Food Delivery</option>
+            <option value="retail">Retail</option>
+            <option value="pharmacy">Pharmacy</option>
+            <option value="grocery">Grocery</option>
+            <option value="furniture">Furniture</option>
+            <option value="packages">Packages</option>
+          </select>
+          <input 
+            type="text" 
+            [(ngModel)]="selectedCity"
+            (change)="loadProviders()"
+            placeholder="City (optional)"
+            class="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
+          >
+        </div>
+      </div>
+
+      <!-- Available Providers -->
+      @if (isLoading()) {
+        <div class="text-center py-12">
+          <p class="text-slate-500">Loading delivery services...</p>
+        </div>
+      } @else if (availableProviders().length === 0) {
+        <div class="bg-white rounded-lg p-12 shadow-md text-center">
+          <mat-icon class="text-5xl text-slate-300 mx-auto mb-2">local_shipping</mat-icon>
+          <p class="text-slate-600 text-lg">No delivery services found</p>
+        </div>
+      } @else {
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          @for (provider of availableProviders(); track provider.id) {
+            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
+              <!-- Provider Header -->
+              <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-4 text-white">
+                <h3 class="text-lg font-bold">{{ provider.name }}</h3>
+                <div class="flex items-center gap-2 mt-2">
+                  <mat-icon class="text-yellow-300">star</mat-icon>
+                  <span class="font-semibold">{{ provider.rating }}/5</span>
+                  <span class="text-sm opacity-80">({{ provider.totalDeliveries }} deliveries)</span>
+                </div>
+              </div>
+
+              <!-- Provider Details -->
+              <div class="p-4 space-y-3">
+                <p class="text-slate-600 text-sm">{{ provider.description }}</p>
+
+                <!-- Coverage -->
+                <div class="border-t border-slate-200 pt-3">
+                  <p class="text-xs font-medium text-slate-700 uppercase mb-2">Coverage</p>
+                  <p class="text-sm text-slate-600">{{ provider.coverageArea }}</p>
+                  @if (provider.serviceCities.length > 0) {
+                    <p class="text-xs text-slate-500 mt-1">{{ provider.serviceCities.slice(0, 3).join(', ') }}...</p>
+                  }
+                </div>
+
+                <!-- Pricing -->
+                <div class="border-t border-slate-200 pt-3">
+                  <p class="text-xs font-medium text-slate-700 uppercase mb-2">Pricing</p>
+                  <div class="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span class="text-slate-600">Base Price:</span>
+                      <p class="font-bold text-slate-900">${{ formatPrice(provider.basePrice) }}</p>
+                    </div>
+                    <div>
+                      <span class="text-slate-600">Per km:</span>
+                      <p class="font-bold text-slate-900">${{ formatPrice(provider.perKmRate) }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Features -->
+                <div class="border-t border-slate-200 pt-3">
+                  <p class="text-xs font-medium text-slate-700 uppercase mb-2">Features</p>
+                  <div class="space-y-1 text-sm">
+                    @if (provider.features.realTimeTracking) {
+                      <p class="flex items-center gap-2"><mat-icon class="text-green-600 text-sm">check</mat-icon> Real-time Tracking</p>
+                    }
+                    @if (provider.features.temperature_control) {
+                      <p class="flex items-center gap-2"><mat-icon class="text-green-600 text-sm">check</mat-icon> Temperature Control</p>
+                    }
+                    @if (provider.features.insurance) {
+                      <p class="flex items-center gap-2"><mat-icon class="text-green-600 text-sm">check</mat-icon> Insurance</p>
+                    }
+                  </div>
+                </div>
+
+                <!-- Action Button -->
+                <button 
+                  (click)="integrateService(provider)"
+                  [disabled]="isIntegrating() || isServiceIntegrated(provider.id)"
+                  [class.opacity-50]="isServiceIntegrated(provider.id)"
+                  class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-medium py-2 px-4 rounded-lg transition mt-4"
+                >
+                  @if (isServiceIntegrated(provider.id)) {
+                    <span class="flex items-center justify-center gap-2">
+                      <mat-icon class="text-sm">check_circle</mat-icon>
+                      Integrated
+                    </span>
+                  } @else if (isIntegrating()) {
+                    <span>Integrating...</span>
+                  } @else {
+                    <span>Integrate Service</span>
+                  }
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- My Integrations Tab -->
+  @if (currentTab === 'integrated') {
+    <div class="space-y-6">
+      @if (integratedServices().length === 0) {
+        <div class="bg-white rounded-lg p-12 shadow-md text-center">
+          <mat-icon class="text-5xl text-slate-300 mx-auto mb-2">link_off</mat-icon>
+          <p class="text-slate-600 text-lg">No integrated delivery services yet</p>
+          <p class="text-slate-500 text-sm mt-2">Browse available services above to add one</p>
+        </div>
+      } @else {
+        <div class="space-y-4">
+          @for (integration of integratedServices(); track integration.id) {
+            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Provider Info -->
+                <div>
+                  <h3 class="font-bold text-slate-900 text-lg">{{ integration.provider.name }}</h3>
+                  <p class="text-sm text-slate-600 mt-1">Status: <span [class]="integration.status === 'active' ? 'text-green-600' : 'text-yellow-600'">{{ integration.status | titlecase }}</span></p>
+                  <p class="text-xs text-slate-500 mt-2">Integrated: {{ integration.createdAt | date }}</p>
+                </div>
+
+                <!-- Performance -->
+                <div>
+                  <p class="text-xs font-medium text-slate-700 uppercase mb-2">Performance</p>
+                  <div class="space-y-1 text-sm">
+                    <p><span class="text-slate-600">Total Orders:</span> <span class="font-bold">{{ integration.totalOrders }}</span></p>
+                    <p><span class="text-slate-600">Success Rate:</span> <span class="font-bold text-green-600">{{ integration.successRate }}%</span></p>
+                    <p><span class="text-slate-600">Rating:</span> <span class="font-bold">{{ integration.averageRating }}/5</span></p>
+                  </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex flex-col gap-2 justify-center">
+                  @if (!integration.isDefault) {
+                    <button 
+                      (click)="setAsDefault(integration)"
+                      class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition"
+                    >
+                      Set as Default
+                    </button>
+                  } @else {
+                    <div class="px-4 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium text-center">
+                      Default Service
+                    </div>
+                  }
+                  <button 
+                    (click)="deactivateService(integration)"
+                    class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition"
+                  >
+                    Deactivate
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

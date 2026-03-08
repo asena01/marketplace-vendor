@@ -252,113 +252,7 @@ interface Incident {
   styles: []
 })
 export class IncidentManagementComponent implements OnInit {
-  incidents = signal<Incident[]>([
-    {
-      id: 'INC-0045',
-      title: 'WiFi Outage in East Wing',
-      description: 'Complete internet connectivity loss in rooms 301-310. Customers unable to access streaming services.',
-      severity: 'critical',
-      status: 'open',
-      category: 'Network',
-      reportedBy: 'Front Desk',
-      assignedTo: 'IT Team',
-      createdDate: '2024-03-04 09:15 AM',
-      priority: 1,
-      attachments: 2
-    },
-    {
-      id: 'INC-0044',
-      title: 'Air Conditioning Malfunction',
-      description: 'AC unit in Room 202 not cooling properly. Temperature stuck at 28°C.',
-      severity: 'high',
-      status: 'in-progress',
-      category: 'Maintenance',
-      reportedBy: 'Guest (Room 202)',
-      assignedTo: 'Maintenance Team',
-      createdDate: '2024-03-04 08:45 AM',
-      priority: 2,
-      attachments: 1
-    },
-    {
-      id: 'INC-0043',
-      title: 'Room Service Delivery Late',
-      description: 'Food delivery to Room 105 delayed by 45 minutes beyond promised time.',
-      severity: 'medium',
-      status: 'in-progress',
-      category: 'Service Quality',
-      reportedBy: 'Guest (Room 105)',
-      assignedTo: 'Manager',
-      createdDate: '2024-03-04 08:00 AM',
-      priority: 3
-    },
-    {
-      id: 'INC-0042',
-      title: 'Water Leakage in Bathroom',
-      description: 'Water leak from ceiling in bathroom of Room 403. Potential structural damage.',
-      severity: 'high',
-      status: 'open',
-      category: 'Maintenance',
-      reportedBy: 'Housekeeping',
-      assignedTo: 'Maintenance Team',
-      createdDate: '2024-03-04 07:30 AM',
-      priority: 2,
-      attachments: 3
-    },
-    {
-      id: 'INC-0041',
-      title: 'Restaurant Menu System Down',
-      description: 'POS system in restaurant not responding. Unable to process orders.',
-      severity: 'high',
-      status: 'resolved',
-      category: 'System',
-      reportedBy: 'Restaurant Manager',
-      assignedTo: 'IT Support',
-      createdDate: '2024-03-04 06:00 AM',
-      resolvedDate: '2024-03-04 06:45 AM',
-      priority: 1,
-      attachments: 0
-    },
-    {
-      id: 'INC-0040',
-      title: 'Elevator Stuck',
-      description: 'Elevator in main lobby stuck between floors with 4 passengers. Emergency services alerted.',
-      severity: 'critical',
-      status: 'resolved',
-      category: 'Safety',
-      reportedBy: 'Security',
-      assignedTo: 'Emergency Services',
-      createdDate: '2024-03-03 11:30 PM',
-      resolvedDate: '2024-03-03 11:50 PM',
-      priority: 1,
-      attachments: 4
-    },
-    {
-      id: 'INC-0039',
-      title: 'Guest Complaint - Noise Level',
-      description: 'Guest in Room 205 complaints about excessive noise from adjacent room.',
-      severity: 'low',
-      status: 'closed',
-      category: 'Guest Relations',
-      reportedBy: 'Front Desk',
-      assignedTo: 'Manager',
-      createdDate: '2024-03-03 10:00 PM',
-      resolvedDate: '2024-03-03 10:30 PM',
-      priority: 4
-    },
-    {
-      id: 'INC-0038',
-      title: 'Missing Room Key Card',
-      description: 'Guest lost room key card. New card needed for Room 156.',
-      severity: 'low',
-      status: 'closed',
-      category: 'Security',
-      reportedBy: 'Front Desk',
-      assignedTo: 'Front Desk',
-      createdDate: '2024-03-03 08:45 PM',
-      resolvedDate: '2024-03-03 08:50 PM',
-      priority: 5
-    }
-  ]);
+  incidents = signal<Incident[]>([]);
 
   filterStatus = '';
   filterSeverity = '';
@@ -389,8 +283,9 @@ export class IncidentManagementComponent implements OnInit {
   }
 
   getResolutionRate(): number {
-    const resolved = this.getResolvedIncidents();
     const total = this.incidents().length;
+    if (total === 0) return 0;
+    const resolved = this.getResolvedIncidents();
     return Math.round((resolved / total) * 100);
   }
 

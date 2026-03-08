@@ -76,7 +76,10 @@ export interface VendorResponse {
   providedIn: 'root'
 })
 export class VendorService {
-  private apiUrl = 'https://us-central1-uni-backend01.cloudfunctions.net/api/vendors';
+  // ⚠️ REPLACED: Firebase Cloud Functions endpoint with local backend API
+  // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api/vendors'
+  // NEW: Local Node.js/Express backend
+  private apiUrl = 'http://localhost:5001/vendors';
 
   constructor(private http: HttpClient) {}
 

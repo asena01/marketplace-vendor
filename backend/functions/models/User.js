@@ -48,7 +48,11 @@ const userSchema = new mongoose.Schema(
         'super-admin',
         'admin',
         'moderator',
-        'support'
+        'support',
+        'finance-manager',
+        'compliance-officer',
+        'support-manager',
+        'vendor-manager'
       ],
       default: null,
     },
@@ -128,6 +132,12 @@ const userSchema = new mongoose.Schema(
     isVerified: {
       type: Boolean,
       default: false,
+    },
+    // Reference to DeliveryPartner (for delivery vendors)
+    deliveryPartnerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'DeliveryPartner',
+      default: null,
     },
     createdAt: {
       type: Date,

@@ -4,6 +4,15 @@ import User from '../models/User.js';
 import PaymentTransaction from '../models/PaymentTransaction.js';
 import AdminSettings from '../models/AdminSettings.js';
 import Device from '../models/Device.js';
+import VendorKyc from '../models/VendorKyc.js';
+import VendorPerformance from '../models/VendorPerformance.js';
+import * as vendorManagementController from '../controllers/vendorManagementController.js';
+import * as vendorKycController from '../controllers/vendorKycController.js';
+import * as vendorPerformanceController from '../controllers/vendorPerformanceController.js';
+import * as settlementController from '../controllers/settlementController.js';
+import * as payoutController from '../controllers/payoutController.js';
+import * as roleController from '../controllers/roleController.js';
+import { verifyAdmin as rbacVerifyAdmin, requirePermission } from '../middleware/rbacMiddleware.js';
 
 const router = express.Router();
 
@@ -800,6 +809,93 @@ router.get('/analytics/revenue-by-type', verifyAdmin, async (req, res) => {
 });
 
 // ============================================
+// VENDOR MANAGEMENT ROUTES
+// ============================================
+
+// Get all vendors with filtering
+router.get('/vendors', verifyAdmin, vendorManagementController.getVendors);
+
+// Get vendor by ID
+router.get('/vendors/:vendorId', verifyAdmin, vendorManagementController.getVendorById);
+
+// Create vendor
+router.post('/vendors', verifyAdmin, vendorManagementController.createVendor);
+
+// Update vendor
+router.put('/vendors/:vendorId', verifyAdmin, vendorManagementController.updateVendor);
+
+// Delete vendor
+router.delete('/vendors/:vendorId', verifyAdmin, vendorManagementController.deleteVendor);
+
+// Approve vendor
+router.patch('/vendors/:vendorId/approve', verifyAdmin, vendorManagementController.approveVendor);
+
+// Reject vendor
+router.patch('/vendors/:vendorId/reject', verifyAdmin, vendorManagementController.rejectVendor);
+
+// Suspend vendor
+router.patch('/vendors/:vendorId/suspend', verifyAdmin, vendorManagementController.suspendVendor);
+
+// Block vendor
+router.patch('/vendors/:vendorId/block', verifyAdmin, vendorManagementController.blockVendor);
+
+// Get vendor statistics
+router.get('/vendors-stats', verifyAdmin, vendorManagementController.getVendorStats);
+
+// ============================================
+// VENDOR KYC ROUTES
+// ============================================
+
+// Get vendor KYC
+router.get('/vendors/:vendorId/kyc', verifyAdmin, vendorKycController.getVendorKyc);
+
+// Create or update KYC
+router.put('/vendors/:vendorId/kyc', verifyAdmin, vendorKycController.createOrUpdateKyc);
+
+// Approve KYC
+router.patch('/vendors/:vendorId/kyc/approve', verifyAdmin, vendorKycController.approveKyc);
+
+// Reject KYC
+router.patch('/vendors/:vendorId/kyc/reject', verifyAdmin, vendorKycController.rejectKyc);
+
+// Request KYC resubmission
+router.patch('/vendors/:vendorId/kyc/resubmit', verifyAdmin, vendorKycController.requestResubmission);
+
+// Update risk assessment
+router.put('/vendors/:vendorId/kyc/risk', verifyAdmin, vendorKycController.updateRiskAssessment);
+
+// Get pending KYC
+router.get('/kyc/pending', verifyAdmin, vendorKycController.getPendingKyc);
+
+// Get high-risk vendors
+router.get('/kyc/high-risk', verifyAdmin, vendorKycController.getHighRiskVendors);
+
+// ============================================
+// VENDOR PERFORMANCE ROUTES
+// ============================================
+
+// Get vendor performance
+router.get('/vendors/:vendorId/performance', verifyAdmin, vendorPerformanceController.getVendorPerformance);
+
+// Update performance metrics
+router.put('/vendors/:vendorId/performance', verifyAdmin, vendorPerformanceController.updatePerformanceMetrics);
+
+// Record review
+router.post('/vendors/:vendorId/performance/review', verifyAdmin, vendorPerformanceController.recordReview);
+
+// Record booking
+router.post('/vendors/:vendorId/performance/booking', verifyAdmin, vendorPerformanceController.recordBooking);
+
+// Add monthly performance
+router.post('/vendors/:vendorId/performance/monthly', verifyAdmin, vendorPerformanceController.addMonthlyPerformance);
+
+// Get top performers
+router.get('/performance/top-performers', verifyAdmin, vendorPerformanceController.getTopPerformers);
+
+// Get vendors needing improvement
+router.get('/performance/needs-improvement', verifyAdmin, vendorPerformanceController.getVendorsNeedingImprovement);
+
+// ============================================
 // SETTINGS ROUTES
 // ============================================
 
@@ -807,12 +903,12 @@ router.get('/analytics/revenue-by-type', verifyAdmin, async (req, res) => {
 router.get('/settings', verifyAdmin, async (req, res) => {
   try {
     let settings = await AdminSettings.findOne();
-    
+
     if (!settings) {
       settings = new AdminSettings();
       await settings.save();
     }
-    
+
     res.status(200).json({
       success: true,
       data: settings
@@ -829,16 +925,16 @@ router.get('/settings', verifyAdmin, async (req, res) => {
 router.put('/settings', verifyAdmin, async (req, res) => {
   try {
     let settings = await AdminSettings.findOne();
-    
+
     if (!settings) {
       settings = new AdminSettings(req.body);
     } else {
       Object.assign(settings, req.body);
     }
-    
+
     await settings.save();
     console.log('✅ Admin settings updated');
-    
+
     res.status(200).json({
       success: true,
       message: 'Settings updated successfully',
@@ -852,5 +948,60 @@ router.put('/settings', verifyAdmin, async (req, res) => {
     });
   }
 });
+
+// ============================================
+// SETTLEMENT MANAGEMENT ROUTES
+// ============================================
+
+router.get('/settlements', verifyAdmin, settlementController.getSettlements);
+router.get('/settlements/:settlementId', verifyAdmin, settlementController.getSettlementById);
+router.post('/settlements', verifyAdmin, settlementController.createSettlement);
+router.put('/settlements/:settlementId', verifyAdmin, settlementController.updateSettlement);
+router.patch('/settlements/:settlementId/approve', verifyAdmin, settlementController.approveSettlement);
+router.patch('/settlements/:settlementId/reject', verifyAdmin, settlementController.rejectSettlement);
+router.delete('/settlements/:settlementId', verifyAdmin, settlementController.deleteSettlement);
+router.get('/settlements/stats', verifyAdmin, settlementController.getSettlementStats);
+
+// ============================================
+// PAYOUT MANAGEMENT ROUTES
+// ============================================
+
+router.get('/payouts', verifyAdmin, payoutController.getPayouts);
+router.get('/payouts/:payoutId', verifyAdmin, payoutController.getPayoutById);
+router.post('/payouts', verifyAdmin, payoutController.createPayout);
+router.put('/payouts/:payoutId', verifyAdmin, payoutController.updatePayout);
+router.patch('/payouts/:payoutId/approve', verifyAdmin, payoutController.approvePayout);
+router.patch('/payouts/:payoutId/process', verifyAdmin, payoutController.processPayout);
+router.patch('/payouts/:payoutId/complete', verifyAdmin, payoutController.completePayout);
+router.patch('/payouts/:payoutId/retry', verifyAdmin, payoutController.retryPayout);
+router.patch('/payouts/:payoutId/cancel', verifyAdmin, payoutController.cancelPayout);
+
+// Payout Schedule
+router.get('/payout-schedules/:vendorId', verifyAdmin, payoutController.getPayoutSchedule);
+router.put('/payout-schedules/:vendorId', verifyAdmin, payoutController.updatePayoutSchedule);
+
+// ============================================
+// ROLE & PERMISSION MANAGEMENT ROUTES
+// ============================================
+
+// Permissions
+router.get('/permissions', verifyAdmin, roleController.getPermissions);
+router.post('/permissions', verifyAdmin, roleController.createPermission);
+router.put('/permissions/:permissionId', verifyAdmin, roleController.updatePermission);
+
+// Roles
+router.get('/roles', verifyAdmin, roleController.getRoles);
+router.get('/roles/:roleId', verifyAdmin, roleController.getRoleById);
+router.post('/roles', verifyAdmin, roleController.createRole);
+router.put('/roles/:roleId', verifyAdmin, roleController.updateRole);
+router.delete('/roles/:roleId', verifyAdmin, roleController.deleteRole);
+
+// Role Permissions
+router.post('/roles/:roleId/permissions/:permissionId', verifyAdmin, roleController.addPermissionToRole);
+router.delete('/roles/:roleId/permissions/:permissionId', verifyAdmin, roleController.removePermissionFromRole);
+
+// User Permissions
+router.get('/users/:userId/permissions', verifyAdmin, roleController.getUserPermissions);
+router.post('/check-permission', verifyAdmin, roleController.checkPermission);
 
 export default router;

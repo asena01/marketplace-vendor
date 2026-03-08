@@ -4,7 +4,7 @@
   <!-- Header Section -->
   <section class="bg-gradient-to-r from-teal-600 to-cyan-600 text-white py-16 px-4 sm:px-6 lg:px-8">
     <div class="max-w-7xl mx-auto">
-      <h1 class="text-4xl sm:text-5xl font-bold mb-4">⚡ Fast Delivery Service</h1>
+      <h1 class="text-4xl sm:text-5xl font-bold mb-4 flex items-center gap-3"><mat-icon class="text-5xl">flash_on</mat-icon> Fast Delivery Service</h1>
       <p class="text-lg text-teal-100 mb-2">Send packages, food, groceries - Choose your vehicle, get instant pricing</p>
       <p class="text-sm text-teal-200">Real-time tracking • Multiple vehicle options • Flexible delivery</p>
     </div>
@@ -29,12 +29,12 @@
               @for (vehicle of deliveryMethods; track vehicle.type) {
                 <button
                   (click)="selectedVehicle.set(vehicle.type)"
-                  [class]="'p-4 rounded-lg border-2 transition text-center ' + 
-                    (selectedVehicle() === vehicle.type 
-                      ? 'border-teal-600 bg-teal-50' 
+                  [class]="'p-4 rounded-lg border-2 transition text-center ' +
+                    (selectedVehicle() === vehicle.type
+                      ? 'border-teal-600 bg-teal-50'
                       : 'border-gray-200 bg-white hover:border-teal-300')"
                 >
-                  <div class="text-4xl mb-2">{{ getVehicleIcon(vehicle.type) }}</div>
+                  <mat-icon class="text-5xl text-teal-600 mb-2 flex justify-center">{{ getVehicleIcon(vehicle.type) }}</mat-icon>
                   <p class="font-semibold text-sm text-gray-800">{{ vehicle.type | titlecase }}</p>
                   <p class="text-xs text-gray-600 mt-1">{{ vehicle.maxWeight?.value }}kg max</p>
                 </button>
@@ -46,9 +46,9 @@
               <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <h4 class="font-semibold text-gray-800 mb-2">{{ selectedVehicleData()?.description }}</h4>
                 <div class="grid grid-cols-2 gap-4 text-sm text-gray-700">
-                  <div>📦 Max Packages: {{ selectedVehicleData()?.maxPackages }}</div>
-                  <div>⚖️ Max Weight: {{ selectedVehicleData()?.maxWeight?.value }}{{ selectedVehicleData()?.maxWeight?.unit }}</div>
-                  <div class="col-span-2">✨ Features: {{ selectedVehicleData()?.features?.join(', ') }}</div>
+                  <div class="flex items-center gap-2"><mat-icon class="text-lg">inventory_2</mat-icon> Max Packages: {{ selectedVehicleData()?.maxPackages }}</div>
+                  <div class="flex items-center gap-2"><mat-icon class="text-lg">scale</mat-icon> Max Weight: {{ selectedVehicleData()?.maxWeight?.value }}{{ selectedVehicleData()?.maxWeight?.unit }}</div>
+                  <div class="col-span-2 flex items-center gap-2"><mat-icon class="text-lg">star</mat-icon> Features: {{ selectedVehicleData()?.features?.join(', ') }}</div>
                 </div>
               </div>
             }
@@ -80,12 +80,12 @@
                   @for (size of packageSizes; track size.category) {
                     <button
                       (click)="selectedPackageSize.set(size.category)"
-                      [class]="'p-3 rounded-lg border-2 transition text-center ' + 
-                        (selectedPackageSize() === size.category 
-                          ? 'border-teal-600 bg-teal-50' 
+                      [class]="'p-3 rounded-lg border-2 transition text-center ' +
+                        (selectedPackageSize() === size.category
+                          ? 'border-teal-600 bg-teal-50'
                           : 'border-gray-200 bg-white hover:border-teal-300')"
                     >
-                      <div class="text-2xl mb-1">{{ getSizeIcon(size.category) }}</div>
+                      <mat-icon class="text-3xl text-teal-600 flex justify-center mb-1">{{ getSizeIcon(size.category) }}</mat-icon>
                       <p class="font-semibold text-xs text-gray-800">{{ size.category | titlecase }}</p>
                       <p class="text-xs text-gray-600">+${{ size.charge }}</p>
                     </button>

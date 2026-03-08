@@ -10,10 +10,10 @@ export const MARKETPLACE_SERVICES: Service[] = [
     color: 'from-blue-500 to-blue-600',
     bgColor: 'bg-blue-50',
     categories: [
-      { id: 'adult-wear', name: 'Adult Wears', description: 'Clothing for adults', icon: '👔' , color: 'text-blue-600' },
-      { id: 'children-wear', name: 'Children Wears', description: 'Kids clothing', icon: '👕', color: 'text-pink-600' },
-      { id: 'jewelry', name: 'Jewelry', description: 'Jewelry & accessories', icon: '💍', color: 'text-yellow-600' },
-      { id: 'supermarket', name: 'Supermarkets', description: 'Groceries & essentials', icon: '🛒', color: 'text-green-600' },
+      { id: 'adult-wear', name: 'Adult Wears', description: 'Clothing for adults', icon: 'checkroom' , color: 'text-blue-600' },
+      { id: 'children-wear', name: 'Children Wears', description: 'Kids clothing', icon: 'child_care', color: 'text-pink-600' },
+      { id: 'jewelry', name: 'Jewelry', description: 'Jewelry & accessories', icon: 'diamond', color: 'text-yellow-600' },
+      { id: 'supermarket', name: 'Supermarkets', description: 'Groceries & essentials', icon: 'shopping_cart', color: 'text-green-600' },
     ]
   },
   {

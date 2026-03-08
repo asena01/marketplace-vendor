@@ -12,6 +12,7 @@ import { HairComponent } from './pages/hair/hair.component';
 import { PetsComponent } from './pages/pets/pets.component';
 import { GymComponent } from './pages/gym/gym.component';
 import { DeliveryComponent } from './pages/delivery/delivery.component';
+import { DeliveryNewComponent } from './pages/delivery/delivery-new.component';
 import { SignupComponent } from './pages/auth/signup/signup.component';
 import { ToursSignupComponent } from './pages/auth/tours-signup/tours-signup.component';
 import { LoginComponent } from './pages/auth/login/login.component';
@@ -19,6 +20,7 @@ import { ForgotPasswordComponent } from './pages/auth/forgot-password/forgot-pas
 import { VendorDashboardComponent } from './pages/vendors/dashboard/vendor-dashboard.component';
 import { VendorLoginComponent } from './pages/auth/vendor-login/vendor-login.component';
 import { AdminDashboardComponent } from './pages/admin/admin-dashboard/admin-dashboard.component';
+import { VendorDetailComponent } from './pages/admin/admin-vendors/vendor-detail.component';
 import { DeliveryDashboardComponent } from './pages/delivery/delivery-dashboard/delivery-dashboard.component';
 import { CustomerDashboardComponent } from './pages/customer/customer-dashboard/customer-dashboard.component';
 import { HotelDashboardComponent } from './pages/vendors/dashboards/hotel-dashboard/hotel-dashboard.component';
@@ -26,45 +28,163 @@ import { RestaurantDashboardComponent } from './pages/vendors/dashboards/restaur
 import { RetailDashboardComponent } from './pages/vendors/dashboards/retail-dashboard/retail-dashboard.component';
 import { ServiceDashboardComponent } from './pages/vendors/dashboards/service-dashboard/service-dashboard.component';
 import { ToursDashboardComponent } from './pages/vendors/dashboards/tours-dashboard/tours-dashboard.component';
-import { DeviceManagementComponent } from './pages/vendors/dashboards/hotel-dashboard/device-management/device-management.component';
+import { ToursDashboardToursComponent } from './pages/vendors/dashboards/tours-dashboard/tours/tours.component';
+import { ToursBookingsComponent } from './pages/vendors/dashboards/tours-dashboard/bookings/bookings.component';
+import { ToursGuidesComponent } from './pages/vendors/dashboards/tours-dashboard/guides/guides.component';
+import { ToursItinerariesComponent } from './pages/vendors/dashboards/tours-dashboard/itineraries/itineraries.component';
+import { ToursReportsComponent } from './pages/vendors/dashboards/tours-dashboard/reports/reports.component';
+import { FinanceComponent } from './pages/vendors/dashboards/shared/finance/finance.component';
+import { HotelDevicesComponent } from './pages/vendors/dashboards/hotel-dashboard/devices/devices.component';
+import { AvailabilityCalendarComponent } from './pages/vendors/dashboards/hotel-dashboard/availability-calendar/availability-calendar.component';
+import { PricingComponent } from './pages/vendors/dashboards/hotel-dashboard/pricing/pricing.component';
+import { HotelRoomsComponent } from './pages/vendors/dashboards/hotel-dashboard/rooms/rooms.component';
+import { HotelStaffComponent } from './pages/vendors/dashboards/hotel-dashboard/staff/staff.component';
+import { HotelNotificationsComponent } from './pages/vendors/dashboards/hotel-dashboard/notifications/notifications.component';
+import { HotelReviewsComponent } from './pages/vendors/dashboards/hotel-dashboard/reviews/reviews.component';
+import { HotelBookingsComponent } from './pages/vendors/dashboards/hotel-dashboard/bookings/bookings.component';
+import { HotelProfileComponent } from './pages/vendors/dashboards/hotel-dashboard/profile/profile.component';
+import { RestaurantMenuComponent } from './pages/vendors/dashboards/restaurant-dashboard/menu/menu.component';
+import { RestaurantOrdersComponent } from './pages/vendors/dashboards/restaurant-dashboard/orders/orders.component';
+import { DeliveryOrdersComponent } from './pages/vendors/dashboards/restaurant-dashboard/delivery-orders/delivery-orders.component';
+import { DriversComponent } from './pages/vendors/dashboards/restaurant-dashboard/drivers/drivers.component';
+import { DriverTrackingComponent } from './pages/vendors/dashboards/restaurant-dashboard/driver-tracking/driver-tracking.component';
+import { DeliveryAnalyticsComponent } from './pages/vendors/dashboards/restaurant-dashboard/delivery-analytics/delivery-analytics.component';
+import { DeliverySupportComponent } from './pages/vendors/dashboards/restaurant-dashboard/delivery-support/delivery-support.component';
+import { DeliveryIntegrationsComponent } from './pages/vendors/dashboards/restaurant-dashboard/delivery-integrations/delivery-integrations.component';
+import { DeliveryTrackingMonitorComponent } from './pages/vendors/dashboards/restaurant-dashboard/delivery-tracking-monitor/delivery-tracking-monitor.component';
+import { RetailProductsComponent } from './pages/vendors/dashboards/retail-dashboard/products/products.component';
+import { RetailInventoryComponent } from './pages/vendors/dashboards/retail-dashboard/inventory/inventory.component';
+import { RetailCustomersComponent } from './pages/vendors/dashboards/retail-dashboard/customers/customers.component';
+import { RetailNotificationsComponent } from './pages/vendors/dashboards/retail-dashboard/notifications/notifications.component';
+import { RetailShippingComponent } from './pages/vendors/dashboards/retail-dashboard/shipping/shipping.component';
+import { RetailDeliveryIntegrationsComponent } from './pages/vendors/dashboards/retail-dashboard/delivery-integrations/delivery-integrations.component';
+import { RetailDeliveryTrackingComponent } from './pages/vendors/dashboards/retail-dashboard/delivery-tracking/delivery-tracking.component';
+import { OrdersComponent } from './pages/vendors/dashboards/retail-dashboard/orders/orders.component';
+import { PaymentsComponent } from './pages/vendors/dashboards/retail-dashboard/payments/payments.component';
+import { ReturnsComponent } from './pages/vendors/dashboards/retail-dashboard/returns/returns.component';
 import { ReviewManagementComponent } from './pages/vendors/dashboards/shared/review-management/review-management.component';
 import { IncidentManagementComponent } from './pages/vendors/dashboards/shared/incident-management/incident-management.component';
+import { ProfileSettingsComponent } from './pages/vendors/dashboards/shared/profile-settings/profile-settings.component';
+import { ServiceAppointmentsComponent } from './pages/vendors/dashboards/service-dashboard/appointments/appointments.component';
+import { ServiceServicesComponent } from './pages/vendors/dashboards/service-dashboard/services/services.component';
+import { ServiceStaffComponent } from './pages/vendors/dashboards/service-dashboard/staff/staff.component';
+import { ServiceClientsComponent } from './pages/vendors/dashboards/service-dashboard/clients/clients.component';
+import { ServiceReportsComponent } from './pages/vendors/dashboards/service-dashboard/reports/reports.component';
+import { ServiceNotificationsComponent } from './pages/vendors/dashboards/service-dashboard/notifications/notifications.component';
 import { VendorGuard } from './guards/vendor.guard';
 import { AdminGuard } from './guards/admin.guard';
+import { PermissionGuard, PermissionsGuard, RoleGuard, RolesGuard } from './guards/permission.guard';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'login', component: LoginComponent },
   { path: 'vendor-login', component: VendorLoginComponent },
   { path: 'customer-dashboard', component: CustomerDashboardComponent },
-  { path: 'admin-dashboard', component: AdminDashboardComponent, canActivate: [AdminGuard] },
+  {
+    path: 'admin-dashboard',
+    component: AdminDashboardComponent,
+    canActivate: [AdminGuard, RoleGuard],
+    data: { role: 'admin' }
+  },
+  { path: 'vendor-detail/:id', component: VendorDetailComponent, canActivate: [AdminGuard] },
   { path: 'delivery-dashboard', component: DeliveryDashboardComponent, canActivate: [VendorGuard] },
-  // Hotel Dashboard Routes - Specific routes BEFORE catch-all
-  { path: 'hotel-dashboard/devices', component: DeviceManagementComponent, canActivate: [VendorGuard] },
-  { path: 'hotel-dashboard/reviews', component: ReviewManagementComponent, canActivate: [VendorGuard] },
-  { path: 'hotel-dashboard/incidents', component: IncidentManagementComponent, canActivate: [VendorGuard] },
-  { path: 'hotel-dashboard/:page', component: HotelDashboardComponent, canActivate: [VendorGuard] },
-  { path: 'hotel-dashboard', component: HotelDashboardComponent, canActivate: [VendorGuard] },
+  // Hotel Dashboard Routes
+  {
+    path: 'hotel-dashboard',
+    component: HotelDashboardComponent,
+    canActivate: [VendorGuard],
+    children: [
+      { path: 'calendar', component: AvailabilityCalendarComponent },
+      { path: 'pricing', component: PricingComponent },
+      { path: 'devices', component: HotelDevicesComponent },
+      { path: 'rooms', component: HotelRoomsComponent },
+      { path: 'staff', component: HotelStaffComponent },
+      { path: 'bookings', component: HotelBookingsComponent },
+      { path: 'notifications', component: HotelNotificationsComponent },
+      { path: 'reviews', component: HotelReviewsComponent },
+      { path: 'incidents', component: IncidentManagementComponent },
+      { path: 'finance', component: FinanceComponent },
+      { path: 'settings', component: HotelProfileComponent }
+    ]
+  },
   // Restaurant Dashboard Routes
-  { path: 'restaurant-dashboard/reviews', component: ReviewManagementComponent, canActivate: [VendorGuard] },
-  { path: 'restaurant-dashboard/incidents', component: IncidentManagementComponent, canActivate: [VendorGuard] },
-  { path: 'restaurant-dashboard/:page', component: RestaurantDashboardComponent, canActivate: [VendorGuard] },
-  { path: 'restaurant-dashboard', component: RestaurantDashboardComponent, canActivate: [VendorGuard] },
+  {
+    path: 'restaurant-dashboard',
+    component: RestaurantDashboardComponent,
+    canActivate: [VendorGuard],
+    children: [
+      { path: 'menu', component: RestaurantMenuComponent },
+      { path: 'orders', component: RestaurantOrdersComponent },
+      { path: 'delivery-orders', component: DeliveryOrdersComponent },
+      { path: 'drivers', component: DriversComponent },
+      { path: 'driver-tracking', component: DriverTrackingComponent },
+      { path: 'delivery-analytics', component: DeliveryAnalyticsComponent },
+      { path: 'delivery-support', component: DeliverySupportComponent },
+      { path: 'delivery-integrations', component: DeliveryIntegrationsComponent },
+      { path: 'delivery-tracking', component: DeliveryTrackingMonitorComponent },
+      { path: 'reviews', component: ReviewManagementComponent },
+      { path: 'incidents', component: IncidentManagementComponent },
+      { path: 'finance', component: FinanceComponent },
+      { path: 'settings', component: ProfileSettingsComponent }
+    ]
+  },
   // Retail Dashboard Routes
-  { path: 'retail-dashboard/reviews', component: ReviewManagementComponent, canActivate: [VendorGuard] },
-  { path: 'retail-dashboard/incidents', component: IncidentManagementComponent, canActivate: [VendorGuard] },
-  { path: 'retail-dashboard/:page', component: RetailDashboardComponent, canActivate: [VendorGuard] },
-  { path: 'retail-dashboard', component: RetailDashboardComponent, canActivate: [VendorGuard] },
+  {
+    path: 'retail-dashboard',
+    component: RetailDashboardComponent,
+    canActivate: [VendorGuard],
+    children: [
+      { path: 'products', component: RetailProductsComponent },
+      { path: 'inventory', component: RetailInventoryComponent },
+      { path: 'orders', component: OrdersComponent },
+      { path: 'payments', component: PaymentsComponent },
+      { path: 'returns', component: ReturnsComponent },
+      { path: 'customers', component: RetailCustomersComponent },
+      { path: 'notifications', component: RetailNotificationsComponent },
+      { path: 'shipping', component: RetailShippingComponent },
+      { path: 'delivery-integrations', component: RetailDeliveryIntegrationsComponent },
+      { path: 'delivery-tracking', component: RetailDeliveryTrackingComponent },
+      { path: 'reviews', component: ReviewManagementComponent },
+      { path: 'incidents', component: IncidentManagementComponent },
+      { path: 'finance', component: FinanceComponent },
+      { path: 'settings', component: ProfileSettingsComponent }
+    ]
+  },
   // Service Dashboard Routes
-  { path: 'service-dashboard/reviews', component: ReviewManagementComponent, canActivate: [VendorGuard] },
-  { path: 'service-dashboard/incidents', component: IncidentManagementComponent, canActivate: [VendorGuard] },
-  { path: 'service-dashboard/:page', component: ServiceDashboardComponent, canActivate: [VendorGuard] },
-  { path: 'service-dashboard', component: ServiceDashboardComponent, canActivate: [VendorGuard] },
+  {
+    path: 'service-dashboard',
+    component: ServiceDashboardComponent,
+    canActivate: [VendorGuard],
+    children: [
+      { path: 'appointments', component: ServiceAppointmentsComponent },
+      { path: 'services', component: ServiceServicesComponent },
+      { path: 'staff', component: ServiceStaffComponent },
+      { path: 'clients', component: ServiceClientsComponent },
+      { path: 'reviews', component: ReviewManagementComponent },
+      { path: 'incidents', component: IncidentManagementComponent },
+      { path: 'reports', component: ServiceReportsComponent },
+      { path: 'notifications', component: ServiceNotificationsComponent },
+      { path: 'finance', component: FinanceComponent },
+      { path: 'settings', component: ProfileSettingsComponent }
+    ]
+  },
   // Tours Dashboard Routes
-  { path: 'tours-dashboard/reviews', component: ReviewManagementComponent, canActivate: [VendorGuard] },
-  { path: 'tours-dashboard/incidents', component: IncidentManagementComponent, canActivate: [VendorGuard] },
-  { path: 'tours-dashboard/:page', component: ToursDashboardComponent, canActivate: [VendorGuard] },
-  { path: 'tours-dashboard', component: ToursDashboardComponent, canActivate: [VendorGuard] },
+  {
+    path: 'tours-dashboard',
+    component: ToursDashboardComponent,
+    canActivate: [VendorGuard],
+    children: [
+      { path: 'tours', component: ToursDashboardToursComponent },
+      { path: 'bookings', component: ToursBookingsComponent },
+      { path: 'guides', component: ToursGuidesComponent },
+      { path: 'itineraries', component: ToursItinerariesComponent },
+      { path: 'reports', component: ToursReportsComponent },
+      { path: 'reviews', component: ReviewManagementComponent },
+      { path: 'incidents', component: IncidentManagementComponent },
+      { path: 'finance', component: FinanceComponent },
+      { path: 'settings', component: ProfileSettingsComponent }
+    ]
+  },
   { path: 'signup', component: SignupComponent },
   { path: 'tours-signup', component: ToursSignupComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
@@ -75,7 +195,7 @@ export const routes: Routes = [
   { path: 'services/:id', component: ServiceDetailComponent },
   { path: 'tours', component: ToursComponent },
   { path: 'tours/:id', component: TourDetailComponent },
-  { path: 'delivery', component: DeliveryComponent },
+  { path: 'delivery', component: DeliveryNewComponent },
   { path: 'furniture', component: FurnitureComponent },
   { path: 'hair', component: HairComponent },
   { path: 'pets', component: PetsComponent },

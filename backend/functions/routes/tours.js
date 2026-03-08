@@ -15,6 +15,16 @@ import {
   getBookings,
   getTourPackages
 } from '../controllers/toursController.js';
+import {
+  getTourGuides,
+  getTourGuideById,
+  createTourGuide,
+  updateTourGuide,
+  deleteTourGuide,
+  updateGuideStatus,
+  updateGuideRating,
+  incrementToursCompleted
+} from '../controllers/tourGuidesController.js';
 
 const router = express.Router();
 
@@ -28,6 +38,16 @@ router.get('/difficulty/:difficulty', getToursByDifficulty);
 router.get('/agency/:agencyId', getAgencyInfo);
 router.get('/bookings', getBookings);
 router.get('/packages', getTourPackages);
+
+// Tour guides endpoints
+router.get('/tour-guides', getTourGuides);
+router.get('/tour-guides/:id', getTourGuideById);
+router.post('/tour-guides', createTourGuide);
+router.put('/tour-guides/:id', updateTourGuide);
+router.put('/tour-guides/:id/status', updateGuideStatus);
+router.put('/tour-guides/:id/rating', updateGuideRating);
+router.put('/tour-guides/:id/tours-completed', incrementToursCompleted);
+router.delete('/tour-guides/:id', deleteTourGuide);
 
 // Single tour endpoints
 router.get('/:id', getTourById);

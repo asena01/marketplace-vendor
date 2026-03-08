@@ -1,14 +1,16 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatIconModule } from '@angular/material/icon';
 import { HeaderComponent } from '../../components/header/header.component';
 import { GymEquipmentService, GymEquipment } from '../../services/gym-equipment.service';
 import { PaymentService } from '../../services/payment.service';
+import { DeliveryService, DeliveryServiceDefinition } from '../../services/delivery.service';
 
 @Component({
   selector: 'app-gym',
   standalone: true,
-  imports: [CommonModule, FormsModule, HeaderComponent],
+  imports: [CommonModule, FormsModule, HeaderComponent, MatIconModule],
   templateUrl: './gym.component.html',
   styleUrl: './gym.component.css'
 })
@@ -41,6 +43,14 @@ export class GymComponent implements OnInit {
   // Payment state
   isProcessingPayment = signal(false);
   paymentError = signal<string>('');
+
+  // Delivery related signals
+  deliveryServices = signal<DeliveryServiceDefinition[]>([]);
+  selectedDeliveryService = signal<DeliveryServiceDefinition | null>(null);
+  deliveryAddress = signal<string>('');
+  estimatedDistance = signal<number>(0);
+  deliveryPrice = signal<number>(0);
+  showDeliveryOptions = signal<boolean>(false);
 
   // Computed values
   filteredEquipment = computed(() => {
@@ -81,12 +91,13 @@ export class GymComponent implements OnInit {
   });
 
   cartGrandTotal = computed(() => {
-    return Math.round((this.cartTotal() + this.cartTax()) * 100) / 100;
+    return Math.round((this.cartTotal() + this.cartTax() + this.deliveryPrice()) * 100) / 100;
   });
 
   constructor(
     private gymService: GymEquipmentService,
-    private paymentService: PaymentService
+    private paymentService: PaymentService,
+    private deliveryService: DeliveryService
   ) {
     this.categories.set(this.gymService.getCategories());
     this.fitnessLevels.set(this.gymService.getFitnessLevels());
@@ -192,6 +203,17 @@ export class GymComponent implements OnInit {
       return;
     }
 
+    // Validate delivery info
+    if (!this.selectedDeliveryService()) {
+      this.paymentError.set('Please select a delivery service');
+      return;
+    }
+
+    if (!this.deliveryAddress()) {
+      this.paymentError.set('Please enter a delivery address');
+      return;
+    }
+
     this.isProcessingPayment.set(true);
     this.paymentError.set('');
 
@@ -206,6 +228,10 @@ export class GymComponent implements OnInit {
       customerAddress: this.customerAddress(),
       subtotal: Math.round(this.cartTotal() * 100) / 100,
       tax: this.cartTax(),
+      deliveryService: this.selectedDeliveryService()?.name,
+      deliveryAddress: this.deliveryAddress(),
+      deliveryDistance: this.estimatedDistance() || 10,
+      deliveryPrice: this.deliveryPrice(),
       total: this.cartGrandTotal()
     };
 
@@ -214,7 +240,7 @@ export class GymComponent implements OnInit {
         if (response.status === 'success' && response.data?.sessionId) {
           // Redirect to Stripe checkout
           this.paymentService.redirectToCheckout(response.data.sessionId)
-            .catch(error => {
+            .catch((error: any) => {
               this.paymentError.set(error.message || 'Failed to redirect to checkout');
               this.isProcessingPayment.set(false);
             });
@@ -228,6 +254,58 @@ export class GymComponent implements OnInit {
         this.isProcessingPayment.set(false);
       }
     });
+  }
+
+  // ============================================
+  // DELIVERY METHODS
+  // ============================================
+
+  loadDeliveryServices(): void {
+    const services = this.deliveryService.getAvailableServices('retail');
+    this.deliveryServices.set(services);
+    console.log('✅ Loaded', services.length, 'delivery services');
+  }
+
+  selectDeliveryService(service: DeliveryServiceDefinition): void {
+    this.selectedDeliveryService.set(service);
+    this.calculateDeliveryPrice();
+  }
+
+  calculateDeliveryPrice(): void {
+    const service = this.selectedDeliveryService();
+    if (!service || !this.deliveryAddress()) {
+      return;
+    }
+
+    const weight = this.cartItemCount() * 15; // Gym equipment is heavier, assume 15kg per item
+    const distance = this.estimatedDistance() || 10;
+    const price = this.deliveryService.calculatePrice(service, distance, weight);
+    this.deliveryPrice.set(price);
+  }
+
+  formatDeliveryTime(service: DeliveryServiceDefinition | null): string {
+    if (!service) return 'N/A';
+    const minutes = service.estimatedDeliveryTime.standard;
+    if (minutes < 60) {
+      return `${minutes} mins`;
+    } else if (minutes < 1440) {
+      const hours = Math.ceil(minutes / 60);
+      return `${hours}h`;
+    } else {
+      const days = Math.ceil(minutes / 1440);
+      return `${days} day${days > 1 ? 's' : ''}`;
+    }
+  }
+
+  openDeliveryOptions(): void {
+    this.showDeliveryOptions.set(true);
+    if (this.deliveryServices().length === 0) {
+      this.loadDeliveryServices();
+    }
+  }
+
+  closeDeliveryOptions(): void {
+    this.showDeliveryOptions.set(false);
   }
 
   private validateEmail(email: string): boolean {

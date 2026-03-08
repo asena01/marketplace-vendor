@@ -13,7 +13,10 @@ interface ApiResponse<T> {
   providedIn: 'root'
 })
 export class AdminService {
-  private apiUrl = 'https://us-central1-uni-backend01.cloudfunctions.net/api/admin';
+  // ⚠️ REPLACED: Firebase Cloud Functions endpoint with local backend API
+  // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api/admin'
+  // NEW: Local Node.js/Express backend
+  private apiUrl = 'http://localhost:5001/admin';
 
   constructor(private http: HttpClient) {}
 
@@ -217,6 +220,137 @@ export class AdminService {
   }
 
   // ============================================
+  // VENDORS
+  // ============================================
+
+  getVendors(page: number = 1, limit: number = 10, filters?: any): Observable<ApiResponse<any[]>> {
+    let url = `${this.apiUrl}/vendors?page=${page}&limit=${limit}`;
+    if (filters) {
+      if (filters.vendorType) url += `&vendorType=${filters.vendorType}`;
+      if (filters.status) url += `&status=${filters.status}`;
+      if (filters.kycStatus) url += `&kycStatus=${filters.kycStatus}`;
+      if (filters.search) url += `&search=${filters.search}`;
+    }
+    return this.http.get<ApiResponse<any[]>>(url, { headers: this.getAdminHeaders() });
+  }
+
+  getVendorById(id: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/vendors/${id}`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  createVendor(data: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${this.apiUrl}/vendors`,
+      data,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  updateVendor(id: string, data: any): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${this.apiUrl}/vendors/${id}`,
+      data,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  deleteVendor(id: string): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(
+      `${this.apiUrl}/vendors/${id}`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  approveVendor(id: string, notes?: string): Observable<ApiResponse<any>> {
+    return this.http.patch<ApiResponse<any>>(
+      `${this.apiUrl}/vendors/${id}/approve`,
+      { notes },
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  rejectVendor(id: string, reason: string): Observable<ApiResponse<any>> {
+    return this.http.patch<ApiResponse<any>>(
+      `${this.apiUrl}/vendors/${id}/reject`,
+      { reason },
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  suspendVendor(id: string, reason: string): Observable<ApiResponse<any>> {
+    return this.http.patch<ApiResponse<any>>(
+      `${this.apiUrl}/vendors/${id}/suspend`,
+      { reason },
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  blockVendor(id: string, reason: string): Observable<ApiResponse<any>> {
+    return this.http.patch<ApiResponse<any>>(
+      `${this.apiUrl}/vendors/${id}/block`,
+      { reason },
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  // ============================================
+  // VENDOR KYC
+  // ============================================
+
+  getVendorKyc(vendorId: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/vendors/${vendorId}/kyc`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  updateVendorKyc(vendorId: string, data: any): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${this.apiUrl}/vendors/${vendorId}/kyc`,
+      data,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  approveVendorKyc(vendorId: string, notes?: string): Observable<ApiResponse<any>> {
+    return this.http.patch<ApiResponse<any>>(
+      `${this.apiUrl}/vendors/${vendorId}/kyc/approve`,
+      { notes },
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  rejectVendorKyc(vendorId: string, reason: string): Observable<ApiResponse<any>> {
+    return this.http.patch<ApiResponse<any>>(
+      `${this.apiUrl}/vendors/${vendorId}/kyc/reject`,
+      { reason },
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  // ============================================
+  // VENDOR PERFORMANCE
+  // ============================================
+
+  getVendorPerformance(vendorId: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/vendors/${vendorId}/performance`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  updateVendorPerformance(vendorId: string, data: any): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${this.apiUrl}/vendors/${vendorId}/performance`,
+      data,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  // ============================================
   // SETTINGS
   // ============================================
 
@@ -231,6 +365,206 @@ export class AdminService {
     return this.http.put<ApiResponse<any>>(
       `${this.apiUrl}/settings`,
       data,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  // ============================================
+  // SETTLEMENT METHODS
+  // ============================================
+
+  getSettlements(page: number = 1, limit: number = 10): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(
+      `${this.apiUrl}/settlements?page=${page}&limit=${limit}`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  getSettlementById(id: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/settlements/${id}`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  createSettlement(data: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${this.apiUrl}/settlements`,
+      data,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  updateSettlement(id: string, data: any): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${this.apiUrl}/settlements/${id}`,
+      data,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  approveSettlement(id: string, notes?: string): Observable<ApiResponse<any>> {
+    return this.http.patch<ApiResponse<any>>(
+      `${this.apiUrl}/settlements/${id}/approve`,
+      { notes },
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  rejectSettlement(id: string, reason: string): Observable<ApiResponse<any>> {
+    return this.http.patch<ApiResponse<any>>(
+      `${this.apiUrl}/settlements/${id}/reject`,
+      { reason },
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  deleteSettlement(id: string): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(
+      `${this.apiUrl}/settlements/${id}`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  getSettlementStats(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/settlements/stats`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  // ============================================
+  // PAYOUT METHODS
+  // ============================================
+
+  getPayouts(page: number = 1, limit: number = 10): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(
+      `${this.apiUrl}/payouts?page=${page}&limit=${limit}`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  getPayoutById(id: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/payouts/${id}`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  createPayout(data: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${this.apiUrl}/payouts`,
+      data,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  processPayout(id: string, data: any): Observable<ApiResponse<any>> {
+    return this.http.patch<ApiResponse<any>>(
+      `${this.apiUrl}/payouts/${id}/process`,
+      data,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  completePayout(id: string): Observable<ApiResponse<any>> {
+    return this.http.patch<ApiResponse<any>>(
+      `${this.apiUrl}/payouts/${id}/complete`,
+      {},
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  retryPayout(id: string): Observable<ApiResponse<any>> {
+    return this.http.patch<ApiResponse<any>>(
+      `${this.apiUrl}/payouts/${id}/retry`,
+      {},
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  cancelPayout(id: string, reason: string): Observable<ApiResponse<any>> {
+    return this.http.patch<ApiResponse<any>>(
+      `${this.apiUrl}/payouts/${id}/cancel`,
+      { reason },
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  // ============================================
+  // ROLE & PERMISSION METHODS
+  // ============================================
+
+  getRoles(): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(
+      `${this.apiUrl}/roles`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  getRoleById(id: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/roles/${id}`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  createRole(data: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${this.apiUrl}/roles`,
+      data,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  updateRole(id: string, data: any): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${this.apiUrl}/roles/${id}`,
+      data,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  deleteRole(id: string): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(
+      `${this.apiUrl}/roles/${id}`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  getPermissions(): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(
+      `${this.apiUrl}/permissions`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  getPermissionById(id: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/permissions/${id}`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  createPermission(data: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${this.apiUrl}/permissions`,
+      data,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  updatePermission(id: string, data: any): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${this.apiUrl}/permissions/${id}`,
+      data,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  deletePermission(id: string): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(
+      `${this.apiUrl}/permissions/${id}`,
       { headers: this.getAdminHeaders() }
     );
   }

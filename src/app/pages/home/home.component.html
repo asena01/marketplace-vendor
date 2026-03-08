@@ -9,11 +9,11 @@
 
     <div class="relative max-w-7xl mx-auto text-center">
       <h1 class="text-5xl sm:text-6xl font-bold text-white mb-6 leading-tight">
-        Fast Delivery &<br class="hidden sm:block" />
-        <span class="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Trusted Services</span>
+        Your One-Stop<br class="hidden sm:block" />
+        <span class="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Marketplace</span>
       </h1>
       <p class="text-xl text-gray-300 mb-12 max-w-3xl mx-auto">
-        Get what you need delivered fast or find trusted service providers. From food and groceries to professional services, we've got you covered.
+        Shop for everything you need, from hotels and restaurants to services, tours, and more. All in one convenient platform.
       </p>
 
       <div class="stats-grid grid grid-cols-2 md:grid-cols-5 gap-6 max-w-5xl mx-auto">
@@ -80,13 +80,13 @@
   <section class="py-20 px-4 sm:px-6 lg:px-8">
     <div class="max-w-7xl mx-auto">
       <div class="text-center mb-16">
-        <h2 class="section-title text-4xl font-bold text-slate-900 mb-4">Core Services</h2>
-        <p class="section-subtitle text-lg text-slate-600">Fast delivery and professional services at your fingertips</p>
+        <h2 class="section-title text-4xl font-bold text-slate-900 mb-4">Featured Service</h2>
+        <p class="section-subtitle text-lg text-slate-600">Professional services and expert providers at your fingertips</p>
       </div>
 
       <div class="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
         @for (service of mainServices; let i = $index; track service.id) {
-          <a [routerLink]="service.route" [ngClass]="'service-card service-card-' + (i + 1)" class="group">
+          <a [routerLink]="service.route" [ngClass]="'service-card service-card-' + (i + 1)" class="group md:col-span-2 lg:col-span-1">
             <div class="service-card h-full bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-8 border border-gray-100 hover:border-primary/30">
               <div class="service-icon text-6xl mb-6 transform group-hover:scale-110 transition-transform duration-300">
                 {{ service.icon }}
@@ -186,7 +186,7 @@
   <section class="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-primary to-secondary animate-gradient">
     <div class="max-w-4xl mx-auto text-center">
       <h2 class="section-title text-4xl font-bold text-white mb-6">Ready to Get Started?</h2>
-      <p class="section-subtitle text-xl text-white/90 mb-8">Experience fast delivery and trusted services with our all-in-one platform. Shop, order, and book everything you need</p>
+      <p class="section-subtitle text-xl text-white/90 mb-8">Join our marketplace and access everything you need. Shop, book services, find travel experiences, and explore countless opportunities all in one place.</p>
       <div class="flex flex-col sm:flex-row gap-4 justify-center">
         <a href="#" class="cta-button bg-white text-primary hover:bg-gray-100 font-bold py-4 px-8 rounded-lg transition-all duration-300 transform hover:scale-105">
           Get Started Now
@@ -252,4 +252,12 @@
       <p class="text-center text-sm">&#169; 2024 MarketHub. All rights reserved.</p>
     </div>
   </footer>
+
+  <!-- Auth Overlays -->
+  @if (authModalService.isLoginOpen()) {
+    <app-login-overlay></app-login-overlay>
+  }
+  @if (authModalService.isSignupOpen()) {
+    <app-signup-overlay></app-signup-overlay>
+  }
 </div>

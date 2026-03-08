@@ -1,276 +1,333 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
-export interface CheckoutRequest {
-  items: any[];
-  customerEmail: string;
-  customerName: string;
-  customerPhone: string;
-  customerAddress: string;
-  subtotal: number;
-  tax: number;
-  total: number;
-}
-
-export interface CheckoutResponse {
-  status: string;
-  data?: {
-    sessionId: string;
-    orderId: string;
-    url: string;
-  };
-  message?: string;
-}
-
-export interface SessionDetails {
-  id: string;
-  paymentStatus: string;
-  customerEmail: string;
-  amountTotal: number;
-  currency: string;
-  clientReferenceId: string;
-}
-
-export interface Order {
+export interface PaymentTransaction {
+  _id?: string;
+  transactionId: string;
   orderId: string;
-  userEmail: string;
-  customerName: string;
-  customerPhone: string;
-  customerAddress: string;
-  items: any[];
-  subtotal: number;
-  tax: number;
-  total: number;
-  paymentStatus: string;
-  status: string;
-  createdAt: string;
-}
-
-export interface PaymentIntentRequest {
   amount: number;
-  email: string;
+  currency: string;
+  paymentMethod: 'credit_card' | 'debit_card' | 'bank_transfer' | 'mobile_money' | 'wallet';
+  paymentGateway?: string; // e.g., 'stripe', 'paypal', 'flutterwave'
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
+  description?: string;
+  metadata?: any;
+  vendorId: string;
+  customerId: string;
+  customerName: string;
+  customerEmail: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-export interface PaymentIntentResponse {
-  status: string;
-  data?: {
-    clientSecret: string;
-  };
-  message?: string;
+export interface Refund {
+  _id?: string;
+  refundId: string;
+  transactionId: string;
+  orderId: string;
+  amount: number;
+  reason: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  refundMethod: string;
+  notes?: string;
+  vendorId: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-// Legacy interfaces for compatibility with existing components
 export interface PaymentMethod {
   id: string;
+  type?: 'credit_card' | 'debit_card' | 'bank_transfer' | 'mobile_money' | 'wallet';
   name: string;
-  type?: string;
   icon?: string;
   description?: string;
+  last4?: string;
+  expiryDate?: string;
+  isDefault?: boolean;
 }
 
 export interface PaymentRequest {
-  amount?: number;
-  currency?: string;
+  orderId: string;
+  amount: number;
+  currency: string;
+  paymentMethod: PaymentMethod | string;
   description?: string;
-  orderId?: string;
-  paymentMethod?: PaymentMethod | string;
-  paymentMethodId?: string;
-  cardNumber?: string;
-  expiryMonth?: string;
-  expiryYear?: string;
-  cvv?: string;
-  cardholderName?: string;
+  metadata?: any;
+  items?: any[];
   cardDetails?: {
-    cardNumber?: string;
-    expiryMonth?: string;
-    expiryYear?: string;
-    cvv?: string;
-    cardholderName?: string;
+    cardNumber: string;
+    cardholderName: string;
+    expiryMonth: string;
+    expiryYear: string;
+    cvv: string;
   };
   bankDetails?: {
-    bankName?: string;
-    accountNumber?: string;
-    accountName?: string;
+    bankName: string;
+    accountNumber: string;
+    accountName: string;
     bankCode?: string;
   };
   mobileMoneyDetails?: {
-    provider?: string;
-    phoneNumber?: string;
+    provider: string;
+    phoneNumber: string;
   };
   walletDetails?: {
-    walletId?: string;
+    walletProvider?: string;
+    walletId: string;
   };
-  // Cart and customer info
-  items?: Array<{
-    id: string;
-    name: string;
-    price: number;
-    quantity: number;
-    category: string;
-    image?: string;
-  }>;
-  userId?: string;
-  userEmail?: string;
-  customerName?: string;
-  storeName?: string;
+  [key: string]: any; // Allow additional properties
 }
 
 export interface PaymentResponse {
-  status: string;
+  success: boolean;
   message: string;
-  success?: boolean;
+  data?: PaymentTransaction | PaymentTransaction[] | Refund | Refund[];
   transactionId?: string;
   amount?: number;
-  data?: any;
+  pagination?: {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  };
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class PaymentService {
-  // Cloud Functions URL
-  private apiUrl = 'https://us-central1-uni-backend01.cloudfunctions.net/api/payments';
+  private apiUrl = 'http://localhost:5001/payments';
+  private refundsUrl = 'http://localhost:5001/refunds';
 
   constructor(private http: HttpClient) {}
 
+  // ==================== PAYMENT TRANSACTIONS ====================
+
   /**
-   * Create a checkout session and redirect to Stripe Checkout
+   * Get all payments for a vendor
    */
-  createCheckoutSession(checkoutData: CheckoutRequest): Observable<CheckoutResponse> {
-    return this.http.post<CheckoutResponse>(`${this.apiUrl}/checkout`, checkoutData).pipe(
-      catchError((error) => {
-        console.error('Error creating checkout session:', error);
-        return of({
-          status: 'error',
-          message: error.error?.message || 'Failed to create checkout session'
-        });
-      })
-    );
+  getVendorPayments(
+    vendorId: string,
+    page: number = 1,
+    limit: number = 20,
+    status?: string
+  ): Observable<PaymentResponse> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('limit', limit.toString());
+
+    if (status) {
+      params = params.set('status', status);
+    }
+
+    return this.http.get<PaymentResponse>(`${this.apiUrl}/vendor/${vendorId}`, { params });
   }
 
   /**
-   * Dummy redirect (Stripe replacement)
+   * Get payment by transaction ID
    */
-  async redirectToCheckout(sessionId: string): Promise<void> {
-    // For dummy API, just log the redirect
-    console.log('📍 Redirect to dummy checkout:', sessionId);
+  getPaymentByTransactionId(transactionId: string): Observable<PaymentResponse> {
+    return this.http.get<PaymentResponse>(`${this.apiUrl}/${transactionId}`);
   }
 
   /**
-   * Get session details from backend
+   * Get payments by status
    */
-  getSessionDetails(sessionId: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/session/${sessionId}`).pipe(
-      catchError((error) => {
-        console.error('Error retrieving session:', error);
-        return of({
-          status: 'error',
-          message: error.error?.message || 'Failed to retrieve session'
-        });
-      })
-    );
+  getPaymentsByStatus(
+    vendorId: string,
+    status: string,
+    page: number = 1,
+    limit: number = 20
+  ): Observable<PaymentResponse> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('limit', limit.toString())
+      .set('status', status);
+
+    return this.http.get<PaymentResponse>(`${this.apiUrl}/vendor/${vendorId}`, { params });
   }
 
   /**
-   * Get order details
+   * Get payments for specific order
    */
-  getOrder(orderId: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/order/${orderId}`).pipe(
-      catchError((error) => {
-        console.error('Error retrieving order:', error);
-        return of({
-          status: 'error',
-          message: error.error?.message || 'Failed to retrieve order'
-        });
-      })
-    );
+  getOrderPayments(orderId: string): Observable<PaymentResponse> {
+    return this.http.get<PaymentResponse>(`${this.apiUrl}/order/${orderId}`);
   }
 
   /**
-   * Get orders by email
+   * Record payment transaction
    */
-  getOrdersByEmail(email: string, page: number = 1, limit: number = 10): Observable<any> {
-    return this.http
-      .get<any>(`${this.apiUrl}/orders/${email}?page=${page}&limit=${limit}`)
-      .pipe(
-        catchError((error) => {
-          console.error('Error retrieving orders:', error);
-          return of({
-            status: 'error',
-            data: [],
-            message: error.error?.message || 'Failed to retrieve orders'
-          });
-        })
-      );
+  recordPayment(payment: Partial<PaymentTransaction>): Observable<PaymentResponse> {
+    return this.http.post<PaymentResponse>(`${this.apiUrl}`, payment);
   }
 
   /**
-   * Create a payment intent for manual payment processing
+   * Update payment status
    */
-  createPaymentIntent(data: PaymentIntentRequest): Observable<PaymentIntentResponse> {
-    return this.http.post<PaymentIntentResponse>(`${this.apiUrl}/intent`, data).pipe(
-      catchError((error) => {
-        console.error('Error creating payment intent:', error);
-        return of({
-          status: 'error',
-          message: error.error?.message || 'Failed to create payment intent'
-        });
-      })
-    );
+  updatePaymentStatus(transactionId: string, status: string): Observable<PaymentResponse> {
+    return this.http.patch<PaymentResponse>(`${this.apiUrl}/${transactionId}/status`, {
+      status
+    });
   }
 
   /**
-   * Legacy method: Process payment (for backward compatibility)
+   * Get payment statistics
    */
-  processPayment(request: PaymentRequest): Observable<PaymentResponse> {
-    console.log('🚀 Sending payment request to backend:', request);
-    return this.http.post<PaymentResponse>(`${this.apiUrl}/process`, request).pipe(
-      catchError((error) => {
-        console.error('❌ HTTP Error processing payment:', error);
-        console.error('Error status:', error.status);
-        console.error('Error body:', error.error);
-        return of({
-          status: 'error',
-          message: error.error?.message || error.message || 'Payment processing failed'
-        });
-      })
-    );
+  getPaymentStats(vendorId: string, dateRange?: string): Observable<any> {
+    let params = new HttpParams();
+    if (dateRange) {
+      params = params.set('dateRange', dateRange);
+    }
+    return this.http.get<any>(`${this.apiUrl}/vendor/${vendorId}/stats`, { params });
   }
 
   /**
-   * Legacy method: Get payment methods (for backward compatibility)
+   * Get revenue summary
    */
-  getPaymentMethods(): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/methods`).pipe(
-      catchError((error) => {
-        console.error('Error retrieving payment methods:', error);
-        return of({
-          status: 'error',
-          data: []
-        });
-      })
-    );
+  getRevenueSummary(vendorId: string, period: 'daily' | 'weekly' | 'monthly' = 'monthly'): Observable<any> {
+    const params = new HttpParams().set('period', period);
+    return this.http.get<any>(`${this.apiUrl}/vendor/${vendorId}/revenue`, { params });
+  }
+
+  // ==================== REFUNDS ====================
+
+  /**
+   * Get all refunds for a vendor
+   */
+  getVendorRefunds(
+    vendorId: string,
+    page: number = 1,
+    limit: number = 20,
+    status?: string
+  ): Observable<PaymentResponse> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('limit', limit.toString());
+
+    if (status) {
+      params = params.set('status', status);
+    }
+
+    return this.http.get<PaymentResponse>(`${this.refundsUrl}/vendor/${vendorId}`, { params });
   }
 
   /**
-   * Legacy method: Validate card number
+   * Get refund by ID
    */
+  getRefundById(refundId: string): Observable<PaymentResponse> {
+    return this.http.get<PaymentResponse>(`${this.refundsUrl}/${refundId}`);
+  }
+
+  /**
+   * Create refund request
+   */
+  createRefund(refund: Partial<Refund>): Observable<PaymentResponse> {
+    return this.http.post<PaymentResponse>(`${this.refundsUrl}`, refund);
+  }
+
+  /**
+   * Process refund
+   */
+  processRefund(refundId: string): Observable<PaymentResponse> {
+    return this.http.patch<PaymentResponse>(`${this.refundsUrl}/${refundId}/process`, {});
+  }
+
+  /**
+   * Update refund status
+   */
+  updateRefundStatus(refundId: string, status: string): Observable<PaymentResponse> {
+    return this.http.patch<PaymentResponse>(`${this.refundsUrl}/${refundId}/status`, {
+      status
+    });
+  }
+
+  /**
+   * Get refunds for order
+   */
+  getOrderRefunds(orderId: string): Observable<PaymentResponse> {
+    return this.http.get<PaymentResponse>(`${this.refundsUrl}/order/${orderId}`);
+  }
+
+  /**
+   * Approve refund
+   */
+  approveRefund(refundId: string, notes?: string): Observable<PaymentResponse> {
+    return this.http.patch<PaymentResponse>(`${this.refundsUrl}/${refundId}/approve`, {
+      notes
+    });
+  }
+
+  /**
+   * Reject refund
+   */
+  rejectRefund(refundId: string, reason: string): Observable<PaymentResponse> {
+    return this.http.patch<PaymentResponse>(`${this.refundsUrl}/${refundId}/reject`, {
+      reason
+    });
+  }
+
+  // ==================== ADDITIONAL PAYMENT METHODS ====================
+
+  /**
+   * Get available payment methods
+   */
+  getPaymentMethods(): Observable<PaymentResponse> {
+    return this.http.get<PaymentResponse>(`${this.apiUrl}/methods`);
+  }
+
+  /**
+   * Process payment
+   */
+  processPayment(paymentRequest: PaymentRequest): Observable<PaymentResponse> {
+    return this.http.post<PaymentResponse>(`${this.apiUrl}/process`, paymentRequest);
+  }
+
+  /**
+   * Create checkout session (for Stripe/external payment gateways)
+   */
+  createCheckoutSession(checkoutData: any): Observable<PaymentResponse> {
+    return this.http.post<PaymentResponse>(`${this.apiUrl}/checkout-session`, checkoutData);
+  }
+
+  /**
+   * Redirect to checkout (for external payment gateways)
+   */
+  redirectToCheckout(sessionId: string): Promise<void> {
+    // This would typically redirect to an external checkout page
+    return new Promise((resolve, reject) => {
+      try {
+        if (typeof window !== 'undefined') {
+          window.location.href = `${this.apiUrl}/checkout/${sessionId}`;
+          resolve();
+        } else {
+          reject(new Error('Window object not available'));
+        }
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  // ==================== VALIDATION UTILITIES ====================
+
   validateCardNumber(cardNumber: string): boolean {
-    // Luhn algorithm for card validation
-    const digits = cardNumber.replace(/\D/g, '');
-    if (digits.length < 13 || digits.length > 19) return false;
+    const cleaned = cardNumber.replace(/\s/g, '');
+    if (!/^\d{13,19}$/.test(cleaned)) return false;
 
     let sum = 0;
     let isEven = false;
 
-    for (let i = digits.length - 1; i >= 0; i--) {
-      let digit = parseInt(digits[i], 10);
+    for (let i = cleaned.length - 1; i >= 0; i--) {
+      let digit = parseInt(cleaned[i], 10);
+
       if (isEven) {
         digit *= 2;
-        if (digit > 9) digit -= 9;
+        if (digit > 9) {
+          digit -= 9;
+        }
       }
+
       sum += digit;
       isEven = !isEven;
     }
@@ -278,25 +335,21 @@ export class PaymentService {
     return sum % 10 === 0;
   }
 
-  /**
-   * Legacy method: Validate CVV
-   */
   validateCVV(cvv: string): boolean {
     return /^\d{3,4}$/.test(cvv);
   }
 
-  /**
-   * Legacy method: Validate expiry date
-   */
   validateExpiryDate(month: string, year: string): boolean {
-    const now = new Date();
-    // Month should be 0-indexed for Date constructor, so subtract 1
-    // Also set day to last day of the month to include the entire month
-    const monthNum = parseInt(month, 10) - 1; // Convert 1-12 to 0-11
-    const yearNum = parseInt(year, 10);
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1;
 
-    // Create date for the last day of the expiry month
-    const expiryDate = new Date(yearNum, monthNum + 1, 0);
-    return expiryDate > now;
+    const expiryYear = parseInt(year, 10);
+    const expiryMonth = parseInt(month, 10);
+
+    if (expiryYear < currentYear) return false;
+    if (expiryYear === currentYear && expiryMonth < currentMonth) return false;
+
+    return expiryMonth >= 1 && expiryMonth <= 12;
   }
 }

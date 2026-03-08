@@ -62,7 +62,10 @@ export interface ApiResponse<T> {
   providedIn: 'root'
 })
 export class FoodService {
-  private apiUrl = 'https://us-central1-uni-backend01.cloudfunctions.net/api/restaurants';
+  // ⚠️ REPLACED: Firebase Cloud Functions endpoint with local backend API
+  // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api/restaurants'
+  // NEW: Local Node.js/Express backend
+  private apiUrl = 'http://localhost:5001/restaurants';
 
   constructor(private http: HttpClient) {}
 
@@ -218,6 +221,16 @@ export class FoodService {
     return this.http.delete<ApiResponse<any>>(`${this.apiUrl}/${restaurantId}`).pipe(
       catchError((error) => {
         console.error('Error deleting restaurant:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
+
+  // DELETE order
+  deleteOrder(restaurantId: string, orderId: string): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(`${this.apiUrl}/${restaurantId}/orders/${orderId}`).pipe(
+      catchError((error) => {
+        console.error('Error deleting order:', error);
         return of({ status: 'error', data: null });
       })
     );

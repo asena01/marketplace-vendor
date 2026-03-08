@@ -1,6 +1,7 @@
 import { Component, OnInit, signal, Signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
 import { DeliveryService } from '../../../services/delivery.service';
 import { AuthService } from '../../../services/auth.service';
 
@@ -9,16 +10,19 @@ import { DeliveryOrdersComponent } from '../delivery-orders/delivery-orders.comp
 import { DeliveryCouriersComponent } from '../delivery-couriers/delivery-couriers.component';
 import { DeliveryTrackingComponent } from '../delivery-tracking/delivery-tracking.component';
 import { DeliveryAnalyticsComponent } from '../delivery-analytics/delivery-analytics.component';
+import { DeliveryServicesComponent } from '../delivery-services/delivery-services.component';
 
 @Component({
   selector: 'app-delivery-dashboard',
   standalone: true,
   imports: [
     CommonModule,
+    MatIconModule,
     DeliveryOrdersComponent,
     DeliveryCouriersComponent,
     DeliveryTrackingComponent,
-    DeliveryAnalyticsComponent
+    DeliveryAnalyticsComponent,
+    DeliveryServicesComponent
   ],
   template: `
     <div class="min-h-screen bg-gray-100">
@@ -26,7 +30,7 @@ import { DeliveryAnalyticsComponent } from '../delivery-analytics/delivery-analy
       <header class="bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg">
         <div class="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
           <div class="flex items-center gap-4">
-            <div class="text-4xl">🚚</div>
+            <mat-icon class="text-5xl">local_shipping</mat-icon>
             <div>
               <h1 class="text-3xl font-bold">Delivery Management Dashboard</h1>
               <p class="text-cyan-100 text-sm">Real-time delivery tracking and management</p>
@@ -34,9 +38,10 @@ import { DeliveryAnalyticsComponent } from '../delivery-analytics/delivery-analy
           </div>
           <button
             (click)="logout()"
-            class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-semibold transition"
+            class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2"
           >
-            🚪 Logout
+            <mat-icon>exit_to_app</mat-icon>
+            <span>Logout</span>
           </button>
         </div>
       </header>
@@ -49,52 +54,68 @@ import { DeliveryAnalyticsComponent } from '../delivery-analytics/delivery-analy
 
             <button
               (click)="setCurrentPage('overview')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition ' +
+              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
                 (currentPage() === 'overview'
                   ? 'bg-teal-100 text-teal-700 border-l-4 border-teal-600'
                   : 'text-gray-700 hover:bg-gray-100')"
             >
-              📊 Overview
+              <mat-icon class="text-lg">dashboard</mat-icon>
+              <span>Overview</span>
             </button>
 
             <button
               (click)="setCurrentPage('orders')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition ' +
+              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
                 (currentPage() === 'orders'
                   ? 'bg-teal-100 text-teal-700 border-l-4 border-teal-600'
                   : 'text-gray-700 hover:bg-gray-100')"
             >
-              📦 Orders
+              <mat-icon class="text-lg">inventory_2</mat-icon>
+              <span>Orders</span>
             </button>
 
             <button
               (click)="setCurrentPage('tracking')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition ' +
+              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
                 (currentPage() === 'tracking'
                   ? 'bg-teal-100 text-teal-700 border-l-4 border-teal-600'
                   : 'text-gray-700 hover:bg-gray-100')"
             >
-              📍 Live Tracking
+              <mat-icon class="text-lg">my_location</mat-icon>
+              <span>Live Tracking</span>
             </button>
 
             <button
               (click)="setCurrentPage('couriers')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition ' +
+              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
                 (currentPage() === 'couriers'
                   ? 'bg-teal-100 text-teal-700 border-l-4 border-teal-600'
                   : 'text-gray-700 hover:bg-gray-100')"
             >
-              👥 Couriers
+              <mat-icon class="text-lg">people</mat-icon>
+              <span>Couriers</span>
             </button>
 
             <button
               (click)="setCurrentPage('analytics')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition ' +
+              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
                 (currentPage() === 'analytics'
                   ? 'bg-teal-100 text-teal-700 border-l-4 border-teal-600'
                   : 'text-gray-700 hover:bg-gray-100')"
             >
-              📈 Analytics
+              <mat-icon class="text-lg">analytics</mat-icon>
+              <span>Analytics</span>
+            </button>
+
+            <button
+              (click)="setCurrentPage('services')"
+              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
+                (currentPage() === 'services'
+                  ? 'bg-teal-100 text-teal-700 border-l-4 border-teal-600'
+                  : 'text-gray-700 hover:bg-gray-100')"
+            >
+              <mat-icon class="text-lg">local_shipping</mat-icon>
+              <span>My Services</span>
             </button>
           </nav>
         </aside>
@@ -118,7 +139,7 @@ import { DeliveryAnalyticsComponent } from '../delivery-analytics/delivery-analy
                       <p class="text-4xl font-bold text-gray-800">{{ stats()?.activeOrders || 0 }}</p>
                       <p class="text-xs text-gray-500 mt-1">In delivery</p>
                     </div>
-                    <div class="text-5xl">📦</div>
+                    <mat-icon class="text-6xl text-blue-500">inventory_2</mat-icon>
                   </div>
                 </div>
 
@@ -130,7 +151,7 @@ import { DeliveryAnalyticsComponent } from '../delivery-analytics/delivery-analy
                       <p class="text-4xl font-bold text-gray-800">{{ stats()?.completedDeliveries || 0 }}</p>
                       <p class="text-xs text-gray-500 mt-1">Success rate</p>
                     </div>
-                    <div class="text-5xl">✅</div>
+                    <mat-icon class="text-6xl text-green-500">check_circle</mat-icon>
                   </div>
                 </div>
 
@@ -142,7 +163,7 @@ import { DeliveryAnalyticsComponent } from '../delivery-analytics/delivery-analy
                       <p class="text-4xl font-bold text-gray-800">{{ stats()?.activeCouriers || 0 }}</p>
                       <p class="text-xs text-gray-500 mt-1">Online now</p>
                     </div>
-                    <div class="text-5xl">👥</div>
+                    <mat-icon class="text-6xl text-orange-500">people</mat-icon>
                   </div>
                 </div>
 
@@ -154,7 +175,7 @@ import { DeliveryAnalyticsComponent } from '../delivery-analytics/delivery-analy
                       <p class="text-4xl font-bold text-gray-800">{{ stats()?.completionRate || 0 }}%</p>
                       <p class="text-xs text-gray-500 mt-1">All-time average</p>
                     </div>
-                    <div class="text-5xl">📊</div>
+                    <mat-icon class="text-6xl text-purple-500">analytics</mat-icon>
                   </div>
                 </div>
               </div>
@@ -167,6 +188,8 @@ import { DeliveryAnalyticsComponent } from '../delivery-analytics/delivery-analy
             <app-delivery-couriers></app-delivery-couriers>
           } @else if (currentPage() === 'analytics') {
             <app-delivery-analytics></app-delivery-analytics>
+          } @else if (currentPage() === 'services') {
+            <app-delivery-services></app-delivery-services>
           }
         </main>
       </div>
@@ -190,8 +213,8 @@ export class DeliveryDashboardComponent implements OnInit {
   ngOnInit(): void {
     // Check if user is vendor (delivery service)
     if (!this.authService.isVendor()) {
-      console.log('❌ User is not a vendor - redirecting to login');
-      this.router.navigate(['/login']);
+      console.log('❌ User is not a vendor - redirecting to home');
+      this.router.navigate(['/']);
       return;
     }
 
@@ -231,6 +254,6 @@ export class DeliveryDashboardComponent implements OnInit {
 
   logout(): void {
     this.authService.logout();
-    this.router.navigate(['/login']);
+    this.router.navigate(['/']);
   }
 }

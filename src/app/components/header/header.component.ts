@@ -2,6 +2,7 @@ import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { AuthModalService } from '../../services/auth-modal.service';
 
 @Component({
   selector: 'app-header',
@@ -15,6 +16,7 @@ export class HeaderComponent {
 
   constructor(
     private authService: AuthService,
+    private authModalService: AuthModalService,
     private router: Router
   ) {}
 
@@ -41,9 +43,20 @@ export class HeaderComponent {
     this.closeMenu();
   }
 
+  openLogin(): void {
+    this.authModalService.openLogin();
+    this.closeMenu();
+  }
+
+  openSignup(): void {
+    this.authModalService.openSignup();
+    this.closeMenu();
+  }
+
   logout(): void {
     this.authService.logout();
-    this.router.navigate(['/login']);
+    this.authModalService.closeModal();
+    this.router.navigate(['/']);
     this.closeMenu();
   }
 }

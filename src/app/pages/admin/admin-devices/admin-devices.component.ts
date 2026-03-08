@@ -289,7 +289,7 @@ export class AdminDevicesComponent implements OnInit {
         }
         this.isLoading.set(false);
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('❌ Error loading devices:', error);
         this.error.set(error.error?.message || 'Failed to load devices');
         this.isLoading.set(false);
@@ -350,7 +350,7 @@ export class AdminDevicesComponent implements OnInit {
           this.loadDevices();
         }
       },
-      error: (error) => {
+      error: (error: any) => {
         this.error.set(error.error?.message || 'Failed to update device');
       }
     });
@@ -373,7 +373,7 @@ export class AdminDevicesComponent implements OnInit {
           }
         }
       },
-      error: (error) => {
+      error: (error: any) => {
         this.error.set(error.error?.message || 'Failed to delete device');
       }
     });

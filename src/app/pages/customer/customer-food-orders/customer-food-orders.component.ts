@@ -1,5 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
 import { CustomerService } from '../../../services/customer.service';
 
 interface FoodOrder {
@@ -15,7 +16,7 @@ interface FoodOrder {
 @Component({
   selector: 'app-customer-food-orders',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MatIconModule],
   template: `
     <div class="space-y-6">
       <!-- Summary Cards -->
@@ -75,16 +76,18 @@ interface FoodOrder {
                     }
                   </td>
                   <td class="px-6 py-3 text-sm space-x-2">
-                    <button 
+                    <button
                       (click)="viewOrderDetails(order)"
-                      class="text-blue-600 hover:text-blue-800 font-semibold">
-                      View
+                      class="text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1 inline-flex">
+                      <mat-icon class="text-sm">visibility</mat-icon>
+                      <span>View</span>
                     </button>
                     @if (order.status === 'pending') {
-                      <button 
+                      <button
                         (click)="cancelOrder(order)"
-                        class="text-red-600 hover:text-red-800 font-semibold">
-                        Cancel
+                        class="text-red-600 hover:text-red-800 font-semibold flex items-center gap-1 inline-flex">
+                        <mat-icon class="text-sm">cancel</mat-icon>
+                        <span>Cancel</span>
                       </button>
                     }
                   </td>
@@ -95,13 +98,22 @@ interface FoodOrder {
         </div>
       } @else {
         <div class="bg-white rounded-lg shadow p-12 text-center">
-          <p class="text-gray-500 text-lg mb-4">🍕 No food orders yet</p>
+          <div class="flex justify-center mb-4">
+            <mat-icon class="text-5xl text-gray-400">restaurant</mat-icon>
+          </div>
+          <p class="text-gray-500 text-lg mb-2 font-semibold">No food orders yet</p>
           <p class="text-gray-400 text-sm">Browse restaurants and place your first order!</p>
         </div>
       }
     </div>
   `,
-  styles: []
+  styles: [`
+    ::ng-deep mat-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+  `]
 })
 export class CustomerFoodOrdersComponent implements OnInit {
   foodOrders = signal<FoodOrder[]>([]);
@@ -147,12 +159,12 @@ export class CustomerFoodOrdersComponent implements OnInit {
 
   getStatusBadge(status: string): string {
     const badges: { [key: string]: string } = {
-      pending: '⏳ Pending',
-      confirmed: '✓ Confirmed',
-      preparing: '👨‍🍳 Preparing',
-      ready: '📦 Ready',
-      delivered: '✓ Delivered',
-      cancelled: '✕ Cancelled'
+      pending: 'Pending',
+      confirmed: 'Confirmed',
+      preparing: 'Preparing',
+      ready: 'Ready',
+      delivered: 'Delivered',
+      cancelled: 'Cancelled'
     };
     return badges[status] || status;
   }

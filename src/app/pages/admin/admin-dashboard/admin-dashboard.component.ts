@@ -13,6 +13,9 @@ import { AdminDevicesComponent } from '../admin-devices/admin-devices.component'
 import { AdminSettingsComponent } from '../admin-settings/admin-settings.component';
 import { AdminDeliveryComponent } from '../admin-delivery/admin-delivery.component';
 import { AdminProfileComponent } from '../admin-profile/admin-profile.component';
+import { VendorDirectoryComponent } from '../admin-vendors/vendor-directory.component';
+import { SettlementsComponent } from '../admin-settlements/settlements.component';
+import { RolesComponent } from '../admin-roles/roles.component';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -26,7 +29,10 @@ import { AdminProfileComponent } from '../admin-profile/admin-profile.component'
     AdminDevicesComponent,
     AdminSettingsComponent,
     AdminDeliveryComponent,
-    AdminProfileComponent
+    AdminProfileComponent,
+    VendorDirectoryComponent,
+    SettlementsComponent,
+    RolesComponent
   ],
   template: `
     <div class="min-h-screen bg-gray-100">
@@ -34,7 +40,7 @@ import { AdminProfileComponent } from '../admin-profile/admin-profile.component'
       <header class="bg-gradient-to-r from-slate-800 to-slate-900 text-white shadow-lg">
         <div class="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
           <div class="flex items-center gap-4">
-            <div class="text-3xl">⚙️</div>
+            <span class="material-icons text-4xl">admin_panel_settings</span>
             <div>
               <h1 class="text-3xl font-bold">Admin Dashboard</h1>
               <p class="text-slate-300 text-sm">MarketHub Administration Control Center</p>
@@ -47,9 +53,10 @@ import { AdminProfileComponent } from '../admin-profile/admin-profile.component'
             </div>
             <button
               (click)="logout()"
-              class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-semibold transition"
+              class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2"
             >
-              🚪 Logout
+              <span class="material-icons">logout</span>
+              Logout
             </button>
           </div>
         </div>
@@ -63,82 +70,123 @@ import { AdminProfileComponent } from '../admin-profile/admin-profile.component'
 
             <button
               (click)="setCurrentPage('overview')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition ' +
+              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
                 (currentPage() === 'overview'
                   ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
                   : 'text-gray-700 hover:bg-gray-100')"
             >
-              📊 Overview
+              <span class="material-icons">dashboard</span>
+              Overview
+            </button>
+
+            <button
+              (click)="setCurrentPage('vendors')"
+              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
+                (currentPage() === 'vendors'
+                  ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
+                  : 'text-gray-700 hover:bg-gray-100')"
+            >
+              <span class="material-icons">business</span>
+              Vendors
             </button>
 
             <button
               (click)="setCurrentPage('organizations')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition ' +
+              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
                 (currentPage() === 'organizations'
                   ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
                   : 'text-gray-700 hover:bg-gray-100')"
             >
-              🏢 Organizations
+              <span class="material-icons">apartment</span>
+              Organizations
             </button>
 
             <button
               (click)="setCurrentPage('users')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition ' +
+              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
                 (currentPage() === 'users'
                   ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
                   : 'text-gray-700 hover:bg-gray-100')"
             >
-              👥 Users
+              <span class="material-icons">people</span>
+              Users
             </button>
 
             <button
               (click)="setCurrentPage('payments')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition ' +
+              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
                 (currentPage() === 'payments'
                   ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
                   : 'text-gray-700 hover:bg-gray-100')"
             >
-              💳 Payments
+              <span class="material-icons">payment</span>
+              Payments
+            </button>
+
+            <button
+              (click)="setCurrentPage('settlements')"
+              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
+                (currentPage() === 'settlements'
+                  ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
+                  : 'text-gray-700 hover:bg-gray-100')"
+            >
+              <span class="material-icons">account_balance_wallet</span>
+              Settlements
             </button>
 
             <button
               (click)="setCurrentPage('devices')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition ' +
+              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
                 (currentPage() === 'devices'
                   ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
                   : 'text-gray-700 hover:bg-gray-100')"
             >
-              📱 Devices
+              <span class="material-icons">devices</span>
+              Devices
             </button>
 
             <button
               (click)="setCurrentPage('delivery')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition ' +
+              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
                 (currentPage() === 'delivery'
                   ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
                   : 'text-gray-700 hover:bg-gray-100')"
             >
-              🚚 Delivery
+              <span class="material-icons">local_shipping</span>
+              Delivery
             </button>
 
             <button
               (click)="setCurrentPage('profile')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition ' +
+              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
                 (currentPage() === 'profile'
                   ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
                   : 'text-gray-700 hover:bg-gray-100')"
             >
-              👤 Profile
+              <span class="material-icons">account_circle</span>
+              Profile
             </button>
 
             <button
               (click)="setCurrentPage('settings')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition ' +
+              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
                 (currentPage() === 'settings'
                   ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
                   : 'text-gray-700 hover:bg-gray-100')"
             >
-              ⚙️ Settings
+              <span class="material-icons">settings</span>
+              Settings
+            </button>
+
+            <button
+              (click)="setCurrentPage('roles')"
+              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
+                (currentPage() === 'roles'
+                  ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
+                  : 'text-gray-700 hover:bg-gray-100')"
+            >
+              <span class="material-icons">security</span>
+              Roles & Permissions
             </button>
           </nav>
         </aside>
@@ -147,12 +195,16 @@ import { AdminProfileComponent } from '../admin-profile/admin-profile.component'
         <main class="flex-1 p-8">
           @if (currentPage() === 'overview') {
             <app-admin-overview></app-admin-overview>
+          } @else if (currentPage() === 'vendors') {
+            <app-vendor-directory></app-vendor-directory>
           } @else if (currentPage() === 'organizations') {
             <app-admin-organizations></app-admin-organizations>
           } @else if (currentPage() === 'users') {
             <app-admin-users></app-admin-users>
           } @else if (currentPage() === 'payments') {
             <app-admin-payments></app-admin-payments>
+          } @else if (currentPage() === 'settlements') {
+            <app-settlements></app-settlements>
           } @else if (currentPage() === 'devices') {
             <app-admin-devices></app-admin-devices>
           } @else if (currentPage() === 'delivery') {
@@ -161,12 +213,26 @@ import { AdminProfileComponent } from '../admin-profile/admin-profile.component'
             <app-admin-profile></app-admin-profile>
           } @else if (currentPage() === 'settings') {
             <app-admin-settings></app-admin-settings>
+          } @else if (currentPage() === 'roles') {
+            <app-roles></app-roles>
           }
         </main>
       </div>
     </div>
   `,
-  styles: []
+  styles: [
+    `
+      .material-icons {
+        font-size: 24px;
+        height: 24px;
+        width: 24px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        user-select: none;
+      }
+    `
+  ]
 })
 export class AdminDashboardComponent implements OnInit {
   currentPage = signal<string>('overview');
@@ -180,8 +246,8 @@ export class AdminDashboardComponent implements OnInit {
   ngOnInit(): void {
     // Check if user is admin
     if (!this.authService.isAdmin()) {
-      console.log('❌ User is not admin - redirecting to login');
-      this.router.navigate(['/login']);
+      console.log('❌ User is not admin - redirecting to home');
+      this.router.navigate(['/']);
       return;
     }
 
@@ -204,6 +270,6 @@ export class AdminDashboardComponent implements OnInit {
 
   logout(): void {
     this.authService.logout();
-    this.router.navigate(['/login']);
+    this.router.navigate(['/']);
   }
 }

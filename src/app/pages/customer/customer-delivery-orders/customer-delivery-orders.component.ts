@@ -1,5 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
 import { CustomerService } from '../../../services/customer.service';
 
 interface DeliveryOrder {
@@ -23,7 +24,7 @@ interface DeliveryOrder {
 @Component({
   selector: 'app-customer-delivery-orders',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MatIconModule],
   template: `
     <div class="space-y-6">
       <!-- Summary Cards -->
@@ -56,7 +57,10 @@ interface DeliveryOrder {
                 <div class="flex justify-between items-start mb-2">
                   <div>
                     <h3 class="text-lg font-bold">{{ order.itemName }}</h3>
-                    <p class="text-sm opacity-90">📦 Order #{{ order.orderId.slice(0, 8) }}</p>
+                    <p class="text-sm opacity-90 flex items-center gap-1">
+                      <mat-icon class="text-sm">local_shipping</mat-icon>
+                      <span>Order #{{ order.orderId.slice(0, 8) }}</span>
+                    </p>
                   </div>
                   <span [class]="getStatusBadgeClass(order.status)">
                     {{ getStatusBadge(order.status) }}
@@ -75,11 +79,17 @@ interface DeliveryOrder {
                 <!-- Locations -->
                 <div class="grid grid-cols-2 gap-4">
                   <div>
-                    <p class="text-xs text-gray-600 font-semibold mb-1">📍 Pickup</p>
+                    <p class="text-xs text-gray-600 font-semibold mb-1 flex items-center gap-1">
+                      <mat-icon class="text-xs">location_on</mat-icon>
+                      <span>Pickup</span>
+                    </p>
                     <p class="text-xs text-gray-700 line-clamp-2">{{ order.pickupLocation }}</p>
                   </div>
                   <div>
-                    <p class="text-xs text-gray-600 font-semibold mb-1">📍 Delivery</p>
+                    <p class="text-xs text-gray-600 font-semibold mb-1 flex items-center gap-1">
+                      <mat-icon class="text-xs">location_on</mat-icon>
+                      <span>Delivery</span>
+                    </p>
                     <p class="text-xs text-gray-700 line-clamp-2">{{ order.deliveryLocation }}</p>
                   </div>
                 </div>
@@ -87,7 +97,10 @@ interface DeliveryOrder {
                 <!-- Courier Info -->
                 @if (order.courierName && (order.status === 'accepted' || order.status === 'picked-up' || order.status === 'in-transit' || order.status === 'arriving')) {
                   <div class="bg-blue-50 rounded p-3 border border-blue-200">
-                    <p class="text-xs text-gray-600 font-semibold mb-2">👤 Courier Info</p>
+                    <p class="text-xs text-gray-600 font-semibold mb-2 flex items-center gap-1">
+                      <mat-icon class="text-xs">person</mat-icon>
+                      <span>Courier Info</span>
+                    </p>
                     <div class="flex justify-between items-center">
                       <div>
                         <p class="text-sm font-semibold text-gray-900">{{ order.courierName }}</p>
@@ -97,9 +110,15 @@ interface DeliveryOrder {
                       </div>
                       <div class="text-right">
                         @if (order.status === 'in-transit' || order.status === 'arriving') {
-                          <p class="text-xs text-green-600 font-semibold">🟢 On the way</p>
+                          <p class="text-xs text-green-600 font-semibold flex items-center gap-1">
+                            <mat-icon class="text-xs">check_circle</mat-icon>
+                            <span>On the way</span>
+                          </p>
                         } @else if (order.status === 'picked-up') {
-                          <p class="text-xs text-orange-600 font-semibold">📦 Picked up</p>
+                          <p class="text-xs text-orange-600 font-semibold flex items-center gap-1">
+                            <mat-icon class="text-xs">local_shipping</mat-icon>
+                            <span>Picked up</span>
+                          </p>
                         }
                       </div>
                     </div>
@@ -125,7 +144,10 @@ interface DeliveryOrder {
                 <!-- Estimated Delivery -->
                 @if (order.estimatedDelivery) {
                   <div class="bg-yellow-50 rounded p-3 border border-yellow-200">
-                    <p class="text-xs text-gray-600 font-semibold">⏱️ Estimated Delivery</p>
+                    <p class="text-xs text-gray-600 font-semibold flex items-center gap-1">
+                      <mat-icon class="text-xs">schedule</mat-icon>
+                      <span>Estimated Delivery</span>
+                    </p>
                     <p class="text-sm font-semibold text-gray-900">{{ formatTime(order.estimatedDelivery) }}</p>
                   </div>
                 }
@@ -145,16 +167,18 @@ interface DeliveryOrder {
 
               <!-- Actions -->
               <div class="bg-white px-4 py-3 flex gap-2 border-t">
-                <button 
+                <button
                   (click)="viewOrderDetails(order)"
-                  class="flex-1 text-blue-600 hover:text-blue-800 font-semibold text-sm py-2 hover:bg-blue-50 rounded transition">
-                  View Details
+                  class="flex-1 text-blue-600 hover:text-blue-800 font-semibold text-sm py-2 hover:bg-blue-50 rounded transition flex items-center justify-center gap-1">
+                  <mat-icon class="text-sm">visibility</mat-icon>
+                  <span>View Details</span>
                 </button>
                 @if (order.status === 'pending') {
-                  <button 
+                  <button
                     (click)="cancelOrder(order)"
-                    class="flex-1 text-red-600 hover:text-red-800 font-semibold text-sm py-2 hover:bg-red-50 rounded transition">
-                    Cancel
+                    class="flex-1 text-red-600 hover:text-red-800 font-semibold text-sm py-2 hover:bg-red-50 rounded transition flex items-center justify-center gap-1">
+                    <mat-icon class="text-sm">cancel</mat-icon>
+                    <span>Cancel</span>
                   </button>
                 }
               </div>
@@ -163,13 +187,22 @@ interface DeliveryOrder {
         </div>
       } @else {
         <div class="bg-white rounded-lg shadow p-12 text-center">
-          <p class="text-gray-500 text-lg mb-4">🚚 No delivery orders yet</p>
+          <div class="flex justify-center mb-4">
+            <mat-icon class="text-5xl text-gray-400">local_shipping</mat-icon>
+          </div>
+          <p class="text-gray-500 text-lg mb-2 font-semibold">No delivery orders yet</p>
           <p class="text-gray-400 text-sm">Order delivery from your favorite shops and restaurants!</p>
         </div>
       }
     </div>
   `,
-  styles: []
+  styles: [`
+    ::ng-deep mat-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+  `]
 })
 export class CustomerDeliveryOrdersComponent implements OnInit {
   deliveryOrders = signal<DeliveryOrder[]>([]);
@@ -215,14 +248,14 @@ export class CustomerDeliveryOrdersComponent implements OnInit {
 
   getStatusBadge(status: string): string {
     const badges: { [key: string]: string } = {
-      pending: '⏳ Pending',
-      accepted: '✓ Accepted',
-      'picked-up': '📦 Picked Up',
-      'in-transit': '🚚 In Transit',
-      arriving: '📍 Arriving',
-      delivered: '✓ Delivered',
-      failed: '❌ Failed',
-      cancelled: '✕ Cancelled'
+      pending: 'Pending',
+      accepted: 'Accepted',
+      'picked-up': 'Picked Up',
+      'in-transit': 'In Transit',
+      arriving: 'Arriving',
+      delivered: 'Delivered',
+      failed: 'Failed',
+      cancelled: 'Cancelled'
     };
     return badges[status] || status;
   }

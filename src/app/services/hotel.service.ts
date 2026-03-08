@@ -5,8 +5,10 @@ import { tap, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { AuthService } from './auth.service';
 
-// API URL - Cloud Functions URL
-const API_URL = 'https://us-central1-uni-backend01.cloudfunctions.net/api';
+// ⚠️ REPLACED: Firebase Cloud Functions endpoint with local backend API
+// OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api'
+// NEW: Local Node.js/Express backend
+const API_URL = 'http://localhost:5001';
 
 interface ApiResponse<T> {
   status: string;
@@ -495,66 +497,6 @@ export class HotelService {
     );
   }
 
-  // ==================== DEVICES ====================
-  getDevices(page = 1, limit = 10, status?: string, type?: string): Observable<ApiResponse<any[]>> {
-    let params = new HttpParams()
-      .set('page', page.toString())
-      .set('limit', limit.toString())
-      .set('hotelId', this.hotelId);
-
-    if (status !== undefined) params = params.set('status', status);
-    if (type) params = params.set('deviceType', type);
-
-    const url = `${API_URL}/devices`;
-    console.log('🔗 Devices API Request:', {
-      url,
-      hotelId: this.hotelId,
-      params: { page, limit, status, type }
-    });
-
-    return this.http.get<ApiResponse<any[]>>(url, { params }).pipe(
-      tap((data) => {
-        console.log('✅ Devices API Success - Received', data.data?.length, 'devices');
-      }),
-      catchError((error) => {
-        console.error('❌ Devices API Failed:', {
-          status: error.status,
-          statusText: error.statusText,
-          message: error.message,
-          url: error.url
-        });
-        throw error;
-      })
-    );
-  }
-
-  getDeviceById(deviceId: string): Observable<ApiResponse<any>> {
-    return this.http.get<ApiResponse<any>>(`${API_URL}/devices/${deviceId}`);
-  }
-
-  registerDevices(devicesData: any[]): Observable<ApiResponse<any>> {
-    return this.http.post<ApiResponse<any>>(`${API_URL}/devices`, devicesData);
-  }
-
-  createDevice(deviceData: any): Observable<ApiResponse<any>> {
-    return this.http.post<ApiResponse<any>>(`${API_URL}/devices`, [deviceData]);
-  }
-
-  updateDevice(deviceId: string, deviceData: any): Observable<ApiResponse<any>> {
-    return this.http.put<ApiResponse<any>>(`${API_URL}/devices/${deviceId}`, deviceData);
-  }
-
-  updateDeviceStatus(deviceId: string, status: boolean): Observable<ApiResponse<any>> {
-    return this.http.put<ApiResponse<any>>(
-      `${API_URL}/devices/${deviceId}/status`,
-      { status }
-    );
-  }
-
-  deleteDevices(ids: string[]): Observable<ApiResponse<any>> {
-    return this.http.post<ApiResponse<any>>(`${API_URL}/devices/remove`, { ids });
-  }
-
   // ==================== REVIEWS ====================
   getReviews(page = 1, limit = 10): Observable<ApiResponse<any[]>> {
     let params = new HttpParams()
@@ -716,4 +658,350 @@ export class HotelService {
   deleteHotel(hotelId: string): Observable<ApiResponse<any>> {
     return this.http.delete<ApiResponse<any>>(`${API_URL}/hotels/${hotelId}`);
   }
+
+  // ==================== NOTIFICATIONS ====================
+  getNotifications(page = 1, limit = 20): Observable<ApiResponse<any[]>> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('limit', limit.toString());
+
+    return this.http.get<ApiResponse<any[]>>(`${API_URL}/hotels/${this.hotelId}/notifications`, { params }).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch notifications:', error);
+        return of({ status: 'error', data: [], message: error.message });
+      })
+    );
+  }
+
+  getUnreadNotificationsCount(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/notifications/unread-count`).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch unread count:', error);
+        return of({ status: 'error', data: { count: 0 }, message: error.message });
+      })
+    );
+  }
+
+  markNotificationAsRead(notificationId: string): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/notifications/${notificationId}/read`, {}).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to mark notification as read:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  markAllNotificationsAsRead(): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/notifications/mark-all-read`, {}).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to mark all notifications as read:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  // ==================== DEVICES ====================
+  getAllDevices(page = 1, limit = 10, status?: string, deviceType?: string): Observable<ApiResponse<any[]>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('limit', limit.toString());
+
+    if (status !== undefined) params = params.set('status', status);
+    if (deviceType) params = params.set('deviceType', deviceType);
+
+    return this.http.get<ApiResponse<any[]>>(`${API_URL}/hotels/${this.hotelId}/devices`, { params }).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch devices:', error);
+        return of({ status: 'error', data: [], message: error.message });
+      })
+    );
+  }
+
+  getDeviceById(deviceId: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/devices/${deviceId}`).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch device:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  createDevice(deviceData: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/devices`, deviceData).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to create device:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  updateDevice(deviceId: string, deviceData: any): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/devices/${deviceId}`, deviceData).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to update device:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  updateDeviceStatus(deviceId: string, status: boolean): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/devices/${deviceId}/status`, { status }).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to update device status:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  deleteDevice(deviceId: string): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/devices/${deviceId}`).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to delete device:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  registerDevices(devices: any[]): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(`${API_URL}/devices/register`, devices).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to register devices:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  // ==================== TUYA DEVICE STATUS ====================
+  getDeviceStatus(deviceId: string): Observable<any> {
+    return this.http.get<any>(`${API_URL}/tuya/devices/${deviceId}/status`).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch device status:', error);
+        return of({ error: 'Failed to fetch device status' });
+      })
+    );
+  }
+
+  getDeviceLogs(deviceId: string, startTime?: number, endTime?: number, codes?: string): Observable<any> {
+    let params = new HttpParams();
+    if (startTime) params = params.set('start_time', startTime.toString());
+    if (endTime) params = params.set('end_time', endTime.toString());
+    if (codes) params = params.set('codes', codes);
+
+    return this.http.get<any>(`${API_URL}/tuya/devices/${deviceId}/logs`, { params }).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch device logs:', error);
+        return of({ error: 'Failed to fetch device logs' });
+      })
+    );
+  }
+
+  getDeviceShadowProperties(deviceId: string): Observable<any> {
+    return this.http.get<any>(`${API_URL}/tuya/devices/${deviceId}/shadow-properties`).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch shadow properties:', error);
+        return of({ error: 'Failed to fetch shadow properties' });
+      })
+    );
+  }
+
+  // ==================== AVAILABILITY CALENDAR ====================
+  updateRoomAvailability(roomId: string, date: Date, status: string): Observable<ApiResponse<any>> {
+    const dateStr = date.toISOString().split('T')[0];
+    return this.http.put<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/rooms/${roomId}/availability`,
+      { date: dateStr, status }
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to update room availability:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  bulkUpdateAvailability(updates: any[]): Observable<ApiResponse<any>> {
+    const formattedUpdates = updates.map(u => ({
+      roomId: u.roomId,
+      date: u.date.toISOString().split('T')[0],
+      status: u.status
+    }));
+
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/availability/bulk-update`,
+      { updates: formattedUpdates }
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to bulk update availability:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  getAvailabilityCalendar(month: number, year: number): Observable<ApiResponse<any>> {
+    const params = new HttpParams()
+      .set('month', month.toString())
+      .set('year', year.toString());
+
+    return this.http.get<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/availability/calendar`,
+      { params }
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch calendar:', error);
+        return of({ status: 'error', data: [], message: error.message });
+      })
+    );
+  }
+
+  // ==================== PRICING MANAGEMENT ====================
+  getPricingRates(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/pricing`
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch pricing rates:', error);
+        return of({ status: 'error', data: { baseRates: [], seasonalRates: [], discounts: [], specialOffers: [] }, message: error.message });
+      })
+    );
+  }
+
+  createBaseRate(rateData: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/pricing/base-rates`,
+      rateData
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to create base rate:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  updateBaseRate(rateId: string, rateData: any): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/pricing/base-rates/${rateId}`,
+      rateData
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to update base rate:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  deleteRate(rateId: string): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/pricing/base-rates/${rateId}`
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to delete rate:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  createSeasonalRate(seasonData: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/pricing/seasonal`,
+      seasonData
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to create seasonal rate:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  updateSeasonalRate(seasonId: string, seasonData: any): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/pricing/seasonal/${seasonId}`,
+      seasonData
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to update seasonal rate:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  deleteSeason(seasonId: string): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/pricing/seasonal/${seasonId}`
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to delete seasonal rate:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  createDiscount(discountData: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/pricing/discounts`,
+      discountData
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to create discount:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  updateDiscount(discountId: string, discountData: any): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/pricing/discounts/${discountId}`,
+      discountData
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to update discount:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  deleteDiscount(discountId: string): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/pricing/discounts/${discountId}`
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to delete discount:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  createSpecialOffer(offerData: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/pricing/special-offers`,
+      offerData
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to create special offer:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  updateSpecialOffer(offerId: string, offerData: any): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/pricing/special-offers/${offerId}`,
+      offerData
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to update special offer:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  deleteSpecial(specialId: string): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/pricing/special-offers/${specialId}`
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to delete special offer:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
 }

@@ -30,7 +30,10 @@ export interface ApiResponse<T> {
   providedIn: 'root'
 })
 export class ReviewService {
-  private apiUrl = 'https://us-central1-uni-backend01.cloudfunctions.net/api/reviews';
+  // ⚠️ REPLACED: Firebase Cloud Functions endpoint with local backend API
+  // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api/reviews'
+  // NEW: Local Node.js/Express backend
+  private apiUrl = 'http://localhost:5001/reviews';
 
   constructor(private http: HttpClient) {}
 
