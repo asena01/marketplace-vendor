@@ -129,6 +129,12 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // Reference to DeliveryPartner (for delivery vendors)
+    deliveryPartnerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'DeliveryPartner',
+      default: null,
+    },
     createdAt: {
       type: Date,
       default: Date.now,

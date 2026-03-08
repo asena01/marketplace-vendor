@@ -55,6 +55,7 @@ export interface ApiResponse<T> {
 })
 export class DeliveryService {
   private apiUrl = 'http://localhost:5001/restaurants';
+  private baseApiUrl = 'http://localhost:5001'; // Base API for non-restaurant endpoints
   private restaurantId: string = '';
   
   // Observable for real-time notifications
@@ -722,7 +723,7 @@ export class DeliveryService {
    */
   getDeliveryProviderServices(deliveryId: string): Observable<ApiResponse<any[]>> {
     return this.http.get<ApiResponse<any[]>>(
-      `${this.apiUrl}/delivery-providers/${deliveryId}/services`
+      `${this.baseApiUrl}/delivery-providers/${deliveryId}/services`
     ).pipe(
       catchError((error) => {
         console.error('Error fetching provider services:', error);
@@ -736,7 +737,7 @@ export class DeliveryService {
    */
   createDeliveryProviderService(deliveryId: string, serviceData: any): Observable<ApiResponse<any>> {
     return this.http.post<ApiResponse<any>>(
-      `${this.apiUrl}/delivery-providers/${deliveryId}/services`,
+      `${this.baseApiUrl}/delivery-providers/${deliveryId}/services`,
       serviceData
     ).pipe(
       catchError((error) => {
@@ -751,7 +752,7 @@ export class DeliveryService {
    */
   updateDeliveryProviderService(deliveryId: string, serviceId: string, updates: any): Observable<ApiResponse<any>> {
     return this.http.put<ApiResponse<any>>(
-      `${this.apiUrl}/delivery-providers/${deliveryId}/services/${serviceId}`,
+      `${this.baseApiUrl}/delivery-providers/${deliveryId}/services/${serviceId}`,
       updates
     ).pipe(
       catchError((error) => {
@@ -766,7 +767,7 @@ export class DeliveryService {
    */
   deleteDeliveryProviderService(deliveryId: string, serviceId: string): Observable<ApiResponse<any>> {
     return this.http.delete<ApiResponse<any>>(
-      `${this.apiUrl}/delivery-providers/${deliveryId}/services/${serviceId}`
+      `${this.baseApiUrl}/delivery-providers/${deliveryId}/services/${serviceId}`
     ).pipe(
       catchError((error) => {
         console.error('Error deleting provider service:', error);
