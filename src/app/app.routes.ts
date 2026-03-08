@@ -40,6 +40,10 @@ import { DeliverySupportComponent } from './pages/vendors/dashboards/restaurant-
 import { DeliveryIntegrationsComponent } from './pages/vendors/dashboards/restaurant-dashboard/delivery-integrations/delivery-integrations.component';
 import { DeliveryTrackingMonitorComponent } from './pages/vendors/dashboards/restaurant-dashboard/delivery-tracking-monitor/delivery-tracking-monitor.component';
 import { RetailProductsComponent } from './pages/vendors/dashboards/retail-dashboard/products/products.component';
+import { RetailInventoryComponent } from './pages/vendors/dashboards/retail-dashboard/inventory/inventory.component';
+import { RetailCustomersComponent } from './pages/vendors/dashboards/retail-dashboard/customers/customers.component';
+import { RetailNotificationsComponent } from './pages/vendors/dashboards/retail-dashboard/notifications/notifications.component';
+import { RetailShippingComponent } from './pages/vendors/dashboards/retail-dashboard/shipping/shipping.component';
 import { ReviewManagementComponent } from './pages/vendors/dashboards/shared/review-management/review-management.component';
 import { IncidentManagementComponent } from './pages/vendors/dashboards/shared/incident-management/incident-management.component';
 import { ProfileSettingsComponent } from './pages/vendors/dashboards/shared/profile-settings/profile-settings.component';
@@ -94,6 +98,10 @@ export const routes: Routes = [
     canActivate: [VendorGuard],
     children: [
       { path: 'products', component: RetailProductsComponent },
+      { path: 'inventory', component: RetailInventoryComponent },
+      { path: 'customers', component: RetailCustomersComponent },
+      { path: 'notifications', component: RetailNotificationsComponent },
+      { path: 'shipping', component: RetailShippingComponent },
       { path: 'reviews', component: ReviewManagementComponent },
       { path: 'incidents', component: IncidentManagementComponent },
       { path: 'settings', component: ProfileSettingsComponent }

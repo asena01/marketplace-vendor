@@ -161,18 +161,21 @@ export class VendorSidenavComponent implements OnInit {
         error: (error) => console.log('Error loading rooms:', error)
       });
     } else if (this.vendorType === 'retail') {
-      // Load low stock products count
-      this.productService.getProducts(1, 100).subscribe({
-        next: (response: any) => {
-          if (response.success && response.data) {
-            const lowStockCount = response.data.filter((product: any) => product.stock < 10).length;
-            this.productsBadge.set(lowStockCount);
-            const productsItem = this.sidenavItems.find(item => item.label === 'Products');
-            if (productsItem) productsItem.badge = lowStockCount;
-          }
-        },
-        error: (error) => console.log('Error loading products:', error)
-      });
+      // Load low stock products count for this vendor
+      const storeId = localStorage.getItem('storeId') || '';
+      if (storeId) {
+        this.productService.getVendorProducts(storeId, 1, 100).subscribe({
+          next: (response: any) => {
+            if (response.success && response.data) {
+              const lowStockCount = response.data.filter((product: any) => product.stock < 10).length;
+              this.productsBadge.set(lowStockCount);
+              const productsItem = this.sidenavItems.find(item => item.label === 'Products');
+              if (productsItem) productsItem.badge = lowStockCount;
+            }
+          },
+          error: (error) => console.log('Error loading products:', error)
+        });
+      }
     }
   }
 
@@ -227,7 +230,9 @@ export class VendorSidenavComponent implements OnInit {
       'Delivery Analytics': 'analytics',
       'Support Tickets': 'support_agent',
       'Delivery Integrations': 'link',
-      'Delivery Tracking': 'location_on'
+      'Delivery Tracking': 'location_on',
+      'Notifications': 'notifications',
+      'Shipping': 'local_shipping'
     };
     return iconMap[label] || 'circle';
   }
@@ -264,7 +269,10 @@ export class VendorSidenavComponent implements OnInit {
       items.push(
         { label: 'Products', icon: '📦', route: `${dashboardPath}/products`, badge: 0 },
         { label: 'Inventory', icon: '📊', route: `${dashboardPath}/inventory` },
-        { label: 'Customers', icon: '👥', route: `${dashboardPath}/customers` }
+        { label: 'Customers', icon: '👥', route: `${dashboardPath}/customers` },
+        { label: 'Notifications', icon: '🔔', route: `${dashboardPath}/notifications`, badge: 0 },
+        { label: 'Shipping', icon: '🚚', route: `${dashboardPath}/shipping` },
+        { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` }
       );
     }
 
