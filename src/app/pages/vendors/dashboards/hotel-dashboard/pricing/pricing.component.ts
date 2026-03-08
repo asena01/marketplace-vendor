@@ -63,7 +63,7 @@ import { HotelService } from '../../../../../services/hotel.service';
           <div class="flex items-center justify-between">
             <h2 class="text-2xl font-bold text-slate-900">Base Rates by Room Type</h2>
             <button
-              (click)="showAddRateModal()"
+              (click)="openBaseRateModal()"
               class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg transition"
             >
               ➕ Add Base Rate
@@ -97,13 +97,13 @@ import { HotelService } from '../../../../../services/hotel.service';
                       <td class="px-6 py-4 text-sm">
                         <div class="flex gap-2">
                           <button
-                            (click)="editRate(rate)"
+                            (click)="editBaseRate(rate)"
                             class="text-blue-600 hover:text-blue-700 font-medium"
                           >
                             Edit
                           </button>
                           <button
-                            (click)="deleteRate(rate._id)"
+                            (click)="deleteBaseRate(rate._id)"
                             class="text-red-600 hover:text-red-700 font-medium"
                           >
                             Delete
@@ -125,7 +125,7 @@ import { HotelService } from '../../../../../services/hotel.service';
           <div class="flex items-center justify-between">
             <h2 class="text-2xl font-bold text-slate-900">Seasonal Pricing</h2>
             <button
-              (click)="showAddSeasonalModal()"
+              (click)="openSeasonalModal()"
               class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg transition"
             >
               ➕ Add Seasonal Rate
@@ -189,7 +189,7 @@ import { HotelService } from '../../../../../services/hotel.service';
           <div class="flex items-center justify-between">
             <h2 class="text-2xl font-bold text-slate-900">Length of Stay Discounts</h2>
             <button
-              (click)="showAddDiscountModal()"
+              (click)="openDiscountModal()"
               class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg transition"
             >
               ➕ Add Discount
@@ -257,7 +257,7 @@ import { HotelService } from '../../../../../services/hotel.service';
           <div class="flex items-center justify-between">
             <h2 class="text-2xl font-bold text-slate-900">Special Offers</h2>
             <button
-              (click)="showAddSpecialModal()"
+              (click)="openSpecialModal()"
               class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg transition"
             >
               ➕ Add Special Offer
@@ -328,6 +328,300 @@ import { HotelService } from '../../../../../services/hotel.service';
           <p class="font-semibold">✗ {{ errorMessage() }}</p>
         </div>
       }
+
+      <!-- Base Rate Modal -->
+      @if (showBaseRateModal()) {
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div class="bg-white rounded-xl shadow-lg p-8 w-full max-w-md">
+            <h2 class="text-2xl font-bold text-slate-900 mb-6">
+              {{ editingRateId ? '✏️ Edit Base Rate' : '➕ Add Base Rate' }}
+            </h2>
+
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Room Type (required)</label>
+                <input
+                  type="text"
+                  [(ngModel)]="baseRateForm.roomType"
+                  placeholder="e.g., Single, Double, Suite"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Base Price (₦) (required)</label>
+                <input
+                  type="number"
+                  [(ngModel)]="baseRateForm.basePrice"
+                  placeholder="e.g., 50000"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Minimum Stay (nights)</label>
+                <input
+                  type="number"
+                  [(ngModel)]="baseRateForm.minStay"
+                  placeholder="1"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Capacity (guests)</label>
+                <input
+                  type="number"
+                  [(ngModel)]="baseRateForm.capacity"
+                  placeholder="2"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600"
+                />
+              </div>
+            </div>
+
+            <div class="flex gap-4 mt-6">
+              <button
+                (click)="saveBaseRate()"
+                class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg transition"
+              >
+                {{ editingRateId ? 'Update' : 'Create' }}
+              </button>
+              <button
+                (click)="closeBaseRateModal()"
+                class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-900 font-bold py-2 px-4 rounded-lg transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Seasonal Rate Modal -->
+      @if (showSeasonalModal()) {
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div class="bg-white rounded-xl shadow-lg p-8 w-full max-w-md max-h-96 overflow-y-auto">
+            <h2 class="text-2xl font-bold text-slate-900 mb-6">
+              {{ editingSeasonId ? '✏️ Edit Seasonal Rate' : '➕ Add Seasonal Rate' }}
+            </h2>
+
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Season Name (required)</label>
+                <input
+                  type="text"
+                  [(ngModel)]="seasonalForm.seasonName"
+                  placeholder="e.g., Peak Season, Holiday"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Start Date (required)</label>
+                <input
+                  type="date"
+                  [(ngModel)]="seasonalForm.startDate"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">End Date (required)</label>
+                <input
+                  type="date"
+                  [(ngModel)]="seasonalForm.endDate"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Price Multiplier (required)</label>
+                <input
+                  type="number"
+                  [(ngModel)]="seasonalForm.priceMultiplier"
+                  step="0.1"
+                  placeholder="1.5"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600"
+                />
+              </div>
+              <div class="flex items-center">
+                <input
+                  type="checkbox"
+                  [(ngModel)]="seasonalForm.active"
+                  id="seasonal-active"
+                  class="w-4 h-4 text-emerald-600"
+                />
+                <label for="seasonal-active" class="ml-2 text-sm font-medium text-slate-700">Active</label>
+              </div>
+            </div>
+
+            <div class="flex gap-4 mt-6">
+              <button
+                (click)="saveSeason()"
+                class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg transition"
+              >
+                {{ editingSeasonId ? 'Update' : 'Create' }}
+              </button>
+              <button
+                (click)="closeSeasonalModal()"
+                class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-900 font-bold py-2 px-4 rounded-lg transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Discount Modal -->
+      @if (showDiscountModal()) {
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div class="bg-white rounded-xl shadow-lg p-8 w-full max-w-md">
+            <h2 class="text-2xl font-bold text-slate-900 mb-6">
+              {{ editingDiscountId ? '✏️ Edit Discount' : '➕ Add Discount' }}
+            </h2>
+
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Minimum Nights (required)</label>
+                <input
+                  type="number"
+                  [(ngModel)]="discountForm.minNights"
+                  placeholder="7"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Discount % (required)</label>
+                <input
+                  type="number"
+                  [(ngModel)]="discountForm.discountPercent"
+                  placeholder="10"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Description</label>
+                <input
+                  type="text"
+                  [(ngModel)]="discountForm.description"
+                  placeholder="e.g., 10% off for weekly stays"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600"
+                />
+              </div>
+              <div class="flex items-center">
+                <input
+                  type="checkbox"
+                  [(ngModel)]="discountForm.active"
+                  id="discount-active"
+                  class="w-4 h-4 text-emerald-600"
+                />
+                <label for="discount-active" class="ml-2 text-sm font-medium text-slate-700">Active</label>
+              </div>
+            </div>
+
+            <div class="flex gap-4 mt-6">
+              <button
+                (click)="saveDiscount()"
+                class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg transition"
+              >
+                {{ editingDiscountId ? 'Update' : 'Create' }}
+              </button>
+              <button
+                (click)="closeDiscountModal()"
+                class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-900 font-bold py-2 px-4 rounded-lg transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Special Offer Modal -->
+      @if (showSpecialModal()) {
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div class="bg-white rounded-xl shadow-lg p-8 w-full max-w-md max-h-96 overflow-y-auto">
+            <h2 class="text-2xl font-bold text-slate-900 mb-6">
+              {{ editingSpecialId ? '✏️ Edit Special Offer' : '➕ Add Special Offer' }}
+            </h2>
+
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Offer Name (required)</label>
+                <input
+                  type="text"
+                  [(ngModel)]="specialForm.offerName"
+                  placeholder="e.g., Early Bird Discount"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Description</label>
+                <textarea
+                  [(ngModel)]="specialForm.description"
+                  placeholder="Describe your offer"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600"
+                  rows="2"
+                ></textarea>
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Discount Value (required)</label>
+                <input
+                  type="number"
+                  [(ngModel)]="specialForm.discountValue"
+                  placeholder="5000"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Discount Type</label>
+                <select
+                  [(ngModel)]="specialForm.discountType"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600"
+                >
+                  <option value="percentage">Percentage (%)</option>
+                  <option value="fixed">Fixed Amount (₦)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Valid From (required)</label>
+                <input
+                  type="date"
+                  [(ngModel)]="specialForm.validFrom"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Valid Until (required)</label>
+                <input
+                  type="date"
+                  [(ngModel)]="specialForm.validUntil"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600"
+                />
+              </div>
+              <div class="flex items-center">
+                <input
+                  type="checkbox"
+                  [(ngModel)]="specialForm.active"
+                  id="special-active"
+                  class="w-4 h-4 text-emerald-600"
+                />
+                <label for="special-active" class="ml-2 text-sm font-medium text-slate-700">Active</label>
+              </div>
+            </div>
+
+            <div class="flex gap-4 mt-6">
+              <button
+                (click)="saveSpecial()"
+                class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg transition"
+              >
+                {{ editingSpecialId ? 'Update' : 'Create' }}
+              </button>
+              <button
+                (click)="closeSpecialModal()"
+                class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-900 font-bold py-2 px-4 rounded-lg transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      }
     </div>
   `,
   styles: []
@@ -341,6 +635,24 @@ export class PricingComponent implements OnInit {
   activeTab = 'base-rates';
   successMessage = signal('');
   errorMessage = signal('');
+
+  // Modals
+  showBaseRateModal = signal(false);
+  showSeasonalModal = signal(false);
+  showDiscountModal = signal(false);
+  showSpecialModal = signal(false);
+
+  // Editing flags
+  editingRateId = '';
+  editingSeasonId = '';
+  editingDiscountId = '';
+  editingSpecialId = '';
+
+  // Form data
+  baseRateForm: any = { roomType: '', basePrice: 0, minStay: 1, capacity: 2 };
+  seasonalForm: any = { seasonName: '', startDate: '', endDate: '', priceMultiplier: 1.5, active: true };
+  discountForm: any = { minNights: 7, discountPercent: 10, description: '', active: true };
+  specialForm: any = { offerName: '', description: '', discountValue: 0, discountType: 'percentage', validFrom: '', validUntil: '', active: true };
 
   constructor(private hotelService: HotelService) {}
 
@@ -362,93 +674,284 @@ export class PricingComponent implements OnInit {
     });
   }
 
-  // Base Rates Methods
-  showAddRateModal(): void {
-    // In a real implementation, show a modal form
-    alert('Add base rate form would appear here');
+  // ==================== BASE RATES ====================
+  openBaseRateModal(): void {
+    this.editingRateId = '';
+    this.baseRateForm = { roomType: '', basePrice: 0, minStay: 1, capacity: 2 };
+    this.showBaseRateModal.set(true);
   }
 
-  editRate(rate: any): void {
-    alert(`Edit rate: ${rate.roomType}`);
+  editBaseRate(rate: any): void {
+    this.editingRateId = rate._id;
+    this.baseRateForm = { ...rate };
+    this.showBaseRateModal.set(true);
   }
 
-  deleteRate(rateId: string): void {
-    if (confirm('Delete this base rate?')) {
-      this.hotelService.deleteRate(rateId).subscribe({
+  saveBaseRate(): void {
+    if (!this.baseRateForm.roomType || !this.baseRateForm.basePrice) {
+      this.errorMessage.set('Room type and base price are required');
+      setTimeout(() => this.errorMessage.set(''), 3000);
+      return;
+    }
+
+    if (this.editingRateId) {
+      this.hotelService.updateBaseRate(this.editingRateId, this.baseRateForm).subscribe({
         next: () => {
-          this.successMessage.set('Base rate deleted');
+          this.successMessage.set('Base rate updated successfully');
           setTimeout(() => this.successMessage.set(''), 3000);
           this.loadPricingData();
+          this.closeBaseRateModal();
         },
-        error: () => this.errorMessage.set('Failed to delete rate')
+        error: () => {
+          this.errorMessage.set('Failed to update base rate');
+          setTimeout(() => this.errorMessage.set(''), 3000);
+        }
+      });
+    } else {
+      this.hotelService.createBaseRate(this.baseRateForm).subscribe({
+        next: () => {
+          this.successMessage.set('Base rate created successfully');
+          setTimeout(() => this.successMessage.set(''), 3000);
+          this.loadPricingData();
+          this.closeBaseRateModal();
+        },
+        error: () => {
+          this.errorMessage.set('Failed to create base rate');
+          setTimeout(() => this.errorMessage.set(''), 3000);
+        }
       });
     }
   }
 
-  // Seasonal Rates Methods
-  showAddSeasonalModal(): void {
-    alert('Add seasonal rate form would appear here');
+  deleteBaseRate(rateId: string): void {
+    if (!confirm('Delete this base rate?')) return;
+    this.hotelService.deleteRate(rateId).subscribe({
+      next: () => {
+        this.successMessage.set('Base rate deleted successfully');
+        setTimeout(() => this.successMessage.set(''), 3000);
+        this.loadPricingData();
+      },
+      error: () => {
+        this.errorMessage.set('Failed to delete base rate');
+        setTimeout(() => this.errorMessage.set(''), 3000);
+      }
+    });
+  }
+
+  closeBaseRateModal(): void {
+    this.showBaseRateModal.set(false);
+    this.editingRateId = '';
+    this.baseRateForm = { roomType: '', basePrice: 0, minStay: 1, capacity: 2 };
+  }
+
+  // ==================== SEASONAL RATES ====================
+  openSeasonalModal(): void {
+    this.editingSeasonId = '';
+    this.seasonalForm = { seasonName: '', startDate: '', endDate: '', priceMultiplier: 1.5, active: true };
+    this.showSeasonalModal.set(true);
   }
 
   editSeason(season: any): void {
-    alert(`Edit season: ${season.seasonName}`);
+    this.editingSeasonId = season._id;
+    this.seasonalForm = { ...season };
+    this.showSeasonalModal.set(true);
+  }
+
+  saveSeason(): void {
+    if (!this.seasonalForm.seasonName || !this.seasonalForm.startDate || !this.seasonalForm.endDate || !this.seasonalForm.priceMultiplier) {
+      this.errorMessage.set('All fields are required');
+      setTimeout(() => this.errorMessage.set(''), 3000);
+      return;
+    }
+
+    if (this.editingSeasonId) {
+      this.hotelService.updateSeasonalRate(this.editingSeasonId, this.seasonalForm).subscribe({
+        next: () => {
+          this.successMessage.set('Seasonal rate updated successfully');
+          setTimeout(() => this.successMessage.set(''), 3000);
+          this.loadPricingData();
+          this.closeSeasonalModal();
+        },
+        error: () => {
+          this.errorMessage.set('Failed to update seasonal rate');
+          setTimeout(() => this.errorMessage.set(''), 3000);
+        }
+      });
+    } else {
+      this.hotelService.createSeasonalRate(this.seasonalForm).subscribe({
+        next: () => {
+          this.successMessage.set('Seasonal rate created successfully');
+          setTimeout(() => this.successMessage.set(''), 3000);
+          this.loadPricingData();
+          this.closeSeasonalModal();
+        },
+        error: () => {
+          this.errorMessage.set('Failed to create seasonal rate');
+          setTimeout(() => this.errorMessage.set(''), 3000);
+        }
+      });
+    }
   }
 
   deleteSeason(seasonId: string): void {
-    if (confirm('Delete this seasonal rate?')) {
-      this.hotelService.deleteSeason(seasonId).subscribe({
-        next: () => {
-          this.successMessage.set('Seasonal rate deleted');
-          setTimeout(() => this.successMessage.set(''), 3000);
-          this.loadPricingData();
-        },
-        error: () => this.errorMessage.set('Failed to delete season')
-      });
-    }
+    if (!confirm('Delete this seasonal rate?')) return;
+    this.hotelService.deleteSeason(seasonId).subscribe({
+      next: () => {
+        this.successMessage.set('Seasonal rate deleted successfully');
+        setTimeout(() => this.successMessage.set(''), 3000);
+        this.loadPricingData();
+      },
+      error: () => {
+        this.errorMessage.set('Failed to delete seasonal rate');
+        setTimeout(() => this.errorMessage.set(''), 3000);
+      }
+    });
   }
 
-  // Discounts Methods
-  showAddDiscountModal(): void {
-    alert('Add discount form would appear here');
+  closeSeasonalModal(): void {
+    this.showSeasonalModal.set(false);
+    this.editingSeasonId = '';
+    this.seasonalForm = { seasonName: '', startDate: '', endDate: '', priceMultiplier: 1.5, active: true };
+  }
+
+  // ==================== DISCOUNTS ====================
+  openDiscountModal(): void {
+    this.editingDiscountId = '';
+    this.discountForm = { minNights: 7, discountPercent: 10, description: '', active: true };
+    this.showDiscountModal.set(true);
   }
 
   editDiscount(discount: any): void {
-    alert(`Edit discount: ${discount.minNights} nights`);
+    this.editingDiscountId = discount._id;
+    this.discountForm = { ...discount };
+    this.showDiscountModal.set(true);
+  }
+
+  saveDiscount(): void {
+    if (!this.discountForm.minNights || !this.discountForm.discountPercent) {
+      this.errorMessage.set('Minimum nights and discount percentage are required');
+      setTimeout(() => this.errorMessage.set(''), 3000);
+      return;
+    }
+
+    if (this.editingDiscountId) {
+      this.hotelService.updateDiscount(this.editingDiscountId, this.discountForm).subscribe({
+        next: () => {
+          this.successMessage.set('Discount updated successfully');
+          setTimeout(() => this.successMessage.set(''), 3000);
+          this.loadPricingData();
+          this.closeDiscountModal();
+        },
+        error: () => {
+          this.errorMessage.set('Failed to update discount');
+          setTimeout(() => this.errorMessage.set(''), 3000);
+        }
+      });
+    } else {
+      this.hotelService.createDiscount(this.discountForm).subscribe({
+        next: () => {
+          this.successMessage.set('Discount created successfully');
+          setTimeout(() => this.successMessage.set(''), 3000);
+          this.loadPricingData();
+          this.closeDiscountModal();
+        },
+        error: () => {
+          this.errorMessage.set('Failed to create discount');
+          setTimeout(() => this.errorMessage.set(''), 3000);
+        }
+      });
+    }
   }
 
   deleteDiscount(discountId: string): void {
-    if (confirm('Delete this discount?')) {
-      this.hotelService.deleteDiscount(discountId).subscribe({
-        next: () => {
-          this.successMessage.set('Discount deleted');
-          setTimeout(() => this.successMessage.set(''), 3000);
-          this.loadPricingData();
-        },
-        error: () => this.errorMessage.set('Failed to delete discount')
-      });
-    }
+    if (!confirm('Delete this discount?')) return;
+    this.hotelService.deleteDiscount(discountId).subscribe({
+      next: () => {
+        this.successMessage.set('Discount deleted successfully');
+        setTimeout(() => this.successMessage.set(''), 3000);
+        this.loadPricingData();
+      },
+      error: () => {
+        this.errorMessage.set('Failed to delete discount');
+        setTimeout(() => this.errorMessage.set(''), 3000);
+      }
+    });
   }
 
-  // Special Offers Methods
-  showAddSpecialModal(): void {
-    alert('Add special offer form would appear here');
+  closeDiscountModal(): void {
+    this.showDiscountModal.set(false);
+    this.editingDiscountId = '';
+    this.discountForm = { minNights: 7, discountPercent: 10, description: '', active: true };
+  }
+
+  // ==================== SPECIAL OFFERS ====================
+  openSpecialModal(): void {
+    this.editingSpecialId = '';
+    this.specialForm = { offerName: '', description: '', discountValue: 0, discountType: 'percentage', validFrom: '', validUntil: '', active: true };
+    this.showSpecialModal.set(true);
   }
 
   editSpecial(special: any): void {
-    alert(`Edit offer: ${special.offerName}`);
+    this.editingSpecialId = special._id;
+    this.specialForm = { ...special };
+    this.showSpecialModal.set(true);
+  }
+
+  saveSpecial(): void {
+    if (!this.specialForm.offerName || !this.specialForm.discountValue || !this.specialForm.validFrom || !this.specialForm.validUntil) {
+      this.errorMessage.set('Offer name, discount value, and dates are required');
+      setTimeout(() => this.errorMessage.set(''), 3000);
+      return;
+    }
+
+    if (this.editingSpecialId) {
+      this.hotelService.updateSpecialOffer(this.editingSpecialId, this.specialForm).subscribe({
+        next: () => {
+          this.successMessage.set('Special offer updated successfully');
+          setTimeout(() => this.successMessage.set(''), 3000);
+          this.loadPricingData();
+          this.closeSpecialModal();
+        },
+        error: () => {
+          this.errorMessage.set('Failed to update special offer');
+          setTimeout(() => this.errorMessage.set(''), 3000);
+        }
+      });
+    } else {
+      this.hotelService.createSpecialOffer(this.specialForm).subscribe({
+        next: () => {
+          this.successMessage.set('Special offer created successfully');
+          setTimeout(() => this.successMessage.set(''), 3000);
+          this.loadPricingData();
+          this.closeSpecialModal();
+        },
+        error: () => {
+          this.errorMessage.set('Failed to create special offer');
+          setTimeout(() => this.errorMessage.set(''), 3000);
+        }
+      });
+    }
   }
 
   deleteSpecial(specialId: string): void {
-    if (confirm('Delete this special offer?')) {
-      this.hotelService.deleteSpecial(specialId).subscribe({
-        next: () => {
-          this.successMessage.set('Special offer deleted');
-          setTimeout(() => this.successMessage.set(''), 3000);
-          this.loadPricingData();
-        },
-        error: () => this.errorMessage.set('Failed to delete offer')
-      });
-    }
+    if (!confirm('Delete this special offer?')) return;
+    this.hotelService.deleteSpecial(specialId).subscribe({
+      next: () => {
+        this.successMessage.set('Special offer deleted successfully');
+        setTimeout(() => this.successMessage.set(''), 3000);
+        this.loadPricingData();
+      },
+      error: () => {
+        this.errorMessage.set('Failed to delete special offer');
+        setTimeout(() => this.errorMessage.set(''), 3000);
+      }
+    });
+  }
+
+  closeSpecialModal(): void {
+    this.showSpecialModal.set(false);
+    this.editingSpecialId = '';
+    this.specialForm = { offerName: '', description: '', discountValue: 0, discountType: 'percentage', validFrom: '', validUntil: '', active: true };
   }
 
   formatDate(dateString: string): string {
