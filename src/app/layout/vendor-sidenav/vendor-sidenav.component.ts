@@ -35,14 +35,17 @@ interface SidenavItem {
           @for (item of sidenavItems; track item.route) {
             <a
               [routerLink]="item.route"
-              routerLinkActive="bg-blue-600"
-              [routerLinkActiveOptions]="{ exact: false }"
-              class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors relative group"
+              routerLinkActive="active-link"
+              [routerLinkActiveOptions]="{ exact: true }"
+              class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-all duration-200 relative group text-slate-300 hover:text-white"
             >
-              <span class="text-xl">{{ item.icon }}</span>
-              <span class="flex-1">{{ item.label }}</span>
+              <!-- Icon with improved styling -->
+              <span class="text-lg font-semibold w-6 flex items-center justify-center">
+                {{ getIconForLabel(item.label) }}
+              </span>
+              <span class="flex-1 font-medium">{{ item.label }}</span>
               @if (item.badge && item.badge > 0) {
-                <span class="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                <span class="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
                   {{ item.badge }}
                 </span>
               }
@@ -65,7 +68,7 @@ interface SidenavItem {
         
         <button
           (click)="onLogout()"
-          class="w-full flex items-center gap-3 px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors text-sm"
+          class="w-full flex items-center gap-3 px-4 py-3 text-slate-300 hover:text-white hover:bg-red-900/50 rounded-lg transition-all duration-200 text-sm font-medium"
         >
           <span class="text-lg">🚪</span>
           <span>Logout</span>
@@ -76,6 +79,15 @@ interface SidenavItem {
   styles: [`
     :host {
       display: block;
+    }
+
+    a.active-link {
+      @apply bg-blue-600 text-white shadow-lg;
+    }
+
+    a.active-link::before {
+      content: '';
+      @apply absolute left-0 top-0 bottom-0 w-1 bg-blue-400 rounded-r-lg;
     }
   `]
 })
@@ -113,6 +125,27 @@ export class VendorSidenavComponent {
       'delivery': '🚚'
     };
     this.vendorTypeIcon = icons[this.vendorType] || '🏢';
+  }
+
+  getIconForLabel(label: string): string {
+    const iconMap: { [key: string]: string } = {
+      'Dashboard': '📊',
+      'Orders': '📋',
+      'Menu': '🍔',
+      'Rooms': '🛏️',
+      'Staff': '👔',
+      'Products': '🏷️',
+      'Bookings': '📅',
+      'Inventory': '📦',
+      'Customers': '👥',
+      'Reports': '📈',
+      'Settings': '⚙️',
+      'Reviews': '⭐',
+      'Incidents': '🚨',
+      'Devices': '📱',
+      'Guests': '👥'
+    };
+    return iconMap[label] || '•';
   }
 
   getDefaultItems(): SidenavItem[] {
