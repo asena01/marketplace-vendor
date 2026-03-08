@@ -46,6 +46,9 @@ import { RetailNotificationsComponent } from './pages/vendors/dashboards/retail-
 import { RetailShippingComponent } from './pages/vendors/dashboards/retail-dashboard/shipping/shipping.component';
 import { RetailDeliveryIntegrationsComponent } from './pages/vendors/dashboards/retail-dashboard/delivery-integrations/delivery-integrations.component';
 import { RetailDeliveryTrackingComponent } from './pages/vendors/dashboards/retail-dashboard/delivery-tracking/delivery-tracking.component';
+import { OrdersComponent } from './pages/vendors/dashboards/retail-dashboard/orders/orders.component';
+import { PaymentsComponent } from './pages/vendors/dashboards/retail-dashboard/payments/payments.component';
+import { ReturnsComponent } from './pages/vendors/dashboards/retail-dashboard/returns/returns.component';
 import { ReviewManagementComponent } from './pages/vendors/dashboards/shared/review-management/review-management.component';
 import { IncidentManagementComponent } from './pages/vendors/dashboards/shared/incident-management/incident-management.component';
 import { ProfileSettingsComponent } from './pages/vendors/dashboards/shared/profile-settings/profile-settings.component';
@@ -101,6 +104,9 @@ export const routes: Routes = [
     children: [
       { path: 'products', component: RetailProductsComponent },
       { path: 'inventory', component: RetailInventoryComponent },
+      { path: 'orders', component: OrdersComponent },
+      { path: 'payments', component: PaymentsComponent },
+      { path: 'returns', component: ReturnsComponent },
       { path: 'customers', component: RetailCustomersComponent },
       { path: 'notifications', component: RetailNotificationsComponent },
       { path: 'shipping', component: RetailShippingComponent },

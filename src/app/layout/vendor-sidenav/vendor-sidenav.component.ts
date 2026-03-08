@@ -218,6 +218,8 @@ export class VendorSidenavComponent implements OnInit {
       'Bookings': 'event_note',
       'Inventory': 'warehouse',
       'Customers': 'people_outline',
+      'Payments': 'payments',
+      'Returns': 'undo',
       'Reports': 'assessment',
       'Settings': 'settings',
       'Reviews': 'star',
@@ -269,6 +271,9 @@ export class VendorSidenavComponent implements OnInit {
       items.push(
         { label: 'Products', icon: '📦', route: `${dashboardPath}/products`, badge: 0 },
         { label: 'Inventory', icon: '📊', route: `${dashboardPath}/inventory` },
+        { label: 'Orders', icon: '📋', route: `${dashboardPath}/orders`, badge: 0 },
+        { label: 'Payments', icon: '💳', route: `${dashboardPath}/payments` },
+        { label: 'Returns', icon: '↩️', route: `${dashboardPath}/returns` },
         { label: 'Customers', icon: '👥', route: `${dashboardPath}/customers` },
         { label: 'Notifications', icon: '🔔', route: `${dashboardPath}/notifications`, badge: 0 },
         { label: 'Shipping', icon: '🚚', route: `${dashboardPath}/shipping` },
