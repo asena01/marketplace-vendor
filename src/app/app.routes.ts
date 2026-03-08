@@ -27,6 +27,8 @@ import { RetailDashboardComponent } from './pages/vendors/dashboards/retail-dash
 import { ServiceDashboardComponent } from './pages/vendors/dashboards/service-dashboard/service-dashboard.component';
 import { ToursDashboardComponent } from './pages/vendors/dashboards/tours-dashboard/tours-dashboard.component';
 import { DeviceManagementComponent } from './pages/vendors/dashboards/hotel-dashboard/device-management/device-management.component';
+import { HotelRoomsComponent } from './pages/vendors/dashboards/hotel-dashboard/rooms/rooms.component';
+import { HotelStaffComponent } from './pages/vendors/dashboards/hotel-dashboard/staff/staff.component';
 import { ReviewManagementComponent } from './pages/vendors/dashboards/shared/review-management/review-management.component';
 import { IncidentManagementComponent } from './pages/vendors/dashboards/shared/incident-management/incident-management.component';
 import { VendorGuard } from './guards/vendor.guard';
@@ -41,6 +43,8 @@ export const routes: Routes = [
   { path: 'delivery-dashboard', component: DeliveryDashboardComponent, canActivate: [VendorGuard] },
   // Hotel Dashboard Routes - Specific routes BEFORE catch-all
   { path: 'hotel-dashboard/devices', component: DeviceManagementComponent, canActivate: [VendorGuard] },
+  { path: 'hotel-dashboard/rooms', component: HotelRoomsComponent, canActivate: [VendorGuard] },
+  { path: 'hotel-dashboard/staff', component: HotelStaffComponent, canActivate: [VendorGuard] },
   { path: 'hotel-dashboard/reviews', component: ReviewManagementComponent, canActivate: [VendorGuard] },
   { path: 'hotel-dashboard/incidents', component: IncidentManagementComponent, canActivate: [VendorGuard] },
   { path: 'hotel-dashboard/:page', component: HotelDashboardComponent, canActivate: [VendorGuard] },
