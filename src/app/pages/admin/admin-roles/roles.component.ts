@@ -335,22 +335,36 @@ export class RolesComponent implements OnInit {
   loadRoles(): void {
     this.adminService.getRoles().subscribe({
       next: (response: any) => {
-        if (response.status === 'success' && response.data) {
+        console.log('Roles response:', response);
+        if ((response.status === 'success' || response.success) && response.data) {
           this.roles.set(response.data);
+        } else {
+          console.warn('Unexpected roles response format:', response);
+          this.roles.set([]);
         }
       },
-      error: (error: any) => console.error('Error loading roles:', error)
+      error: (error: any) => {
+        console.error('Error loading roles:', error);
+        this.roles.set([]);
+      }
     });
   }
 
   loadPermissions(): void {
     this.adminService.getPermissions().subscribe({
       next: (response: any) => {
-        if (response.status === 'success' && response.data) {
+        console.log('Permissions response:', response);
+        if ((response.status === 'success' || response.success) && response.data) {
           this.permissions.set(response.data);
+        } else {
+          console.warn('Unexpected permissions response format:', response);
+          this.permissions.set([]);
         }
       },
-      error: (error: any) => console.error('Error loading permissions:', error)
+      error: (error: any) => {
+        console.error('Error loading permissions:', error);
+        this.permissions.set([]);
+      }
     });
   }
 
