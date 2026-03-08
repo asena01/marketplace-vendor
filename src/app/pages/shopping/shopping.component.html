@@ -66,9 +66,10 @@
           @for (category of categories; track category.id) {
             <button
               (click)="selectedCategory.set(category.name)"
-              [class]="'w-full text-left px-4 py-2 rounded-lg transition ' + (selectedCategory() === category.name ? 'bg-red-500 text-white font-bold' : 'text-gray-700 hover:bg-gray-100')"
+              [class]="'w-full text-left px-4 py-2 rounded-lg transition flex items-center gap-2 ' + (selectedCategory() === category.name ? 'bg-red-500 text-white font-bold' : 'text-gray-700 hover:bg-gray-100')"
             >
-              {{ category.icon }} {{ category.name }}
+              <mat-icon class="text-lg">{{ category.icon }}</mat-icon>
+              <span>{{ category.name }}</span>
             </button>
           }
         </div>

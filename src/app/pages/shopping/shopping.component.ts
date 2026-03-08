@@ -37,7 +37,15 @@ interface CartItem {
   standalone: true,
   imports: [CommonModule, HeaderComponent, FormsModule, MatIconModule],
   templateUrl: './shopping.component.html',
-  styleUrl: './shopping.component.css'
+  styleUrl: './shopping.component.css',
+  styles: [`
+    ::ng-deep mat-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      vertical-align: middle;
+    }
+  `]
 })
 export class ShoppingComponent implements OnInit {
   shoppingService = MARKETPLACE_SERVICES.find(s => s.id === 'shopping')!;
