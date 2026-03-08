@@ -333,7 +333,10 @@
           <!-- Product Comparison -->
           @if (cart().length > 1) {
             <div class="mb-4 p-3 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200">
-              <h4 class="font-bold text-gray-900 mb-2 text-sm">📊 Cart Summary</h4>
+              <div class="flex items-center gap-2 mb-2">
+                <mat-icon class="text-blue-600 text-sm">analytics</mat-icon>
+                <h4 class="font-bold text-gray-900 text-sm">Cart Summary</h4>
+              </div>
               <div class="space-y-1 text-xs">
                 <div class="flex justify-between">
                   <span class="text-gray-600">Total Items:</span>
@@ -677,7 +680,10 @@
             <!-- Wallet -->
             @case ('wallet') {
               <div class="space-y-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <h4 class="font-bold text-gray-900">💰 Digital Wallet</h4>
+                <div class="flex items-center gap-2">
+                  <mat-icon class="text-blue-600">account_balance_wallet</mat-icon>
+                  <h4 class="font-bold text-gray-900">Digital Wallet</h4>
+                </div>
                 <p class="text-sm text-gray-600">Your wallet balance will be used to complete this payment.</p>
                 <div class="p-3 bg-white rounded border border-blue-300">
                   <p class="text-sm text-gray-600">Wallet Balance: <span class="font-bold text-blue-600">₦2,500.00</span></p>

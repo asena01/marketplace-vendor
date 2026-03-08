@@ -428,11 +428,11 @@ export class ShoppingComponent implements OnInit {
 
   private loadDefaultPaymentMethods(): void {
     const defaultMethods: PaymentMethod[] = [
-      { id: 'credit_card', name: 'Credit Card', icon: '💳', description: 'Visa, Mastercard, Amex' },
-      { id: 'debit_card', name: 'Debit Card', icon: '🏦', description: 'Bank Debit Card' },
-      { id: 'bank_transfer', name: 'Bank Transfer', icon: '🏪', description: 'Direct bank transfer' },
-      { id: 'mobile_money', name: 'Mobile Money', icon: '📱', description: 'MTN, Airtel, Vodafone' },
-      { id: 'wallet', name: 'Digital Wallet', icon: '💰', description: 'Use your wallet balance' }
+      { id: 'credit_card', name: 'Credit Card', icon: 'credit_card', description: 'Visa, Mastercard, Amex' },
+      { id: 'debit_card', name: 'Debit Card', icon: 'account_balance', description: 'Bank Debit Card' },
+      { id: 'bank_transfer', name: 'Bank Transfer', icon: 'business', description: 'Direct bank transfer' },
+      { id: 'mobile_money', name: 'Mobile Money', icon: 'phone_android', description: 'MTN, Airtel, Vodafone' },
+      { id: 'wallet', name: 'Digital Wallet', icon: 'account_balance_wallet', description: 'Use your wallet balance' }
     ];
     this.paymentMethods.set(defaultMethods);
   }
@@ -476,7 +476,7 @@ export class ShoppingComponent implements OnInit {
         price: item.product.price,
         quantity: item.quantity,
         category: item.product.category,
-        image: item.product.icon || item.product.images?.[0] || '📦'
+        image: item.product.icon || item.product.images?.[0] || 'inventory_2'
       })),
       userId: userId,
       userEmail: userEmail,
