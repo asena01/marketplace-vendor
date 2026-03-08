@@ -71,7 +71,10 @@ export interface DeliveryConfiguration {
   providedIn: 'root'
 })
 export class DeliveryService {
-  private apiUrl = 'https://us-central1-uni-backend01.cloudfunctions.net/api/delivery-admin';
+  // ⚠️ REPLACED: Firebase Cloud Functions endpoint with local backend API
+  // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api/delivery-admin'
+  // NEW: Local Node.js/Express backend
+  private apiUrl = 'http://localhost:5001/delivery-admin';
 
   constructor(private http: HttpClient) {}
 

@@ -35,7 +35,10 @@ export interface FurnitureResponse {
   providedIn: 'root'
 })
 export class FurnitureService {
-  private apiUrl = 'https://us-central1-uni-backend01.cloudfunctions.net/api/furniture';
+  // ⚠️ REPLACED: Firebase Cloud Functions endpoint with local backend API
+  // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api/furniture'
+  // NEW: Local Node.js/Express backend
+  private apiUrl = 'http://localhost:5001/furniture';
 
   constructor(private http: HttpClient) {}
 

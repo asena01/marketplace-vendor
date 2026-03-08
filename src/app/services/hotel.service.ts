@@ -5,8 +5,10 @@ import { tap, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { AuthService } from './auth.service';
 
-// API URL - Cloud Functions URL
-const API_URL = 'https://us-central1-uni-backend01.cloudfunctions.net/api';
+// ⚠️ REPLACED: Firebase Cloud Functions endpoint with local backend API
+// OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api'
+// NEW: Local Node.js/Express backend
+const API_URL = 'http://localhost:5001';
 
 interface ApiResponse<T> {
   status: string;

@@ -34,6 +34,7 @@ import paymentRoutes from './routes/payments.js';
 import vendorRoutes from './routes/vendors.js';
 import vendorAnalyticsRoutes from './routes/vendorAnalytics.js';
 import deliveryAdminRoutes from './routes/deliveryAdmin.js';
+import uploadRoutes from './routes/uploads.js';
 
 // Load environment variables
 dotenv.config();
@@ -266,6 +267,9 @@ app.use('/vendor-analytics', vendorAnalyticsRoutes);
 app.use('/delivery-admin', deliveryAdminRoutes);
 
 app.use('/devices', deviceRoutes);
+
+// Upload Routes (replaces Firebase Storage) - API endpoint for file operations
+app.use('/api/upload', uploadRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

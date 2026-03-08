@@ -62,7 +62,10 @@ export interface ApiResponse<T> {
   providedIn: 'root'
 })
 export class FoodService {
-  private apiUrl = 'https://us-central1-uni-backend01.cloudfunctions.net/api/restaurants';
+  // ⚠️ REPLACED: Firebase Cloud Functions endpoint with local backend API
+  // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api/restaurants'
+  // NEW: Local Node.js/Express backend
+  private apiUrl = 'http://localhost:5001/restaurants';
 
   constructor(private http: HttpClient) {}
 

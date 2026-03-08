@@ -13,7 +13,10 @@ interface ApiResponse<T> {
   providedIn: 'root'
 })
 export class CustomerService {
-  private apiUrl = 'https://us-central1-uni-backend01.cloudfunctions.net/api';
+  // ⚠️ REPLACED: Firebase Cloud Functions endpoint with local backend API
+  // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api'
+  // NEW: Local Node.js/Express backend
+  private apiUrl = 'http://localhost:5001';
 
   constructor(private http: HttpClient) {}
 

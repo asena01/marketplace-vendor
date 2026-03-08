@@ -29,7 +29,10 @@ export interface HairResponse {
   providedIn: 'root'
 })
 export class HairService {
-  private apiUrl = 'https://us-central1-uni-backend01.cloudfunctions.net/api/hair';
+  // ⚠️ REPLACED: Firebase Cloud Functions endpoint with local backend API
+  // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api/hair'
+  // NEW: Local Node.js/Express backend
+  private apiUrl = 'http://localhost:5001/hair';
 
   constructor(private http: HttpClient) {}
 
