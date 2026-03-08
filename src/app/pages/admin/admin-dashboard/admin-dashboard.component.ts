@@ -246,8 +246,8 @@ export class AdminDashboardComponent implements OnInit {
   ngOnInit(): void {
     // Check if user is admin
     if (!this.authService.isAdmin()) {
-      console.log('❌ User is not admin - redirecting to login');
-      this.router.navigate(['/login']);
+      console.log('❌ User is not admin - redirecting to home');
+      this.router.navigate(['/']);
       return;
     }
 
@@ -270,6 +270,6 @@ export class AdminDashboardComponent implements OnInit {
 
   logout(): void {
     this.authService.logout();
-    this.router.navigate(['/login']);
+    this.router.navigate(['/']);
   }
 }

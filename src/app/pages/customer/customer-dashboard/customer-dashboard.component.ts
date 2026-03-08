@@ -204,8 +204,8 @@ export class CustomerDashboardComponent implements OnInit {
   ngOnInit(): void {
     // Check if user is customer
     if (!this.authService.isCustomer()) {
-      console.log('❌ User is not a customer - redirecting to login');
-      this.router.navigate(['/login']);
+      console.log('❌ User is not a customer - redirecting to home');
+      this.router.navigate(['/']);
       return;
     }
 
@@ -218,7 +218,7 @@ export class CustomerDashboardComponent implements OnInit {
 
   logout(): void {
     this.authService.logout();
-    this.router.navigate(['/login']);
+    this.router.navigate(['/']);
   }
 
   goBack(): void {

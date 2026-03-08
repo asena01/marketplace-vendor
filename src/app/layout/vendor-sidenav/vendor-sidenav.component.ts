@@ -369,6 +369,6 @@ export class VendorSidenavComponent implements OnInit {
   onLogout(): void {
     this.authService.logout();
     this.logout.emit();
-    this.router.navigate(['/login']);
+    this.router.navigate(['/']);
   }
 }
