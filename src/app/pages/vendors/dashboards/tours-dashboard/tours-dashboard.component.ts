@@ -315,6 +315,7 @@ export class ToursDashboardComponent implements OnInit {
     { label: 'Reviews', icon: '⭐', route: '/tours-dashboard/reviews', badge: 0 },
     { label: 'Incidents', icon: '🚨', route: '/tours-dashboard/incidents', badge: 0 },
     { label: 'Reports', icon: '📈', route: '/tours-dashboard/reports' },
+    { label: 'Finance', icon: '💼', route: '/tours-dashboard/finance' },
     { label: 'Settings', icon: '⚙️', route: '/tours-dashboard/settings' }
   ];
 
