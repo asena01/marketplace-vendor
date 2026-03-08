@@ -12,6 +12,7 @@ import { HairComponent } from './pages/hair/hair.component';
 import { PetsComponent } from './pages/pets/pets.component';
 import { GymComponent } from './pages/gym/gym.component';
 import { DeliveryComponent } from './pages/delivery/delivery.component';
+import { DeliveryNewComponent } from './pages/delivery/delivery-new.component';
 import { SignupComponent } from './pages/auth/signup/signup.component';
 import { ToursSignupComponent } from './pages/auth/tours-signup/tours-signup.component';
 import { LoginComponent } from './pages/auth/login/login.component';
@@ -126,7 +127,7 @@ export const routes: Routes = [
   { path: 'services/:id', component: ServiceDetailComponent },
   { path: 'tours', component: ToursComponent },
   { path: 'tours/:id', component: TourDetailComponent },
-  { path: 'delivery', component: DeliveryComponent },
+  { path: 'delivery', component: DeliveryNewComponent },
   { path: 'furniture', component: FurnitureComponent },
   { path: 'hair', component: HairComponent },
   { path: 'pets', component: PetsComponent },

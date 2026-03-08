@@ -1,6 +1,7 @@
 import { Component, OnInit, signal, Signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
 import { DeliveryService } from '../../../services/delivery.service';
 import { AuthService } from '../../../services/auth.service';
 
@@ -15,6 +16,7 @@ import { DeliveryAnalyticsComponent } from '../delivery-analytics/delivery-analy
   standalone: true,
   imports: [
     CommonModule,
+    MatIconModule,
     DeliveryOrdersComponent,
     DeliveryCouriersComponent,
     DeliveryTrackingComponent,
@@ -26,7 +28,7 @@ import { DeliveryAnalyticsComponent } from '../delivery-analytics/delivery-analy
       <header class="bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg">
         <div class="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
           <div class="flex items-center gap-4">
-            <div class="text-4xl">🚚</div>
+            <mat-icon class="text-5xl">local_shipping</mat-icon>
             <div>
               <h1 class="text-3xl font-bold">Delivery Management Dashboard</h1>
               <p class="text-cyan-100 text-sm">Real-time delivery tracking and management</p>
@@ -34,9 +36,10 @@ import { DeliveryAnalyticsComponent } from '../delivery-analytics/delivery-analy
           </div>
           <button
             (click)="logout()"
-            class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-semibold transition"
+            class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2"
           >
-            🚪 Logout
+            <mat-icon>exit_to_app</mat-icon>
+            <span>Logout</span>
           </button>
         </div>
       </header>
