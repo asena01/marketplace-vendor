@@ -100,6 +100,26 @@ const RestaurantOrderSchema = new Schema({
     default: 'pending'
   },
   
+  // Integrated Delivery (third-party delivery provider)
+  integratedDeliveryId: {
+    type: Schema.Types.ObjectId,
+    ref: 'IntegratedDelivery',
+    default: null
+  },
+
+  deliveryStatus: {
+    type: String,
+    enum: ['pending', 'confirmed', 'picking_up', 'picked_up', 'out_for_delivery', 'delivered', 'cancelled'],
+    default: 'pending'
+  },
+
+  // Delivery Integration Reference
+  deliveryIntegrationId: {
+    type: Schema.Types.ObjectId,
+    ref: 'BusinessDeliveryIntegration',
+    default: null
+  },
+
   // Timestamps
   createdAt: {
     type: Date,

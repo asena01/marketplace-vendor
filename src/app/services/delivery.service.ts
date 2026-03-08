@@ -775,4 +775,132 @@ export class DeliveryService {
       })
     );
   }
+
+  /**
+   * ==================== INTEGRATED DELIVERY TRACKING ====================
+   * Methods for restaurants to track deliveries via integrated providers
+   */
+
+  /**
+   * Create an integrated delivery for an order
+   */
+  createIntegratedDelivery(businessId: string, businessType: string, deliveryData: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${this.baseApiUrl}/integrated-deliveries`,
+      {
+        businessId,
+        businessType,
+        ...deliveryData
+      }
+    ).pipe(
+      catchError((error) => {
+        console.error('Error creating integrated delivery:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
+
+  /**
+   * Get deliveries for a business
+   */
+  getBusinessDeliveries(businessId: string, businessType: string, status?: string): Observable<ApiResponse<any[]>> {
+    let url = `${this.baseApiUrl}/integrated-deliveries/${businessType}/${businessId}`;
+    if (status) {
+      url += `?status=${status}`;
+    }
+
+    return this.http.get<ApiResponse<any[]>>(url).pipe(
+      catchError((error) => {
+        console.error('Error getting business deliveries:', error);
+        return of({ status: 'error', data: [] });
+      })
+    );
+  }
+
+  /**
+   * Get active integrated deliveries for real-time tracking
+   */
+  getActiveIntegratedDeliveries(businessId: string, businessType: string): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(
+      `${this.baseApiUrl}/integrated-deliveries/${businessType}/${businessId}/active`
+    ).pipe(
+      catchError((error) => {
+        console.error('Error getting active deliveries:', error);
+        return of({ status: 'error', data: [] });
+      })
+    );
+  }
+
+  /**
+   * Get delivery details
+   */
+  getDeliveryDetails(deliveryId: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.baseApiUrl}/integrated-deliveries/${deliveryId}/details`
+    ).pipe(
+      catchError((error) => {
+        console.error('Error getting delivery details:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
+
+  /**
+   * Update delivery status
+   */
+  updateDeliveryStatus(deliveryId: string, status: string, currentLocation?: any): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${this.baseApiUrl}/integrated-deliveries/${deliveryId}/status`,
+      { status, currentLocation }
+    ).pipe(
+      catchError((error) => {
+        console.error('Error updating delivery status:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
+
+  /**
+   * Rate a delivery
+   */
+  rateDelivery(deliveryId: string, rating: number, feedback?: string): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${this.baseApiUrl}/integrated-deliveries/${deliveryId}/rate`,
+      { rating, feedback }
+    ).pipe(
+      catchError((error) => {
+        console.error('Error rating delivery:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
+
+  /**
+   * Cancel a delivery
+   */
+  cancelIntegratedDelivery(deliveryId: string, reason?: string): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${this.baseApiUrl}/integrated-deliveries/${deliveryId}/cancel`,
+      { reason }
+    ).pipe(
+      catchError((error) => {
+        console.error('Error cancelling delivery:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
+
+  /**
+   * Get integrated delivery statistics for a business
+   */
+  getIntegratedDeliveryStats(businessId: string, businessType: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.baseApiUrl}/integrated-deliveries/${businessType}/${businessId}/stats`
+    ).pipe(
+      catchError((error) => {
+        console.error('Error getting delivery stats:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
 }

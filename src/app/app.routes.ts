@@ -38,6 +38,7 @@ import { DriverTrackingComponent } from './pages/vendors/dashboards/restaurant-d
 import { DeliveryAnalyticsComponent } from './pages/vendors/dashboards/restaurant-dashboard/delivery-analytics/delivery-analytics.component';
 import { DeliverySupportComponent } from './pages/vendors/dashboards/restaurant-dashboard/delivery-support/delivery-support.component';
 import { DeliveryIntegrationsComponent } from './pages/vendors/dashboards/restaurant-dashboard/delivery-integrations/delivery-integrations.component';
+import { DeliveryTrackingMonitorComponent } from './pages/vendors/dashboards/restaurant-dashboard/delivery-tracking-monitor/delivery-tracking-monitor.component';
 import { RetailProductsComponent } from './pages/vendors/dashboards/retail-dashboard/products/products.component';
 import { ReviewManagementComponent } from './pages/vendors/dashboards/shared/review-management/review-management.component';
 import { IncidentManagementComponent } from './pages/vendors/dashboards/shared/incident-management/incident-management.component';
@@ -80,6 +81,7 @@ export const routes: Routes = [
       { path: 'delivery-analytics', component: DeliveryAnalyticsComponent },
       { path: 'delivery-support', component: DeliverySupportComponent },
       { path: 'delivery-integrations', component: DeliveryIntegrationsComponent },
+      { path: 'delivery-tracking', component: DeliveryTrackingMonitorComponent },
       { path: 'reviews', component: ReviewManagementComponent },
       { path: 'incidents', component: IncidentManagementComponent },
       { path: 'settings', component: ProfileSettingsComponent }
