@@ -10,7 +10,7 @@ import { DeliveryService, DeliveryServiceDefinition } from '../../services/deliv
 @Component({
   selector: 'app-hair',
   standalone: true,
-  imports: [CommonModule, FormsModule, HeaderComponent],
+  imports: [CommonModule, FormsModule, HeaderComponent, MatIconModule],
   templateUrl: './hair.component.html',
   styleUrl: './hair.component.css'
 })
@@ -39,6 +39,14 @@ export class HairComponent implements OnInit {
   // Payment state
   isProcessingPayment = signal(false);
   paymentError = signal<string>('');
+
+  // Delivery related signals
+  deliveryServices = signal<DeliveryServiceDefinition[]>([]);
+  selectedDeliveryService = signal<DeliveryServiceDefinition | null>(null);
+  deliveryAddress = signal<string>('');
+  estimatedDistance = signal<number>(0);
+  deliveryPrice = signal<number>(0);
+  showDeliveryOptions = signal<boolean>(false);
 
   // Computed values
   filteredProducts = computed(() => {
