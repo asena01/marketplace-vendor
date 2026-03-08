@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../services/auth.service';
 
 interface SidenavItem {
@@ -13,14 +14,14 @@ interface SidenavItem {
 @Component({
   selector: 'app-vendor-sidenav',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, MatIconModule],
   template: `
     <div class="w-64 bg-slate-900 text-white h-screen overflow-y-auto flex flex-col">
       <!-- Header -->
       <div class="p-6 border-b border-slate-700">
         <div class="flex items-center gap-3 mb-4">
           <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-            <span class="text-lg font-bold">{{ vendorTypeIcon }}</span>
+            <mat-icon class="text-white text-lg" [matIconFontSet]="'material-icons'">{{ getVendorIconName() }}</mat-icon>
           </div>
           <div>
             <h2 class="font-bold text-lg">MarketHub</h2>
@@ -39,10 +40,8 @@ interface SidenavItem {
               [routerLinkActiveOptions]="{ exact: true }"
               class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-all duration-200 relative group text-slate-300 hover:text-white"
             >
-              <!-- Icon with improved styling -->
-              <span class="text-lg font-semibold w-6 flex items-center justify-center">
-                {{ getIconForLabel(item.label) }}
-              </span>
+              <!-- Material Icon -->
+              <mat-icon class="text-lg">{{ getIconNameForLabel(item.label) }}</mat-icon>
               <span class="flex-1 font-medium">{{ item.label }}</span>
               @if (item.badge && item.badge > 0) {
                 <span class="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
@@ -70,7 +69,7 @@ interface SidenavItem {
           (click)="onLogout()"
           class="w-full flex items-center gap-3 px-4 py-3 text-slate-300 hover:text-white hover:bg-red-900/50 rounded-lg transition-all duration-200 text-sm font-medium"
         >
-          <span class="text-lg">🚪</span>
+          <mat-icon class="text-lg">logout</mat-icon>
           <span>Logout</span>
         </button>
       </div>
@@ -88,6 +87,18 @@ interface SidenavItem {
     a.active-link::before {
       content: '';
       @apply absolute left-0 top-0 bottom-0 w-1 bg-blue-400 rounded-r-lg;
+    }
+
+    mat-icon {
+      @apply text-slate-300;
+    }
+
+    a.active-link mat-icon {
+      @apply text-white;
+    }
+
+    a:hover mat-icon {
+      @apply text-white;
     }
   `]
 })
@@ -127,25 +138,37 @@ export class VendorSidenavComponent {
     this.vendorTypeIcon = icons[this.vendorType] || '🏢';
   }
 
-  getIconForLabel(label: string): string {
+  getVendorIconName(): string {
     const iconMap: { [key: string]: string } = {
-      'Dashboard': '📊',
-      'Orders': '📋',
-      'Menu': '🍔',
-      'Rooms': '🛏️',
-      'Staff': '👔',
-      'Products': '🏷️',
-      'Bookings': '📅',
-      'Inventory': '📦',
-      'Customers': '👥',
-      'Reports': '📈',
-      'Settings': '⚙️',
-      'Reviews': '⭐',
-      'Incidents': '🚨',
-      'Devices': '📱',
-      'Guests': '👥'
+      'hotel': 'hotel',
+      'restaurant': 'restaurant',
+      'retail': 'shopping_cart',
+      'service': 'miscellaneous_services',
+      'tours': 'flight',
+      'delivery': 'local_shipping'
     };
-    return iconMap[label] || '•';
+    return iconMap[this.vendorType] || 'business';
+  }
+
+  getIconNameForLabel(label: string): string {
+    const iconMap: { [key: string]: string } = {
+      'Dashboard': 'dashboard',
+      'Orders': 'assignment',
+      'Menu': 'menu_book',
+      'Rooms': 'hotel',
+      'Staff': 'people',
+      'Products': 'inventory_2',
+      'Bookings': 'event_note',
+      'Inventory': 'warehouse',
+      'Customers': 'people_outline',
+      'Reports': 'assessment',
+      'Settings': 'settings',
+      'Reviews': 'star',
+      'Incidents': 'warning',
+      'Devices': 'devices',
+      'Guests': 'group'
+    };
+    return iconMap[label] || 'circle';
   }
 
   getDefaultItems(): SidenavItem[] {
