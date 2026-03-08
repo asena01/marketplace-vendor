@@ -299,6 +299,7 @@ export class VendorSidenavComponent implements OnInit {
     } else if (this.vendorType === 'hotel') {
       items.push(
         { label: 'Rooms', icon: '🏨', route: `${dashboardPath}/rooms`, badge: 0 },
+        { label: 'Devices', icon: '📱', route: `${dashboardPath}/devices` },
         { label: 'Staff', icon: '👥', route: `${dashboardPath}/staff` },
         { label: 'Bookings', icon: '📅', route: `${dashboardPath}/bookings` },
         { label: 'Notifications', icon: '🔔', route: `${dashboardPath}/notifications`, badge: 0 },

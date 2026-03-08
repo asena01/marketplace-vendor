@@ -760,4 +760,108 @@ export class HotelService {
     );
   }
 
+  // ==================== DEVICES ====================
+  getAllDevices(page = 1, limit = 10, status?: string, deviceType?: string): Observable<ApiResponse<any[]>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('limit', limit.toString());
+
+    if (status !== undefined) params = params.set('status', status);
+    if (deviceType) params = params.set('deviceType', deviceType);
+
+    return this.http.get<ApiResponse<any[]>>(`${API_URL}/hotels/${this.hotelId}/devices`, { params }).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch devices:', error);
+        return of({ status: 'error', data: [], message: error.message });
+      })
+    );
+  }
+
+  getDeviceById(deviceId: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/devices/${deviceId}`).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch device:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  createDevice(deviceData: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/devices`, deviceData).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to create device:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  updateDevice(deviceId: string, deviceData: any): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/devices/${deviceId}`, deviceData).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to update device:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  updateDeviceStatus(deviceId: string, status: boolean): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/devices/${deviceId}/status`, { status }).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to update device status:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  deleteDevice(deviceId: string): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/devices/${deviceId}`).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to delete device:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  registerDevices(devices: any[]): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(`${API_URL}/devices/register`, devices).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to register devices:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  // ==================== TUYA DEVICE STATUS ====================
+  getDeviceStatus(deviceId: string): Observable<any> {
+    return this.http.get<any>(`${API_URL}/tuya/devices/${deviceId}/status`).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch device status:', error);
+        return of({ error: 'Failed to fetch device status' });
+      })
+    );
+  }
+
+  getDeviceLogs(deviceId: string, startTime?: number, endTime?: number, codes?: string): Observable<any> {
+    let params = new HttpParams();
+    if (startTime) params = params.set('start_time', startTime.toString());
+    if (endTime) params = params.set('end_time', endTime.toString());
+    if (codes) params = params.set('codes', codes);
+
+    return this.http.get<any>(`${API_URL}/tuya/devices/${deviceId}/logs`, { params }).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch device logs:', error);
+        return of({ error: 'Failed to fetch device logs' });
+      })
+    );
+  }
+
+  getDeviceShadowProperties(deviceId: string): Observable<any> {
+    return this.http.get<any>(`${API_URL}/tuya/devices/${deviceId}/shadow-properties`).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch shadow properties:', error);
+        return of({ error: 'Failed to fetch shadow properties' });
+      })
+    );
+  }
+
 }

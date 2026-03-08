@@ -27,7 +27,7 @@ import { RestaurantDashboardComponent } from './pages/vendors/dashboards/restaur
 import { RetailDashboardComponent } from './pages/vendors/dashboards/retail-dashboard/retail-dashboard.component';
 import { ServiceDashboardComponent } from './pages/vendors/dashboards/service-dashboard/service-dashboard.component';
 import { ToursDashboardComponent } from './pages/vendors/dashboards/tours-dashboard/tours-dashboard.component';
-import { DeviceManagementComponent } from './pages/vendors/dashboards/hotel-dashboard/device-management/device-management.component';
+import { HotelDevicesComponent } from './pages/vendors/dashboards/hotel-dashboard/devices/devices.component';
 import { HotelRoomsComponent } from './pages/vendors/dashboards/hotel-dashboard/rooms/rooms.component';
 import { HotelStaffComponent } from './pages/vendors/dashboards/hotel-dashboard/staff/staff.component';
 import { HotelNotificationsComponent } from './pages/vendors/dashboards/hotel-dashboard/notifications/notifications.component';
@@ -78,7 +78,7 @@ export const routes: Routes = [
     component: HotelDashboardComponent,
     canActivate: [VendorGuard],
     children: [
-      { path: 'devices', component: DeviceManagementComponent },
+      { path: 'devices', component: HotelDevicesComponent },
       { path: 'rooms', component: HotelRoomsComponent },
       { path: 'staff', component: HotelStaffComponent },
       { path: 'bookings', component: HotelBookingsComponent },
