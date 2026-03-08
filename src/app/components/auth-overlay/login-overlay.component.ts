@@ -110,26 +110,111 @@ import { AuthModalService } from '../../services/auth-modal.service';
           <!-- Demo Accounts Quick Access -->
           <div class="flex items-center gap-4 my-6">
             <div class="flex-1 border-t border-gray-300"></div>
-            <span class="text-gray-600 text-sm">Quick Login</span>
+            <span class="text-gray-600 text-sm">Quick Demo Login</span>
             <div class="flex-1 border-t border-gray-300"></div>
           </div>
 
-          <div class="space-y-2 mb-6">
+          <div class="grid grid-cols-2 gap-2 mb-6 max-h-48 overflow-y-auto">
+            <!-- Admin Accounts -->
             <button
               type="button"
               (click)="loginAsDemo('admin')"
               [disabled]="isLoading()"
-              class="w-full border border-slate-700 text-slate-700 font-semibold py-2 rounded-lg hover:bg-slate-50 transition disabled:opacity-50 text-sm"
+              class="border border-slate-700 text-slate-700 font-semibold py-2 rounded-lg hover:bg-slate-50 transition disabled:opacity-50 text-xs"
             >
-              ⚙️ Demo Admin
+              ⚙️ Super Admin
             </button>
+            <button
+              type="button"
+              (click)="loginAsDemo('finance')"
+              [disabled]="isLoading()"
+              class="border border-green-600 text-green-700 font-semibold py-2 rounded-lg hover:bg-green-50 transition disabled:opacity-50 text-xs"
+            >
+              💰 Finance Mgr
+            </button>
+
+            <!-- Customers -->
             <button
               type="button"
               (click)="loginAsDemo('customer')"
               [disabled]="isLoading()"
-              class="w-full border border-green-500 text-green-700 font-semibold py-2 rounded-lg hover:bg-green-50 transition disabled:opacity-50 text-sm"
+              class="border border-blue-500 text-blue-700 font-semibold py-2 rounded-lg hover:bg-blue-50 transition disabled:opacity-50 text-xs"
             >
-              👤 Demo Customer
+              👤 Customer
+            </button>
+            <button
+              type="button"
+              (click)="loginAsDemo('customer2')"
+              [disabled]="isLoading()"
+              class="border border-blue-500 text-blue-700 font-semibold py-2 rounded-lg hover:bg-blue-50 transition disabled:opacity-50 text-xs"
+            >
+              👨 Customer 2
+            </button>
+
+            <!-- Vendors -->
+            <button
+              type="button"
+              (click)="loginAsDemo('hotel')"
+              [disabled]="isLoading()"
+              class="border border-purple-500 text-purple-700 font-semibold py-2 rounded-lg hover:bg-purple-50 transition disabled:opacity-50 text-xs"
+            >
+              🏨 Hotel
+            </button>
+            <button
+              type="button"
+              (click)="loginAsDemo('restaurant')"
+              [disabled]="isLoading()"
+              class="border border-orange-500 text-orange-700 font-semibold py-2 rounded-lg hover:bg-orange-50 transition disabled:opacity-50 text-xs"
+            >
+              🍽️ Restaurant
+            </button>
+            <button
+              type="button"
+              (click)="loginAsDemo('retail')"
+              [disabled]="isLoading()"
+              class="border border-red-500 text-red-700 font-semibold py-2 rounded-lg hover:bg-red-50 transition disabled:opacity-50 text-xs"
+            >
+              🛍️ Retail
+            </button>
+            <button
+              type="button"
+              (click)="loginAsDemo('delivery')"
+              [disabled]="isLoading()"
+              class="border border-pink-500 text-pink-700 font-semibold py-2 rounded-lg hover:bg-pink-50 transition disabled:opacity-50 text-xs"
+            >
+              🚚 Delivery
+            </button>
+            <button
+              type="button"
+              (click)="loginAsDemo('hair')"
+              [disabled]="isLoading()"
+              class="border border-indigo-500 text-indigo-700 font-semibold py-2 rounded-lg hover:bg-indigo-50 transition disabled:opacity-50 text-xs"
+            >
+              💇 Hair Salon
+            </button>
+            <button
+              type="button"
+              (click)="loginAsDemo('gym')"
+              [disabled]="isLoading()"
+              class="border border-yellow-600 text-yellow-700 font-semibold py-2 rounded-lg hover:bg-yellow-50 transition disabled:opacity-50 text-xs"
+            >
+              🏋️ Gym
+            </button>
+            <button
+              type="button"
+              (click)="loginAsDemo('tours')"
+              [disabled]="isLoading()"
+              class="border border-teal-500 text-teal-700 font-semibold py-2 rounded-lg hover:bg-teal-50 transition disabled:opacity-50 text-xs"
+            >
+              ✈️ Tours
+            </button>
+            <button
+              type="button"
+              (click)="loginAsDemo('pets')"
+              [disabled]="isLoading()"
+              class="border border-amber-600 text-amber-700 font-semibold py-2 rounded-lg hover:bg-amber-50 transition disabled:opacity-50 text-xs"
+            >
+              🐾 Pet Store
             </button>
           </div>
 
@@ -279,24 +364,42 @@ export class LoginOverlayComponent implements OnInit {
     });
   }
 
-  loginAsDemo(type: 'admin' | 'customer'): void {
-    const demoCredentials = {
-      admin: {
-        email: 'admin@demo.com',
-        password: 'admin123456'
-      },
-      customer: {
-        email: 'customer@demo.com',
-        password: 'demo123456'
-      }
+  loginAsDemo(type: string): void {
+    const demoCredentials: Record<string, { email: string; password: string }> = {
+      // Admin Accounts
+      admin: { email: 'admin@demo.com', password: 'admin123456' },
+      finance: { email: 'finance@demo.com', password: 'demo123456' },
+      compliance: { email: 'compliance@demo.com', password: 'demo123456' },
+      support: { email: 'support@demo.com', password: 'demo123456' },
+      // Customer Accounts
+      customer: { email: 'customer@demo.com', password: 'demo123456' },
+      customer2: { email: 'sarah@demo.com', password: 'demo123456' },
+      customer3: { email: 'mike@demo.com', password: 'demo123456' },
+      // Vendor Accounts
+      hotel: { email: 'hotel@demo.com', password: 'demo123456' },
+      restaurant: { email: 'restaurant@demo.com', password: 'demo123456' },
+      retail: { email: 'retail@demo.com', password: 'demo123456' },
+      delivery: { email: 'delivery@demo.com', password: 'demo123456' },
+      hair: { email: 'hair@demo.com', password: 'demo123456' },
+      gym: { email: 'gym@demo.com', password: 'demo123456' },
+      pets: { email: 'pets@demo.com', password: 'demo123456' },
+      tours: { email: 'tours@demo.com', password: 'demo123456' },
+      service: { email: 'service@demo.com', password: 'demo123456' },
+      clothing: { email: 'clothing@demo.com', password: 'demo123456' },
+      jewelry: { email: 'jewelry@demo.com', password: 'demo123456' },
+      furniture: { email: 'furniture@demo.com', password: 'demo123456' },
+      spa: { email: 'spa@demo.com', password: 'demo123456' }
     };
 
     const credentials = demoCredentials[type];
-    this.loginForm.patchValue(credentials);
-
-    setTimeout(() => {
-      this.onLogin();
-    }, 300);
+    if (credentials) {
+      this.loginForm.patchValue(credentials);
+      setTimeout(() => {
+        this.onLogin();
+      }, 300);
+    } else {
+      this.errorMessage.set('Invalid demo account type');
+    }
   }
 
   private redirectVendorToDashboard(vendorType: string | null): void {
@@ -309,10 +412,21 @@ export class LoginOverlayComponent implements OnInit {
       'delivery': ['/delivery-dashboard'],
       'hotel': ['/hotel-dashboard'],
       'restaurant': ['/restaurant-dashboard'],
+      'retail': ['/retail-dashboard'],
       'service': ['/service-dashboard'],
       'tours': ['/tours-dashboard'],
-      'retail': ['/retail-dashboard'],
-      'tour-operator': ['/tours-dashboard']
+      'tour-operator': ['/tours-dashboard'],
+      // All other vendor types route to generic vendor dashboard
+      'clothing-store': ['/vendor-dashboard', 'retail'],
+      'jewelry': ['/vendor-dashboard', 'retail'],
+      'supermarket': ['/vendor-dashboard', 'retail'],
+      'furniture': ['/vendor-dashboard', 'retail'],
+      'hair-salon': ['/vendor-dashboard', 'service'],
+      'pet-store': ['/vendor-dashboard', 'retail'],
+      'gym': ['/vendor-dashboard', 'service'],
+      'car-rental': ['/vendor-dashboard', 'service'],
+      'event-center': ['/vendor-dashboard', 'service'],
+      'salon-spa': ['/vendor-dashboard', 'service']
     };
 
     const route = dashboardRoutes[vendorType] || ['/vendor-dashboard', vendorType];

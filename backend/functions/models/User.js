@@ -48,7 +48,11 @@ const userSchema = new mongoose.Schema(
         'super-admin',
         'admin',
         'moderator',
-        'support'
+        'support',
+        'finance-manager',
+        'compliance-officer',
+        'support-manager',
+        'vendor-manager'
       ],
       default: null,
     },

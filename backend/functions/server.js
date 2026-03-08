@@ -105,8 +105,9 @@ connectDB();
 const createDemoAccounts = async () => {
   try {
     const demoAccounts = [
+      // ========== ADMIN ACCOUNTS ==========
       {
-        name: 'Admin User',
+        name: 'Super Admin',
         email: 'admin@demo.com',
         password: 'admin123456',
         phone: '+1234567899',
@@ -124,71 +125,256 @@ const createDemoAccounts = async () => {
         }
       },
       {
-        name: 'Delivery Service',
+        name: 'Finance Manager',
+        email: 'finance@demo.com',
+        password: 'demo123456',
+        phone: '+1234567850',
+        userType: 'admin',
+        adminRole: 'finance-manager',
+        adminPermissions: {
+          processPayments: true,
+          viewAnalytics: true,
+          viewLogs: true
+        }
+      },
+      {
+        name: 'Compliance Officer',
+        email: 'compliance@demo.com',
+        password: 'demo123456',
+        phone: '+1234567851',
+        userType: 'admin',
+        adminRole: 'compliance-officer',
+        adminPermissions: {
+          manageUsers: true,
+          manageSuspensions: true,
+          viewLogs: true
+        }
+      },
+      {
+        name: 'Support Manager',
+        email: 'support@demo.com',
+        password: 'demo123456',
+        phone: '+1234567852',
+        userType: 'admin',
+        adminRole: 'support-manager',
+        adminPermissions: {
+          manageUsers: true,
+          viewLogs: true
+        }
+      },
+      {
+        name: 'Vendor Manager',
+        email: 'vendor-mgr@demo.com',
+        password: 'demo123456',
+        phone: '+1234567853',
+        userType: 'admin',
+        adminRole: 'vendor-manager',
+        adminPermissions: {
+          manageUsers: true,
+          viewAnalytics: true
+        }
+      },
+
+      // ========== CUSTOMER ACCOUNTS ==========
+      {
+        name: 'John Doe',
+        email: 'customer@demo.com',
+        password: 'demo123456',
+        phone: '+1234567890',
+        userType: 'customer',
+        address: '123 Main St',
+        city: 'New York',
+        country: 'USA'
+      },
+      {
+        name: 'Sarah Johnson',
+        email: 'sarah@demo.com',
+        password: 'demo123456',
+        phone: '+1234567897',
+        userType: 'customer',
+        address: '456 Oak Ave',
+        city: 'Los Angeles',
+        country: 'USA'
+      },
+      {
+        name: 'Mike Smith',
+        email: 'mike@demo.com',
+        password: 'demo123456',
+        phone: '+1234567898',
+        userType: 'customer',
+        address: '789 Pine Rd',
+        city: 'Chicago',
+        country: 'USA'
+      },
+
+      // ========== VENDOR ACCOUNTS - DELIVERY & LOGISTICS ==========
+      {
+        name: 'Express Delivery Co',
         email: 'delivery@demo.com',
         password: 'demo123456',
         phone: '+1234567896',
         userType: 'vendor',
         vendorType: 'delivery',
-        businessName: 'Demo Delivery Service',
-        businessDescription: 'A demo delivery service for testing'
+        businessName: 'Express Delivery Co',
+        businessDescription: 'Fast & reliable delivery service across the city'
       },
+
+      // ========== VENDOR ACCOUNTS - ACCOMMODATION & FOOD ==========
       {
-        name: 'Demo Customer',
-        email: 'customer@demo.com',
-        password: 'demo123456',
-        phone: '+1234567890',
-        userType: 'customer'
-      },
-      {
-        name: 'Demo Hotel',
+        name: 'Luxury Hotel Group',
         email: 'hotel@demo.com',
         password: 'demo123456',
         phone: '+1234567892',
         userType: 'vendor',
         vendorType: 'hotel',
-        businessName: 'Demo Hotel',
-        businessDescription: 'A demo hotel for testing'
+        businessName: 'Luxury Hotel Group',
+        businessDescription: '5-star hotel with premium amenities'
       },
       {
-        name: 'Demo Restaurant',
+        name: 'Gourmet Restaurant',
         email: 'restaurant@demo.com',
         password: 'demo123456',
         phone: '+1234567891',
         userType: 'vendor',
         vendorType: 'restaurant',
-        businessName: 'Demo Restaurant',
-        businessDescription: 'A demo restaurant for testing'
+        businessName: 'Gourmet Restaurant',
+        businessDescription: 'Fine dining with international cuisine'
       },
+
+      // ========== VENDOR ACCOUNTS - RETAIL & SHOPPING ==========
       {
-        name: 'Demo Retail Store',
+        name: 'Fashion Retail',
         email: 'retail@demo.com',
         password: 'demo123456',
         phone: '+1234567893',
         userType: 'vendor',
         vendorType: 'retail',
-        businessName: 'Demo Retail Store',
-        businessDescription: 'A demo retail store for testing'
+        businessName: 'Fashion Retail',
+        businessDescription: 'Clothing & fashion store with latest trends'
       },
       {
-        name: 'Demo Service',
+        name: 'Clothing Boutique',
+        email: 'clothing@demo.com',
+        password: 'demo123456',
+        phone: '+1234567854',
+        userType: 'vendor',
+        vendorType: 'clothing-store',
+        businessName: 'Clothing Boutique',
+        businessDescription: 'Premium clothing for men & women'
+      },
+      {
+        name: 'Jewelry Store',
+        email: 'jewelry@demo.com',
+        password: 'demo123456',
+        phone: '+1234567855',
+        userType: 'vendor',
+        vendorType: 'jewelry',
+        businessName: 'Jewelry Store',
+        businessDescription: 'Fine jewelry & accessories'
+      },
+      {
+        name: 'Supermarket Plus',
+        email: 'supermarket@demo.com',
+        password: 'demo123456',
+        phone: '+1234567856',
+        userType: 'vendor',
+        vendorType: 'supermarket',
+        businessName: 'Supermarket Plus',
+        businessDescription: 'Grocery & general merchandise'
+      },
+      {
+        name: 'Furniture Store',
+        email: 'furniture@demo.com',
+        password: 'demo123456',
+        phone: '+1234567857',
+        userType: 'vendor',
+        vendorType: 'furniture',
+        businessName: 'Furniture Store',
+        businessDescription: 'Premium furniture & home decor'
+      },
+
+      // ========== VENDOR ACCOUNTS - SERVICES ==========
+      {
+        name: 'Hair & Beauty Salon',
+        email: 'hair@demo.com',
+        password: 'demo123456',
+        phone: '+1234567858',
+        userType: 'vendor',
+        vendorType: 'hair-salon',
+        businessName: 'Hair & Beauty Salon',
+        businessDescription: 'Professional hair & beauty services'
+      },
+      {
+        name: 'Pro Services',
         email: 'service@demo.com',
         password: 'demo123456',
         phone: '+1234567894',
         userType: 'vendor',
         vendorType: 'service',
-        businessName: 'Demo Service Business',
-        businessDescription: 'A demo service business for testing'
+        businessName: 'Pro Services',
+        businessDescription: 'Professional services & consultations'
       },
       {
-        name: 'Demo Tours Agency',
+        name: 'Pet Care Center',
+        email: 'pets@demo.com',
+        password: 'demo123456',
+        phone: '+1234567859',
+        userType: 'vendor',
+        vendorType: 'pet-store',
+        businessName: 'Pet Care Center',
+        businessDescription: 'Pet supplies & grooming services'
+      },
+      {
+        name: 'Fitness Gym',
+        email: 'gym@demo.com',
+        password: 'demo123456',
+        phone: '+1234567860',
+        userType: 'vendor',
+        vendorType: 'gym',
+        businessName: 'Fitness Gym',
+        businessDescription: 'Modern gym with personal training'
+      },
+
+      // ========== VENDOR ACCOUNTS - TOURS & TRAVEL ==========
+      {
+        name: 'Adventure Tours',
         email: 'tours@demo.com',
         password: 'demo123456',
         phone: '+1234567895',
         userType: 'vendor',
         vendorType: 'tour-operator',
-        businessName: 'Demo Tours Agency',
-        businessDescription: 'A demo tour operator for testing'
+        businessName: 'Adventure Tours',
+        businessDescription: 'Exciting tours & travel packages'
+      },
+      {
+        name: 'Car Rental Pro',
+        email: 'car-rental@demo.com',
+        password: 'demo123456',
+        phone: '+1234567861',
+        userType: 'vendor',
+        vendorType: 'car-rental',
+        businessName: 'Car Rental Pro',
+        businessDescription: 'Vehicle rental with competitive rates'
+      },
+      {
+        name: 'Event Center',
+        email: 'events@demo.com',
+        password: 'demo123456',
+        phone: '+1234567862',
+        userType: 'vendor',
+        vendorType: 'event-center',
+        businessName: 'Event Center',
+        businessDescription: 'Perfect venue for all your events'
+      },
+      {
+        name: 'Salon & Spa',
+        email: 'spa@demo.com',
+        password: 'demo123456',
+        phone: '+1234567863',
+        userType: 'vendor',
+        vendorType: 'salon-spa',
+        businessName: 'Salon & Spa',
+        businessDescription: 'Wellness & beauty treatments'
       }
     ];
 
