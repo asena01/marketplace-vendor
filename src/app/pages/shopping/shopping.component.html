@@ -258,8 +258,8 @@
 
     <!-- Shopping Cart Overlay -->
     @if (showCart()) {
-      <div class="fixed inset-0 bg-black/30 z-30 cart-backdrop" (click)="showCart.set(false)"></div>
-      <aside class="fixed right-0 top-0 h-screen w-full sm:w-96 border-l border-gray-200 bg-white overflow-y-auto flex flex-col z-40 shadow-2xl cart-overlay">
+      <div class="fixed inset-0 bg-black/30 z-[9997] cart-backdrop" (click)="showCart.set(false)"></div>
+      <aside class="fixed right-0 top-0 h-screen w-full sm:w-96 border-l border-gray-200 bg-white overflow-y-auto flex flex-col z-[9998] shadow-2xl cart-overlay">
         <!-- Cart Header -->
         <div class="sticky top-0 bg-white z-10 px-6 py-4 border-b border-gray-200">
           <div class="flex items-center justify-between">
@@ -379,8 +379,8 @@
 
             <!-- Delivery Options Panel -->
             @if (showDeliveryOptions()) {
-              <div class="fixed inset-0 bg-black/40 z-40 cart-backdrop" (click)="closeDeliveryOptions()"></div>
-              <div class="fixed right-0 top-0 h-screen w-full sm:w-96 bg-white border-l border-gray-200 overflow-y-auto z-[90] shadow-2xl p-6">
+              <div class="fixed inset-0 bg-black/40 z-[9998] cart-backdrop" (click)="closeDeliveryOptions()"></div>
+              <div class="fixed right-0 top-0 h-screen w-full sm:w-96 bg-white border-l border-gray-200 overflow-y-auto z-[9999] shadow-2xl p-6">
                 <!-- Header -->
                 <div class="flex items-center justify-between mb-4">
                   <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
@@ -511,7 +511,7 @@
 
   <!-- Payment Modal -->
   @if (showPaymentModal()) {
-    <div class="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
+    <div class="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-4">
       <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
         <!-- Payment Modal Header -->
         <div class="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 border-b border-blue-800">
@@ -850,7 +850,7 @@
   <!-- Quick View Modal -->
   @if (showQuickView() && quickViewProduct()) {
     @let product = quickViewProduct();
-    <div class="fixed inset-0 bg-black/50 z-[90] flex items-center justify-center p-4" (click)="closeQuickView()">
+    <div class="fixed inset-0 bg-black/50 z-[9998] flex items-center justify-center p-4" (click)="closeQuickView()">
       <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
         <div class="flex items-center justify-between bg-white border-b border-gray-200 p-6">
           <h2 class="text-xl font-bold text-gray-900">Product Details</h2>
