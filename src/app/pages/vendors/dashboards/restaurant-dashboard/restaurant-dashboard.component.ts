@@ -106,46 +106,58 @@ import { VendorSidenavComponent } from '../../../../layout/vendor-sidenav/vendor
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Top Menu Items -->
         <div class="bg-white rounded-lg p-6 shadow-md">
-          <h3 class="text-lg font-bold text-slate-900 mb-6">Top Menu Items</h3>
-          <div class="space-y-3">
-            <div class="flex items-center justify-between">
-              <span class="text-slate-700 font-medium">Grilled Salmon</span>
-              <span class="font-bold text-slate-900">34 orders</span>
-            </div>
-            <div class="w-full bg-slate-200 rounded-full h-2">
-              <div class="bg-orange-500 h-2 rounded-full" style="width: 100%;"></div>
-            </div>
-
-            <div class="flex items-center justify-between mt-4">
-              <span class="text-slate-700 font-medium">Caesar Salad</span>
-              <span class="font-bold text-slate-900">28 orders</span>
-            </div>
-            <div class="w-full bg-slate-200 rounded-full h-2">
-              <div class="bg-orange-500 h-2 rounded-full" style="width: 82%;"></div>
-            </div>
-
-            <div class="flex items-center justify-between mt-4">
-              <span class="text-slate-700 font-medium">Ribeye Steak</span>
-              <span class="font-bold text-slate-900">26 orders</span>
-            </div>
-            <div class="w-full bg-slate-200 rounded-full h-2">
-              <div class="bg-orange-500 h-2 rounded-full" style="width: 76%;"></div>
-            </div>
-
-            <div class="flex items-center justify-between mt-4">
-              <span class="text-slate-700 font-medium">Pasta Carbonara</span>
-              <span class="font-bold text-slate-900">22 orders</span>
-            </div>
-            <div class="w-full bg-slate-200 rounded-full h-2">
-              <div class="bg-orange-500 h-2 rounded-full" style="width: 65%;"></div>
-            </div>
+          <h3 class="text-lg font-bold text-slate-900 mb-6">Menu Item Breakdown</h3>
+          <div class="space-y-4">
+            @if (menuItems().length === 0) {
+              <p class="text-slate-500 text-center py-4">No menu items available</p>
+            }
+            @for (item of menuItems().slice(0, 4); track item._id; let idx = $index) {
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-slate-700 font-medium">{{ (idx + 1) }}. {{ item.name }}</span>
+                  <span class="text-xs font-semibold text-orange-600 bg-orange-50 px-2 py-1 rounded">{{ item.category }}</span>
+                </div>
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-sm text-slate-600">Price: <span class="currency-prefix">$</span>{{ item.price }}</span>
+                  <span [ngClass]="item.isAvailable ? 'text-emerald-600 font-semibold' : 'text-red-600 font-semibold'">
+                    {{ item.isAvailable ? '✓ Available' : '✗ Unavailable' }}
+                  </span>
+                </div>
+                <div class="w-full bg-slate-200 rounded-full h-2">
+                  <div class="bg-orange-500 h-2 rounded-full" [style.width.%]="(item.price / (menuItems()[0]?.price || 100)) * 100"></div>
+                </div>
+              </div>
+            }
           </div>
         </div>
 
-        <!-- Critical Inventory -->
+        <!-- Menu Summary -->
         <div class="bg-white rounded-lg p-6 shadow-md">
-          <h3 class="text-lg font-bold text-slate-900 mb-6">Inventory Status</h3>
-          <div class="space-y-3">
+          <h3 class="text-lg font-bold text-slate-900 mb-6">Menu Summary</h3>
+          <div class="space-y-4">
+            @if (menuItems().length > 0) {
+              <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                <p class="text-slate-600 text-sm font-medium">Total Items</p>
+                <p class="text-3xl font-bold text-emerald-700 mt-2">{{ menuItems().length }}</p>
+              </div>
+
+              <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p class="text-slate-600 text-sm font-medium">Available Items</p>
+                <p class="text-3xl font-bold text-blue-700 mt-2">{{ countAvailableItems() }}</p>
+              </div>
+
+              <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p class="text-slate-600 text-sm font-medium">Unavailable Items</p>
+                <p class="text-3xl font-bold text-red-700 mt-2">{{ menuItems().length - countAvailableItems() }}</p>
+              </div>
+
+              <div class="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                <p class="text-slate-600 text-sm font-medium">Avg. Price</p>
+                <p class="text-3xl font-bold text-orange-700 mt-2"><span class="currency-prefix">$</span>{{ getAveragePrice().toFixed(2) }}</p>
+              </div>
+            } @else {
+              <p class="text-slate-500 text-center py-8">No menu data available</p>
+            }
           </div>
         </div>
       </div>
@@ -281,6 +293,16 @@ export class RestaurantDashboardComponent implements OnInit {
 
   countOrdersByStatus(status: string): number {
     return this.orders().filter(o => o.status === status).length;
+  }
+
+  countAvailableItems(): number {
+    return this.menuItems().filter(item => item.isAvailable).length;
+  }
+
+  getAveragePrice(): number {
+    if (this.menuItems().length === 0) return 0;
+    const total = this.menuItems().reduce((sum, item) => sum + (item.price || 0), 0);
+    return total / this.menuItems().length;
   }
 
   goToOrders(): void {
