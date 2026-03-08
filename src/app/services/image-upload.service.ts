@@ -1,88 +1,104 @@
 import { Injectable } from '@angular/core';
-import { initializeApp } from 'firebase/app';
-import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { Observable, from } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
-
-// Firebase configuration - Replace with your actual config
-const firebaseConfig = {
-  apiKey: 'AIzaSyDZAc9Z5VZnJ3o5p5k5k5k5k5k5k5k5k5',
-  authDomain: 'your-project.firebaseapp.com',
-  projectId: 'your-project-id',
-  storageBucket: 'your-project.appspot.com',
-  messagingSenderId: '123456789',
-  appId: '1:123456789:web:abc123def456'
-};
+import { Observable, of } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ImageUploadService {
-  private storage: any;
+  private uploadedImages: Map<string, string> = new Map();
 
   constructor() {
-    try {
-      const app = initializeApp(firebaseConfig);
-      this.storage = getStorage(app);
-    } catch (error) {
-      console.error('Firebase initialization error:', error);
-    }
+    console.log('✅ ImageUploadService initialized (using local storage mock)');
   }
 
   /**
-   * Upload image to Firebase Storage
+   * Upload image - using data URL approach (no Firebase needed)
    * @param file Image file to upload
    * @param path Path in storage (e.g., 'products/product-id/image.jpg')
-   * @returns Observable with download URL
+   * @returns Observable with data URL
    */
   uploadImage(file: File, path: string): Observable<string> {
-    const storageRef = ref(this.storage, path);
-    
-    return from(
-      uploadBytes(storageRef, file).then((snapshot) => {
-        return getDownloadURL(snapshot.ref);
-      })
-    ).pipe(
-      catchError((error) => {
-        console.error('Image upload error:', error);
-        throw error;
-      })
-    );
+    return new Observable((observer) => {
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string;
+        const uniqueKey = `${path}-${Date.now()}`;
+        this.uploadedImages.set(uniqueKey, dataUrl);
+        
+        // Simulate network delay
+        setTimeout(() => {
+          console.log('✅ Image uploaded:', path);
+          observer.next(dataUrl);
+          observer.complete();
+        }, 500);
+      };
+
+      reader.onerror = (error) => {
+        console.error('❌ Image read error:', error);
+        observer.error(error);
+      };
+
+      reader.readAsDataURL(file);
+    });
   }
 
   /**
-   * Upload multiple images
+   * Upload multiple images - using data URL approach
    * @param files Array of files to upload
    * @param folderPath Folder path in storage
-   * @returns Observable with array of download URLs
+   * @returns Observable with array of data URLs
    */
   uploadMultipleImages(files: File[], folderPath: string): Observable<string[]> {
-    const uploadPromises = files.map((file, index) => {
-      const path = `${folderPath}/${Date.now()}-${index}-${file.name}`;
-      const storageRef = ref(this.storage, path);
-      return uploadBytes(storageRef, file).then((snapshot) => {
-        return getDownloadURL(snapshot.ref);
+    return new Observable((observer) => {
+      const results: string[] = [];
+      let completed = 0;
+
+      if (files.length === 0) {
+        observer.next([]);
+        observer.complete();
+        return;
+      }
+
+      files.forEach((file, index) => {
+        const reader = new FileReader();
+        
+        reader.onload = (e) => {
+          const dataUrl = e.target?.result as string;
+          const uniqueKey = `${folderPath}/${Date.now()}-${index}-${file.name}`;
+          this.uploadedImages.set(uniqueKey, dataUrl);
+          
+          results[index] = dataUrl;
+          completed++;
+          
+          console.log(`✅ Image ${index + 1}/${files.length} uploaded: ${file.name}`);
+          
+          if (completed === files.length) {
+            // Small delay to simulate network
+            setTimeout(() => {
+              observer.next(results);
+              observer.complete();
+            }, 300);
+          }
+        };
+
+        reader.onerror = (error) => {
+          console.error(`❌ Error reading file ${index}:`, error);
+          observer.error(error);
+        };
+
+        reader.readAsDataURL(file);
       });
     });
-
-    return from(Promise.all(uploadPromises)).pipe(
-      catchError((error) => {
-        console.error('Multiple images upload error:', error);
-        throw error;
-      })
-    );
   }
 
   /**
-   * Create thumbnail image (placeholder for now)
-   * In production, use image processing library like sharp
+   * Create thumbnail image using Canvas API
    * @param file Original image file
-   * @returns Promise with thumbnail data
+   * @returns Promise with thumbnail data URL
    */
-  async createThumbnail(file: File): Promise<Blob> {
-    // For now, return the original file
-    // In production, use Canvas API or image processing library
-    return new Promise((resolve) => {
+  async createThumbnail(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const canvas = document.createElement('canvas');
@@ -112,29 +128,47 @@ export class ImageUploadService {
           ctx?.drawImage(img, 0, 0, width, height);
           
           canvas.toBlob((blob) => {
-            resolve(blob || file);
+            if (blob) {
+              const reader2 = new FileReader();
+              reader2.onload = (e2) => {
+                resolve(e2.target?.result as string);
+              };
+              reader2.readAsDataURL(blob);
+            } else {
+              resolve(e.target?.result as string);
+            }
           }, 'image/jpeg', 0.8);
+        };
+
+        img.onerror = () => {
+          reject(new Error('Failed to load image'));
         };
         
         img.src = e.target?.result as string;
       };
+
+      reader.onerror = () => {
+        reject(new Error('Failed to read file'));
+      };
+
       reader.readAsDataURL(file);
     });
   }
 
   /**
-   * Delete image from Firebase Storage
-   * @param path Path to image in storage
+   * Delete image from local storage
+   * @param dataUrl Data URL of image to delete
    * @returns Observable<void>
    */
-  deleteImage(path: string): Observable<void> {
-    const storageRef = ref(this.storage, path);
-    return from(deleteObject(storageRef)).pipe(
-      catchError((error) => {
-        console.error('Image delete error:', error);
-        throw error;
-      })
-    );
+  deleteImage(dataUrl: string): Observable<void> {
+    // Find and remove from map
+    for (const [key, value] of this.uploadedImages.entries()) {
+      if (value === dataUrl) {
+        this.uploadedImages.delete(key);
+        console.log('✅ Image deleted:', key);
+      }
+    }
+    return of(void 0);
   }
 
   /**
