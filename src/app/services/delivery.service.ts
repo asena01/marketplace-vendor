@@ -558,4 +558,157 @@ export class DeliveryService {
       })
     );
   }
+
+  // ==================== SERVICE-BASED DELIVERY SYSTEM ====================
+
+  /**
+   * Get available delivery services for this business
+   * Fetches from backend or returns predefined services
+   */
+  getDeliveryServices(businessType?: string): Observable<ApiResponse<DeliveryServiceDefinition[]>> {
+    const params = new HttpParams()
+      .set('businessType', businessType || 'restaurant');
+
+    return this.http.get<ApiResponse<DeliveryServiceDefinition[]>>(
+      `${this.apiUrl}/${this.restaurantId}/delivery-services`,
+      { params }
+    ).pipe(
+      catchError((error) => {
+        console.error('Error fetching delivery services:', error);
+        // Return predefined services as fallback
+        return of({
+          status: 'success',
+          data: this.getAvailableServices('restaurant')
+        });
+      })
+    );
+  }
+
+  /**
+   * Get a specific delivery service by ID
+   */
+  getDeliveryService(serviceId: string): Observable<ApiResponse<DeliveryServiceDefinition>> {
+    return this.http.get<ApiResponse<DeliveryServiceDefinition>>(
+      `${this.apiUrl}/${this.restaurantId}/delivery-services/${serviceId}`
+    ).pipe(
+      catchError((error) => {
+        console.error('Error fetching delivery service:', error);
+        const service = this.getServiceById(serviceId);
+        return of({
+          status: service ? 'success' : 'error',
+          data: service || null
+        });
+      })
+    );
+  }
+
+  /**
+   * Create a custom delivery service
+   */
+  createDeliveryService(service: Partial<DeliveryServiceDefinition>): Observable<ApiResponse<DeliveryServiceDefinition>> {
+    return this.http.post<ApiResponse<DeliveryServiceDefinition>>(
+      `${this.apiUrl}/${this.restaurantId}/delivery-services`,
+      service
+    ).pipe(
+      catchError((error) => {
+        console.error('Error creating delivery service:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
+
+  /**
+   * Update a delivery service
+   */
+  updateDeliveryService(serviceId: string, updates: Partial<DeliveryServiceDefinition>): Observable<ApiResponse<DeliveryServiceDefinition>> {
+    return this.http.put<ApiResponse<DeliveryServiceDefinition>>(
+      `${this.apiUrl}/${this.restaurantId}/delivery-services/${serviceId}`,
+      updates
+    ).pipe(
+      catchError((error) => {
+        console.error('Error updating delivery service:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
+
+  /**
+   * Delete a delivery service
+   */
+  deleteDeliveryService(serviceId: string): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(
+      `${this.apiUrl}/${this.restaurantId}/delivery-services/${serviceId}`
+    ).pipe(
+      catchError((error) => {
+        console.error('Error deleting delivery service:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
+
+  /**
+   * Calculate delivery price for a service
+   * Can be called on frontend or backend
+   */
+  calculateDeliveryPrice(serviceId: string, distance: number, weight: number): Observable<ApiResponse<{ price: number; breakdown: any }>> {
+    const params = new HttpParams()
+      .set('serviceId', serviceId)
+      .set('distance', distance.toString())
+      .set('weight', weight.toString());
+
+    return this.http.get<ApiResponse<{ price: number; breakdown: any }>>(
+      `${this.apiUrl}/${this.restaurantId}/delivery-services/calculate-price`,
+      { params }
+    ).pipe(
+      catchError((error) => {
+        console.error('Error calculating delivery price:', error);
+        // Fallback to local calculation
+        const service = this.getServiceById(serviceId);
+        if (service) {
+          const price = this.calculatePrice(service, distance, weight);
+          return of({
+            status: 'success',
+            data: { price, breakdown: { service: service.name, distance, weight } }
+          });
+        }
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
+
+  /**
+   * Create a delivery order using a specific service
+   */
+  createDeliveryOrderWithService(serviceId: string, orderData: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${this.apiUrl}/${this.restaurantId}/delivery-orders/${serviceId}`,
+      orderData
+    ).pipe(
+      catchError((error) => {
+        console.error('Error creating delivery order:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
+
+  /**
+   * Get delivery estimates (time and cost)
+   */
+  getDeliveryEstimate(serviceId: string, pickupLocation: string, deliveryLocation: string, weight: number): Observable<ApiResponse<any>> {
+    const params = new HttpParams()
+      .set('serviceId', serviceId)
+      .set('pickupLocation', pickupLocation)
+      .set('deliveryLocation', deliveryLocation)
+      .set('weight', weight.toString());
+
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/${this.restaurantId}/delivery-estimate`,
+      { params }
+    ).pipe(
+      catchError((error) => {
+        console.error('Error getting delivery estimate:', error);
+        return of({ status: 'error', data: null });
+      })
+    );
+  }
 }
