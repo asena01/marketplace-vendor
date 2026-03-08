@@ -12,7 +12,7 @@ import { NotificationService, Notification } from '../../services/notification.s
       <!-- Notification Bell Icon with Unread Count -->
       <button
         (click)="toggleDropdown()"
-        class="pointer-events-auto relative p-2 rounded-full hover:bg-slate-100 transition-colors bg-white shadow-md"
+        class="pointer-events-auto relative p-2 rounded-full hover:bg-yellow-200 transition-colors bg-yellow-100 shadow-md border border-yellow-200"
       >
         <mat-icon class="text-2xl">notifications</mat-icon>
         @if (unreadCount() > 0) {
