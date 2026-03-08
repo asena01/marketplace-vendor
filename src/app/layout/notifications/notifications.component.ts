@@ -8,21 +8,21 @@ import { NotificationService, Notification } from '../../services/notification.s
   standalone: true,
   imports: [CommonModule, MatIconModule],
   template: `
-    <div class="fixed top-4 right-4 z-50 space-y-3 max-w-md">
-      <!-- Notification Bell Icon with Unread Count -->
-      <div class="flex justify-end mb-4">
-        <button 
-          (click)="toggleDropdown()"
-          class="relative p-2 rounded-full hover:bg-slate-100 transition-colors"
-        >
-          <mat-icon class="text-2xl">notifications</mat-icon>
-          @if (unreadCount() > 0) {
-            <span class="absolute top-0 right-0 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full">
-              {{ unreadCount() }}
-            </span>
-          }
-        </button>
-      </div>
+    <!-- Notification Bell Icon with Unread Count -->
+    <button
+      (click)="toggleDropdown()"
+      class="fixed top-4 right-4 z-50 relative p-2 rounded-full hover:bg-slate-100 transition-colors bg-white shadow-md"
+    >
+      <mat-icon class="text-2xl">notifications</mat-icon>
+      @if (unreadCount() > 0) {
+        <span class="absolute top-0 right-0 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
+          {{ unreadCount() }}
+        </span>
+      }
+    </button>
+
+    <div class="fixed top-16 right-4 z-40 space-y-3 max-w-md">
+      <!-- Notifications Dropdown (now separate container) -->
 
       <!-- Notifications Dropdown -->
       @if (showDropdown()) {
