@@ -760,13 +760,4 @@ export class HotelService {
     );
   }
 
-  // ==================== ROOM STATUS SUMMARY ====================
-  getRoomStatusSummary(): Observable<ApiResponse<any>> {
-    return this.http.get<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/rooms/status-summary`).pipe(
-      catchError((error) => {
-        console.error('❌ Failed to fetch room status summary:', error);
-        return of({ status: 'error', data: null, message: error.message });
-      })
-    );
-  }
 }

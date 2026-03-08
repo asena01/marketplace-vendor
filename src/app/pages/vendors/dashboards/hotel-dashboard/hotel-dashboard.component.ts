@@ -257,7 +257,7 @@ export class HotelDashboardComponent implements OnInit {
       stats: this.hotelService.getHotelStats(),
       bookings: this.hotelService.getHotelBookings(1, 5),
       staff: this.hotelService.getStaff(1, 10),
-      roomStatus: this.hotelService.getRoomStatusSummary()
+      rooms: this.hotelService.getRooms(1, 100)
     }).subscribe({
       next: (results: any) => {
         // Load hotel details
@@ -283,10 +283,11 @@ export class HotelDashboardComponent implements OnInit {
           console.log('✅ Staff loaded:', results.staff.data);
         }
 
-        // Load room status summary
-        if (results.roomStatus.status === 'success' && results.roomStatus.data) {
-          this.roomStatusSummary.set(results.roomStatus.data);
-          console.log('✅ Room status summary loaded:', results.roomStatus.data);
+        // Calculate room status summary from rooms data
+        if (results.rooms.status === 'success' && Array.isArray(results.rooms.data)) {
+          const roomSummary = this.calculateRoomStatusSummary(results.rooms.data);
+          this.roomStatusSummary.set(roomSummary);
+          console.log('✅ Room status summary calculated:', roomSummary);
         }
 
         this.isLoading.set(false);
@@ -297,6 +298,30 @@ export class HotelDashboardComponent implements OnInit {
         this.isLoading.set(false);
       }
     });
+  }
+
+  private calculateRoomStatusSummary(rooms: any[]): any {
+    const summary = {
+      occupied: 0,
+      available: 0,
+      cleaning: 0,
+      maintenance: 0
+    };
+
+    rooms.forEach((room: any) => {
+      const status = room.status?.toLowerCase() || 'available';
+      if (status === 'occupied' || status === 'checked-in') {
+        summary.occupied++;
+      } else if (status === 'available') {
+        summary.available++;
+      } else if (status === 'cleaning') {
+        summary.cleaning++;
+      } else if (status === 'maintenance') {
+        summary.maintenance++;
+      }
+    });
+
+    return summary;
   }
 
   getOccupancyRate(): number {
