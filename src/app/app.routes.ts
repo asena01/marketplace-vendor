@@ -29,6 +29,9 @@ import { ToursDashboardComponent } from './pages/vendors/dashboards/tours-dashbo
 import { DeviceManagementComponent } from './pages/vendors/dashboards/hotel-dashboard/device-management/device-management.component';
 import { HotelRoomsComponent } from './pages/vendors/dashboards/hotel-dashboard/rooms/rooms.component';
 import { HotelStaffComponent } from './pages/vendors/dashboards/hotel-dashboard/staff/staff.component';
+import { RestaurantMenuComponent } from './pages/vendors/dashboards/restaurant-dashboard/menu/menu.component';
+import { RestaurantOrdersComponent } from './pages/vendors/dashboards/restaurant-dashboard/orders/orders.component';
+import { RetailProductsComponent } from './pages/vendors/dashboards/retail-dashboard/products/products.component';
 import { ReviewManagementComponent } from './pages/vendors/dashboards/shared/review-management/review-management.component';
 import { IncidentManagementComponent } from './pages/vendors/dashboards/shared/incident-management/incident-management.component';
 import { VendorGuard } from './guards/vendor.guard';
@@ -50,11 +53,14 @@ export const routes: Routes = [
   { path: 'hotel-dashboard/:page', component: HotelDashboardComponent, canActivate: [VendorGuard] },
   { path: 'hotel-dashboard', component: HotelDashboardComponent, canActivate: [VendorGuard] },
   // Restaurant Dashboard Routes
+  { path: 'restaurant-dashboard/menu', component: RestaurantMenuComponent, canActivate: [VendorGuard] },
+  { path: 'restaurant-dashboard/orders', component: RestaurantOrdersComponent, canActivate: [VendorGuard] },
   { path: 'restaurant-dashboard/reviews', component: ReviewManagementComponent, canActivate: [VendorGuard] },
   { path: 'restaurant-dashboard/incidents', component: IncidentManagementComponent, canActivate: [VendorGuard] },
   { path: 'restaurant-dashboard/:page', component: RestaurantDashboardComponent, canActivate: [VendorGuard] },
   { path: 'restaurant-dashboard', component: RestaurantDashboardComponent, canActivate: [VendorGuard] },
   // Retail Dashboard Routes
+  { path: 'retail-dashboard/products', component: RetailProductsComponent, canActivate: [VendorGuard] },
   { path: 'retail-dashboard/reviews', component: ReviewManagementComponent, canActivate: [VendorGuard] },
   { path: 'retail-dashboard/incidents', component: IncidentManagementComponent, canActivate: [VendorGuard] },
   { path: 'retail-dashboard/:page', component: RetailDashboardComponent, canActivate: [VendorGuard] },

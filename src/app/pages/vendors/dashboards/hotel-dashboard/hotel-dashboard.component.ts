@@ -258,6 +258,7 @@ export class HotelDashboardComponent implements OnInit {
   hotelSidenavItems = [
     { label: 'Dashboard', icon: '📊', route: '/hotel-dashboard' },
     { label: 'Rooms', icon: '🛏️', route: '/hotel-dashboard/rooms', badge: 0 },
+    { label: 'Staff', icon: '👔', route: '/hotel-dashboard/staff', badge: 0 },
     { label: 'Bookings', icon: '📅', route: '/hotel-dashboard/bookings', badge: 5 },
     { label: 'Devices', icon: '📱', route: '/hotel-dashboard/devices', badge: 0 },
     { label: 'Guests', icon: '👥', route: '/hotel-dashboard/guests' },
