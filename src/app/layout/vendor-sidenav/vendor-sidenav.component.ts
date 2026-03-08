@@ -133,11 +133,9 @@ export class VendorSidenavComponent implements OnInit {
   }
 
   loadBadgeData(): void {
-    const vendorId = localStorage.getItem(`${this.vendorType}Id`);
-
-    if (this.vendorType === 'restaurant' && vendorId) {
+    if (this.vendorType === 'restaurant') {
       // Load pending orders count
-      this.foodService.getRestaurantOrders(vendorId).subscribe({
+      this.foodService.getRestaurantOrders(localStorage.getItem('restaurantId') || '').subscribe({
         next: (response: any) => {
           if (response.status === 'success' && response.data) {
             const pendingCount = response.data.filter((order: any) => order.status === 'pending').length;
@@ -146,11 +144,12 @@ export class VendorSidenavComponent implements OnInit {
             const ordersItem = this.sidenavItems.find(item => item.label === 'Orders');
             if (ordersItem) ordersItem.badge = pendingCount;
           }
-        }
+        },
+        error: (error) => console.log('Error loading orders:', error)
       });
-    } else if (this.vendorType === 'hotel' && vendorId) {
-      // Load rooms and staff counts
-      this.hotelService.getRooms(vendorId).subscribe({
+    } else if (this.vendorType === 'hotel') {
+      // Load available rooms count
+      this.hotelService.getRooms(1, 100).subscribe({
         next: (response: any) => {
           if (response.status === 'success' && response.data) {
             const availableRooms = response.data.filter((room: any) => room.status === 'available').length;
@@ -158,19 +157,21 @@ export class VendorSidenavComponent implements OnInit {
             const roomsItem = this.sidenavItems.find(item => item.label === 'Rooms');
             if (roomsItem) roomsItem.badge = availableRooms;
           }
-        }
+        },
+        error: (error) => console.log('Error loading rooms:', error)
       });
-    } else if (this.vendorType === 'retail' && vendorId) {
-      // Load products count
-      this.productService.getProducts(vendorId).subscribe({
+    } else if (this.vendorType === 'retail') {
+      // Load low stock products count
+      this.productService.getProducts(1, 100).subscribe({
         next: (response: any) => {
-          if (response.status === 'success' && response.data) {
+          if (response.success && response.data) {
             const lowStockCount = response.data.filter((product: any) => product.stock < 10).length;
             this.productsBadge.set(lowStockCount);
             const productsItem = this.sidenavItems.find(item => item.label === 'Products');
             if (productsItem) productsItem.badge = lowStockCount;
           }
-        }
+        },
+        error: (error) => console.log('Error loading products:', error)
       });
     }
   }

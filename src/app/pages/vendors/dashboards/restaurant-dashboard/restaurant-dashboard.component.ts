@@ -227,14 +227,7 @@ export class RestaurantDashboardComponent implements OnInit {
   orders = signal<any[]>([]);
   menuItems = signal<any[]>([]);
 
-  restaurantSidenavItems = [
-    { label: 'Dashboard', icon: '🍽️', route: '/restaurant-dashboard' },
-    { label: 'Orders', icon: '📋', route: '/restaurant-dashboard/orders', badge: 5 },
-    { label: 'Menu', icon: '🍔', route: '/restaurant-dashboard/menu', badge: 0 },
-    { label: 'Reviews', icon: '⭐', route: '/restaurant-dashboard/reviews', badge: 2 },
-    { label: 'Incidents', icon: '🚨', route: '/restaurant-dashboard/incidents', badge: 1 },
-    { label: 'Settings', icon: '⚙️', route: '/restaurant-dashboard/settings' }
-  ];
+  restaurantSidenavItems = [];
 
   private restaurantId: string = '';
 

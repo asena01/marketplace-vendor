@@ -255,18 +255,7 @@ export class HotelDashboardComponent implements OnInit {
   isLoading = signal(false);
   errorMessage = signal('');
 
-  hotelSidenavItems = [
-    { label: 'Dashboard', icon: '📊', route: '/hotel-dashboard' },
-    { label: 'Rooms', icon: '🛏️', route: '/hotel-dashboard/rooms', badge: 0 },
-    { label: 'Staff', icon: '👔', route: '/hotel-dashboard/staff', badge: 0 },
-    { label: 'Bookings', icon: '📅', route: '/hotel-dashboard/bookings', badge: 5 },
-    { label: 'Devices', icon: '📱', route: '/hotel-dashboard/devices', badge: 0 },
-    { label: 'Guests', icon: '👥', route: '/hotel-dashboard/guests' },
-    { label: 'Reviews', icon: '⭐', route: '/hotel-dashboard/reviews', badge: 2 },
-    { label: 'Incidents', icon: '🚨', route: '/hotel-dashboard/incidents', badge: 1 },
-    { label: 'Reports', icon: '📈', route: '/hotel-dashboard/reports' },
-    { label: 'Settings', icon: '⚙️', route: '/hotel-dashboard/settings' }
-  ];
+  hotelSidenavItems = [];
 
   currentRoute = signal('');
 

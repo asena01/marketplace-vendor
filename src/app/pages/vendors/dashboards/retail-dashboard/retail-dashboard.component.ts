@@ -271,17 +271,7 @@ export class RetailDashboardComponent implements OnInit {
   errorMessage = signal('');
   currentRoute = signal('');
 
-  retailSidenavItems = [
-    { label: 'Dashboard', icon: '🛍️', route: '/retail-dashboard' },
-    { label: 'Sales', icon: '💰', route: '/retail-dashboard/sales', badge: 0 },
-    { label: 'Inventory', icon: '📦', route: '/retail-dashboard/inventory', badge: 24 },
-    { label: 'Products', icon: '🏷️', route: '/retail-dashboard/products', badge: 0 },
-    { label: 'Customers', icon: '👥', route: '/retail-dashboard/customers', badge: 0 },
-    { label: 'Reviews', icon: '⭐', route: '/retail-dashboard/reviews', badge: 2 },
-    { label: 'Incidents', icon: '🚨', route: '/retail-dashboard/incidents', badge: 1 },
-    { label: 'Reports', icon: '📈', route: '/retail-dashboard/reports' },
-    { label: 'Settings', icon: '⚙️', route: '/retail-dashboard/settings' }
-  ];
+  retailSidenavItems = [];
 
   constructor(
     private authService: AuthService,
