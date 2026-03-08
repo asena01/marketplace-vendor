@@ -170,7 +170,7 @@ interface IntegratedDelivery {
                       <mat-icon class="text-green-600">check_circle</mat-icon>
                       <div>
                         <p class="text-sm font-semibold text-slate-900">Picked up</p>
-                        <p class="text-xs text-slate-600">{{ delivery.tracking.pickupTime | date: 'medium' }}</p>
+                        <p class="text-xs text-slate-600">{{ delivery.tracking?.pickupTime | date: 'medium' }}</p>
                       </div>
                     </div>
                   }
@@ -179,7 +179,7 @@ interface IntegratedDelivery {
                       <mat-icon class="text-orange-600">access_time</mat-icon>
                       <div>
                         <p class="text-sm font-semibold text-slate-900">Est. Delivery</p>
-                        <p class="text-xs text-slate-600">{{ delivery.tracking.estimatedDeliveryTime | date: 'medium' }}</p>
+                        <p class="text-xs text-slate-600">{{ delivery.tracking?.estimatedDeliveryTime | date: 'medium' }}</p>
                       </div>
                     </div>
                   }
@@ -188,7 +188,7 @@ interface IntegratedDelivery {
                       <mat-icon class="text-green-600">check_circle</mat-icon>
                       <div>
                         <p class="text-sm font-semibold text-slate-900">Delivered</p>
-                        <p class="text-xs text-slate-600">{{ delivery.tracking.deliveryTime | date: 'medium' }}</p>
+                        <p class="text-xs text-slate-600">{{ delivery.tracking?.deliveryTime | date: 'medium' }}</p>
                       </div>
                     </div>
                   }
@@ -202,8 +202,8 @@ interface IntegratedDelivery {
                       <span>Current Location</span>
                     </p>
                     <p class="text-sm text-slate-900 mt-1">
-                      Lat: {{ delivery.tracking.currentLocation.latitude | number: '1.4-4' }}, 
-                      Lng: {{ delivery.tracking.currentLocation.longitude | number: '1.4-4' }}
+                      Lat: {{ delivery.tracking?.currentLocation?.latitude | number: '1.4-4' }},
+                      Lng: {{ delivery.tracking?.currentLocation?.longitude | number: '1.4-4' }}
                     </p>
                   </div>
                 }

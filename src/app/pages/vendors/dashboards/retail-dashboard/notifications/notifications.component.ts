@@ -241,10 +241,6 @@ export class RetailNotificationsComponent implements OnInit, OnDestroy {
     return this.notifications();
   }
 
-  unreadCount(): number {
-    return this.notifications().filter(n => !n.isRead).length;
-  }
-
   markAsRead(notificationId?: string): void {
     if (!notificationId) return;
     this.notificationService.markAsRead(notificationId).subscribe({

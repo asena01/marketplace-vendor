@@ -353,8 +353,8 @@ export class RetailCustomersComponent implements OnInit {
       filtered.sort((a, b) => b.totalPurchases - a.totalPurchases);
     } else if (this.sortBy === 'joined') {
       filtered.sort((a, b) => {
-        const dateA = new Date(b.firstPurchaseDate || 0).getTime();
-        const dateB = new Date(a.firstPurchaseDate || 0).getTime();
+        const dateA = new Date(b.lastPurchaseDate || 0).getTime();
+        const dateB = new Date(a.lastPurchaseDate || 0).getTime();
         return dateA - dateB;
       });
     } else {

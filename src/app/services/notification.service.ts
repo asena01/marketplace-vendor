@@ -103,4 +103,21 @@ export class NotificationService {
       `${this.apiUrl}/${notificationId}`
     );
   }
+
+  // Toast notification methods for UI feedback
+  success(title: string, message: string): void {
+    console.log(`✓ ${title}: ${message}`);
+  }
+
+  error(title: string, message: string): void {
+    console.error(`✗ ${title}: ${message}`);
+  }
+
+  warning(title: string, message: string): void {
+    console.warn(`⚠ ${title}: ${message}`);
+  }
+
+  info(title: string, message: string): void {
+    console.info(`ℹ ${title}: ${message}`);
+  }
 }
