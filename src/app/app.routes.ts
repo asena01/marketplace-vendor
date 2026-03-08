@@ -73,13 +73,19 @@ import { ServiceReportsComponent } from './pages/vendors/dashboards/service-dash
 import { ServiceNotificationsComponent } from './pages/vendors/dashboards/service-dashboard/notifications/notifications.component';
 import { VendorGuard } from './guards/vendor.guard';
 import { AdminGuard } from './guards/admin.guard';
+import { PermissionGuard, PermissionsGuard, RoleGuard, RolesGuard } from './guards/permission.guard';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'login', component: LoginComponent },
   { path: 'vendor-login', component: VendorLoginComponent },
   { path: 'customer-dashboard', component: CustomerDashboardComponent },
-  { path: 'admin-dashboard', component: AdminDashboardComponent, canActivate: [AdminGuard] },
+  {
+    path: 'admin-dashboard',
+    component: AdminDashboardComponent,
+    canActivate: [AdminGuard, RoleGuard],
+    data: { role: 'admin' }
+  },
   { path: 'vendor-detail/:id', component: VendorDetailComponent, canActivate: [AdminGuard] },
   { path: 'delivery-dashboard', component: DeliveryDashboardComponent, canActivate: [VendorGuard] },
   // Hotel Dashboard Routes

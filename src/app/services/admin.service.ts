@@ -490,4 +490,82 @@ export class AdminService {
       { headers: this.getAdminHeaders() }
     );
   }
+
+  // ============================================
+  // ROLE & PERMISSION METHODS
+  // ============================================
+
+  getRoles(): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(
+      `${this.apiUrl}/roles`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  getRoleById(id: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/roles/${id}`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  createRole(data: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${this.apiUrl}/roles`,
+      data,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  updateRole(id: string, data: any): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${this.apiUrl}/roles/${id}`,
+      data,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  deleteRole(id: string): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(
+      `${this.apiUrl}/roles/${id}`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  getPermissions(): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(
+      `${this.apiUrl}/permissions`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  getPermissionById(id: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/permissions/${id}`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  createPermission(data: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${this.apiUrl}/permissions`,
+      data,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  updatePermission(id: string, data: any): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${this.apiUrl}/permissions/${id}`,
+      data,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  deletePermission(id: string): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(
+      `${this.apiUrl}/permissions/${id}`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
 }

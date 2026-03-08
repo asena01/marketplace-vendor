@@ -15,6 +15,7 @@ import { AdminDeliveryComponent } from '../admin-delivery/admin-delivery.compone
 import { AdminProfileComponent } from '../admin-profile/admin-profile.component';
 import { VendorDirectoryComponent } from '../admin-vendors/vendor-directory.component';
 import { SettlementsComponent } from '../admin-settlements/settlements.component';
+import { RolesComponent } from '../admin-roles/roles.component';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -30,7 +31,8 @@ import { SettlementsComponent } from '../admin-settlements/settlements.component
     AdminDeliveryComponent,
     AdminProfileComponent,
     VendorDirectoryComponent,
-    SettlementsComponent
+    SettlementsComponent,
+    RolesComponent
   ],
   template: `
     <div class="min-h-screen bg-gray-100">
@@ -175,6 +177,17 @@ import { SettlementsComponent } from '../admin-settlements/settlements.component
               <span class="material-icons">settings</span>
               Settings
             </button>
+
+            <button
+              (click)="setCurrentPage('roles')"
+              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
+                (currentPage() === 'roles'
+                  ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
+                  : 'text-gray-700 hover:bg-gray-100')"
+            >
+              <span class="material-icons">security</span>
+              Roles & Permissions
+            </button>
           </nav>
         </aside>
 
@@ -200,6 +213,8 @@ import { SettlementsComponent } from '../admin-settlements/settlements.component
             <app-admin-profile></app-admin-profile>
           } @else if (currentPage() === 'settings') {
             <app-admin-settings></app-admin-settings>
+          } @else if (currentPage() === 'roles') {
+            <app-roles></app-roles>
           }
         </main>
       </div>
