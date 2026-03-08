@@ -8,6 +8,7 @@ import { ProductService, Product as ApiProduct } from '../../services/product.se
 import { ReviewService, ProductReview } from '../../services/review.service';
 import { PaymentService, PaymentMethod, PaymentRequest, PaymentResponse } from '../../services/payment.service';
 import { CurrencyService } from '../../services/currency.service';
+import { DeliveryService, DeliveryServiceDefinition } from '../../services/delivery.service';
 
 interface Product {
   id: string;
@@ -96,11 +97,23 @@ export class ShoppingComponent implements OnInit {
   mobileMoneyProvider = signal<string>('');
   phoneNumber = signal<string>('');
 
+  // Delivery related signals
+  deliveryServices = signal<DeliveryServiceDefinition[]>([]);
+  selectedDeliveryService = signal<DeliveryServiceDefinition | null>(null);
+  deliveryAddress = signal<string>('');
+  estimatedDistance = signal<number>(0);
+  estimatedWeight = signal<number>(0);
+  deliveryPrice = signal<number>(0);
+  isCalculatingDelivery = signal<boolean>(false);
+  showDeliveryOptions = signal<boolean>(false);
+  deliveryError = signal<string>('');
+
   constructor(
     private productService: ProductService,
     private reviewService: ReviewService,
     private paymentService: PaymentService,
-    public currencyService: CurrencyService
+    public currencyService: CurrencyService,
+    private deliveryService: DeliveryService
   ) {
     // Prevent body scroll when cart is open
     effect(() => {
@@ -391,6 +404,12 @@ export class ShoppingComponent implements OnInit {
       return;
     }
 
+    if (!this.validateDeliveryInfo()) {
+      alert(this.deliveryError());
+      this.showDeliveryOptions.set(true);
+      return;
+    }
+
     this.showPaymentModal.set(true);
     this.loadPaymentMethods();
     this.paymentError.set('');
@@ -471,10 +490,10 @@ export class ShoppingComponent implements OnInit {
     const userEmail = localStorage.getItem('userEmail') || 'customer@example.com';
     const userName = localStorage.getItem('userName') || 'Customer';
 
-    // Create payment request with cart items
+    // Create payment request with cart items and delivery
     const paymentRequest: PaymentRequest = {
       orderId: `ORD-${Date.now()}`,
-      amount: this.cartTotal,
+      amount: this.getTotalWithDelivery(), // Include delivery cost in total
       currency: 'NGN',
       paymentMethod: paymentMethod,
       // Add customer and cart info
@@ -489,7 +508,16 @@ export class ShoppingComponent implements OnInit {
       userId: userId,
       userEmail: userEmail,
       customerName: userName,
-      storeName: 'MarketHub Shopping'
+      storeName: 'MarketHub Shopping',
+      // Add delivery information
+      deliveryInfo: {
+        serviceId: this.selectedDeliveryService()?.id,
+        serviceName: this.selectedDeliveryService()?.name,
+        address: this.deliveryAddress(),
+        distance: this.estimatedDistance() || 10,
+        estimatedDays: this.selectedDeliveryService()?.estimatedDays,
+        price: this.deliveryPrice()
+      } as any
     };
 
     // Add payment details based on method
@@ -668,5 +696,103 @@ export class ShoppingComponent implements OnInit {
   changeCurrency(event: any): void {
     const currencyCode = event.target?.value || event;
     this.currencyService.setCurrency(currencyCode);
+  }
+
+  // ============================================
+  // DELIVERY METHODS
+  // ============================================
+
+  /**
+   * Load available delivery services for retail
+   */
+  loadDeliveryServices(): void {
+    const services = this.deliveryService.getAvailableServices('retail');
+    this.deliveryServices.set(services);
+    console.log('✅ Loaded', services.length, 'delivery services');
+  }
+
+  /**
+   * Select a delivery service and calculate price
+   */
+  selectDeliveryService(service: DeliveryServiceDefinition): void {
+    this.selectedDeliveryService.set(service);
+    console.log('📦 Selected delivery service:', service.name);
+    this.calculateDeliveryPrice();
+  }
+
+  /**
+   * Calculate delivery price based on selected service and cart weight/distance
+   */
+  calculateDeliveryPrice(): void {
+    const service = this.selectedDeliveryService();
+    if (!service) {
+      this.deliveryError.set('Please select a delivery service');
+      return;
+    }
+
+    if (!this.deliveryAddress()) {
+      this.deliveryError.set('Please enter a delivery address');
+      return;
+    }
+
+    this.isCalculatingDelivery.set(true);
+    this.deliveryError.set('');
+
+    // Calculate estimated weight from cart items (assume 0.5kg per item)
+    const weight = this.cartItemsCount * 0.5;
+
+    // Estimate distance (default to 10km if not specified)
+    const distance = this.estimatedDistance() || 10;
+
+    console.log(`📊 Calculating delivery: service=${service.id}, distance=${distance}km, weight=${weight}kg`);
+
+    // Calculate price
+    const price = this.deliveryService.calculatePrice(service, distance, weight);
+    this.deliveryPrice.set(price);
+
+    console.log(`✅ Delivery price calculated: ${this.formatPrice(price)}`);
+
+    this.isCalculatingDelivery.set(false);
+  }
+
+  /**
+   * Get total with delivery cost
+   */
+  getTotalWithDelivery(): number {
+    return this.cartTotal + this.deliveryPrice();
+  }
+
+  /**
+   * Validate delivery information before checkout
+   */
+  validateDeliveryInfo(): boolean {
+    if (!this.deliveryAddress()) {
+      this.deliveryError.set('Please enter a delivery address');
+      return false;
+    }
+
+    if (!this.selectedDeliveryService()) {
+      this.deliveryError.set('Please select a delivery service');
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Open delivery options panel
+   */
+  openDeliveryOptions(): void {
+    this.showDeliveryOptions.set(true);
+    if (this.deliveryServices().length === 0) {
+      this.loadDeliveryServices();
+    }
+  }
+
+  /**
+   * Close delivery options panel
+   */
+  closeDeliveryOptions(): void {
+    this.showDeliveryOptions.set(false);
   }
 }
