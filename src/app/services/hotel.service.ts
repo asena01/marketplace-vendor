@@ -497,66 +497,6 @@ export class HotelService {
     );
   }
 
-  // ==================== DEVICES ====================
-  getDevices(page = 1, limit = 10, status?: string, type?: string): Observable<ApiResponse<any[]>> {
-    let params = new HttpParams()
-      .set('page', page.toString())
-      .set('limit', limit.toString())
-      .set('hotelId', this.hotelId);
-
-    if (status !== undefined) params = params.set('status', status);
-    if (type) params = params.set('deviceType', type);
-
-    const url = `${API_URL}/devices`;
-    console.log('🔗 Devices API Request:', {
-      url,
-      hotelId: this.hotelId,
-      params: { page, limit, status, type }
-    });
-
-    return this.http.get<ApiResponse<any[]>>(url, { params }).pipe(
-      tap((data) => {
-        console.log('✅ Devices API Success - Received', data.data?.length, 'devices');
-      }),
-      catchError((error) => {
-        console.error('❌ Devices API Failed:', {
-          status: error.status,
-          statusText: error.statusText,
-          message: error.message,
-          url: error.url
-        });
-        throw error;
-      })
-    );
-  }
-
-  getDeviceById(deviceId: string): Observable<ApiResponse<any>> {
-    return this.http.get<ApiResponse<any>>(`${API_URL}/devices/${deviceId}`);
-  }
-
-  registerDevices(devicesData: any[]): Observable<ApiResponse<any>> {
-    return this.http.post<ApiResponse<any>>(`${API_URL}/devices`, devicesData);
-  }
-
-  createDevice(deviceData: any): Observable<ApiResponse<any>> {
-    return this.http.post<ApiResponse<any>>(`${API_URL}/devices`, [deviceData]);
-  }
-
-  updateDevice(deviceId: string, deviceData: any): Observable<ApiResponse<any>> {
-    return this.http.put<ApiResponse<any>>(`${API_URL}/devices/${deviceId}`, deviceData);
-  }
-
-  updateDeviceStatus(deviceId: string, status: boolean): Observable<ApiResponse<any>> {
-    return this.http.put<ApiResponse<any>>(
-      `${API_URL}/devices/${deviceId}/status`,
-      { status }
-    );
-  }
-
-  deleteDevices(ids: string[]): Observable<ApiResponse<any>> {
-    return this.http.post<ApiResponse<any>>(`${API_URL}/devices/remove`, { ids });
-  }
-
   // ==================== REVIEWS ====================
   getReviews(page = 1, limit = 10): Observable<ApiResponse<any[]>> {
     let params = new HttpParams()
