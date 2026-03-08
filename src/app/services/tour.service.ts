@@ -111,6 +111,42 @@ export class TourService {
   }
 
   /**
+   * Create booking
+   */
+  createBooking(booking: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/bookings`, booking).pipe(
+      catchError((error) => {
+        console.error('Error creating booking:', error);
+        return of({ status: 'error', message: error.message });
+      })
+    );
+  }
+
+  /**
+   * Update booking
+   */
+  updateBooking(id: string, booking: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/bookings/${id}`, booking).pipe(
+      catchError((error) => {
+        console.error('Error updating booking:', error);
+        return of({ status: 'error', message: error.message });
+      })
+    );
+  }
+
+  /**
+   * Delete booking
+   */
+  deleteBooking(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/bookings/${id}`).pipe(
+      catchError((error) => {
+        console.error('Error deleting booking:', error);
+        return of({ status: 'error', message: error.message });
+      })
+    );
+  }
+
+  /**
    * Get tour packages
    */
   getTourPackages(page: number = 1, limit: number = 10): Observable<ApiResponse> {

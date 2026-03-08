@@ -27,6 +27,11 @@ import { RestaurantDashboardComponent } from './pages/vendors/dashboards/restaur
 import { RetailDashboardComponent } from './pages/vendors/dashboards/retail-dashboard/retail-dashboard.component';
 import { ServiceDashboardComponent } from './pages/vendors/dashboards/service-dashboard/service-dashboard.component';
 import { ToursDashboardComponent } from './pages/vendors/dashboards/tours-dashboard/tours-dashboard.component';
+import { ToursDashboardToursComponent } from './pages/vendors/dashboards/tours-dashboard/tours/tours.component';
+import { ToursBookingsComponent } from './pages/vendors/dashboards/tours-dashboard/bookings/bookings.component';
+import { ToursGuidesComponent } from './pages/vendors/dashboards/tours-dashboard/guides/guides.component';
+import { ToursItinerariesComponent } from './pages/vendors/dashboards/tours-dashboard/itineraries/itineraries.component';
+import { ToursReportsComponent } from './pages/vendors/dashboards/tours-dashboard/reports/reports.component';
 import { HotelDevicesComponent } from './pages/vendors/dashboards/hotel-dashboard/devices/devices.component';
 import { AvailabilityCalendarComponent } from './pages/vendors/dashboards/hotel-dashboard/availability-calendar/availability-calendar.component';
 import { PricingComponent } from './pages/vendors/dashboards/hotel-dashboard/pricing/pricing.component';
@@ -156,6 +161,11 @@ export const routes: Routes = [
     component: ToursDashboardComponent,
     canActivate: [VendorGuard],
     children: [
+      { path: 'tours', component: ToursDashboardToursComponent },
+      { path: 'bookings', component: ToursBookingsComponent },
+      { path: 'guides', component: ToursGuidesComponent },
+      { path: 'itineraries', component: ToursItinerariesComponent },
+      { path: 'reports', component: ToursReportsComponent },
       { path: 'reviews', component: ReviewManagementComponent },
       { path: 'incidents', component: IncidentManagementComponent },
       { path: 'settings', component: ProfileSettingsComponent }
