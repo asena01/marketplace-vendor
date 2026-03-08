@@ -127,11 +127,19 @@ router.post('/login', async (req, res) => {
       console.log('🏢 Vendor type:', user.vendorType);
     }
 
+    const userResponse = user.toJSON();
+
+    // Include deliveryPartnerId if user is a delivery vendor
+    if (user.userType === 'vendor' && user.vendorType === 'delivery' && user.deliveryPartnerId) {
+      userResponse.deliveryPartnerId = user.deliveryPartnerId;
+      console.log('🚚 Delivery Partner ID:', user.deliveryPartnerId);
+    }
+
     res.status(200).json({
       success: true,
       message: 'Login successful',
       token,
-      user: user.toJSON(),
+      user: userResponse,
     });
   } catch (error) {
     console.error('❌ Login error:', error.message);

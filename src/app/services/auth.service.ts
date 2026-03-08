@@ -21,6 +21,7 @@ export interface User {
   website?: string;
   openingTime?: string;
   closingTime?: string;
+  deliveryPartnerId?: string;
 }
 
 @Injectable({
@@ -89,8 +90,9 @@ export class AuthService {
               localStorage.setItem('storeId', userId);
               console.log('✅ Store ID stored:', userId);
             } else if (response.user.vendorType === 'delivery') {
-              localStorage.setItem('deliveryId', userId);
-              console.log('✅ Delivery ID stored:', userId);
+              const deliveryId = response.user.deliveryPartnerId || userId;
+              localStorage.setItem('deliveryId', deliveryId);
+              console.log('✅ Delivery ID stored:', deliveryId);
             }
           }
         }
@@ -129,7 +131,10 @@ export class AuthService {
             } else if (response.user.vendorType === 'retail') {
               localStorage.setItem('storeId', response.user._id || 'retail-default');
             } else if (response.user.vendorType === 'delivery') {
-              localStorage.setItem('deliveryId', response.user._id || 'delivery-default');
+              // Use deliveryPartnerId if available, otherwise use userId
+              const deliveryId = response.user.deliveryPartnerId || response.user._id || 'delivery-default';
+              localStorage.setItem('deliveryId', deliveryId);
+              console.log('✅ Delivery ID stored:', deliveryId);
             }
           }
         }
