@@ -261,13 +261,16 @@ export class DriverTrackingComponent implements OnInit, OnDestroy {
     this.deliveryService.getActiveDeliveries().subscribe({
       next: (response: any) => {
         this.isLoading.set(false);
-        if (response.status === 'success' && response.data) {
+        if (response.status === 'success' && response.data && Array.isArray(response.data)) {
           this.deliveries.set(response.data);
+        } else {
+          this.deliveries.set([]);
         }
       },
       error: (error: any) => {
         this.isLoading.set(false);
         console.error('Error loading active deliveries:', error);
+        this.deliveries.set([]);
       }
     });
   }

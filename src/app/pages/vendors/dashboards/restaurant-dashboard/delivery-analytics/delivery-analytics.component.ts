@@ -20,33 +20,42 @@ import { NotificationService } from '../../../../../services/notification.servic
       </div>
 
       <!-- Key Metrics -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-blue-500">
-          <p class="text-slate-600 text-sm font-medium mb-1">Total Deliveries</p>
-          <p class="text-3xl font-bold text-slate-900">{{ stats().totalDeliveries }}</p>
-          <p class="mt-2 text-sm text-blue-600">This month</p>
+      @if (stats().totalDeliveries === 0 && stats().totalRevenue === 0) {
+        <div class="bg-white rounded-lg p-12 shadow-md text-center">
+          <mat-icon class="text-5xl text-slate-300 mx-auto mb-2">analytics</mat-icon>
+          <p class="text-slate-600 text-lg">No analytics data available</p>
+          <p class="text-slate-500 text-sm mt-2">Analytics will appear once deliveries are processed</p>
         </div>
+      } @else {
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-blue-500">
+            <p class="text-slate-600 text-sm font-medium mb-1">Total Deliveries</p>
+            <p class="text-3xl font-bold text-slate-900">{{ stats().totalDeliveries }}</p>
+            <p class="mt-2 text-sm text-blue-600">This month</p>
+          </div>
 
-        <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-emerald-500">
-          <p class="text-slate-600 text-sm font-medium mb-1">Successful Rate</p>
-          <p class="text-3xl font-bold text-slate-900">{{ stats().successRate }}%</p>
-          <p class="mt-2 text-sm text-emerald-600">On-time deliveries</p>
-        </div>
+          <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-emerald-500">
+            <p class="text-slate-600 text-sm font-medium mb-1">Successful Rate</p>
+            <p class="text-3xl font-bold text-slate-900">{{ stats().successRate }}%</p>
+            <p class="mt-2 text-sm text-emerald-600">On-time deliveries</p>
+          </div>
 
-        <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-orange-500">
-          <p class="text-slate-600 text-sm font-medium mb-1">Avg Delivery Time</p>
-          <p class="text-3xl font-bold text-slate-900">{{ stats().avgDeliveryTime }}</p>
-          <p class="mt-2 text-sm text-orange-600">minutes</p>
-        </div>
+          <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-orange-500">
+            <p class="text-slate-600 text-sm font-medium mb-1">Avg Delivery Time</p>
+            <p class="text-3xl font-bold text-slate-900">{{ stats().avgDeliveryTime }}</p>
+            <p class="mt-2 text-sm text-orange-600">minutes</p>
+          </div>
 
-        <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-purple-500">
-          <p class="text-slate-600 text-sm font-medium mb-1">Revenue</p>
-          <p class="text-3xl font-bold text-slate-900"><span class="currency-prefix">$</span>{{ stats().totalRevenue }}</p>
-          <p class="mt-2 text-sm text-purple-600">From deliveries</p>
+          <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-purple-500">
+            <p class="text-slate-600 text-sm font-medium mb-1">Revenue</p>
+            <p class="text-3xl font-bold text-slate-900"><span class="currency-prefix">$</span>{{ stats().totalRevenue }}</p>
+            <p class="mt-2 text-sm text-purple-600">From deliveries</p>
+          </div>
         </div>
-      </div>
+      }
 
       <!-- Detailed Analytics -->
+      @if (stats().totalDeliveries > 0) {
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Delivery Status Distribution -->
         <div class="bg-white rounded-lg p-6 shadow-md">
@@ -183,6 +192,7 @@ import { NotificationService } from '../../../../../services/notification.servic
           </div>
         </div>
       </div>
+      }
 
       <!-- Export Options -->
       <div class="bg-slate-50 rounded-lg p-4 flex justify-end gap-3">
@@ -233,36 +243,19 @@ export class DeliveryAnalyticsComponent implements OnInit {
         if (response.status === 'success' && response.data) {
           this.stats.set({
             totalDeliveries: response.data.totalDeliveries || 0,
-            successRate: response.data.successRate || 92,
-            avgDeliveryTime: response.data.avgDeliveryTime || 28,
-            totalRevenue: response.data.totalRevenue || 4250,
-            completed: response.data.completed || 145,
-            inTransit: response.data.inTransit || 18,
-            failed: response.data.failed || 8
+            successRate: response.data.successRate || 0,
+            avgDeliveryTime: response.data.avgDeliveryTime || 0,
+            totalRevenue: response.data.totalRevenue || 0,
+            completed: response.data.completed || 0,
+            inTransit: response.data.inTransit || 0,
+            failed: response.data.failed || 0
           });
-        } else {
-          // API returned error status or no data, use mock data
-          this.setMockData();
         }
       },
       error: (error: any) => {
         this.isLoading.set(false);
         console.error('Error loading analytics:', error);
-        // Set mock data for demonstration
-        this.setMockData();
       }
-    });
-  }
-
-  private setMockData(): void {
-    this.stats.set({
-      totalDeliveries: 171,
-      successRate: 92,
-      avgDeliveryTime: 28,
-      totalRevenue: 4250,
-      completed: 145,
-      inTransit: 18,
-      failed: 8
     });
   }
 
