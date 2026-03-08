@@ -281,12 +281,13 @@ export class ServiceDashboardComponent implements OnInit {
 
   serviceSidenavItems = [
     { label: 'Dashboard', icon: '💇', route: '/service-dashboard' },
-    { label: 'Appointments', icon: '📅', route: '/service-dashboard/appointments', badge: 6 },
+    { label: 'Appointments', icon: '📅', route: '/service-dashboard/appointments', badge: 0 },
     { label: 'Services', icon: '🛠️', route: '/service-dashboard/services', badge: 0 },
     { label: 'Staff', icon: '👔', route: '/service-dashboard/staff', badge: 0 },
     { label: 'Clients', icon: '👥', route: '/service-dashboard/clients', badge: 0 },
-    { label: 'Reviews', icon: '⭐', route: '/service-dashboard/reviews', badge: 2 },
-    { label: 'Incidents', icon: '🚨', route: '/service-dashboard/incidents', badge: 1 },
+    { label: 'Reviews', icon: '⭐', route: '/service-dashboard/reviews', badge: 0 },
+    { label: 'Notifications', icon: '🔔', route: '/service-dashboard/notifications', badge: 0 },
+    { label: 'Incidents', icon: '🚨', route: '/service-dashboard/incidents', badge: 0 },
     { label: 'Reports', icon: '📈', route: '/service-dashboard/reports' },
     { label: 'Settings', icon: '⚙️', route: '/service-dashboard/settings' }
   ];

@@ -412,4 +412,78 @@ export class ServiceProviderService {
       })
     );
   }
+
+  // ============ BADGE COUNT METHODS ============
+
+  /**
+   * Get badge counts for sidenav
+   */
+  getBadgeCounts(providerId: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(`${this.apiUrl}/${providerId}/badge-counts`).pipe(
+      catchError((error) => {
+        console.error('Error fetching badge counts:', error);
+        return of({
+          status: 'error',
+          data: {
+            pendingAppointments: 0,
+            pendingReviews: 0,
+            activeIncidents: 0,
+            unreadNotifications: 0
+          }
+        });
+      })
+    );
+  }
+
+  /**
+   * Get unread notifications count
+   */
+  getUnreadNotificationsCount(providerId: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(`${this.apiUrl}/${providerId}/notifications/unread-count`).pipe(
+      catchError((error) => {
+        console.error('Error fetching unread count:', error);
+        return of({ status: 'error', data: { count: 0 } });
+      })
+    );
+  }
+
+  /**
+   * Get notifications for provider
+   */
+  getNotifications(providerId: string, page: number = 1, limit: number = 20): Observable<ApiResponse<any[]>> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('limit', limit.toString());
+
+    return this.http.get<ApiResponse<any[]>>(`${this.apiUrl}/${providerId}/notifications`, { params }).pipe(
+      catchError((error) => {
+        console.error('Error fetching notifications:', error);
+        return of({ status: 'error', data: [] });
+      })
+    );
+  }
+
+  /**
+   * Mark notification as read
+   */
+  markNotificationAsRead(notificationId: string): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(`${this.appointmentsUrl}/../notifications/${notificationId}/read`, {}).pipe(
+      catchError((error) => {
+        console.error('Error marking notification as read:', error);
+        return of({ status: 'error', message: error.error?.message });
+      })
+    );
+  }
+
+  /**
+   * Mark all notifications as read
+   */
+  markAllNotificationsAsRead(providerId: string): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(`${this.apiUrl}/${providerId}/notifications/mark-all-read`, {}).pipe(
+      catchError((error) => {
+        console.error('Error marking all as read:', error);
+        return of({ status: 'error', message: error.error?.message });
+      })
+    );
+  }
 }

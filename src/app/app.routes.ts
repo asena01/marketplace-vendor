@@ -57,6 +57,7 @@ import { ServiceServicesComponent } from './pages/vendors/dashboards/service-das
 import { ServiceStaffComponent } from './pages/vendors/dashboards/service-dashboard/staff/staff.component';
 import { ServiceClientsComponent } from './pages/vendors/dashboards/service-dashboard/clients/clients.component';
 import { ServiceReportsComponent } from './pages/vendors/dashboards/service-dashboard/reports/reports.component';
+import { ServiceNotificationsComponent } from './pages/vendors/dashboards/service-dashboard/notifications/notifications.component';
 import { VendorGuard } from './guards/vendor.guard';
 import { AdminGuard } from './guards/admin.guard';
 
@@ -135,6 +136,7 @@ export const routes: Routes = [
       { path: 'reviews', component: ReviewManagementComponent },
       { path: 'incidents', component: IncidentManagementComponent },
       { path: 'reports', component: ServiceReportsComponent },
+      { path: 'notifications', component: ServiceNotificationsComponent },
       { path: 'settings', component: ProfileSettingsComponent }
     ]
   },

@@ -6,6 +6,7 @@ import { AuthService } from '../../services/auth.service';
 import { FoodService } from '../../services/food.service';
 import { HotelService } from '../../services/hotel.service';
 import { ProductService } from '../../services/product.service';
+import { ServiceProviderService } from '../../services/service-provider.service';
 
 interface SidenavItem {
   label: string;
@@ -120,7 +121,8 @@ export class VendorSidenavComponent implements OnInit {
     private router: Router,
     private foodService: FoodService,
     private hotelService: HotelService,
-    private productService: ProductService
+    private productService: ProductService,
+    private serviceProviderService: ServiceProviderService
   ) {
     this.setVendorIcon();
   }
@@ -177,29 +179,38 @@ export class VendorSidenavComponent implements OnInit {
         });
       }
     } else if (this.vendorType === 'service') {
-      // Load dynamic badge counts for service provider
-      // This is a simple implementation - in production, you would fetch actual data from APIs
-      this.updateServiceBadges();
-    }
-  }
+      // Load actual badge counts for service provider from API
+      const providerId = localStorage.getItem('userId') || '';
+      this.serviceProviderService.getBadgeCounts(providerId).subscribe({
+        next: (response: any) => {
+          if (response.status === 'success' && response.data) {
+            // Update Appointments badge
+            const appointmentsItem = this.sidenavItems.find(item => item.label === 'Appointments');
+            if (appointmentsItem) {
+              appointmentsItem.badge = response.data.pendingAppointments || 0;
+            }
 
-  private updateServiceBadges(): void {
-    // Update Appointments badge - simulating upcoming appointments
-    const appointmentsItem = this.sidenavItems.find(item => item.label === 'Appointments');
-    if (appointmentsItem) {
-      appointmentsItem.badge = Math.floor(Math.random() * 10); // TODO: Load from actual API
-    }
+            // Update Reviews badge
+            const reviewsItem = this.sidenavItems.find(item => item.label === 'Reviews');
+            if (reviewsItem) {
+              reviewsItem.badge = response.data.pendingReviews || 0;
+            }
 
-    // Update Reviews badge
-    const reviewsItem = this.sidenavItems.find(item => item.label === 'Reviews');
-    if (reviewsItem) {
-      reviewsItem.badge = Math.floor(Math.random() * 5); // TODO: Load from actual API
-    }
+            // Update Incidents badge
+            const incidentsItem = this.sidenavItems.find(item => item.label === 'Incidents');
+            if (incidentsItem) {
+              incidentsItem.badge = response.data.activeIncidents || 0;
+            }
 
-    // Update Incidents badge
-    const incidentsItem = this.sidenavItems.find(item => item.label === 'Incidents');
-    if (incidentsItem) {
-      incidentsItem.badge = Math.floor(Math.random() * 3); // TODO: Load from actual API
+            // Update Notifications badge
+            const notificationsItem = this.sidenavItems.find(item => item.label === 'Notifications');
+            if (notificationsItem) {
+              notificationsItem.badge = response.data.unreadNotifications || 0;
+            }
+          }
+        },
+        error: (error) => console.log('Error loading badge counts:', error)
+      });
     }
   }
 
