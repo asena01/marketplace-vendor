@@ -20,6 +20,7 @@ import { ForgotPasswordComponent } from './pages/auth/forgot-password/forgot-pas
 import { VendorDashboardComponent } from './pages/vendors/dashboard/vendor-dashboard.component';
 import { VendorLoginComponent } from './pages/auth/vendor-login/vendor-login.component';
 import { AdminDashboardComponent } from './pages/admin/admin-dashboard/admin-dashboard.component';
+import { VendorDetailComponent } from './pages/admin/admin-vendors/vendor-detail.component';
 import { DeliveryDashboardComponent } from './pages/delivery/delivery-dashboard/delivery-dashboard.component';
 import { CustomerDashboardComponent } from './pages/customer/customer-dashboard/customer-dashboard.component';
 import { HotelDashboardComponent } from './pages/vendors/dashboards/hotel-dashboard/hotel-dashboard.component';
@@ -79,6 +80,7 @@ export const routes: Routes = [
   { path: 'vendor-login', component: VendorLoginComponent },
   { path: 'customer-dashboard', component: CustomerDashboardComponent },
   { path: 'admin-dashboard', component: AdminDashboardComponent, canActivate: [AdminGuard] },
+  { path: 'vendor-detail/:id', component: VendorDetailComponent, canActivate: [AdminGuard] },
   { path: 'delivery-dashboard', component: DeliveryDashboardComponent, canActivate: [VendorGuard] },
   // Hotel Dashboard Routes
   {

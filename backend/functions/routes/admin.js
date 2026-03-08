@@ -4,6 +4,11 @@ import User from '../models/User.js';
 import PaymentTransaction from '../models/PaymentTransaction.js';
 import AdminSettings from '../models/AdminSettings.js';
 import Device from '../models/Device.js';
+import VendorKyc from '../models/VendorKyc.js';
+import VendorPerformance from '../models/VendorPerformance.js';
+import * as vendorManagementController from '../controllers/vendorManagementController.js';
+import * as vendorKycController from '../controllers/vendorKycController.js';
+import * as vendorPerformanceController from '../controllers/vendorPerformanceController.js';
 
 const router = express.Router();
 
@@ -800,6 +805,93 @@ router.get('/analytics/revenue-by-type', verifyAdmin, async (req, res) => {
 });
 
 // ============================================
+// VENDOR MANAGEMENT ROUTES
+// ============================================
+
+// Get all vendors with filtering
+router.get('/vendors', verifyAdmin, vendorManagementController.getVendors);
+
+// Get vendor by ID
+router.get('/vendors/:vendorId', verifyAdmin, vendorManagementController.getVendorById);
+
+// Create vendor
+router.post('/vendors', verifyAdmin, vendorManagementController.createVendor);
+
+// Update vendor
+router.put('/vendors/:vendorId', verifyAdmin, vendorManagementController.updateVendor);
+
+// Delete vendor
+router.delete('/vendors/:vendorId', verifyAdmin, vendorManagementController.deleteVendor);
+
+// Approve vendor
+router.patch('/vendors/:vendorId/approve', verifyAdmin, vendorManagementController.approveVendor);
+
+// Reject vendor
+router.patch('/vendors/:vendorId/reject', verifyAdmin, vendorManagementController.rejectVendor);
+
+// Suspend vendor
+router.patch('/vendors/:vendorId/suspend', verifyAdmin, vendorManagementController.suspendVendor);
+
+// Block vendor
+router.patch('/vendors/:vendorId/block', verifyAdmin, vendorManagementController.blockVendor);
+
+// Get vendor statistics
+router.get('/vendors-stats', verifyAdmin, vendorManagementController.getVendorStats);
+
+// ============================================
+// VENDOR KYC ROUTES
+// ============================================
+
+// Get vendor KYC
+router.get('/vendors/:vendorId/kyc', verifyAdmin, vendorKycController.getVendorKyc);
+
+// Create or update KYC
+router.put('/vendors/:vendorId/kyc', verifyAdmin, vendorKycController.createOrUpdateKyc);
+
+// Approve KYC
+router.patch('/vendors/:vendorId/kyc/approve', verifyAdmin, vendorKycController.approveKyc);
+
+// Reject KYC
+router.patch('/vendors/:vendorId/kyc/reject', verifyAdmin, vendorKycController.rejectKyc);
+
+// Request KYC resubmission
+router.patch('/vendors/:vendorId/kyc/resubmit', verifyAdmin, vendorKycController.requestResubmission);
+
+// Update risk assessment
+router.put('/vendors/:vendorId/kyc/risk', verifyAdmin, vendorKycController.updateRiskAssessment);
+
+// Get pending KYC
+router.get('/kyc/pending', verifyAdmin, vendorKycController.getPendingKyc);
+
+// Get high-risk vendors
+router.get('/kyc/high-risk', verifyAdmin, vendorKycController.getHighRiskVendors);
+
+// ============================================
+// VENDOR PERFORMANCE ROUTES
+// ============================================
+
+// Get vendor performance
+router.get('/vendors/:vendorId/performance', verifyAdmin, vendorPerformanceController.getVendorPerformance);
+
+// Update performance metrics
+router.put('/vendors/:vendorId/performance', verifyAdmin, vendorPerformanceController.updatePerformanceMetrics);
+
+// Record review
+router.post('/vendors/:vendorId/performance/review', verifyAdmin, vendorPerformanceController.recordReview);
+
+// Record booking
+router.post('/vendors/:vendorId/performance/booking', verifyAdmin, vendorPerformanceController.recordBooking);
+
+// Add monthly performance
+router.post('/vendors/:vendorId/performance/monthly', verifyAdmin, vendorPerformanceController.addMonthlyPerformance);
+
+// Get top performers
+router.get('/performance/top-performers', verifyAdmin, vendorPerformanceController.getTopPerformers);
+
+// Get vendors needing improvement
+router.get('/performance/needs-improvement', verifyAdmin, vendorPerformanceController.getVendorsNeedingImprovement);
+
+// ============================================
 // SETTINGS ROUTES
 // ============================================
 
@@ -807,12 +899,12 @@ router.get('/analytics/revenue-by-type', verifyAdmin, async (req, res) => {
 router.get('/settings', verifyAdmin, async (req, res) => {
   try {
     let settings = await AdminSettings.findOne();
-    
+
     if (!settings) {
       settings = new AdminSettings();
       await settings.save();
     }
-    
+
     res.status(200).json({
       success: true,
       data: settings
@@ -829,16 +921,16 @@ router.get('/settings', verifyAdmin, async (req, res) => {
 router.put('/settings', verifyAdmin, async (req, res) => {
   try {
     let settings = await AdminSettings.findOne();
-    
+
     if (!settings) {
       settings = new AdminSettings(req.body);
     } else {
       Object.assign(settings, req.body);
     }
-    
+
     await settings.save();
     console.log('✅ Admin settings updated');
-    
+
     res.status(200).json({
       success: true,
       message: 'Settings updated successfully',

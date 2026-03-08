@@ -220,6 +220,137 @@ export class AdminService {
   }
 
   // ============================================
+  // VENDORS
+  // ============================================
+
+  getVendors(page: number = 1, limit: number = 10, filters?: any): Observable<ApiResponse<any[]>> {
+    let url = `${this.apiUrl}/vendors?page=${page}&limit=${limit}`;
+    if (filters) {
+      if (filters.vendorType) url += `&vendorType=${filters.vendorType}`;
+      if (filters.status) url += `&status=${filters.status}`;
+      if (filters.kycStatus) url += `&kycStatus=${filters.kycStatus}`;
+      if (filters.search) url += `&search=${filters.search}`;
+    }
+    return this.http.get<ApiResponse<any[]>>(url, { headers: this.getAdminHeaders() });
+  }
+
+  getVendorById(id: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/vendors/${id}`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  createVendor(data: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${this.apiUrl}/vendors`,
+      data,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  updateVendor(id: string, data: any): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${this.apiUrl}/vendors/${id}`,
+      data,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  deleteVendor(id: string): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(
+      `${this.apiUrl}/vendors/${id}`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  approveVendor(id: string, notes?: string): Observable<ApiResponse<any>> {
+    return this.http.patch<ApiResponse<any>>(
+      `${this.apiUrl}/vendors/${id}/approve`,
+      { notes },
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  rejectVendor(id: string, reason: string): Observable<ApiResponse<any>> {
+    return this.http.patch<ApiResponse<any>>(
+      `${this.apiUrl}/vendors/${id}/reject`,
+      { reason },
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  suspendVendor(id: string, reason: string): Observable<ApiResponse<any>> {
+    return this.http.patch<ApiResponse<any>>(
+      `${this.apiUrl}/vendors/${id}/suspend`,
+      { reason },
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  blockVendor(id: string, reason: string): Observable<ApiResponse<any>> {
+    return this.http.patch<ApiResponse<any>>(
+      `${this.apiUrl}/vendors/${id}/block`,
+      { reason },
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  // ============================================
+  // VENDOR KYC
+  // ============================================
+
+  getVendorKyc(vendorId: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/vendors/${vendorId}/kyc`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  updateVendorKyc(vendorId: string, data: any): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${this.apiUrl}/vendors/${vendorId}/kyc`,
+      data,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  approveVendorKyc(vendorId: string, notes?: string): Observable<ApiResponse<any>> {
+    return this.http.patch<ApiResponse<any>>(
+      `${this.apiUrl}/vendors/${vendorId}/kyc/approve`,
+      { notes },
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  rejectVendorKyc(vendorId: string, reason: string): Observable<ApiResponse<any>> {
+    return this.http.patch<ApiResponse<any>>(
+      `${this.apiUrl}/vendors/${vendorId}/kyc/reject`,
+      { reason },
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  // ============================================
+  // VENDOR PERFORMANCE
+  // ============================================
+
+  getVendorPerformance(vendorId: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/vendors/${vendorId}/performance`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  updateVendorPerformance(vendorId: string, data: any): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${this.apiUrl}/vendors/${vendorId}/performance`,
+      data,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  // ============================================
   // SETTINGS
   // ============================================
 
