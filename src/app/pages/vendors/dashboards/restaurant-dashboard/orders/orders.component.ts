@@ -1,7 +1,10 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatIconModule } from '@angular/material/icon';
 import { FoodService } from '../../../../../services/food.service';
+import { DeliveryService } from '../../../../../services/delivery.service';
+import { NotificationService } from '../../../../../services/notification.service';
 
 interface OrderItem {
   itemName: string;
@@ -26,7 +29,7 @@ interface Order {
 @Component({
   selector: 'app-restaurant-orders',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatIconModule],
   template: `
     <div class="p-8 space-y-6">
       <!-- Header -->
@@ -224,6 +227,7 @@ interface Order {
                   <label class="block text-sm font-medium text-slate-700 mb-2">Order Type *</label>
                   <select
                     [(ngModel)]="newOrder.orderType"
+                    (change)="onOrderTypeChange()"
                     name="orderType"
                     class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     required
@@ -251,6 +255,37 @@ interface Order {
                     <option value="cancelled">Cancelled</option>
                   </select>
                 </div>
+
+                <!-- Delivery Service Selection (only show for delivery orders) -->
+                @if (newOrder.orderType === 'delivery') {
+                  <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Delivery Service *</label>
+                    @if (isLoadingDeliveryServices()) {
+                      <div class="px-4 py-2 border border-slate-300 rounded-lg bg-slate-50 text-slate-600">
+                        Loading available delivery services...
+                      </div>
+                    } @else if (integratedDeliveryServices().length === 0) {
+                      <div class="px-4 py-2 border border-red-300 rounded-lg bg-red-50 text-red-700 text-sm">
+                        No delivery services integrated. Go to <strong>Delivery Integrations</strong> to add one.
+                      </div>
+                    } @else {
+                      <select
+                        [ngModel]="selectedDeliveryServiceId()"
+                        (ngModelChange)="selectedDeliveryServiceId.set($event)"
+                        name="deliveryService"
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        required
+                      >
+                        <option value="">Select a delivery service...</option>
+                        @for (service of integratedDeliveryServices(); track service._id) {
+                          <option [value]="service._id">
+                            {{ service.providerId?.name }} - {{ service.providerServiceId?.name }}
+                          </option>
+                        }
+                      </select>
+                    }
+                  </div>
+                }
               </div>
 
               <!-- Items Section -->
@@ -377,9 +412,19 @@ export class RestaurantOrdersComponent implements OnInit {
 
   restaurantId = signal<string>('');
 
+  // Delivery service signals
+  integratedDeliveryServices = signal<any[]>([]);
+  selectedDeliveryServiceId = signal<string>('');
+  hasOwnDelivery = signal(false);
+  isLoadingDeliveryServices = signal(false);
+
   newOrder: Order = this.getEmptyOrder();
 
-  constructor(private foodService: FoodService) {}
+  constructor(
+    private foodService: FoodService,
+    private deliveryService: DeliveryService,
+    private notificationService: NotificationService
+  ) {}
 
   ngOnInit() {
     // Get restaurant ID from localStorage (set during login)
@@ -452,9 +497,45 @@ export class RestaurantOrdersComponent implements OnInit {
     return this.newOrder.items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
   }
 
+  loadDeliveryServices() {
+    const restaurantId = this.restaurantId();
+    if (!restaurantId) return;
+
+    this.isLoadingDeliveryServices.set(true);
+    this.deliveryService.getBusinessDeliveries(restaurantId, 'restaurant').subscribe({
+      next: (response: any) => {
+        this.isLoadingDeliveryServices.set(false);
+        if (response.status === 'success' && response.data) {
+          // Check if any delivery services are active
+          const activeServices = response.data.filter((d: any) => d.status === 'active');
+          this.integratedDeliveryServices.set(activeServices);
+
+          if (activeServices.length === 0) {
+            this.errorMessage.set('No integrated delivery services available. Please add one in Delivery Integrations first.');
+            setTimeout(() => this.errorMessage.set(''), 4000);
+          }
+        }
+      },
+      error: (error) => {
+        this.isLoadingDeliveryServices.set(false);
+        this.errorMessage.set('Failed to load delivery services');
+      }
+    });
+  }
+
+  onOrderTypeChange() {
+    if (this.newOrder.orderType === 'delivery') {
+      this.loadDeliveryServices();
+      this.selectedDeliveryServiceId.set('');
+    } else {
+      this.selectedDeliveryServiceId.set('');
+    }
+  }
+
   openAddOrderModal() {
     this.isEditing.set(false);
     this.newOrder = this.getEmptyOrder();
+    this.selectedDeliveryServiceId.set('');
     this.showOrderModal.set(true);
   }
 
@@ -481,6 +562,13 @@ export class RestaurantOrdersComponent implements OnInit {
   saveOrder() {
     if (!this.newOrder.customerName || !this.newOrder.status || this.newOrder.items.length === 0) {
       this.errorMessage.set('Please fill in customer name, status, and add at least one item');
+      setTimeout(() => this.errorMessage.set(''), 3000);
+      return;
+    }
+
+    // Check if delivery service is selected for delivery orders
+    if (this.newOrder.orderType === 'delivery' && !this.selectedDeliveryServiceId()) {
+      this.errorMessage.set('Please select a delivery service for delivery orders');
       setTimeout(() => this.errorMessage.set(''), 3000);
       return;
     }
@@ -526,7 +614,57 @@ export class RestaurantOrdersComponent implements OnInit {
           if (response.status === 'success' && response.data) {
             // Add the created order to the list
             this.orders.set([...this.orders(), response.data]);
-            this.successMessage.set('Order created successfully!');
+
+            // If it's a delivery order, create integrated delivery record
+            if (this.newOrder.orderType === 'delivery' && this.selectedDeliveryServiceId()) {
+              const selectedService = this.integratedDeliveryServices().find(
+                s => s._id === this.selectedDeliveryServiceId()
+              );
+
+              if (selectedService) {
+                const deliveryData = {
+                  businessId: restaurantId,
+                  businessType: 'restaurant',
+                  integrationId: selectedService._id,
+                  orderId: response.data._id,
+                  pickupLocation: {
+                    address: 'Restaurant Location', // Should come from restaurant profile
+                    contactPerson: response.data.customerName,
+                    contactPhone: response.data.customerPhone || ''
+                  },
+                  deliveryLocation: {
+                    address: response.data.customerAddress || 'Delivery Address',
+                    contactPerson: response.data.customerName,
+                    contactPhone: response.data.customerPhone || ''
+                  },
+                  items: response.data.items,
+                  totalAmount: response.data.totalAmount
+                };
+
+                // Create integrated delivery record
+                this.deliveryService.createIntegratedDelivery(
+                  restaurantId,
+                  'restaurant',
+                  deliveryData
+                ).subscribe({
+                  next: (deliveryResponse: any) => {
+                    if (deliveryResponse.status === 'success') {
+                      this.successMessage.set('Order created and assigned to delivery service!');
+                      console.log('Integrated delivery created:', deliveryResponse.data);
+                    } else {
+                      this.errorMessage.set('Order created but delivery assignment failed. Please try again.');
+                    }
+                  },
+                  error: (deliveryError) => {
+                    console.error('Error creating integrated delivery:', deliveryError);
+                    // Order was created successfully, so don't block the user
+                    this.successMessage.set('Order created. Please assign delivery manually if needed.');
+                  }
+                });
+              }
+            } else {
+              this.successMessage.set('Order created successfully!');
+            }
           } else {
             this.errorMessage.set('Failed to create order');
           }
