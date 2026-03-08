@@ -44,6 +44,8 @@ import { RetailInventoryComponent } from './pages/vendors/dashboards/retail-dash
 import { RetailCustomersComponent } from './pages/vendors/dashboards/retail-dashboard/customers/customers.component';
 import { RetailNotificationsComponent } from './pages/vendors/dashboards/retail-dashboard/notifications/notifications.component';
 import { RetailShippingComponent } from './pages/vendors/dashboards/retail-dashboard/shipping/shipping.component';
+import { RetailDeliveryIntegrationsComponent } from './pages/vendors/dashboards/retail-dashboard/delivery-integrations/delivery-integrations.component';
+import { RetailDeliveryTrackingComponent } from './pages/vendors/dashboards/retail-dashboard/delivery-tracking/delivery-tracking.component';
 import { ReviewManagementComponent } from './pages/vendors/dashboards/shared/review-management/review-management.component';
 import { IncidentManagementComponent } from './pages/vendors/dashboards/shared/incident-management/incident-management.component';
 import { ProfileSettingsComponent } from './pages/vendors/dashboards/shared/profile-settings/profile-settings.component';
@@ -102,6 +104,8 @@ export const routes: Routes = [
       { path: 'customers', component: RetailCustomersComponent },
       { path: 'notifications', component: RetailNotificationsComponent },
       { path: 'shipping', component: RetailShippingComponent },
+      { path: 'delivery-integrations', component: RetailDeliveryIntegrationsComponent },
+      { path: 'delivery-tracking', component: RetailDeliveryTrackingComponent },
       { path: 'reviews', component: ReviewManagementComponent },
       { path: 'incidents', component: IncidentManagementComponent },
       { path: 'settings', component: ProfileSettingsComponent }

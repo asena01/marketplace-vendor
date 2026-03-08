@@ -272,6 +272,8 @@ export class VendorSidenavComponent implements OnInit {
         { label: 'Customers', icon: '👥', route: `${dashboardPath}/customers` },
         { label: 'Notifications', icon: '🔔', route: `${dashboardPath}/notifications`, badge: 0 },
         { label: 'Shipping', icon: '🚚', route: `${dashboardPath}/shipping` },
+        { label: 'Delivery Integrations', icon: '🔗', route: `${dashboardPath}/delivery-integrations` },
+        { label: 'Delivery Tracking', icon: '📍', route: `${dashboardPath}/delivery-tracking` },
         { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` }
       );
     }

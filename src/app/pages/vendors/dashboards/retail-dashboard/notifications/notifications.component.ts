@@ -1,16 +1,19 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
+import { NotificationService } from '../../../../../services/notification.service';
 
 interface Notification {
   _id?: string;
-  type: 'sale' | 'low_stock' | 'review' | 'order' | 'system';
+  type: 'sale' | 'low_stock' | 'review' | 'order' | 'delivery' | 'system';
   title: string;
   message: string;
-  timestamp: string;
+  createdAt: string;
   isRead: boolean;
   actionUrl?: string;
   priority: 'low' | 'medium' | 'high';
+  businessId?: string;
+  businessType?: string;
 }
 
 @Component({
@@ -35,6 +38,24 @@ interface Notification {
           </button>
         }
       </div>
+
+      <!-- Loading State -->
+      @if (isLoading()) {
+        <div class="bg-blue-50 border border-blue-300 text-blue-700 px-4 py-3 rounded-lg">
+          <p class="font-semibold flex items-center gap-2">
+            <mat-icon class="text-lg animate-spin">refresh</mat-icon>
+            Loading notifications...
+          </p>
+        </div>
+      }
+
+      <!-- Error State -->
+      @if (errorMessage()) {
+        <div class="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
+          <mat-icon class="text-lg">error</mat-icon>
+          <p class="font-semibold">{{ errorMessage() }}</p>
+        </div>
+      }
 
       <!-- Filter Tabs -->
       <div class="flex gap-2 border-b border-slate-200">
@@ -129,7 +150,7 @@ interface Notification {
                   </div>
                   <p class="text-slate-600 text-sm mb-2">{{ notification.message }}</p>
                   <div class="flex justify-between items-center">
-                    <span class="text-xs text-slate-500">{{ getTimeAgo(notification.timestamp) }}</span>
+                    <span class="text-xs text-slate-500">{{ getTimeAgo(notification.createdAt) }}</span>
                     @if (!notification.isRead) {
                       <button
                         (click)="markAsRead(notification._id)"
@@ -160,67 +181,56 @@ interface Notification {
     }
   `]
 })
-export class RetailNotificationsComponent implements OnInit {
-  notifications = signal<Notification[]>([
-    {
-      _id: '1',
-      type: 'sale',
-      title: 'New Sale!',
-      message: 'Customer purchased 2x Wireless Headphones for $199.98',
-      timestamp: new Date(Date.now() - 5 * 60000).toISOString(),
-      isRead: false,
-      priority: 'high'
-    },
-    {
-      _id: '2',
-      type: 'low_stock',
-      title: 'Low Stock Alert',
-      message: 'Wireless Headphones stock is below 10 units (Current: 5)',
-      timestamp: new Date(Date.now() - 15 * 60000).toISOString(),
-      isRead: false,
-      priority: 'high'
-    },
-    {
-      _id: '3',
-      type: 'review',
-      title: 'New Review Received',
-      message: 'Customer left a 5-star review: "Great quality product!"',
-      timestamp: new Date(Date.now() - 1 * 3600000).toISOString(),
-      isRead: true,
-      priority: 'medium'
-    },
-    {
-      _id: '4',
-      type: 'sale',
-      title: 'Sale Completed',
-      message: 'Order #2024-003 has been delivered successfully',
-      timestamp: new Date(Date.now() - 2 * 3600000).toISOString(),
-      isRead: true,
-      priority: 'medium'
-    },
-    {
-      _id: '5',
-      type: 'low_stock',
-      title: 'Low Stock Alert',
-      message: 'USB-C Cables stock is running low (Current: 8)',
-      timestamp: new Date(Date.now() - 4 * 3600000).toISOString(),
-      isRead: true,
-      priority: 'medium'
-    },
-    {
-      _id: '6',
-      type: 'system',
-      title: 'System Update',
-      message: 'Your store analytics have been updated. Check the dashboard!',
-      timestamp: new Date(Date.now() - 24 * 3600000).toISOString(),
-      isRead: true,
-      priority: 'low'
-    }
-  ]);
-
+export class RetailNotificationsComponent implements OnInit, OnDestroy {
+  notifications = signal<Notification[]>([]);
+  isLoading = signal(false);
+  errorMessage = signal('');
   filterType = '';
+  unreadCount = computed(() =>
+    this.notifications().filter(n => !n.isRead).length
+  );
+  private storeId: string = '';
+  private businessType: string = 'retail';
+  private autoRefreshInterval: any;
 
-  ngOnInit(): void {}
+  constructor(private notificationService: NotificationService) {
+    this.storeId = localStorage.getItem('storeId') || '';
+  }
+
+  ngOnInit(): void {
+    if (!this.storeId) {
+      this.errorMessage.set('Store ID not found');
+      return;
+    }
+    this.loadNotifications();
+    // Auto-refresh notifications every 30 seconds
+    this.autoRefreshInterval = setInterval(() => this.loadNotifications(), 30000);
+  }
+
+  ngOnDestroy(): void {
+    if (this.autoRefreshInterval) {
+      clearInterval(this.autoRefreshInterval);
+    }
+  }
+
+  loadNotifications(): void {
+    this.isLoading.set(true);
+    this.notificationService.getBusinessNotifications(this.storeId, this.businessType, 1, 50).subscribe({
+      next: (response: any) => {
+        if (response.success && response.data) {
+          this.notifications.set(response.data);
+        } else {
+          this.notifications.set([]);
+        }
+        this.isLoading.set(false);
+      },
+      error: (error: any) => {
+        console.error('Error loading notifications:', error);
+        this.errorMessage.set('Failed to load notifications');
+        this.isLoading.set(false);
+      }
+    });
+  }
 
   getFilteredNotifications(): Notification[] {
     if (this.filterType === 'unread') {
@@ -237,15 +247,29 @@ export class RetailNotificationsComponent implements OnInit {
 
   markAsRead(notificationId?: string): void {
     if (!notificationId) return;
-    const updated = this.notifications().map(n =>
-      n._id === notificationId ? { ...n, isRead: true } : n
-    );
-    this.notifications.set(updated);
+    this.notificationService.markAsRead(notificationId).subscribe({
+      next: (response: any) => {
+        const updated = this.notifications().map(n =>
+          n._id === notificationId ? { ...n, isRead: true } : n
+        );
+        this.notifications.set(updated);
+      },
+      error: (error: any) => {
+        console.error('Error marking notification as read:', error);
+      }
+    });
   }
 
   markAllAsRead(): void {
-    const updated = this.notifications().map(n => ({ ...n, isRead: true }));
-    this.notifications.set(updated);
+    this.notificationService.markAllAsRead().subscribe({
+      next: () => {
+        const updated = this.notifications().map(n => ({ ...n, isRead: true }));
+        this.notifications.set(updated);
+      },
+      error: (error: any) => {
+        console.error('Error marking all as read:', error);
+      }
+    });
   }
 
   getTimeAgo(timestamp: string): string {
