@@ -453,13 +453,13 @@ app.use('/payments', paymentRoutes);
 
 // Vendor Routes
 app.use('/vendors', vendorRoutes);
-app.use('/vendor-analytics', vendorAnalyticsRoutes);
+app.use('/api/vendor-analytics', vendorAnalyticsRoutes);
 
 // Finance Routes
 app.use('/finance', financeRoutes);
 
 // Delivery Management Routes
-app.use('/delivery-admin', deliveryAdminRoutes);
+app.use('/api/delivery-admin', deliveryAdminRoutes);
 
 // Delivery Provider Services Routes
 app.use('/delivery-providers', deliveryProviderServiceRoutes);
