@@ -303,17 +303,17 @@ export class RetailInventoryComponent implements OnInit {
   currentStockValue: number = 0;
 
   // Computed signals
-  lowStockCount = computed(() => 
-    this.inventoryItems().filter(item => item.stock > 0 && item.stock <= 20).length
+  lowStockCount = computed(() =>
+    this.inventoryItems().filter(item => (item?.stock || 0) > 0 && (item?.stock || 0) <= 20).length
   );
-  outOfStockCount = computed(() => 
-    this.inventoryItems().filter(item => item.stock === 0).length
+  outOfStockCount = computed(() =>
+    this.inventoryItems().filter(item => (item?.stock || 0) === 0).length
   );
-  totalValue = computed(() => 
-    this.inventoryItems().reduce((sum, item) => sum + (item.price * item.stock), 0).toLocaleString()
+  totalValue = computed(() =>
+    this.inventoryItems().reduce((sum, item) => sum + ((item?.price || 0) * (item?.stock || 0)), 0).toLocaleString()
   );
   lowStockItems = computed(() =>
-    this.inventoryItems().filter(item => item.stock > 0 && item.stock <= 20).slice(0, 5)
+    this.inventoryItems().filter(item => (item?.stock || 0) > 0 && (item?.stock || 0) <= 20).slice(0, 5)
   );
 
   private storeId: string = '';
@@ -353,26 +353,26 @@ export class RetailInventoryComponent implements OnInit {
   filterInventory(): void {
     let filtered = this.inventoryItems();
 
-    if (this.searchQuery()) {
+    if (this.searchQuery()?.trim()) {
       const query = this.searchQuery().toLowerCase();
       filtered = filtered.filter(item =>
-        item.name.toLowerCase().includes(query) ||
-        (item.sku && item.sku.toLowerCase().includes(query))
+        item?.name?.toLowerCase().includes(query) ||
+        (item?.sku && item.sku.toLowerCase().includes(query))
       );
     }
 
-    if (this.filterCategory) {
+    if (this.filterCategory?.trim()) {
       filtered = filtered.filter(item =>
-        item.category.toLowerCase().includes(this.filterCategory.toLowerCase())
+        item?.category?.toLowerCase().includes(this.filterCategory.toLowerCase())
       );
     }
 
     if (this.filterStatus === 'low') {
-      filtered = filtered.filter(item => item.stock > 0 && item.stock <= 20);
+      filtered = filtered.filter(item => (item?.stock || 0) > 0 && (item?.stock || 0) <= 20);
     } else if (this.filterStatus === 'out') {
-      filtered = filtered.filter(item => item.stock === 0);
+      filtered = filtered.filter(item => (item?.stock || 0) === 0);
     } else if (this.filterStatus === 'in') {
-      filtered = filtered.filter(item => item.stock > 20);
+      filtered = filtered.filter(item => (item?.stock || 0) > 20);
     }
 
     this.filteredInventory.set(filtered);
@@ -433,12 +433,12 @@ export class RetailInventoryComponent implements OnInit {
   private generateCSV(): string {
     const headers = ['Product Name', 'SKU', 'Category', 'Price', 'Stock Level', 'Total Value'];
     const rows = this.inventoryItems().map(item => [
-      item.name,
-      item.sku || '',
-      item.category,
-      item.price,
-      item.stock,
-      (item.price * item.stock)
+      item?.name || '',
+      item?.sku || '',
+      item?.category || '',
+      item?.price || 0,
+      item?.stock || 0,
+      ((item?.price || 0) * (item?.stock || 0))
     ]);
 
     const csvContent = [
