@@ -12,9 +12,19 @@
     Your One-Stop<br class="hidden sm:block" />
     <span class="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Marketplace</span>
   </h1>
-  <p class="text-xl text-gray-300 mb-12 max-w-3xl mx-auto">
+  <p class="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
     Shop for everything you need, from hotels and restaurants to services, tours, and more. All in one convenient platform.
   </p>
+
+  <!-- Hero CTA Buttons -->
+  <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+    <button (click)="authModalService.openSignupModal()" class="bg-white text-primary hover:bg-gray-100 font-bold py-3 px-8 rounded-lg transition-all duration-300 transform hover:scale-105 cursor-pointer">
+      Create Account
+    </button>
+    <button (click)="authModalService.openLoginModal()" class="border-2 border-white text-white hover:bg-white/10 font-bold py-3 px-8 rounded-lg transition-all duration-300 cursor-pointer">
+      Sign In
+    </button>
+  </div>
 
   <div class="stats-grid grid grid-cols-2 md:grid-cols-5 gap-6 max-w-5xl mx-auto">
     <div class="text-white">
@@ -218,12 +228,12 @@
       <h2 class="section-title text-4xl font-bold text-white mb-6">Ready to Get Started?</h2>
       <p class="section-subtitle text-xl text-white/90 mb-8">Join our marketplace and access everything you need. Shop, book services, find travel experiences, and explore countless opportunities all in one place.</p>
       <div class="flex flex-col sm:flex-row gap-4 justify-center">
-        <a href="#" class="cta-button bg-white text-primary hover:bg-gray-100 font-bold py-4 px-8 rounded-lg transition-all duration-300 transform hover:scale-105">
-          Get Started Now
-        </a>
-        <a href="#" class="cta-button border-2 border-white text-white hover:bg-white/10 font-bold py-4 px-8 rounded-lg transition-all duration-300">
-          Learn More
-        </a>
+        <button (click)="authModalService.openSignupModal()" class="cta-button bg-white text-primary hover:bg-gray-100 font-bold py-4 px-8 rounded-lg transition-all duration-300 transform hover:scale-105 cursor-pointer">
+          Sign Up Now
+        </button>
+        <button (click)="authModalService.openLoginModal()" class="cta-button border-2 border-white text-white hover:bg-white/10 font-bold py-4 px-8 rounded-lg transition-all duration-300 cursor-pointer">
+          Sign In
+        </button>
       </div>
     </div>
   </section>
@@ -283,5 +293,9 @@
       <p class="text-center text-sm">&#169; 2024 MarketHub. All rights reserved.</p>
     </div>
   </footer>
+
+  <!-- Auth Modals -->
+  <app-login-overlay></app-login-overlay>
+  <app-signup-overlay></app-signup-overlay>
 
 </div>
