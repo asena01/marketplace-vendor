@@ -118,6 +118,8 @@ interface Product {
   };
   brand?: string;
   manufacturer?: string;
+  service?: string;
+  vendorType?: string;
 }
 
 @Component({
@@ -823,6 +825,42 @@ export class RetailProductsComponent implements OnInit {
     this.storeId = localStorage.getItem('storeId') || '';
   }
 
+  /**
+   * Get vendor type from localStorage or determine based on store type
+   */
+  getVendorType(): string {
+    return localStorage.getItem('vendorType') || 'retail';
+  }
+
+  /**
+   * Map vendor type to service category
+   */
+  getServiceForVendorType(vendorType: string): string {
+    const serviceMap: { [key: string]: string } = {
+      'retail': 'shopping',
+      'clothing-store': 'shopping',
+      'jewelry': 'shopping',
+      'supermarket': 'shopping',
+      'furniture': 'furniture',
+      'hair-salon': 'hair',
+      'hair': 'hair',
+      'pet-store': 'pets',
+      'pets': 'pets',
+      'gym': 'gym',
+      'gym-equipment': 'gym',
+      'restaurant': 'food',
+      'hotel': 'hotels',
+      'service': 'services',
+      'tour-operator': 'tours',
+      'car-rental': 'services',
+      'salon-spa': 'services',
+      'event-center': 'services',
+      'delivery': 'shopping',
+      'general': 'shopping',
+    };
+    return serviceMap[vendorType] || 'shopping';
+  }
+
   ngOnInit() {
     if (!this.storeId) {
       this.errorMessage.set('Store ID not found. Please login again.');
@@ -972,6 +1010,11 @@ export class RetailProductsComponent implements OnInit {
     // Update product with category-specific data
     this.updateProductWithCategoryData();
 
+    // Ensure service and vendorType are set from localStorage
+    const vendorType = this.getVendorType();
+    this.newProduct.service = this.getServiceForVendorType(vendorType);
+    this.newProduct.vendorType = vendorType;
+
     if (this.isEditing() && this.newProduct._id) {
       // Update existing product via API
       this.isLoading.set(true);
@@ -1066,7 +1109,9 @@ export class RetailProductsComponent implements OnInit {
       stock: 0,
       sold: 0,
       isFeatured: false,
-      isActive: true
+      isActive: true,
+      service: this.getServiceForVendorType(this.getVendorType()),
+      vendorType: this.getVendorType()
     };
   }
 
