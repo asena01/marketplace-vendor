@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { FoodService } from '../../../../../services/food.service';
-import { ImageUploadService } from '../../../../../services/image-upload.service';
+import { AngularFireUploadService } from '../../../../../services/angular-fire-upload.service';
 
 interface MenuItem {
   _id?: string;
@@ -384,7 +384,7 @@ export class RestaurantMenuComponent implements OnInit {
 
   constructor(
     private foodService: FoodService,
-    private imageUploadService: ImageUploadService
+    private imageUploadService: AngularFireUploadService
   ) {}
 
   ngOnInit() {

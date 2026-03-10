@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { ProductService } from '../../../../../services/product.service';
-import { ImageUploadService } from '../../../../../services/image-upload.service';
+import { AngularFireUploadService } from '../../../../../services/angular-fire-upload.service';
 
 interface Product {
   _id?: string;
@@ -818,7 +818,7 @@ export class RetailProductsComponent implements OnInit {
 
   constructor(
     private productService: ProductService,
-    private imageUploadService: ImageUploadService
+    private imageUploadService: AngularFireUploadService
   ) {
     this.storeId = localStorage.getItem('storeId') || '';
   }
