@@ -844,8 +844,8 @@ export class RetailProductsComponent implements OnInit {
   filteredProducts = signal<Product[]>([]);
   showProductModal = signal(false);
   isEditing = signal(false);
-  searchQuery = signal('');
-  selectedCategory = signal('');
+  searchQuery: string = '';
+  selectedCategory: string = '';
   minPrice: number = 0;
   maxPrice: number = 9999;
   successMessage = signal('');
@@ -936,7 +936,9 @@ export class RetailProductsComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.storeId = localStorage.getItem('storeId') || '';
     if (!this.storeId) {
+      console.warn('Store ID not found in localStorage');
       this.errorMessage.set('Store ID not found. Please login again.');
       return;
     }
@@ -971,38 +973,38 @@ export class RetailProductsComponent implements OnInit {
   filterProducts() {
     let filtered = this.products();
 
-    if (this.searchQuery()) {
+    if (this.searchQuery?.trim()) {
       filtered = filtered.filter(p =>
-        p.name.toLowerCase().includes(this.searchQuery().toLowerCase()) ||
-        p.description.toLowerCase().includes(this.searchQuery().toLowerCase())
+        p.name?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        p.description?.toLowerCase().includes(this.searchQuery.toLowerCase())
       );
     }
 
-    if (this.selectedCategory()) {
+    if (this.selectedCategory?.trim()) {
       filtered = filtered.filter(p =>
-        p.category.toLowerCase().includes(this.selectedCategory().toLowerCase())
+        p.category?.toLowerCase().includes(this.selectedCategory.toLowerCase())
       );
     }
 
-    filtered = filtered.filter(p => p.price >= this.minPrice && p.price <= this.maxPrice);
+    filtered = filtered.filter(p => (p.price || 0) >= this.minPrice && (p.price || 0) <= this.maxPrice);
 
     this.filteredProducts.set(filtered);
   }
 
   countInStock(): number {
-    return this.products().filter(p => p.stock > 0).length;
+    return this.products().filter(p => (p?.stock || 0) > 0).length;
   }
 
   countOutOfStock(): number {
-    return this.products().filter(p => p.stock === 0).length;
+    return this.products().filter(p => (p?.stock || 0) === 0).length;
   }
 
   countFeatured(): number {
-    return this.products().filter(p => p.isFeatured).length;
+    return this.products().filter(p => p?.isFeatured).length;
   }
 
   getTotalInventoryValue(): number {
-    return this.products().reduce((sum, p) => sum + (p.price * p.stock), 0);
+    return this.products().reduce((sum, p) => sum + ((p?.price || 0) * (p?.stock || 0)), 0);
   }
 
   openAddProductModal() {
