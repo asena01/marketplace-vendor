@@ -41,6 +41,10 @@ import notificationRoutes from './routes/notifications.js';
 import reviewRoutes from './routes/reviews.js';
 import customerRoutes from './routes/customers.js';
 import financeRoutes from './routes/finance.js';
+// Service Provider Dashboard Routes
+import serviceProviderRoutes from './routes/serviceProviders.js';
+import appointmentRoutes from './routes/appointments.js';
+import serviceStaffRoutes from './routes/serviceStaff.js';
 
 // Load environment variables
 dotenv.config();
@@ -473,6 +477,11 @@ app.use('/reviews', reviewRoutes);
 app.use('/customers', customerRoutes);
 
 app.use('/devices', deviceRoutes);
+
+// Service Provider Dashboard Routes (Frontend API Aliases)
+app.use('/service-providers', serviceProviderRoutes);
+app.use('/appointments', appointmentRoutes);
+app.use('/service-staff', serviceStaffRoutes);
 
 // Upload Routes (replaces Firebase Storage) - API endpoint for file operations
 app.use('/api/upload', uploadRoutes);
