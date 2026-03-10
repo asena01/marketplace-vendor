@@ -1,16 +1,14 @@
 import { Injectable } from '@angular/core';
-import { initializeApp } from 'firebase/app';
+import { getApp } from 'firebase/app';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject, UploadMetadata } from 'firebase/storage';
 import { Observable, from, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AngularFireUploadService {
-  private app = initializeApp(environment.firebaseConfig);
-  private storage = getStorage(this.app);
+  private storage = getStorage(getApp());
 
   constructor() {
     console.log('✅ AngularFireUploadService initialized with Firebase Storage');

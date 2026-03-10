@@ -791,7 +791,7 @@ interface Product {
 })
 export class RetailProductsComponent implements OnInit {
   // Product categories from backend model
-  productCategories = [
+  allProductCategories = [
     'adult-wear',
     'children-wear',
     'jewelry',
@@ -810,6 +810,35 @@ export class RetailProductsComponent implements OnInit {
     'boat-cruise',
     'activities',
   ];
+
+  // Category mapping by vendorType
+  private categoryByVendorType: { [key: string]: string[] } = {
+    'retail': ['adult-wear', 'children-wear', 'jewelry', 'supermarket'],
+    'clothing-store': ['adult-wear', 'children-wear'],
+    'jewelry': ['jewelry'],
+    'supermarket': ['supermarket', 'groceries'],
+    'furniture': ['furniture'],
+    'hair-salon': ['hair'],
+    'hair': ['hair'],
+    'pet-store': ['pets'],
+    'pets': ['pets'],
+    'gym': ['gym'],
+    'gym-equipment': ['gym'],
+    'restaurant': ['restaurants', 'fast-food', 'groceries'],
+    'hotel': ['hotels', 'apartments', 'rooms'],
+    'service': ['activities', 'tours'],
+    'tour-operator': ['tours', 'boat-cruise', 'activities'],
+    'car-rental': ['activities'],
+    'salon-spa': ['hair', 'activities'],
+    'event-center': ['activities'],
+    'delivery': ['supermarket', 'groceries'],
+    'general': ['adult-wear', 'children-wear', 'jewelry', 'supermarket', 'furniture', 'hair', 'pets', 'gym', 'restaurants', 'fast-food', 'groceries', 'hotels', 'apartments', 'rooms', 'tours', 'boat-cruise', 'activities'],
+  };
+
+  get productCategories(): string[] {
+    const vendorType = this.getVendorType();
+    return this.categoryByVendorType[vendorType] || this.allProductCategories;
+  }
 
   products = signal<Product[]>([]);
   filteredProducts = signal<Product[]>([]);
