@@ -971,22 +971,29 @@ export class RetailProductsComponent implements OnInit {
   }
 
   filterProducts() {
-    let filtered = this.products();
+    let filtered = [...this.products()];
 
-    if (this.searchQuery?.trim()) {
-      filtered = filtered.filter(p =>
-        p.name?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-        p.description?.toLowerCase().includes(this.searchQuery.toLowerCase())
-      );
+    // Filter by search query
+    if (this.searchQuery && this.searchQuery.trim().length > 0) {
+      const query = this.searchQuery.toLowerCase();
+      filtered = filtered.filter(p => {
+        const nameMatch = p.name && p.name.toLowerCase().includes(query);
+        const descMatch = p.description && p.description.toLowerCase().includes(query);
+        return nameMatch || descMatch;
+      });
     }
 
-    if (this.selectedCategory?.trim()) {
-      filtered = filtered.filter(p =>
-        p.category?.toLowerCase().includes(this.selectedCategory.toLowerCase())
-      );
+    // Filter by category
+    if (this.selectedCategory && this.selectedCategory.trim().length > 0) {
+      const catLower = this.selectedCategory.toLowerCase();
+      filtered = filtered.filter(p => p.category && p.category.toLowerCase().includes(catLower));
     }
 
-    filtered = filtered.filter(p => (p.price || 0) >= this.minPrice && (p.price || 0) <= this.maxPrice);
+    // Filter by price range
+    filtered = filtered.filter(p => {
+      const price = p.price || 0;
+      return price >= this.minPrice && price <= this.maxPrice;
+    });
 
     this.filteredProducts.set(filtered);
   }
