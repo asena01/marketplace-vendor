@@ -306,6 +306,16 @@ interface Product {
             </h2>
 
             <form (ngSubmit)="saveProduct()" class="space-y-6">
+              <!-- Validation Error Banner -->
+              @if (validationError()) {
+                <div class="bg-red-50 border border-red-300 rounded-lg p-4 flex gap-3">
+                  <mat-icon class="text-red-600 flex-shrink-0">error</mat-icon>
+                  <div>
+                    <p class="text-sm font-medium text-red-700">{{ validationError() }}</p>
+                  </div>
+                </div>
+              }
+
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Product Name -->
                 <div>
@@ -320,17 +330,20 @@ interface Product {
                   />
                 </div>
 
-                <!-- Category -->
+                <!-- Category Dropdown -->
                 <div>
                   <label class="block text-sm font-medium text-slate-700 mb-2">Category *</label>
-                  <input
-                    type="text"
+                  <select
                     [(ngModel)]="newProduct.category"
                     name="category"
-                    placeholder="e.g., Clothing"
                     class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
-                  />
+                  >
+                    <option value="">-- Select a Category --</option>
+                    @for (cat of productCategories; track cat) {
+                      <option [value]="cat">{{ formatCategoryName(cat) }}</option>
+                    }
+                  </select>
                 </div>
 
                 <!-- Price -->
@@ -777,6 +790,27 @@ interface Product {
   `]
 })
 export class RetailProductsComponent implements OnInit {
+  // Product categories from backend model
+  productCategories = [
+    'adult-wear',
+    'children-wear',
+    'jewelry',
+    'supermarket',
+    'furniture',
+    'hair',
+    'pets',
+    'gym',
+    'restaurants',
+    'fast-food',
+    'groceries',
+    'hotels',
+    'apartments',
+    'rooms',
+    'tours',
+    'boat-cruise',
+    'activities',
+  ];
+
   products = signal<Product[]>([]);
   filteredProducts = signal<Product[]>([]);
   showProductModal = signal(false);
@@ -789,6 +823,7 @@ export class RetailProductsComponent implements OnInit {
   errorMessage = signal('');
   isLoading = signal(false);
   isUploadingImages = signal(false);
+  validationError = signal('');
 
   newProduct: Product = this.getEmptyProduct();
   private storeId: string = '';
@@ -823,6 +858,16 @@ export class RetailProductsComponent implements OnInit {
     private imageUploadService: AngularFireUploadService
   ) {
     this.storeId = localStorage.getItem('storeId') || '';
+  }
+
+  /**
+   * Format category name for display (e.g., 'adult-wear' -> 'Adult Wear')
+   */
+  formatCategoryName(category: string): string {
+    return category
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   }
 
   /**
@@ -987,6 +1032,7 @@ export class RetailProductsComponent implements OnInit {
     this.showProductModal.set(false);
     this.newProduct = this.getEmptyProduct();
     this.isEditing.set(false);
+    this.validationError.set('');
 
     // Reset category-specific data
     this.furnitureData = {
@@ -1001,9 +1047,24 @@ export class RetailProductsComponent implements OnInit {
   }
 
   saveProduct() {
-    if (!this.newProduct.name || !this.newProduct.category || !this.newProduct.price || this.newProduct.stock === undefined) {
-      this.errorMessage.set('Please fill in all required fields');
-      setTimeout(() => this.errorMessage.set(''), 3000);
+    // Clear previous validation errors
+    this.validationError.set('');
+
+    // Validate required fields
+    if (!this.newProduct.name) {
+      this.validationError.set('Product name is required');
+      return;
+    }
+    if (!this.newProduct.category) {
+      this.validationError.set('Please select a category');
+      return;
+    }
+    if (!this.newProduct.price || this.newProduct.price <= 0) {
+      this.validationError.set('Price must be greater than 0');
+      return;
+    }
+    if (this.newProduct.stock === undefined || this.newProduct.stock < 0) {
+      this.validationError.set('Stock quantity is required and must be non-negative');
       return;
     }
 
@@ -1029,6 +1090,7 @@ export class RetailProductsComponent implements OnInit {
               this.products.set(updated);
             }
             this.successMessage.set('Product updated successfully!');
+            this.validationError.set('');
           } else {
             this.errorMessage.set('Failed to update product');
           }
@@ -1054,6 +1116,7 @@ export class RetailProductsComponent implements OnInit {
           if (response.success && response.data) {
             this.products.set([...this.products(), response.data]);
             this.successMessage.set('Product added successfully!');
+            this.validationError.set('');
           } else {
             this.errorMessage.set('Failed to add product');
           }
