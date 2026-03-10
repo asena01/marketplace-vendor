@@ -28,7 +28,7 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptorsFromDi()),
     {
       provide: 'FIREBASE_INIT',
-      useFactory: initializeFirebase(),
+      useFactory: initializeFirebase,
       multi: true
     }
   ]
