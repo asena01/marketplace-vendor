@@ -39,7 +39,7 @@ export class FurnitureService {
   // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api/furniture'
   // NEW: Local Node.js/Express backend
   private apiUrl = 'http://localhost:5001/furniture';
-
+  //private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/furniture';
   constructor(private http: HttpClient) {}
 
   // Get all furniture with filters

@@ -51,7 +51,7 @@ export interface CustomerResponse<T> {
 })
 export class CustomerService {
   private apiUrl = 'http://localhost:5001/customers';
-
+  //private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/customers';
   constructor(private http: HttpClient) {}
 
   // Get business customers

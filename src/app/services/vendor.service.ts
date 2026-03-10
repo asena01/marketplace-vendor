@@ -80,7 +80,7 @@ export class VendorService {
   // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api/vendors'
   // NEW: Local Node.js/Express backend
   private apiUrl = 'http://localhost:5001/vendors';
-
+  //private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/vendors';
   constructor(private http: HttpClient) {}
 
   /**

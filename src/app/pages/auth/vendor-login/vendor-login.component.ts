@@ -25,24 +25,7 @@ export class VendorLoginComponent {
       password: 'furniture123456',
       id: 'furniture'
     },
-    {
-      name: '💇 Hair Vendor',
-      email: 'hair@demo.com',
-      password: 'hair123456',
-      id: 'hair'
-    },
-    {
-      name: '🐾 Pets Vendor',
-      email: 'pets@demo.com',
-      password: 'pets123456',
-      id: 'pets'
-    },
-    {
-      name: '💪 Gym Equipment Vendor',
-      email: 'gym@demo.com',
-      password: 'gym123456',
-      id: 'gym'
-    }
+   
   ];
 
   constructor(

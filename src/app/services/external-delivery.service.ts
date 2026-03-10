@@ -104,6 +104,7 @@ export interface ApiResponse<T> {
 })
 export class ExternalDeliveryService {
   private apiUrl = 'http://localhost:5001';
+  //private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app';
   
   constructor(private http: HttpClient) {}
 

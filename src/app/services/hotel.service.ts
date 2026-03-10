@@ -9,7 +9,7 @@ import { AuthService } from './auth.service';
 // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api'
 // NEW: Local Node.js/Express backend
 const API_URL = 'http://localhost:5001';
-
+//const API_URL = 'https://api-qpczzmaezq-uc.a.run.app';
 interface ApiResponse<T> {
   status: string;
   message?: string;

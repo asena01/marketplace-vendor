@@ -57,7 +57,9 @@ export interface ApiResponse<T> {
 })
 export class DeliveryService {
   private apiUrl = 'http://localhost:5001/restaurants';
-  private baseApiUrl = 'http://localhost:5001'; // Base API for non-restaurant endpoints
+  private baseApiUrl = 'http://localhost:5001'; 
+  /*private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/restaurants';
+  private baseApiUrl = 'https://api-qpczzmaezq-uc.a.run.app'; */
   private restaurantId: string = '';
   
   // Observable for real-time notifications

@@ -32,6 +32,7 @@ export class AuthService {
   // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api'
   // NEW: Local Node.js/Express backend
   private apiUrl = 'http://localhost:5001';
+  //private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app';
   private tokenKey = 'token';
   private userKey = 'user';
 
@@ -122,6 +123,7 @@ export class AuthService {
 
           // Set business ID from seed data for vendor logins
           if (response.user.userType === 'vendor') {
+            localStorage.setItem('vendorType', response.user.vendorType || 'vendor-type-default');
             if (response.user.vendorType === 'hotel') {
               localStorage.setItem('hotelId', '69a72226003a6f0406e3afb1');
             } else if (response.user.vendorType === 'tour-operator') {
@@ -158,6 +160,7 @@ export class AuthService {
     localStorage.removeItem('deliveryId');
     localStorage.removeItem('userEmail');
     localStorage.removeItem('userName');
+    localStorage.removeItem('vendorType');
     this.isAuthenticated.set(false);
     this.currentUser.set(null);
     this.userType.set(null);

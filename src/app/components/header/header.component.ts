@@ -44,6 +44,7 @@ export class HeaderComponent {
   }
 
   openLogin(): void {
+    console.log("LOGIN CLICKED");
     this.authModalService.openLogin();
     this.closeMenu();
   }

@@ -84,7 +84,7 @@ export const routes: Routes = [
     path: 'admin-dashboard',
     component: AdminDashboardComponent,
     canActivate: [AdminGuard, RoleGuard],
-    data: { role: 'admin' }
+    data: { role: 'super-admin' }
   },
   { path: 'vendor-detail/:id', component: VendorDetailComponent, canActivate: [AdminGuard] },
   { path: 'delivery-dashboard', component: DeliveryDashboardComponent, canActivate: [VendorGuard] },

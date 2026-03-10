@@ -417,16 +417,16 @@ export class LoginOverlayComponent implements OnInit {
       'tours': ['/tours-dashboard'],
       'tour-operator': ['/tours-dashboard'],
       // All other vendor types route to generic vendor dashboard
-      'clothing-store': ['/vendor-dashboard', 'retail'],
-      'jewelry': ['/vendor-dashboard', 'retail'],
-      'supermarket': ['/vendor-dashboard', 'retail'],
-      'furniture': ['/vendor-dashboard', 'retail'],
-      'hair-salon': ['/vendor-dashboard', 'service'],
-      'pet-store': ['/vendor-dashboard', 'retail'],
-      'gym': ['/vendor-dashboard', 'service'],
-      'car-rental': ['/vendor-dashboard', 'service'],
-      'event-center': ['/vendor-dashboard', 'service'],
-      'salon-spa': ['/vendor-dashboard', 'service']
+      'clothing-store': ['/retail-dashboard'],
+      'jewelry': ['/retail-dashboard'],
+      'supermarket': ['/retail-dashboard'],
+      'furniture': ['/retail-dashboard'],
+      'hair-salon': ['/service-dashboard'],
+      'pet-store': ['/retail-dashboard'],
+      'gym': ['/service-dashboard'],
+      'car-rental': ['/service-dashboard'],
+      'event-center': ['/service-dashboard'],
+      'salon-spa': ['/service-dashboard']
     };
 
     const route = dashboardRoutes[vendorType] || ['/vendor-dashboard', vendorType];

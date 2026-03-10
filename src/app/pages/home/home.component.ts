@@ -12,7 +12,7 @@ interface TrendingItem {
   id: number;
   name: string;
   price: string;
-  image: string;
+  icon: string; // updated from 'image' to 'icon' for Material Icons
 }
 
 @Component({
@@ -20,7 +20,7 @@ interface TrendingItem {
   standalone: true,
   imports: [CommonModule, RouterLink, HeaderComponent, LoginOverlayComponent, SignupOverlayComponent],
   templateUrl: './home.component.html',
-  styleUrl: './home.component.css'
+  styleUrls: ['./home.component.css']
 })
 export class HomeComponent {
   services: Service[] = MARKETPLACE_SERVICES;
@@ -28,7 +28,6 @@ export class HomeComponent {
   constructor(public authModalService: AuthModalService) {}
 
   // Main services (Services and Delivery)
-  // NOTE: Delivery service is commented out for now
   mainServices = [
     this.services.find(s => s.id === 'services'),
     // this.services.find(s => s.id === 'delivery')
@@ -37,11 +36,12 @@ export class HomeComponent {
   // Specialized services (all other services)
   specializedServices = this.services.filter(s => s.id !== 'services' && s.id !== 'delivery');
 
+  // Trending products with Material Icons
   trendingProducts: TrendingItem[] = [
-    { id: 1, name: 'Wireless Headphones', price: '$49.99', image: '🎧' },
-    { id: 2, name: 'Smart Watch', price: '$199.99', image: '⌚' },
-    { id: 3, name: 'Phone Case', price: '$12.99', image: '📱' },
-    { id: 4, name: 'USB-C Cable', price: '$9.99', image: '🔌' },
+    { id: 1, name: 'Wireless Headphones', price: '$49.99', icon: 'headphones' },
+    { id: 2, name: 'Smart Watch', price: '$199.99', icon: 'watch' },
+    { id: 3, name: 'Phone Case', price: '$12.99', icon: 'phone_iphone' },
+    { id: 4, name: 'USB-C Cable', price: '$9.99', icon: 'usb' },
   ];
 
   popularLocations = [
@@ -58,11 +58,15 @@ export class HomeComponent {
         allCategories.push(...service.categories);
       }
     });
-    return allCategories.slice(0, 12);
+
+    // Ensure each category has a default Material Icon
+    return allCategories.slice(0, 12).map(cat => ({
+      ...cat,
+      icon: cat.icon || 'category'
+    }));
   }
 
   getCategoryRoute(category: any): any {
-    // Map categories to their respective services
     const categoryToServiceMap: { [key: string]: string } = {
       'adult-wear': '/shopping',
       'children-wear': '/shopping',

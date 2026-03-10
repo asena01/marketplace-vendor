@@ -113,6 +113,9 @@ export class ServiceProviderService {
   private apiUrl = 'http://localhost:5001/service-providers';
   private appointmentsUrl = 'http://localhost:5001/appointments';
   private staffUrl = 'http://localhost:5001/service-staff';
+  /*private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/service-providers';
+  private appointmentsUrl = 'https://api-qpczzmaezq-uc.a.run.app/appointments';
+  private staffUrl = 'https://api-qpczzmaezq-uc.a.run.app/service-staff';*/
 
   constructor(private http: HttpClient) {}
 

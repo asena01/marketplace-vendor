@@ -29,7 +29,7 @@ import { ProductService } from '../../../../services/product.service';
         <div class="p-8 space-y-8">
       <!-- Welcome Section -->
       <div class="bg-gradient-to-r from-green-600 to-green-700 rounded-xl p-8 text-white shadow-lg">
-        <h1 class="text-3xl font-bold mb-2">Retail Management Dashboard</h1>
+        <h1 class="text-3xl font-bold mb-2">Retail Management Dashboard{{vendorType}}</h1>
         <p class="text-green-100">Monitor sales, inventory, products, and customer interactions across your store.</p>
       </div>
 
@@ -161,6 +161,7 @@ export class RetailDashboardComponent implements OnInit {
   retailSidenavItems = [];
 
   private storeId: string = '';
+  public vendorType: string = '';
 
   constructor(
     private authService: AuthService,
@@ -169,6 +170,9 @@ export class RetailDashboardComponent implements OnInit {
     private router: Router
   ) {
     this.storeId = localStorage.getItem('storeId') || '';
+    this.vendorType = localStorage.getItem('vendorType') || '';
+    console.log('store', this.storeId)
+    console.log('this.vendorType', this.vendorType)
   }
 
   ngOnInit(): void {

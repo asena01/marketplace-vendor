@@ -34,7 +34,7 @@ export class ReviewService {
   // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api/reviews'
   // NEW: Local Node.js/Express backend
   private apiUrl = 'http://localhost:5001/reviews';
-
+  //private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/reviews';
   constructor(private http: HttpClient) {}
 
   // Get all reviews for a product

@@ -9,7 +9,7 @@ import { map } from 'rxjs/operators';
 export class FirebaseUploadService {
   // Local backend API endpoint (replacing Firebase Storage)
   private apiUrl = 'http://localhost:5001/api/upload';
-
+  //private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/api/upload';
   constructor(private http: HttpClient) {
     console.log('🔄 FirebaseUploadService initialized with local API endpoint:', this.apiUrl);
   }

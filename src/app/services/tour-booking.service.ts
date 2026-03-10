@@ -59,7 +59,7 @@ export class TourBookingService {
   // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api/tour-bookings'
   // NEW: Local Node.js/Express backend
   private apiUrl = 'http://localhost:5001/tour-bookings';
-
+  //private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/tour-bookings';
   constructor(private http: HttpClient) {}
 
   /**

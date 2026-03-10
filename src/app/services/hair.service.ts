@@ -33,7 +33,7 @@ export class HairService {
   // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api/hair'
   // NEW: Local Node.js/Express backend
   private apiUrl = 'http://localhost:5001/hair';
-
+  //private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/hair';
   constructor(private http: HttpClient) {}
 
   getAllHair(page: number = 1, limit: number = 10, filters?: any): Observable<HairResponse> {

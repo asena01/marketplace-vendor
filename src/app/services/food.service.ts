@@ -66,7 +66,7 @@ export class FoodService {
   // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api/restaurants'
   // NEW: Local Node.js/Express backend
   private apiUrl = 'http://localhost:5001/restaurants';
-
+  //private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/restaurants';
   constructor(private http: HttpClient) {}
 
   // GET all restaurants with filters and pagination
