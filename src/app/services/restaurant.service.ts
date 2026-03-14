@@ -1,10 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { initializeApp } from 'firebase/app';
-import { getStorage } from 'firebase/storage';
-import { environment } from '../../environments/environment';
+import { Observable, map } from 'rxjs';
+import { apiConfig } from '../config/api-config';
 
 export interface MenuItem {
   _id?: string;
@@ -82,17 +79,18 @@ export interface ApiResponse<T> {
   data?: T;
 }
 
-// Initialize Firebase
-const firebaseApp = initializeApp(environment.firebaseConfig);
-const storage = getStorage(firebaseApp);
-
 @Injectable({
   providedIn: 'root'
 })
 export class RestaurantService {
-  private apiUrl = 'http://localhost:5001/restaurants';
-  //private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/pets';
-  constructor(private http: HttpClient) {}
+  private apiUrl: string;
+  private uploadUrl: string;
+
+  constructor(private http: HttpClient) {
+    this.apiUrl = `${apiConfig.getApiBaseUrl()}/restaurants`;
+    this.uploadUrl = `${apiConfig.getApiBaseUrl()}/api/upload`;
+    console.log('🍽️ RestaurantService initialized with dynamic URLs');
+  }
 
   /**
    * Get vendor headers with restaurant ID
@@ -106,43 +104,77 @@ export class RestaurantService {
   }
 
   /**
-   * Upload image to Firebase Storage
+   * Upload image to backend storage
+   * @param file - Image file to upload
+   * @param restaurantId - Restaurant ID (for folder organization)
+   * @param imageType - Type of image (menu-item, logo, banner)
+   * @returns Promise with the image URL
    */
   async uploadImage(file: File, restaurantId: string, imageType: 'menu-item' | 'logo' | 'banner'): Promise<string> {
     try {
-      // Generate unique filename
-      const timestamp = Date.now();
-      const filename = `${imageType}-${timestamp}-${Math.random().toString(36).substr(2, 9)}`;
-      const filePath = `restaurants/${restaurantId}/${imageType}/${filename}`;
+      const formData = new FormData();
+      formData.append('images', file);
 
-      // Create reference
-      const fileRef = ref(storage, filePath);
+      // Determine folder based on image type
+      const folder = imageType === 'menu-item' ? 'products' : imageType === 'logo' ? 'vendor-profiles' : 'vendor-banners';
 
-      // Upload file
-      const snapshot = await uploadBytes(fileRef, file);
-      console.log(`✅ File uploaded: ${snapshot.metadata.name}`);
+      console.log(`📤 Uploading ${imageType} for restaurant ${restaurantId}`);
 
-      // Get download URL
-      const downloadUrl = await getDownloadURL(snapshot.ref);
-      console.log(`✅ Download URL: ${downloadUrl}`);
+      const response = await fetch(`${this.uploadUrl}/multiple/${folder}`, {
+        method: 'POST',
+        body: formData
+      });
 
-      return downloadUrl;
+      if (!response.ok) {
+        throw new Error(`Upload failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.urls && data.urls.length > 0) {
+        const url = data.urls[0];
+        // Ensure it's an absolute URL
+        const absoluteUrl = url.startsWith('http') ? url : `http://localhost:5001${url}`;
+        console.log(`✅ File uploaded: ${absoluteUrl}`);
+        return absoluteUrl;
+      } else {
+        throw new Error(data.message || 'Upload failed');
+      }
     } catch (error) {
-      console.error('Error uploading image to Firebase:', error);
+      console.error('Error uploading image to backend:', error);
       throw error;
     }
   }
 
   /**
-   * Delete image from Firebase Storage
+   * Delete image from backend storage
+   * @param downloadUrl - The image URL to delete
    */
-  async deleteImage(storagePath: string): Promise<void> {
+  async deleteImage(downloadUrl: string): Promise<void> {
     try {
-      const fileRef = ref(storage, storagePath);
-      await deleteObject(fileRef);
-      console.log(`✅ File deleted: ${storagePath}`);
+      console.log(`🗑️ Deleting image: ${downloadUrl}`);
+
+      const response = await fetch(`${this.uploadUrl}/delete-by-url`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ url: downloadUrl })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Delete failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        console.log(`✅ File deleted: ${downloadUrl}`);
+      } else {
+        throw new Error(data.message || 'Delete failed');
+      }
     } catch (error) {
-      console.error('Error deleting image from Firebase:', error);
+      console.error('Error deleting image from backend:', error);
       throw error;
     }
   }

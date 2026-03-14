@@ -1,14 +1,14 @@
 <header class="bg-white shadow-md sticky top-0 z-[999]">
-  <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+  <nav class="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4">
     <div class="flex justify-between items-center">
       <!-- Logo -->
-      <a routerLink="/" class="flex items-center gap-2 text-2xl font-bold">
-        <div class="text-3xl">🚀</div>
+      <a routerLink="/" class="flex items-center gap-1 sm:gap-2 text-lg sm:text-2xl font-bold flex-shrink-0">
+        <div class="text-2xl sm:text-3xl">🚀</div>
         <span class="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">MarketHub</span>
       </a>
 
       <!-- Desktop Menu -->
-      <div class="hidden lg:flex items-center gap-6 text-sm">
+      <div class="hidden lg:flex items-center gap-4 md:gap-6 text-xs md:text-sm">
         <a routerLink="/shopping" class="text-gray-700 hover:text-primary transition font-medium">Shopping</a>
         <a routerLink="/hotels" class="text-gray-700 hover:text-primary transition font-medium">Hotels</a>
         <a routerLink="/food" class="text-gray-700 hover:text-primary transition font-medium">Food</a>
@@ -35,39 +35,43 @@
       </div>
 
       <!-- Right Actions -->
-      <div class="hidden lg:flex items-center gap-3">
+      <div class="hidden lg:flex items-center gap-2 md:gap-3">
         @if (!isLoggedIn()) {
-          <button (click)="openLogin()" class="nav-signin-btn px-6 py-2.5 border-2 border-primary text-primary font-semibold rounded-lg transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md active:scale-95 flex items-center gap-2 cursor-pointer">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button (click)="openLogin()" class="nav-signin-btn px-3 md:px-6 py-2 md:py-2.5 border-2 border-primary text-primary font-semibold rounded-lg transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md active:scale-95 flex items-center gap-2 cursor-pointer text-xs md:text-sm min-h-[44px]">
+            <svg class="w-3.5 md:w-4 h-3.5 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3v-1"></path>
             </svg>
-            Sign In
+            <span class="hidden md:inline">Sign In</span>
+            <span class="md:hidden">In</span>
           </button>
-          <button (click)="openSignup()" class="nav-signup-btn px-7 py-2.5 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-primary/40 transition-all duration-300 active:scale-95 relative overflow-hidden group flex items-center gap-2 cursor-pointer">
-            <span class="relative z-10 flex items-center gap-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button (click)="openSignup()" class="nav-signup-btn px-3 md:px-7 py-2 md:py-2.5 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-primary/40 transition-all duration-300 active:scale-95 relative overflow-hidden group flex items-center gap-1 md:gap-2 cursor-pointer text-xs md:text-sm min-h-[44px]">
+            <span class="relative z-10 flex items-center gap-1 md:gap-2">
+              <svg class="w-3.5 md:w-4 h-3.5 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
               </svg>
-              Sign Up
+              <span class="hidden md:inline">Sign Up</span>
+              <span class="md:hidden">Up</span>
             </span>
             <span class="absolute inset-0 bg-gradient-to-r from-secondary to-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-0"></span>
           </button>
         } @else {
           <button
             (click)="navigateToDashboard()"
-            class="nav-dashboard-btn px-6 py-2.5 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-primary/40 transition-all duration-300 active:scale-95 flex items-center gap-2 cursor-pointer">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            class="nav-dashboard-btn px-3 md:px-6 py-2 md:py-2.5 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-primary/40 transition-all duration-300 active:scale-95 flex items-center gap-1 md:gap-2 cursor-pointer text-xs md:text-sm min-h-[44px]">
+            <svg class="w-3.5 md:w-4 h-3.5 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
-            👤 My Dashboard
+            <span class="hidden md:inline">👤 My Dashboard</span>
+            <span class="md:hidden">👤</span>
           </button>
           <button
             (click)="logout()"
-            class="nav-logout-btn px-6 py-2.5 border-2 border-red-600 text-red-600 font-semibold rounded-lg transition-all duration-300 hover:bg-red-600 hover:text-white hover:shadow-md active:scale-95 flex items-center gap-2 cursor-pointer">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            class="nav-logout-btn px-3 md:px-6 py-2 md:py-2.5 border-2 border-red-600 text-red-600 font-semibold rounded-lg transition-all duration-300 hover:bg-red-600 hover:text-white hover:shadow-md active:scale-95 flex items-center gap-1 md:gap-2 cursor-pointer text-xs md:text-sm min-h-[44px]">
+            <svg class="w-3.5 md:w-4 h-3.5 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3v-1"></path>
             </svg>
-            Logout
+            <span class="hidden md:inline">Logout</span>
+            <span class="md:hidden">Out</span>
           </button>
         }
       </div>
@@ -82,28 +86,28 @@
 
     <!-- Mobile Menu -->
     @if (isMenuOpen()) {
-      <div class="lg:hidden mt-4 pb-4 border-t">
-        <a routerLink="/shopping" (click)="closeMenu()" class="block py-2 text-gray-700 hover:text-primary transition font-medium">Shopping</a>
-        <a routerLink="/hotels" (click)="closeMenu()" class="block py-2 text-gray-700 hover:text-primary transition font-medium">Hotels</a>
-        <a routerLink="/food" (click)="closeMenu()" class="block py-2 text-gray-700 hover:text-primary transition font-medium">Food</a>
-        <a routerLink="/services" (click)="closeMenu()" class="block py-2 text-gray-700 hover:text-primary transition font-medium">Services</a>
-        <a routerLink="/tours" (click)="closeMenu()" class="block py-2 text-gray-700 hover:text-primary transition font-medium">Tours</a>
+      <div class="lg:hidden mt-3 sm:mt-4 pb-3 sm:pb-4 border-t">
+        <a routerLink="/shopping" (click)="closeMenu()" class="block py-2 sm:py-2.5 px-2 text-gray-700 hover:text-primary hover:bg-gray-50 transition font-medium text-sm">Shopping</a>
+        <a routerLink="/hotels" (click)="closeMenu()" class="block py-2 sm:py-2.5 px-2 text-gray-700 hover:text-primary hover:bg-gray-50 transition font-medium text-sm">Hotels</a>
+        <a routerLink="/food" (click)="closeMenu()" class="block py-2 sm:py-2.5 px-2 text-gray-700 hover:text-primary hover:bg-gray-50 transition font-medium text-sm">Food</a>
+        <a routerLink="/services" (click)="closeMenu()" class="block py-2 sm:py-2.5 px-2 text-gray-700 hover:text-primary hover:bg-gray-50 transition font-medium text-sm">Services</a>
+        <a routerLink="/tours" (click)="closeMenu()" class="block py-2 sm:py-2.5 px-2 text-gray-700 hover:text-primary hover:bg-gray-50 transition font-medium text-sm">Tours</a>
         <div class="border-t my-2 pt-2">
           <p class="text-xs font-semibold text-gray-500 px-2 py-2">More Services</p>
-          <a routerLink="/furniture" (click)="closeMenu()" class="block py-2 px-4 text-gray-700 hover:text-primary transition font-medium">🛋️ Furniture</a>
-          <a routerLink="/hair" (click)="closeMenu()" class="block py-2 px-4 text-gray-700 hover:text-primary transition font-medium">💇 Hair & Extensions</a>
-          <a routerLink="/pets" (click)="closeMenu()" class="block py-2 px-4 text-gray-700 hover:text-primary transition font-medium">🐾 Pets & Supplies</a>
-          <a routerLink="/gym" (click)="closeMenu()" class="block py-2 px-4 text-gray-700 hover:text-primary transition font-medium">🏋️ Gym Equipment</a>
+          <a routerLink="/furniture" (click)="closeMenu()" class="block py-2 sm:py-2.5 px-4 text-gray-700 hover:text-primary hover:bg-gray-50 transition font-medium text-sm">🛋️ Furniture</a>
+          <a routerLink="/hair" (click)="closeMenu()" class="block py-2 sm:py-2.5 px-4 text-gray-700 hover:text-primary hover:bg-gray-50 transition font-medium text-sm">💇 Hair & Extensions</a>
+          <a routerLink="/pets" (click)="closeMenu()" class="block py-2 sm:py-2.5 px-4 text-gray-700 hover:text-primary hover:bg-gray-50 transition font-medium text-sm">🐾 Pets & Supplies</a>
+          <a routerLink="/gym" (click)="closeMenu()" class="block py-2 sm:py-2.5 px-4 text-gray-700 hover:text-primary hover:bg-gray-50 transition font-medium text-sm">🏋️ Gym Equipment</a>
         </div>
-        <div class="flex flex-col gap-2 mt-4 pt-4 border-t">
+        <div class="flex flex-col gap-2 mt-3 sm:mt-4 pt-3 sm:pt-4 border-t">
           @if (!isLoggedIn()) {
-            <button (click)="openLogin()" class="nav-signin-btn w-full px-4 py-3 border-2 border-primary text-primary font-semibold rounded-lg transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md active:scale-95 flex items-center justify-center gap-2">
+            <button (click)="openLogin()" class="nav-signin-btn w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-primary text-primary font-semibold rounded-lg transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md active:scale-95 flex items-center justify-center gap-2 min-h-[44px] text-sm">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3v-1"></path>
               </svg>
               Sign In
             </button>
-            <button (click)="openSignup()" class="nav-signup-btn w-full px-4 py-3 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-primary/40 transition-all duration-300 active:scale-95 flex items-center justify-center gap-2 relative overflow-hidden group">
+            <button (click)="openSignup()" class="nav-signup-btn w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-primary/40 transition-all duration-300 active:scale-95 flex items-center justify-center gap-2 relative overflow-hidden group min-h-[44px] text-sm">
               <svg class="w-4 h-4 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
               </svg>
@@ -113,15 +117,15 @@
           } @else {
             <button
               (click)="navigateToDashboard()"
-              class="nav-dashboard-btn w-full px-4 py-3 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-primary/40 transition-all duration-300 active:scale-95 flex items-center justify-center gap-2 cursor-pointer">
+              class="nav-dashboard-btn w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-primary/40 transition-all duration-300 active:scale-95 flex items-center justify-center gap-2 cursor-pointer min-h-[44px] text-sm">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
-              👤 My Dashboard
+              👤 Dashboard
             </button>
             <button
               (click)="logout()"
-              class="nav-logout-btn w-full px-4 py-3 border-2 border-red-600 text-red-600 font-semibold rounded-lg transition-all duration-300 hover:bg-red-600 hover:text-white hover:shadow-md active:scale-95 flex items-center justify-center gap-2 cursor-pointer">
+              class="nav-logout-btn w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-red-600 text-red-600 font-semibold rounded-lg transition-all duration-300 hover:bg-red-600 hover:text-white hover:shadow-md active:scale-95 flex items-center justify-center gap-2 cursor-pointer min-h-[44px] text-sm">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3v-1"></path>
               </svg>

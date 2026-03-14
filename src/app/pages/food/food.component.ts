@@ -9,6 +9,7 @@ import { CurrencyService } from '../../services/currency.service';
 import { PaymentService } from '../../services/payment.service';
 import { FoodService, Restaurant, MenuItem, CartItem as FoodCartItem } from '../../services/food.service';
 import { DeliveryService, DeliveryServiceDefinition } from '../../services/delivery.service';
+import { apiConfig } from '../../config/api-config';
 
 interface CartItem {
   id: string;
@@ -949,5 +950,13 @@ export class FoodComponent implements OnInit {
       { id: 'mobile-money', name: 'Mobile Money', icon: '📱', description: 'Phone payment' },
       { id: 'wallet', name: 'Digital Wallet', icon: '👛', description: 'Online wallet' }
     ];
+  }
+
+  /**
+   * Build a complete image URL from a relative or absolute path
+   */
+  buildImageUrl(imagePath: string | undefined): string {
+    if (!imagePath) return '';
+    return apiConfig.buildImageUrl(imagePath);
   }
 }

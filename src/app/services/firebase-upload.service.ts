@@ -2,16 +2,17 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, from } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { apiConfig } from '../config/api-config';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FirebaseUploadService {
-  // Local backend API endpoint (replacing Firebase Storage)
-  private apiUrl = 'http://localhost:5001/api/upload';
-  //private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/api/upload';
+  private apiUrl: string;
+
   constructor(private http: HttpClient) {
-    console.log('🔄 FirebaseUploadService initialized with local API endpoint:', this.apiUrl);
+    this.apiUrl = `${apiConfig.getApiBaseUrl()}/api/upload`;
+    console.log('🔄 FirebaseUploadService initialized with API endpoint:', this.apiUrl);
   }
 
   /**
@@ -36,7 +37,10 @@ export class FirebaseUploadService {
         ).subscribe({
           next: (response) => {
             if (response.success) {
-              const imageUrl = response.url;
+              // Convert relative URL to absolute if needed
+              const imageUrl = response.url.startsWith('http')
+                ? response.url
+                : `http://localhost:5001${response.url}`;
               console.log('✅ Image uploaded successfully to local backend:', imageUrl);
               resolve(imageUrl);
             } else {
@@ -79,8 +83,12 @@ export class FirebaseUploadService {
         ).subscribe({
           next: (response) => {
             if (response.success) {
+              // Convert relative URLs to absolute if needed
+              const absoluteUrls = response.urls.map((url: string) =>
+                url.startsWith('http') ? url : `http://localhost:5001${url}`
+              );
               console.log('✅ All images uploaded successfully to local backend');
-              resolve(response.urls);
+              resolve(absoluteUrls);
             } else {
               reject(new Error('Batch upload failed'));
             }
