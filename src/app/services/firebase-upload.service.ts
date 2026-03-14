@@ -36,7 +36,10 @@ export class FirebaseUploadService {
         ).subscribe({
           next: (response) => {
             if (response.success) {
-              const imageUrl = response.url;
+              // Convert relative URL to absolute if needed
+              const imageUrl = response.url.startsWith('http')
+                ? response.url
+                : `http://localhost:5001${response.url}`;
               console.log('✅ Image uploaded successfully to local backend:', imageUrl);
               resolve(imageUrl);
             } else {
@@ -79,8 +82,12 @@ export class FirebaseUploadService {
         ).subscribe({
           next: (response) => {
             if (response.success) {
+              // Convert relative URLs to absolute if needed
+              const absoluteUrls = response.urls.map((url: string) =>
+                url.startsWith('http') ? url : `http://localhost:5001${url}`
+              );
               console.log('✅ All images uploaded successfully to local backend');
-              resolve(response.urls);
+              resolve(absoluteUrls);
             } else {
               reject(new Error('Batch upload failed'));
             }
