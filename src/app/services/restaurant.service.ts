@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
+import { apiConfig } from '../config/api-config';
 
 export interface MenuItem {
   _id?: string;
@@ -82,10 +83,14 @@ export interface ApiResponse<T> {
   providedIn: 'root'
 })
 export class RestaurantService {
-  private apiUrl = 'http://localhost:5001/restaurants';
-  private uploadUrl = 'http://localhost:5001/api/upload';
-  //private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/pets';
-  constructor(private http: HttpClient) {}
+  private apiUrl: string;
+  private uploadUrl: string;
+
+  constructor(private http: HttpClient) {
+    this.apiUrl = `${apiConfig.getApiBaseUrl()}/restaurants`;
+    this.uploadUrl = `${apiConfig.getApiBaseUrl()}/api/upload`;
+    console.log('🍽️ RestaurantService initialized with dynamic URLs');
+  }
 
   /**
    * Get vendor headers with restaurant ID

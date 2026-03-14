@@ -2,16 +2,17 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, from } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { apiConfig } from '../config/api-config';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FirebaseUploadService {
-  // Local backend API endpoint (replacing Firebase Storage)
-  private apiUrl = 'http://localhost:5001/api/upload';
-  //private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/api/upload';
+  private apiUrl: string;
+
   constructor(private http: HttpClient) {
-    console.log('🔄 FirebaseUploadService initialized with local API endpoint:', this.apiUrl);
+    this.apiUrl = `${apiConfig.getApiBaseUrl()}/api/upload`;
+    console.log('🔄 FirebaseUploadService initialized with API endpoint:', this.apiUrl);
   }
 
   /**

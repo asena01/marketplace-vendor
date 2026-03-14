@@ -1,16 +1,18 @@
 import {inject, Injectable} from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
+import { apiConfig } from '../config/api-config';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AngularFireUploadService {
-  private apiUrl = 'http://localhost:5001/api/upload';
+  private apiUrl: string;
   private http = inject(HttpClient);
 
   constructor() {
-    console.log('✅ AngularFireUploadService initialized with Backend Upload');
+    this.apiUrl = `${apiConfig.getApiBaseUrl()}/api/upload`;
+    console.log('✅ AngularFireUploadService initialized with API URL:', this.apiUrl);
   }
 
   /**

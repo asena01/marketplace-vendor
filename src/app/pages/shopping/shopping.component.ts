@@ -9,6 +9,7 @@ import { ReviewService, ProductReview } from '../../services/review.service';
 import { PaymentService, PaymentMethod, PaymentRequest, PaymentResponse } from '../../services/payment.service';
 import { CurrencyService } from '../../services/currency.service';
 import { DeliveryService, DeliveryServiceDefinition } from '../../services/delivery.service';
+import { apiConfig } from '../../config/api-config';
 
 interface Product {
   id: string;
@@ -180,6 +181,34 @@ export class ShoppingComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadProducts();
+    // Log current API configuration
+    apiConfig.logConfiguration();
+  }
+
+  /**
+   * Build a complete image URL from a relative or absolute path
+   * @param imagePath - Image path like '/uploads/products/filename.jpg' or 'products/filename.jpg'
+   * @returns Complete image URL
+   */
+  buildImageUrl(imagePath: string | undefined): string {
+    if (!imagePath) return '/assets/placeholder-image.png'; // Fallback placeholder
+    return apiConfig.buildImageUrl(imagePath);
+  }
+
+  /**
+   * Build API URL for backend endpoints
+   * @param endpoint - API endpoint like '/api/products'
+   * @returns Complete API URL
+   */
+  buildApiUrl(endpoint: string): string {
+    return apiConfig.buildApiUrl(endpoint);
+  }
+
+  /**
+   * Get current API configuration (for debugging)
+   */
+  getApiConfig() {
+    return apiConfig.getConfig();
   }
 
   // Products from backend

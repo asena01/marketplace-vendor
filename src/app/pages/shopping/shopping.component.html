@@ -155,10 +155,10 @@
           <div class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 group cursor-pointer" (click)="openQuickView(product)">
             <!-- Product Image Container -->
             <div class="relative bg-gray-100 aspect-square flex items-center justify-center overflow-hidden product-image-main">
-              @if (product.thumbnail && product.thumbnail.startsWith('http')) {
-                <img [src]="product.thumbnail" [alt]="product.name" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
-              } @else if (product.images && product.images[0] && product.images[0].startsWith('http')) {
-                <img [src]="product.images[0]" [alt]="product.name" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+              @if (product.thumbnail) {
+                <img [src]="buildImageUrl(product.thumbnail)" [alt]="product.name" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+              } @else if (product.images && product.images[0]) {
+                <img [src]="buildImageUrl(product.images[0])" [alt]="product.name" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
               } @else {
                 <div class="flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                   <mat-icon class="text-6xl text-gray-400">{{ product.icon || 'inventory_2' }}</mat-icon>
@@ -954,8 +954,8 @@
           <div class="space-y-4">
             <!-- Main Image -->
             <div class="bg-gray-100 rounded-lg aspect-square flex items-center justify-center overflow-hidden border-2 border-gray-200 quick-view-main-image">
-              @if (product!.images && product!.images[selectedImageIndex()] && product!.images[selectedImageIndex()].startsWith('http')) {
-                <img [src]="product!.images[selectedImageIndex()]!" [alt]="product!.name" class="w-full h-full object-cover animate-bounce" />
+              @if (product!.images && product!.images[selectedImageIndex()]) {
+                <img [src]="buildImageUrl(product!.images[selectedImageIndex()]!)" [alt]="product!.name" class="w-full h-full object-cover animate-bounce" />
               } @else {
                 <div class="animate-bounce">
                   <mat-icon class="text-9xl text-gray-400">{{ product!.icon || 'inventory_2' }}</mat-icon>
@@ -970,8 +970,8 @@
                   (click)="selectImage(idx)"
                   [class]="'flex-shrink-0 w-20 h-20 rounded-lg flex items-center justify-center border-2 transition thumbnail-image overflow-hidden ' + (selectedImageIndex() === idx ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-100 hover:border-gray-300')"
                 >
-                  @if (image && image.startsWith('http')) {
-                    <img [src]="image" [alt]="'Product variant ' + idx" class="w-full h-full object-cover" />
+                  @if (image) {
+                    <img [src]="buildImageUrl(image)" [alt]="'Product variant ' + idx" class="w-full h-full object-cover" />
                   } @else {
                     <mat-icon class="text-4xl text-gray-400">{{ product!.icon || 'inventory_2' }}</mat-icon>
                   }
