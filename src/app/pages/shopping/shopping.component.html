@@ -50,9 +50,9 @@
   </div>
 
   <!-- Main Shopping Area -->
-  <div class="flex">
-    <!-- Sidebar Filters -->
-    <aside class="hidden lg:block w-64 border-r border-gray-200 p-6 max-h-[calc(100vh-120px)] overflow-y-auto sticky top-20">
+  <div class="flex flex-col lg:flex-row min-h-[calc(100vh-80px)]">
+    <!-- Sidebar Filters (Hidden on mobile) -->
+    <aside class="hidden lg:block w-64 border-r border-gray-200 p-4 lg:p-6 max-h-[calc(100vh-120px)] overflow-y-auto sticky top-20">
       <!-- Category Filter -->
       <div class="mb-8">
         <h3 class="font-bold text-lg mb-4 text-gray-900">Categories</h3>
@@ -149,12 +149,12 @@
           </div>
         </div>
       } @else {
-      <!-- Products Grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-4">
+      <!-- Products Grid - Mobile First -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
         @for (product of filteredProducts; track product.id) {
-          <div class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 group cursor-pointer" (click)="openQuickView(product)">
+          <div class="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 group cursor-pointer active:scale-95 sm:active:scale-100" (click)="openQuickView(product)">
             <!-- Product Image Container -->
-            <div class="relative bg-gray-100 aspect-square flex items-center justify-center overflow-hidden product-image-main">
+            <div class="relative bg-gradient-to-br from-gray-100 to-gray-200 w-full h-48 sm:h-56 lg:h-64 flex items-center justify-center overflow-hidden product-image-main">
               @if (product.thumbnail) {
                 <img [src]="buildImageUrl(product.thumbnail)" [alt]="product.name" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
               } @else if (product.images && product.images[0]) {
@@ -201,25 +201,33 @@
             </div>
 
             <!-- Product Info -->
-            <div class="p-2 sm:p-3">
+            <div class="p-4 sm:p-5 flex flex-col">
               <!-- Product Name -->
-              <h3 class="text-xs sm:text-sm font-bold text-gray-900 line-clamp-2 mb-1 sm:mb-2">
+              <h3 class="text-sm sm:text-base font-bold text-gray-900 line-clamp-2 mb-2 flex-grow">
                 {{ product.name }}
               </h3>
 
-              <!-- Rating -->
-              <div class="flex items-center gap-1 mb-1 sm:mb-2">
-                <mat-icon class="text-yellow-500 text-xs">star</mat-icon>
-                <span class="text-xs font-semibold text-gray-900">{{ product.rating }}</span>
-                <span class="text-xs text-gray-500">({{ product.reviews }})</span>
+              <!-- Rating and Reviews -->
+              <div class="flex items-center gap-2 mb-3 text-xs sm:text-sm">
+                <div class="flex items-center gap-1">
+                  <mat-icon class="text-yellow-400 text-sm">star_fill</mat-icon>
+                  <span class="font-bold text-gray-900">{{ product.rating }}</span>
+                </div>
+                <span class="text-gray-500">({{ product.reviews }})</span>
+                @if ((product.sold ?? 0) > 0) {
+                  <span class="text-gray-500 ml-auto">{{ product.sold }} sold</span>
+                }
               </div>
 
-              <!-- Price -->
-              <div class="mb-2 sm:mb-3">
-                <div class="flex items-baseline gap-1 sm:gap-2">
-                  <span class="text-sm sm:text-lg font-bold text-red-500">{{ formatPrice(product.price) }}</span>
+              <!-- Price Section -->
+              <div class="mb-4 border-t border-gray-100 pt-3">
+                <div class="flex items-baseline gap-2">
+                  <span class="text-xl sm:text-2xl font-bold text-red-500">{{ formatPrice(product.price) }}</span>
                   @if ((product.originalPrice ?? product.price) > product.price) {
-                    <span class="text-xs text-gray-500 line-through">{{ formatPrice(product.originalPrice) }}</span>
+                    <span class="text-xs sm:text-sm text-gray-500 line-through">{{ formatPrice(product.originalPrice) }}</span>
+                  }
+                  @if ((product.discount ?? 0) > 0) {
+                    <span class="ml-auto text-xs sm:text-sm font-bold text-white bg-red-500 px-2 py-0.5 rounded">-{{ product.discount }}%</span>
                   }
                 </div>
               </div>
@@ -227,11 +235,10 @@
               <!-- Quick View Button -->
               <button
                 (click)="openQuickView(product)"
-                class="w-full bg-red-500 hover:bg-red-600 active:bg-red-700 text-white font-bold py-1.5 sm:py-2 px-2 sm:px-3 rounded-lg transition text-xs sm:text-sm shadow-md flex items-center justify-center gap-1 sm:gap-2 min-h-[36px] sm:min-h-[40px]"
+                class="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 active:from-red-700 active:to-red-800 text-white font-bold py-3 px-4 rounded-lg sm:rounded-xl transition text-sm sm:text-base shadow-md hover:shadow-lg flex items-center justify-center gap-2 min-h-[44px]"
               >
-                <mat-icon class="text-xs sm:text-sm">visibility</mat-icon>
-                <span class="hidden sm:inline">Quick View</span>
-                <span class="sm:hidden">View</span>
+                <mat-icon class="text-lg">visibility</mat-icon>
+                <span>Quick View</span>
               </button>
             </div>
           </div>
@@ -533,51 +540,57 @@
     }
   </div>
 
-  <!-- Payment Modal -->
+  <!-- Payment Modal - Bottom Sheet on Mobile -->
   @if (showPaymentModal()) {
-    <div class="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-2 sm:p-4">
-      <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+    <div class="fixed inset-0 bg-black/50 z-[9999] transition-opacity lg:flex lg:items-center lg:justify-center">
+      <div class="fixed bottom-0 left-0 right-0 lg:relative lg:bottom-auto lg:left-auto lg:right-auto bg-white rounded-t-3xl lg:rounded-lg max-w-2xl w-full max-h-[95vh] lg:max-h-[90vh] overflow-y-auto lg:shadow-2xl">
         <!-- Payment Modal Header -->
-        <div class="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 text-white p-3 sm:p-4 md:p-6 border-b border-blue-800">
-          <div class="flex items-center justify-between">
+        <div class="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 lg:p-6 border-b border-blue-800 lg:rounded-t-lg">
+          <!-- Mobile Handle Bar -->
+          <div class="lg:hidden flex justify-center mb-4">
+            <div class="w-12 h-1 bg-blue-500 rounded-full"></div>
+          </div>
+
+          <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2">
-              <mat-icon class="text-base sm:text-2xl">payment</mat-icon>
-              <h2 class="text-lg sm:text-2xl font-bold">Payment</h2>
+              <mat-icon class="text-2xl">payment</mat-icon>
+              <h2 class="text-xl lg:text-2xl font-bold">Payment</h2>
             </div>
-            <button (click)="closePaymentModal()" class="hover:text-blue-100 p-1 min-h-[40px] min-w-[40px] flex items-center justify-center">
+            <button (click)="closePaymentModal()" class="hover:text-blue-100 p-2 min-h-[44px] min-w-[44px] lg:min-h-[40px] lg:min-w-[40px] flex items-center justify-center rounded-full hover:bg-blue-500 transition">
               <mat-icon>close</mat-icon>
             </button>
           </div>
-          <div class="mt-3 space-y-1 text-blue-100 text-xs sm:text-sm">
+
+          <div class="space-y-1 text-blue-100 text-sm">
             <p>Subtotal: <span class="font-semibold">{{ formatPrice(cartTotal) }}</span></p>
             <p>Delivery: <span class="font-semibold">{{ formatPrice(deliveryPrice()) }}</span></p>
-            <p class="text-blue-50 border-t border-blue-400 pt-2">Order Total: <span class="font-bold text-base sm:text-lg text-white">{{ formatPrice(getTotalWithDelivery()) }}</span></p>
+            <p class="text-blue-50 border-t border-blue-400 pt-2 font-bold">Order Total: <span class="text-lg text-white">{{ formatPrice(getTotalWithDelivery()) }}</span></p>
           </div>
         </div>
 
         <!-- Payment Content -->
-        <div class="p-3 sm:p-4 md:p-6">
+        <div class="p-4 lg:p-6">
           <!-- Payment Methods Selection -->
-          <div class="mb-6 sm:mb-8">
-            <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Select Payment Method</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
+          <div class="mb-8">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">Select Payment Method</h3>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
               @for (method of paymentMethods(); track method.id) {
                 <button
                   (click)="selectedPaymentMethod.set(method.id)"
-                  [class]="'p-3 sm:p-4 rounded-lg border-2 transition text-left min-h-[100px] sm:min-h-[120px] flex flex-col justify-center ' +
+                  [class]="'p-5 rounded-xl border-2 transition text-left min-h-[140px] flex flex-col justify-center active:scale-95 ' +
                     (selectedPaymentMethod() === method.id
-                      ? 'border-blue-600 bg-blue-50'
-                      : 'border-gray-200 bg-white hover:border-blue-300')"
+                      ? 'border-blue-600 bg-gradient-to-br from-blue-50 to-blue-100 shadow-md'
+                      : 'border-gray-300 bg-white hover:border-blue-400 hover:shadow-sm')"
                 >
-                  <div class="mb-2 flex">
+                  <div class="mb-3 flex">
                     @if (method.icon && (method.icon.length === 1 || method.icon.charCodeAt(0) > 127)) {
-                      <span class="text-2xl sm:text-3xl">{{ method.icon }}</span>
+                      <span class="text-3xl lg:text-4xl">{{ method.icon }}</span>
                     } @else {
-                      <mat-icon class="text-2xl sm:text-3xl text-gray-700">{{ method.icon || 'payment' }}</mat-icon>
+                      <mat-icon class="text-3xl lg:text-4xl text-gray-700">{{ method.icon || 'payment' }}</mat-icon>
                     }
                   </div>
-                  <h4 class="font-bold text-gray-900 text-sm sm:text-base">{{ method.name }}</h4>
-                  <p class="text-xs text-gray-600">{{ method.description }}</p>
+                  <h4 class="font-bold text-gray-900 text-base lg:text-lg mb-1">{{ method.name }}</h4>
+                  <p class="text-xs lg:text-sm text-gray-600">{{ method.description }}</p>
                 </button>
               }
             </div>
@@ -843,25 +856,25 @@
             }
           }
 
-          <!-- Action Buttons -->
-          <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-6 sm:mt-8">
+          <!-- Action Buttons - Sticky on Mobile -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-8 lg:mt-8 lg:pb-0 pb-4">
             <button
               (click)="submitPayment()"
               [disabled]="isProcessingPayment() || !selectedPaymentMethod()"
-              class="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-2 sm:py-3 px-3 sm:px-4 rounded-lg transition flex items-center justify-center gap-2 min-h-[44px] sm:min-h-[48px] text-sm sm:text-base"
+              class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold py-4 px-6 rounded-lg lg:rounded-xl transition flex items-center justify-center gap-2 min-h-[52px] lg:min-h-[48px] text-base lg:text-lg shadow-lg hover:shadow-xl active:scale-95"
             >
               @if (isProcessingPayment()) {
-                <mat-icon class="animate-spin text-base sm:text-lg">sync</mat-icon>
+                <mat-icon class="animate-spin text-xl">sync</mat-icon>
                 <span>Processing...</span>
               } @else {
-                <mat-icon class="text-base sm:text-lg">check_circle</mat-icon>
+                <mat-icon class="text-xl">check_circle</mat-icon>
                 <span>Pay {{ formatPrice(cartTotal) }}</span>
               }
             </button>
             <button
               (click)="closePaymentModal()"
               [disabled]="isProcessingPayment()"
-              class="flex-1 bg-white border-2 border-gray-300 hover:border-gray-400 text-gray-900 font-bold py-2 sm:py-3 px-3 sm:px-4 rounded-lg transition disabled:opacity-50 min-h-[44px] sm:min-h-[48px] text-sm sm:text-base"
+              class="bg-white border-2 border-gray-300 hover:border-gray-400 text-gray-900 font-bold py-4 px-6 rounded-lg lg:rounded-xl transition disabled:opacity-50 min-h-[52px] lg:min-h-[48px] text-base lg:text-lg active:scale-95 lg:active:scale-100"
             >
               Cancel
             </button>
@@ -939,19 +952,24 @@
     </div>
   }
 
-  <!-- Quick View Modal -->
+  <!-- Quick View Modal - Bottom Sheet on Mobile -->
   @if (showQuickView() && quickViewProduct()) {
     @let product = quickViewProduct();
-    <div class="fixed inset-0 bg-black/50 z-[9998] flex items-center justify-center p-2 sm:p-4" (click)="closeQuickView()">
-      <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
-        <div class="flex items-center justify-between bg-white border-b border-gray-200 p-3 sm:p-4 md:p-6">
-          <h2 class="text-lg sm:text-xl font-bold text-gray-900">Product Details</h2>
-          <button (click)="closeQuickView()" class="text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg p-1 min-h-[40px] min-w-[40px] flex items-center justify-center transition">
+    <div class="fixed inset-0 bg-black/40 z-[9998] transition-opacity lg:flex lg:items-center lg:justify-center" (click)="closeQuickView()">
+      <div class="fixed bottom-0 left-0 right-0 lg:relative lg:bottom-auto lg:left-auto lg:right-auto bg-white rounded-t-3xl lg:rounded-lg max-w-4xl w-full max-h-[95vh] lg:max-h-[90vh] overflow-y-auto lg:shadow-xl" (click)="$event.stopPropagation()">
+        <div class="sticky top-0 bg-white border-b border-gray-200 p-4 lg:p-6 flex items-center justify-between lg:rounded-t-lg">
+          <h2 class="text-lg lg:text-xl font-bold text-gray-900">Product Details</h2>
+          <button (click)="closeQuickView()" class="text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full p-2 min-h-[44px] min-w-[44px] lg:min-h-[40px] lg:min-w-[40px] flex items-center justify-center transition">
             <mat-icon>close</mat-icon>
           </button>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6 p-3 sm:p-4 md:p-6">
+        <!-- Mobile Handle Bar -->
+        <div class="lg:hidden flex justify-center py-2 px-4">
+          <div class="w-12 h-1 bg-gray-300 rounded-full"></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 p-4 lg:p-6">
           <!-- Image Gallery -->
           <div class="space-y-4">
             <!-- Main Image -->
