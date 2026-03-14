@@ -90,7 +90,9 @@ export const uploadFields = (fields) => {
 // Helper function to get image URL
 export const getImageUrl = (filename, folder = 'products') => {
   if (!filename) return null;
-  return `/uploads/${folder}/${filename}`;
+  // Return absolute URL so frontend can load from correct origin
+  const baseUrl = process.env.BASE_URL || 'http://localhost:5001';
+  return `${baseUrl}/uploads/${folder}/${filename}`;
 };
 
 // Helper function to delete image
