@@ -6,6 +6,7 @@ import { HeaderComponent } from '../../components/header/header.component';
 import { HairService } from '../../services/hair.service';
 import { PaymentService } from '../../services/payment.service';
 import { DeliveryService, DeliveryServiceDefinition } from '../../services/delivery.service';
+import { apiConfig } from '../../config/api-config';
 
 @Component({
   selector: 'app-hair',
@@ -286,5 +287,13 @@ export class HairComponent implements OnInit {
 
   getPriceRange(): string {
     return `$${this.minPrice()} - $${this.maxPrice()}`;
+  }
+
+  /**
+   * Build a complete image URL from a relative or absolute path
+   */
+  buildImageUrl(imagePath: string | undefined): string {
+    if (!imagePath) return '';
+    return apiConfig.buildImageUrl(imagePath);
   }
 }

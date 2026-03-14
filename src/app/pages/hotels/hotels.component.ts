@@ -7,6 +7,7 @@ import { MARKETPLACE_SERVICES } from '../../shared/data/marketplace-data';
 import { CurrencyService } from '../../services/currency.service';
 import { PaymentService } from '../../services/payment.service';
 import { HotelService } from '../../services/hotel.service';
+import { apiConfig } from '../../config/api-config';
 
 interface Room {
   id: string;
@@ -1033,5 +1034,13 @@ export class HotelsComponent implements OnInit {
   getMinDate(): string {
     const today = new Date();
     return today.toISOString().split('T')[0];
+  }
+
+  /**
+   * Build a complete image URL from a relative or absolute path
+   */
+  buildImageUrl(imagePath: string | undefined): string {
+    if (!imagePath) return '';
+    return apiConfig.buildImageUrl(imagePath);
   }
 }

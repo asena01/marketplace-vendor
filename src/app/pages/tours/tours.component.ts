@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { HeaderComponent } from '../../components/header/header.component';
 import { TourService, Tour } from '../../services/tour.service';
 import { MARKETPLACE_SERVICES } from '../../shared/data/marketplace-data';
+import { apiConfig } from '../../config/api-config';
 
 @Component({
   selector: 'app-tours',
@@ -249,5 +250,13 @@ export class ToursComponent implements OnInit {
         toursSection.scrollIntoView({ behavior: 'smooth' });
       }
     }, 100);
+  }
+
+  /**
+   * Build a complete image URL from a relative or absolute path
+   */
+  buildImageUrl(imagePath: string | undefined): string {
+    if (!imagePath) return '';
+    return apiConfig.buildImageUrl(imagePath);
   }
 }

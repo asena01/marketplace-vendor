@@ -6,6 +6,7 @@ import { HeaderComponent } from '../../components/header/header.component';
 import { GymEquipmentService, GymEquipment } from '../../services/gym-equipment.service';
 import { PaymentService } from '../../services/payment.service';
 import { DeliveryService, DeliveryServiceDefinition } from '../../services/delivery.service';
+import { apiConfig } from '../../config/api-config';
 
 @Component({
   selector: 'app-gym',
@@ -340,5 +341,13 @@ export class GymComponent implements OnInit {
       'cardio': '❤️'
     };
     return icons[muscle] || '🏋️';
+  }
+
+  /**
+   * Build a complete image URL from a relative or absolute path
+   */
+  buildImageUrl(imagePath: string | undefined): string {
+    if (!imagePath) return '';
+    return apiConfig.buildImageUrl(imagePath);
   }
 }

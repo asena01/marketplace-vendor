@@ -6,6 +6,7 @@ import { HeaderComponent } from '../../components/header/header.component';
 import { PetsService, PetProduct } from '../../services/pets.service';
 import { PaymentService } from '../../services/payment.service';
 import { DeliveryService, DeliveryServiceDefinition } from '../../services/delivery.service';
+import { apiConfig } from '../../config/api-config';
 
 @Component({
   selector: 'app-pets',
@@ -314,5 +315,13 @@ export class PetsComponent implements OnInit {
       'other': '🐾 Other'
     };
     return labels[type] || type;
+  }
+
+  /**
+   * Build a complete image URL from a relative or absolute path
+   */
+  buildImageUrl(imagePath: string | undefined): string {
+    if (!imagePath) return '';
+    return apiConfig.buildImageUrl(imagePath);
   }
 }

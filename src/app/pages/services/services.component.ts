@@ -8,6 +8,7 @@ import { ServiceService, ServiceFeatures } from '../../services/service.service'
 import { VendorService, VendorProfile } from '../../services/vendor.service';
 import { ReviewService } from '../../services/review.service';
 import { MARKETPLACE_SERVICES } from '../../shared/data/marketplace-data';
+import { apiConfig } from '../../config/api-config';
 
 @Component({
   selector: 'app-services',
@@ -407,5 +408,13 @@ export class ServicesComponent implements OnInit {
     if (rating >= 3.5) return 'text-blue-600';
     if (rating >= 2.5) return 'text-yellow-600';
     return 'text-red-600';
+  }
+
+  /**
+   * Build a complete image URL from a relative or absolute path
+   */
+  buildImageUrl(imagePath: string | undefined): string {
+    if (!imagePath) return '';
+    return apiConfig.buildImageUrl(imagePath);
   }
 }
