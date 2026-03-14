@@ -93,19 +93,19 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 p-6">
+    <main class="flex-1 p-3 sm:p-4 md:p-6">
       <!-- Mobile Filters -->
-      <div class="lg:hidden flex gap-2 mb-6 overflow-x-auto pb-4">
+      <div class="lg:hidden flex gap-2 mb-4 sm:mb-6 overflow-x-auto pb-2 sm:pb-4">
         <button
           (click)="selectedCategory.set('all')"
-          [class]="'px-4 py-2 rounded-full whitespace-nowrap transition ' + (selectedCategory() === 'all' ? 'bg-red-500 text-white font-bold' : 'bg-gray-100 text-gray-700')"
+          [class]="'px-3 sm:px-4 py-1.5 sm:py-2 rounded-full whitespace-nowrap transition text-xs sm:text-sm ' + (selectedCategory() === 'all' ? 'bg-red-500 text-white font-bold' : 'bg-gray-100 text-gray-700')"
         >
           All
         </button>
         @for (category of categories; track category.id) {
           <button
             (click)="selectedCategory.set(category.name)"
-            [class]="'px-4 py-2 rounded-full whitespace-nowrap transition ' + (selectedCategory() === category.name ? 'bg-red-500 text-white font-bold' : 'bg-gray-100 text-gray-700')"
+            [class]="'px-3 sm:px-4 py-1.5 sm:py-2 rounded-full whitespace-nowrap transition text-xs sm:text-sm ' + (selectedCategory() === category.name ? 'bg-red-500 text-white font-bold' : 'bg-gray-100 text-gray-700')"
           >
             {{ category.name }}
           </button>
@@ -113,14 +113,14 @@
       </div>
 
       <!-- Results Info -->
-      <div class="mb-6 flex justify-between items-center">
-        <div class="text-gray-600">
-          <span class="font-bold text-gray-900">{{ filteredProducts.length }}</span> products found
+      <div class="mb-4 sm:mb-6 flex justify-between items-center gap-2 text-xs sm:text-sm">
+        <div class="text-gray-600 whitespace-nowrap">
+          <span class="font-bold text-gray-900">{{ filteredProducts.length }}</span> products
         </div>
         <select
           [(ngModel)]="sortBy"
           (change)="sortBy.set(sortBy())"
-          class="lg:hidden px-3 py-1 border border-gray-300 rounded-lg text-sm text-gray-900"
+          class="lg:hidden px-2 sm:px-3 py-1 border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-900"
         >
           <option value="popular">Most Popular</option>
           <option value="newest">Newest</option>
@@ -132,25 +132,25 @@
 
       <!-- Error Message -->
       @if (errorMessage()) {
-        <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-          <mat-icon class="text-red-700 mt-1">error</mat-icon>
+        <div class="mb-4 sm:mb-6 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2 sm:gap-3 text-xs sm:text-sm">
+          <mat-icon class="text-red-700 mt-1 flex-shrink-0 text-base sm:text-lg">error</mat-icon>
           <p class="text-red-700 font-semibold">{{ errorMessage() }}</p>
         </div>
       }
 
       <!-- Loading State -->
       @if (isLoading()) {
-        <div class="flex justify-center items-center py-20">
+        <div class="flex justify-center items-center py-10 sm:py-20">
           <div class="text-center">
-            <div class="mb-4 flex justify-center">
-              <mat-icon class="text-5xl text-blue-500 animate-spin">sync</mat-icon>
+            <div class="mb-3 sm:mb-4 flex justify-center">
+              <mat-icon class="text-4xl sm:text-5xl text-blue-500 animate-spin">sync</mat-icon>
             </div>
-            <p class="text-gray-600 font-semibold">Loading products...</p>
+            <p class="text-gray-600 font-semibold text-sm sm:text-base">Loading products...</p>
           </div>
         </div>
       } @else {
       <!-- Products Grid -->
-      <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-4">
         @for (product of filteredProducts; track product.id) {
           <div class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 group cursor-pointer" (click)="openQuickView(product)">
             <!-- Product Image Container -->
@@ -240,12 +240,12 @@
 
       <!-- No Results -->
       @if (filteredProducts.length === 0 && !isLoading()) {
-        <div class="text-center py-20">
-          <div class="mb-4 flex justify-center">
-            <mat-icon class="text-6xl text-gray-400">search_off</mat-icon>
+        <div class="text-center py-10 sm:py-20">
+          <div class="mb-3 sm:mb-4 flex justify-center">
+            <mat-icon class="text-4xl sm:text-6xl text-gray-400">search_off</mat-icon>
           </div>
-          <h3 class="text-2xl font-bold text-gray-900 mb-2">No products found</h3>
-          <p class="text-gray-600">
+          <h3 class="text-lg sm:text-2xl font-bold text-gray-900 mb-2">No products found</h3>
+          <p class="text-xs sm:text-base text-gray-600">
             @if (errorMessage()) {
               {{ errorMessage() }}
             } @else {
@@ -874,23 +874,23 @@
   <!-- Add to Cart Modal (Variant Selection) -->
   @if (showAddToCartModal() && addToCartProduct()) {
     @let product = addToCartProduct();
-    <div class="fixed inset-0 bg-black/50 z-[9998] flex items-center justify-center p-4" (click)="closeAddToCartModal()">
-      <div class="bg-white rounded-lg max-w-md w-full p-6" (click)="$event.stopPropagation()">
-        <h2 class="text-xl font-bold text-gray-900 mb-4">Select Variants</h2>
+    <div class="fixed inset-0 bg-black/50 z-[9998] flex items-center justify-center p-3 sm:p-4" (click)="closeAddToCartModal()">
+      <div class="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto p-3 sm:p-6" (click)="$event.stopPropagation()">
+        <h2 class="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4">Select Variants</h2>
 
-        <div class="space-y-6 mb-6">
+        <div class="space-y-4 sm:space-y-6 mb-4 sm:mb-6">
           <!-- Size Selection -->
           @if (product!.size && product!.size.length > 0) {
             <div>
-              <label class="block text-sm font-semibold text-gray-900 mb-3">
+              <label class="block text-xs sm:text-sm font-semibold text-gray-900 mb-2 sm:mb-3">
                 Size
               </label>
-              <div class="flex flex-wrap gap-2">
+              <div class="flex flex-wrap gap-1.5 sm:gap-2">
                 @for (size of product!.size; track size) {
                   <button
                     type="button"
                     (click)="addToCartVariantSize.set(size)"
-                    [class]="'px-4 py-2 rounded-lg font-medium text-sm transition border-2 ' + (addToCartVariantSize() === size ? 'bg-red-500 text-white border-red-500' : 'bg-white text-gray-700 border-gray-300 hover:border-red-500')"
+                    [class]="'px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm transition border-2 ' + (addToCartVariantSize() === size ? 'bg-red-500 text-white border-red-500' : 'bg-white text-gray-700 border-gray-300 hover:border-red-500')"
                   >
                     {{ size }}
                   </button>
@@ -902,15 +902,15 @@
           <!-- Color Selection -->
           @if (product!.color && product!.color.length > 0) {
             <div>
-              <label class="block text-sm font-semibold text-gray-900 mb-3">
+              <label class="block text-xs sm:text-sm font-semibold text-gray-900 mb-2 sm:mb-3">
                 Color
               </label>
-              <div class="flex flex-wrap gap-2">
+              <div class="flex flex-wrap gap-1.5 sm:gap-2">
                 @for (color of product!.color; track color) {
                   <button
                     type="button"
                     (click)="addToCartVariantColor.set(color)"
-                    [class]="'px-4 py-2 rounded-lg font-medium text-sm transition border-2 ' + (addToCartVariantColor() === color ? 'bg-red-500 text-white border-red-500' : 'bg-white text-gray-700 border-gray-300 hover:border-red-500')"
+                    [class]="'px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm transition border-2 ' + (addToCartVariantColor() === color ? 'bg-red-500 text-white border-red-500' : 'bg-white text-gray-700 border-gray-300 hover:border-red-500')"
                   >
                     {{ color }}
                   </button>
@@ -920,19 +920,19 @@
           }
         </div>
 
-        <div class="flex gap-3">
+        <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
           <button
             (click)="closeAddToCartModal()"
-            class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition"
+            class="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition text-sm sm:text-base min-h-[40px] sm:min-h-[44px]"
           >
             Cancel
           </button>
           <button
             (click)="confirmAddToCart()"
-            class="flex-1 px-4 py-2 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition flex items-center justify-center gap-2"
+            class="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition flex items-center justify-center gap-2 text-sm sm:text-base min-h-[40px] sm:min-h-[44px]"
           >
-            <mat-icon class="text-sm">add_shopping_cart</mat-icon>
-            Add to Cart
+            <mat-icon class="text-base sm:text-lg">add_shopping_cart</mat-icon>
+            <span>Add</span>
           </button>
         </div>
       </div>
@@ -951,7 +951,7 @@
           </button>
         </div>
 
-        <div class="grid md:grid-cols-2 gap-3 sm:gap-4 md:gap-6 p-3 sm:p-4 md:p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6 p-3 sm:p-4 md:p-6">
           <!-- Image Gallery -->
           <div class="space-y-4">
             <!-- Main Image -->
@@ -987,15 +987,15 @@
           </div>
 
           <!-- Product Info -->
-          <div class="space-y-5">
+          <div class="space-y-3 sm:space-y-5">
             <!-- Product Name -->
             <div>
-              <h3 class="text-2xl font-bold text-gray-900 mb-1">{{ product!.name }}</h3>
-              <p class="text-sm text-gray-600">{{ product!.category }}</p>
+              <h3 class="text-lg sm:text-2xl font-bold text-gray-900 mb-1">{{ product!.name }}</h3>
+              <p class="text-xs sm:text-sm text-gray-600">{{ product!.category }}</p>
             </div>
 
             <!-- Rating -->
-            <div class="flex items-center gap-3 text-sm">
+            <div class="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm flex-wrap">
               <div class="flex items-center gap-1">
                 <mat-icon class="text-yellow-500 text-sm">star</mat-icon>
                 <span class="font-bold text-gray-900">{{ product!.rating }}</span>
@@ -1009,16 +1009,16 @@
             </div>
 
             <!-- Price -->
-            <div class="border-y border-gray-200 py-4">
-              <div class="flex items-baseline gap-3 mb-2">
-                <span class="text-3xl font-bold text-red-500">{{ formatPrice(product!.price) }}</span>
+            <div class="border-y border-gray-200 py-3 sm:py-4">
+              <div class="flex items-baseline gap-2 sm:gap-3 mb-2 flex-wrap">
+                <span class="text-2xl sm:text-3xl font-bold text-red-500">{{ formatPrice(product!.price) }}</span>
                 @if ((product!.originalPrice ?? product!.price) > product!.price) {
-                <span class="text-base text-gray-500 line-through">{{ formatPrice(product!.originalPrice) }}</span>
+                <span class="text-xs sm:text-base text-gray-500 line-through">{{ formatPrice(product!.originalPrice) }}</span>
               }
             </div>
             @if ((product!.discount ?? 0) > 0) {
-              <div class="inline-block bg-red-500 text-white font-bold px-2 py-1 rounded text-sm flex items-center gap-1">
-                <mat-icon class="text-sm">local_offer</mat-icon>
+              <div class="inline-block bg-red-500 text-white font-bold px-2 py-1 rounded text-xs sm:text-sm flex items-center gap-1">
+                <mat-icon class="text-xs sm:text-sm">local_offer</mat-icon>
                 <span>Save {{ product!.discount }}%</span>
               </div>
             }
@@ -1027,41 +1027,41 @@
             <!-- Description -->
             @if (product!.description) {
               <div>
-                <h4 class="font-semibold text-sm text-gray-900 mb-2">Description</h4>
-                <p class="text-sm text-gray-600 leading-relaxed">{{ product!.description }}</p>
+                <h4 class="font-semibold text-xs sm:text-sm text-gray-900 mb-2">Description</h4>
+                <p class="text-xs sm:text-sm text-gray-600 leading-relaxed">{{ product!.description }}</p>
               </div>
             }
 
             <!-- Features -->
-            <div class="space-y-2">
+            <div class="space-y-1 sm:space-y-2">
               @if (product!.isFreeShipping) {
-                <div class="flex items-center gap-2 text-green-600 font-medium text-sm">
+                <div class="flex items-center gap-2 text-green-600 font-medium text-xs sm:text-sm">
                   <mat-icon class="text-sm">local_shipping</mat-icon>
-                  FREE SHIPPING
+                  <span>FREE SHIPPING</span>
                 </div>
               }
               @if (product!.inStock) {
-                <div class="flex items-center gap-2 text-green-600 font-medium text-sm">
+                <div class="flex items-center gap-2 text-green-600 font-medium text-xs sm:text-sm">
                   <mat-icon class="text-sm">check_circle</mat-icon>
-                  IN STOCK
+                  <span>IN STOCK</span>
                 </div>
               }
             </div>
 
             <!-- Variant Selection (Size & Color) -->
-            <div class="border-t border-gray-200 pt-4 space-y-4">
+            <div class="border-t border-gray-200 pt-3 sm:pt-4 space-y-3 sm:space-y-4">
               <!-- Size Selection -->
               @if (product!.size && product!.size.length > 0) {
                 <div>
-                  <label class="block text-sm font-semibold text-gray-900 mb-2">
+                  <label class="block text-xs sm:text-sm font-semibold text-gray-900 mb-2">
                     Size
                   </label>
-                  <div class="flex flex-wrap gap-2">
+                  <div class="flex flex-wrap gap-1.5 sm:gap-2">
                     @for (size of product!.size; track size) {
                       <button
                         type="button"
                         (click)="selectedVariantSize.set(size)"
-                        [class]="'px-4 py-2 rounded-lg font-medium text-sm transition border-2 ' + (selectedVariantSize() === size ? 'bg-red-500 text-white border-red-500' : 'bg-white text-gray-700 border-gray-300 hover:border-red-500')"
+                        [class]="'px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm transition border-2 ' + (selectedVariantSize() === size ? 'bg-red-500 text-white border-red-500' : 'bg-white text-gray-700 border-gray-300 hover:border-red-500')"
                       >
                         {{ size }}
                       </button>
@@ -1073,15 +1073,15 @@
               <!-- Color Selection -->
               @if (product!.color && product!.color.length > 0) {
                 <div>
-                  <label class="block text-sm font-semibold text-gray-900 mb-2">
+                  <label class="block text-xs sm:text-sm font-semibold text-gray-900 mb-2">
                     Color
                   </label>
-                  <div class="flex flex-wrap gap-2">
+                  <div class="flex flex-wrap gap-1.5 sm:gap-2">
                     @for (color of product!.color; track color) {
                       <button
                         type="button"
                         (click)="selectedVariantColor.set(color)"
-                        [class]="'px-4 py-2 rounded-lg font-medium text-sm transition border-2 ' + (selectedVariantColor() === color ? 'bg-red-500 text-white border-red-500' : 'bg-white text-gray-700 border-gray-300 hover:border-red-500')"
+                        [class]="'px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm transition border-2 ' + (selectedVariantColor() === color ? 'bg-red-500 text-white border-red-500' : 'bg-white text-gray-700 border-gray-300 hover:border-red-500')"
                       >
                         {{ color }}
                       </button>
@@ -1094,23 +1094,23 @@
             <!-- Add to Cart Button -->
             <button
               (click)="addQuickViewToCart()"
-              class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-lg transition text-base flex items-center justify-center gap-2"
+              class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 sm:py-3 px-3 sm:px-4 rounded-lg transition text-sm sm:text-base flex items-center justify-center gap-2 min-h-[44px] sm:min-h-[48px]"
             >
-              <mat-icon>add_shopping_cart</mat-icon>
-              Add to Cart
+              <mat-icon class="text-base sm:text-lg">add_shopping_cart</mat-icon>
+              <span>Add to Cart</span>
             </button>
 
             <!-- Wishlist Button -->
             <button
               (click)="toggleWishlist(product!.id)"
-              [class]="'w-full font-bold py-3 px-4 rounded-lg transition border-2 text-base flex items-center justify-center gap-2 ' + (isInWishlist(product!.id) ? 'bg-red-50 border-red-500 text-red-500 hover:bg-red-100' : 'border-gray-300 text-gray-700 hover:border-red-500')"
+              [class]="'w-full font-bold py-2 sm:py-3 px-3 sm:px-4 rounded-lg transition border-2 text-sm sm:text-base flex items-center justify-center gap-2 min-h-[44px] sm:min-h-[48px] ' + (isInWishlist(product!.id) ? 'bg-red-50 border-red-500 text-red-500 hover:bg-red-100' : 'border-gray-300 text-gray-700 hover:border-red-500')"
             >
               @if (isInWishlist(product!.id)) {
-                <mat-icon>favorite</mat-icon>
-                Added to Wishlist
+                <mat-icon class="text-base sm:text-lg">favorite</mat-icon>
+                <span>Added to Wishlist</span>
               } @else {
-                <mat-icon>favorite_border</mat-icon>
-                Add to Wishlist
+                <mat-icon class="text-base sm:text-lg">favorite_border</mat-icon>
+                <span>Add to Wishlist</span>
               }
             </button>
           </div>
