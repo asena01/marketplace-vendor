@@ -181,11 +181,9 @@
           </div>
         </aside>
 
-        <!-- Mobile Filter Sidebar -->
-        <aside 
-          class="fixed inset-0 z-50 md:hidden filter-sidebar-mobile"
-          [class.show]="showFilterSidebar()"
-        >
+        <!-- Mobile Filter Sidebar - Only visible when opened -->
+        @if (showFilterSidebar()) {
+        <aside class="fixed inset-0 z-50 md:hidden filter-sidebar-mobile">
           <div class="fixed inset-0 bg-black/50" (click)="showFilterSidebar.set(false)"></div>
           <div class="fixed left-0 top-0 bottom-0 w-80 bg-white shadow-xl overflow-y-auto animate-slide-in">
             <div class="p-6">
@@ -300,6 +298,7 @@
             </div>
           </div>
         </aside>
+        }
 
         <!-- Hotels List -->
         <div class="flex-1 min-w-0">
