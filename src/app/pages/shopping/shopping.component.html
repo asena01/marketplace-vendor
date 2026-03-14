@@ -955,9 +955,13 @@
             <!-- Main Image -->
             <div class="bg-gray-100 rounded-lg aspect-square flex items-center justify-center overflow-hidden border-2 border-gray-200 quick-view-main-image">
               @if (product!.images && product!.images[selectedImageIndex()]) {
-                <img [src]="buildImageUrl(product!.images[selectedImageIndex()]!)" [alt]="product!.name" class="w-full h-full object-cover animate-bounce" />
+                <img
+                  [src]="buildImageUrl(product!.images[selectedImageIndex()]!)"
+                  [alt]="product!.name"
+                  [class]="'w-full h-full object-cover ' + (isAnimatedImage(product!.images[selectedImageIndex()]) ? 'animate-bounce' : '')"
+                />
               } @else {
-                <div class="animate-bounce">
+                <div>
                   <mat-icon class="text-9xl text-gray-400">{{ product!.icon || 'inventory_2' }}</mat-icon>
                 </div>
               }

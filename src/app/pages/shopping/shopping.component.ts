@@ -211,6 +211,19 @@ export class ShoppingComponent implements OnInit {
     return apiConfig.getConfig();
   }
 
+  /**
+   * Check if an image is animated (gif, webp with animation)
+   * @param imagePath - Image URL or path
+   * @returns true if image is animated, false otherwise
+   */
+  isAnimatedImage(imagePath: string | undefined): boolean {
+    if (!imagePath) return false;
+
+    const lowerPath = imagePath.toLowerCase();
+    // Only animate GIF files
+    return lowerPath.endsWith('.gif');
+  }
+
   // Products from backend
   allProducts = signal<Product[]>([]);
 
