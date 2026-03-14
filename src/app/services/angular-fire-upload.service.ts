@@ -35,8 +35,13 @@ export class AngularFireUploadService {
     ).pipe(
       map((response: any) => {
         if (response.success && response.url) {
-          console.log(`🔗 Upload successful for ${file.name}: ${response.url}`);
-          return response.url;
+          // Convert relative URL to absolute URL if needed
+          const absoluteUrl = response.url.startsWith('http')
+            ? response.url
+            : `http://localhost:5001${response.url}`;
+
+          console.log(`🔗 Upload successful for ${file.name}: ${absoluteUrl}`);
+          return absoluteUrl;
         } else {
           throw new Error(`Failed to upload ${file.name}: ${response.message}`);
         }
@@ -68,9 +73,18 @@ export class AngularFireUploadService {
     ).pipe(
       map((response: any) => {
         if (response.success && response.urls && response.urls.length > 0) {
-          console.log(`✅ All files uploaded successfully! Count: ${response.urls.length}`);
-          console.log(`📸 URLs:`, response.urls);
-          return response.urls;
+          // Convert relative URLs to absolute URLs if needed
+          const absoluteUrls = response.urls.map((url: string) => {
+            if (url.startsWith('http')) {
+              return url; // Already absolute
+            } else {
+              return `http://localhost:5001${url}`; // Make it absolute
+            }
+          });
+
+          console.log(`✅ All files uploaded successfully! Count: ${absoluteUrls.length}`);
+          console.log(`📸 URLs:`, absoluteUrls);
+          return absoluteUrls;
         } else {
           throw new Error(`Failed to upload images: ${response.message}`);
         }
