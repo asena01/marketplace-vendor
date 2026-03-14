@@ -1,0 +1,12 @@
+/* Delivery Component Styles */
+
+:host {
+  display: block;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  section {
+    padding: 1rem;
+  }
+}

@@ -1,0 +1,275 @@
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+  <app-header></app-header>
+
+  <!-- Hero Section -->
+  <section class="pt-12 pb-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-purple-600 to-purple-500">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-white text-center mb-12">
+        <h1 class="text-5xl font-bold mb-4">Connect With Service Providers</h1>
+        <p class="text-xl text-purple-50">Find trusted professionals for every need</p>
+      </div>
+
+      <!-- Categories -->
+      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        @for (category of categories; track category.id) {
+          <a href="#" class="group">
+            <div
+              class="bg-white rounded-xl p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 text-center"
+            >
+              <span class="material-icons text-5xl mb-4">{{ category.icon }}</span>
+              <h3
+                class="text-sm font-bold text-slate-900 mb-1 group-hover:text-purple-600 transition-colors"
+              >
+                {{ category.name }}
+              </h3>
+              <p class="text-gray-600 text-xs">{{ category.description }}</p>
+            </div>
+          </a>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Service Search & Filters -->
+  <section class="py-8 px-4 sm:px-6 lg:px-8 bg-white border-b">
+    <div class="max-w-7xl mx-auto">
+      <!-- Main Search Bar -->
+      <div class="flex flex-col md:flex-row gap-4 mb-6">
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          (keyup.enter)="searchServices()"
+          placeholder="What service are you looking for?"
+          class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-600"
+        />
+        <button
+          (click)="searchServices()"
+          class="bg-purple-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-purple-700 transition whitespace-nowrap flex items-center justify-center gap-2"
+        >
+          <span class="material-icons">search</span>
+          Search
+        </button>
+      </div>
+
+      <!-- Filters Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <!-- Category Filter -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Category</label>
+          <select
+            [(ngModel)]="selectedCategory"
+            (change)="filterByCategory(selectedCategory())"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-600 text-sm"
+          >
+            <option value="">All Categories</option>
+            @for (category of categories; track category.id) {
+              <option [value]="category.id">{{ category.name }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- City Filter -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">City</label>
+          <select
+            [(ngModel)]="selectedCity"
+            (change)="filterByCity(selectedCity())"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-600 text-sm"
+          >
+            <option value="">All Cities</option>
+            @for (city of uniqueCities(); track city) {
+              <option [value]="city">{{ city }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Min Price Filter -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Min Price</label>
+          <input
+            type="number"
+            [(ngModel)]="minPrice"
+            (change)="updatePriceRange(minPrice(), maxPrice())"
+            placeholder="₦0"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-600 text-sm"
+          />
+        </div>
+
+        <!-- Max Price Filter -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Max Price</label>
+          <input
+            type="number"
+            [(ngModel)]="maxPrice"
+            (change)="updatePriceRange(minPrice(), maxPrice())"
+            placeholder="₦10000"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-600 text-sm"
+          />
+        </div>
+
+        <!-- Sort Filter -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Sort By</label>
+          <select
+            [(ngModel)]="selectedSort"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-600 text-sm"
+          >
+            <option value="rating"> <span class="material-icons text-sm align-middle">star</span> Highest Rating</option>
+            <option value="price-low"> <span class="material-icons text-sm align-middle">attach_money</span> Price: Low to High</option>
+            <option value="price-high"> <span class="material-icons text-sm align-middle">attach_money</span> Price: High to Low</option>
+            <option value="newest"> <span class="material-icons text-sm align-middle">new_releases</span> Newest</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Clear Filters & Results Count -->
+      <div class="flex items-center justify-between mt-6">
+        <div class="text-sm text-gray-600">
+          Showing <span class="font-semibold">{{ paginatedServices().length }}</span> of
+          <span class="font-semibold">{{ filteredAndSortedServices().length }}</span> services
+        </div>
+        @if (searchQuery() || selectedCategory() || selectedCity() || minPrice() > 0 || maxPrice() < 10000) {
+          <button
+            (click)="clearFilters()"
+            class="text-sm text-purple-600 hover:text-purple-700 font-semibold underline flex items-center gap-1"
+          >
+            <span class="material-icons text-sm">close</span>
+            Clear Filters
+          </button>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Available Services Grid -->
+  <section class="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+    <div class="max-w-7xl mx-auto">
+      @if (isLoading()) {
+        <div class="flex justify-center items-center py-20">
+          <span class="material-icons animate-spin text-6xl text-purple-600">autorenew</span>
+        </div>
+      } @else if (filteredAndSortedServices().length === 0) {
+        <div class="text-center py-20">
+          <span class="material-icons text-6xl text-gray-400 mb-4">search_off</span>
+          <h3 class="text-2xl font-bold text-slate-900 mb-2">No Services Found</h3>
+        </div>
+      } @else {
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+          @for (service of paginatedServices(); track service.id || service._id) {
+            <a [routerLink]="['/services', service.id || service._id]" class="block group">
+              <div class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 h-full flex flex-col">
+                <!-- Service Icon/Image -->
+                <div class="relative h-48 bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center text-6xl overflow-hidden">
+                  <span class="group-hover:scale-110 transition-transform duration-300">{{ service.icon }}</span>
+                </div>
+
+                <!-- Service Details -->
+                <div class="p-6 flex flex-col flex-grow">
+                  <!-- Service Name & Category -->
+                  <div class="mb-3">
+                    <h3 class="text-lg font-bold text-slate-900 group-hover:text-purple-600 transition-colors line-clamp-2 mb-1">
+                      {{ service.name }}
+                    </h3>
+                    <p class="text-xs text-gray-500 font-medium">{{ service.category }}</p>
+                  </div>
+
+                  <!-- Description -->
+                  <p class="text-sm text-gray-600 mb-4 line-clamp-2">{{ service.description }}</p>
+
+                  <!-- Price -->
+                  <div class="mb-4 text-lg font-bold text-purple-600">
+                    <span class="material-icons text-base align-middle">attach_money</span>
+                    {{ service.basePrice | number:'1.0-2' }}
+                    @if (service.pricePerUnit) {
+                      <span class="text-sm text-gray-600 font-normal">/{{ service.priceUnit || 'unit' }}</span>
+                    }
+                  </div>
+
+                  <!-- Provider Info -->
+                  <div class="mb-4 pb-4 border-b border-gray-200">
+                    <p class="text-sm font-semibold text-slate-900 mb-1">{{ service.providerName }}</p>
+                    @if (service.location?.city) {
+                      <p class="text-xs text-gray-600 flex items-center gap-1">
+                        <span class="material-icons text-sm">location_on</span>
+                        {{ service.location.city }}
+                      </p>
+                    }
+                  </div>
+
+                  <!-- Rating -->
+                  <div class="mb-4 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <span class="material-icons text-sm text-yellow-500">star</span>
+                      <span class="font-semibold text-slate-900">{{ service.rating || 0 | number:'1.0-1' }}</span>
+                      <span class="text-xs text-gray-600">({{ service.reviews || 0 }} reviews)</span>
+                    </div>
+                    @if (service.isVerified) {
+                      <span class="material-icons text-sm text-green-600" title="Verified provider">verified</span>
+                    }
+                  </div>
+
+                  <!-- Duration & Features -->
+                  <div class="text-xs text-gray-600 space-y-1">
+                    @if (service.duration) {
+                      <p class="flex items-center gap-1">
+                        <span class="material-icons text-sm">schedule</span>
+                        Duration: {{ service.duration }}
+                      </p>
+                    }
+                    @if (service.features && service.features.length > 0) {
+                      <p class="line-clamp-1">
+                        <span class="material-icons text-sm align-middle">check_circle</span>
+                        Features: {{ service.features.slice(0, 2).join(', ') }}
+                        @if (service.features.length > 2) {
+                          <span class="text-gray-500">+{{ service.features.length - 2 }} more</span>
+                        }
+                      </p>
+                    }
+                  </div>
+
+                  <!-- CTA Button -->
+                  <div class="mt-4 w-full bg-purple-600 text-white py-2 rounded-lg font-semibold hover:bg-purple-700 transition text-center cursor-pointer">
+                    View Details
+                  </div>
+                </div>
+              </div>
+            </a>
+          }
+        </div>
+
+        <!-- Pagination -->
+        @if (totalPages() > 1) {
+          <div class="flex justify-center items-center gap-2 mt-12">
+            <button
+              (click)="goToPage(currentPage() - 1)"
+              [disabled]="currentPage() === 1"
+              class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            >
+              Previous
+            </button>
+
+            @for (page of [].constructor(totalPages()); track $index + 1) {
+              <button
+                (click)="goToPage($index + 1)"
+                [class.bg-purple-600]="$index + 1 === currentPage()"
+                [class.text-white]="$index + 1 === currentPage()"
+                [class.border-purple-600]="$index + 1 === currentPage()"
+                class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition"
+              >
+                {{ $index + 1 }}
+              </button>
+            }
+
+            <button
+              (click)="goToPage(currentPage() + 1)"
+              [disabled]="currentPage() === totalPages()"
+              class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            >
+              Next
+            </button>
+          </div>
+        }
+      }
+    </div>
+  </section>
+</div>

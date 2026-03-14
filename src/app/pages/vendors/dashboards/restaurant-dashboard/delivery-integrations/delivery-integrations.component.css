@@ -1,0 +1,39 @@
+/* Delivery Integrations Component Styles */
+
+:host {
+  display: block;
+}
+
+/* Tab styling */
+button[class*="border-b-2"] {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+/* Card hover effects */
+.hover\:shadow-lg:hover {
+  transition: all 0.3s ease;
+}
+
+/* Smooth transitions */
+button {
+  transition: all 0.2s ease;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* Feature icons */
+.text-green-600 {
+  color: #16a34a;
+}
+
+/* Status badge colors */
+.text-green-600 {
+  color: #16a34a;
+}
+
+.text-yellow-600 {
+  color: #ca8a04;
+}

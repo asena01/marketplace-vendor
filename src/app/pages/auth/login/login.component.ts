@@ -1,0 +1,411 @@
+import { Component, OnInit, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { AuthService } from '../../../services/auth.service';
+
+@Component({
+  selector: 'app-login',
+  standalone: true,
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  template: `
+    <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div class="w-full max-w-md">
+        <!-- Card Container -->
+        <div class="bg-white rounded-2xl shadow-2xl overflow-hidden border border-blue-100 animate-slide-up">
+          <!-- Header -->
+          <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-8 text-center">
+            <div class="text-5xl mb-4">🏪</div>
+            <h1 class="text-3xl font-bold text-white">MarketHub</h1>
+            <p class="text-blue-100 text-sm mt-2">Sign in to your account</p>
+          </div>
+
+          <!-- Form Container -->
+          <div class="p-8">
+            <!-- Error Message -->
+            @if (errorMessage()) {
+              <div class="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg mb-6 animate-slide-up flex items-start gap-3">
+                <span class="text-xl">❌</span>
+                <div>
+                  <p class="font-semibold">Login Failed</p>
+                  <p class="text-sm mt-1">{{ errorMessage() }}</p>
+                </div>
+              </div>
+            }
+
+            <!-- Success Message -->
+            @if (successMessage()) {
+              <div class="bg-green-50 border border-green-300 text-green-700 px-4 py-3 rounded-lg mb-6 animate-slide-up flex items-start gap-3">
+                <span class="text-xl">✅</span>
+                <div>
+                  <p class="font-semibold">Login Successful</p>
+                  <p class="text-sm mt-1">{{ successMessage() }}</p>
+                </div>
+              </div>
+            }
+
+            <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="space-y-5">
+              <!-- Email Field -->
+              <div>
+                <label class="block text-gray-700 font-semibold mb-2">Email Address</label>
+                <input
+                  type="email"
+                  formControlName="email"
+                  placeholder="your@email.com"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                />
+                @if (loginForm.get('email')?.hasError('required') && loginForm.get('email')?.touched) {
+                  <p class="text-red-600 text-sm mt-2">Email is required</p>
+                }
+                @if (loginForm.get('email')?.hasError('email') && loginForm.get('email')?.touched) {
+                  <p class="text-red-600 text-sm mt-2">Please enter a valid email</p>
+                }
+              </div>
+
+              <!-- Password Field -->
+              <div>
+                <label class="block text-gray-700 font-semibold mb-2">Password</label>
+                <input
+                  [type]="showPassword() ? 'text' : 'password'"
+                  formControlName="password"
+                  placeholder="••••••••"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                />
+                <button
+                  type="button"
+                  (click)="togglePasswordVisibility()"
+                  class="text-blue-600 text-sm mt-2 hover:text-blue-700 font-medium"
+                >
+                  {{ showPassword() ? 'Hide' : 'Show' }} Password
+                </button>
+                @if (loginForm.get('password')?.hasError('required') && loginForm.get('password')?.touched) {
+                  <p class="text-red-600 text-sm mt-2">Password is required</p>
+                }
+              </div>
+
+              <!-- Remember Me & Forgot Password -->
+              <div class="flex items-center justify-between">
+                <label class="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    formControlName="rememberMe"
+                    class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                  />
+                  <span class="ml-2 text-gray-700 text-sm font-medium">Remember me</span>
+                </label>
+                <a href="/forgot-password" class="text-blue-600 text-sm hover:text-blue-700 font-medium">
+                  Forgot Password?
+                </a>
+              </div>
+
+              <!-- Submit Button -->
+              <button
+                type="submit"
+                [disabled]="isLoading()"
+                class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-3 rounded-lg hover:shadow-lg transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                @if (isLoading()) {
+                  <div class="animate-spin">⏳</div>
+                  <span>Signing in...</span>
+                } @else {
+                  <span>🔓 Sign In</span>
+                }
+              </button>
+            </form>
+
+            <!-- Divider -->
+            <div class="flex items-center gap-4 my-6">
+              <div class="flex-1 border-t border-gray-300"></div>
+              <span class="text-gray-600 text-sm">OR</span>
+              <div class="flex-1 border-t border-gray-300"></div>
+            </div>
+
+            <!-- Demo Accounts -->
+            <div class="space-y-3 mb-6">
+              <p class="text-center text-gray-600 text-sm font-medium mb-3">Try demo accounts:</p>
+
+              <!-- Admin Demo -->
+              <button
+                type="button"
+                (click)="loginAsDemo('admin')"
+                [disabled]="isLoading()"
+                class="w-full border-2 border-slate-700 text-slate-700 font-semibold py-2 rounded-lg hover:bg-slate-50 transition disabled:opacity-50"
+              >
+                ⚙️ Demo Admin
+              </button>
+
+              <!-- Delivery Demo -->
+              <button
+                type="button"
+                (click)="loginAsDemo('delivery')"
+                [disabled]="isLoading()"
+                class="w-full border-2 border-red-500 text-red-700 font-semibold py-2 rounded-lg hover:bg-red-50 transition disabled:opacity-50"
+              >
+                🚚 Demo Delivery Service
+              </button>
+
+              <!-- Customer Demo -->
+              <button
+                type="button"
+                (click)="loginAsDemo('customer')"
+                [disabled]="isLoading()"
+                class="w-full border-2 border-green-500 text-green-700 font-semibold py-2 rounded-lg hover:bg-green-50 transition disabled:opacity-50"
+              >
+                👤 Demo Customer
+              </button>
+
+              <!-- Hotel Vendor Demo -->
+              <button
+                type="button"
+                (click)="loginAsDemo('hotel')"
+                [disabled]="isLoading()"
+                class="w-full border-2 border-blue-500 text-blue-700 font-semibold py-2 rounded-lg hover:bg-blue-50 transition disabled:opacity-50"
+              >
+                🏨 Demo Hotel
+              </button>
+
+              <!-- Restaurant Vendor Demo -->
+              <button
+                type="button"
+                (click)="loginAsDemo('restaurant')"
+                [disabled]="isLoading()"
+                class="w-full border-2 border-orange-500 text-orange-700 font-semibold py-2 rounded-lg hover:bg-orange-50 transition disabled:opacity-50"
+              >
+                🍽️ Demo Restaurant
+              </button>
+
+              <!-- Retail Vendor Demo -->
+              <button
+                type="button"
+                (click)="loginAsDemo('retail')"
+                [disabled]="isLoading()"
+                class="w-full border-2 border-purple-500 text-purple-700 font-semibold py-2 rounded-lg hover:bg-purple-50 transition disabled:opacity-50"
+              >
+                🛍️ Demo Retail Store
+              </button>
+
+              <!-- Service Vendor Demo -->
+              <button
+                type="button"
+                (click)="loginAsDemo('service')"
+                [disabled]="isLoading()"
+                class="w-full border-2 border-pink-500 text-pink-700 font-semibold py-2 rounded-lg hover:bg-pink-50 transition disabled:opacity-50"
+              >
+                💇 Demo Service
+              </button>
+
+              <!-- Tours Vendor Demo -->
+              <button
+                type="button"
+                (click)="loginAsDemo('tour-operator')"
+                [disabled]="isLoading()"
+                class="w-full border-2 border-teal-500 text-teal-700 font-semibold py-2 rounded-lg hover:bg-teal-50 transition disabled:opacity-50"
+              >
+                ✈️ Demo Tours
+              </button>
+            </div>
+
+            <!-- Sign Up Link -->
+            <div class="text-center border-t border-gray-200 pt-6">
+              <p class="text-gray-700 text-sm">
+                Don't have an account?
+                <a href="/signup" class="text-blue-600 font-bold hover:text-blue-700">Create one</a>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer Info -->
+        <div class="text-center mt-8 text-gray-600 text-sm">
+          <p>📧 Use any email and password (minimum 6 characters)</p>
+          <p class="mt-2">🔒 Your data is secure and encrypted</p>
+        </div>
+      </div>
+    </div>
+  `,
+  styles: [`
+    @keyframes slideUp {
+      from {
+        transform: translateY(30px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .animate-slide-up {
+      animation: slideUp 0.5s ease-out;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+    }
+  `]
+})
+export class LoginComponent implements OnInit {
+  loginForm: FormGroup;
+  isLoading = signal(false);
+  errorMessage = signal('');
+  successMessage = signal('');
+  showPassword = signal(false);
+
+  constructor(
+    private fb: FormBuilder,
+    private authService: AuthService,
+    private router: Router
+  ) {
+    this.loginForm = this.fb.group({
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
+      rememberMe: [false]
+    });
+  }
+
+  ngOnInit(): void {
+    // If already logged in, redirect to appropriate page
+    if (this.authService.isLoggedIn()) {
+      const userType = this.authService.getUserType();
+      if (userType === 'admin') {
+        this.router.navigate(['/admin-dashboard']);
+      } else if (userType === 'vendor') {
+        const vendorType = this.authService.getVendorType();
+        this.redirectVendorToDashboard(vendorType);
+      } else if (userType === 'customer') {
+        this.router.navigate(['/customer-dashboard']);
+      } else {
+        this.router.navigate(['/']);
+      }
+    }
+  }
+
+  private redirectVendorToDashboard(vendorType: string | null): void {
+    if (!vendorType) {
+      this.router.navigate(['/']);
+      return;
+    }
+
+    // Map vendor types to their specific dashboards
+    const dashboardRoutes: Record<string, string[]> = {
+      'delivery': ['/delivery-dashboard'],
+      'hotel': ['/hotel-dashboard'],
+      'restaurant': ['/restaurant-dashboard'],
+      'service': ['/service-dashboard'],
+      'tours': ['/tours-dashboard'],
+      'retail': ['/retail-dashboard'],
+      'tour-operator': ['/tours-dashboard'],
+      // Fallback for any other vendor type
+    };
+
+    const route = dashboardRoutes[vendorType] || ['/vendor-dashboard', vendorType];
+    this.router.navigate(route);
+  }
+
+  togglePasswordVisibility(): void {
+    this.showPassword.update(value => !value);
+  }
+
+  onLogin(): void {
+    this.errorMessage.set('');
+    this.successMessage.set('');
+
+    if (this.loginForm.invalid) {
+      this.errorMessage.set('Please fill in all fields correctly');
+      return;
+    }
+
+    this.isLoading.set(true);
+
+    const { email, password } = this.loginForm.value;
+
+    this.authService.login(email, password).subscribe({
+      next: (response: any) => {
+        this.isLoading.set(false);
+
+        if (response.success) {
+          this.successMessage.set('Welcome back! Redirecting...');
+
+          // Redirect based on user type
+          setTimeout(() => {
+            const userType = this.authService.getUserType();
+            if (userType === 'admin') {
+              this.router.navigate(['/admin-dashboard']);
+            } else if (userType === 'vendor') {
+              const vendorType = this.authService.getVendorType();
+              this.redirectVendorToDashboard(vendorType);
+            } else if (userType === 'customer') {
+              // Customer goes to customer dashboard
+              this.router.navigate(['/customer-dashboard']);
+            } else {
+              // Default to home
+              this.router.navigate(['/']);
+            }
+          }, 1500);
+        } else {
+          this.errorMessage.set(response.message || 'Login failed');
+        }
+      },
+      error: (error: any) => {
+        this.isLoading.set(false);
+
+        console.error('Login error:', error);
+
+        if (error.status === 401) {
+          this.errorMessage.set('Invalid email or password');
+        } else if (error.status === 0) {
+          this.errorMessage.set('Cannot connect to server. Please try again later.');
+        } else if (error.status === 400) {
+          this.errorMessage.set(error.error?.message || 'Invalid credentials');
+        } else {
+          this.errorMessage.set('An error occurred. Please try again.');
+        }
+      }
+    });
+  }
+
+  loginAsDemo(type: 'admin' | 'customer' | 'restaurant' | 'hotel' | 'retail' | 'service' | 'tour-operator' | 'delivery'): void {
+    const demoCredentials = {
+      admin: {
+        email: 'admin@demo.com',
+        password: 'admin123456'
+      },
+      customer: {
+        email: 'customer@demo.com',
+        password: 'demo123456'
+      },
+      hotel: {
+        email: 'hotel@demo.com',
+        password: 'demo123456'
+      },
+      restaurant: {
+        email: 'restaurant@demo.com',
+        password: 'demo123456'
+      },
+      retail: {
+        email: 'retail@demo.com',
+        password: 'demo123456'
+      },
+      service: {
+        email: 'service@demo.com',
+        password: 'demo123456'
+      },
+      'tour-operator': {
+        email: 'tours@demo.com',
+        password: 'demo123456'
+      },
+      delivery: {
+        email: 'delivery@demo.com',
+        password: 'demo123456'
+      }
+    };
+
+    const credentials = demoCredentials[type];
+    this.loginForm.patchValue(credentials);
+
+    setTimeout(() => {
+      this.onLogin();
+    }, 300);
+  }
+}

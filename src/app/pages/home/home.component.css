@@ -1,0 +1,194 @@
+/* Hero Section Animations */
+:host ::ng-deep .hero-section h1 {
+  animation: slideUp 0.8s ease-out 0.2s both;
+}
+
+:host ::ng-deep .hero-section p {
+  animation: slideUp 0.8s ease-out 0.4s both;
+}
+
+:host ::ng-deep .hero-section .stats-grid {
+  animation: slideUp 0.8s ease-out 0.6s both;
+}
+
+:host ::ng-deep .hero-section .blob-1 {
+  animation: float 6s ease-in-out infinite;
+}
+
+:host ::ng-deep .hero-section .blob-2 {
+  animation: float-slow 7s ease-in-out infinite 1s;
+}
+
+/* Service Cards Staggered Animation */
+:host ::ng-deep .service-card-1 {
+  animation: slideUp 0.6s ease-out 0s both;
+}
+
+:host ::ng-deep .service-card-2 {
+  animation: slideUp 0.6s ease-out 0.1s both;
+}
+
+:host ::ng-deep .service-card-3 {
+  animation: slideUp 0.6s ease-out 0.2s both;
+}
+
+:host ::ng-deep .service-card-4 {
+  animation: slideUp 0.6s ease-out 0.3s both;
+}
+
+:host ::ng-deep .service-card-5 {
+  animation: slideUp 0.6s ease-out 0.4s both;
+}
+
+/* Specialized Service Cards */
+:host ::ng-deep .specialized-card-1 {
+  animation: slideUp 0.6s ease-out 0s both;
+}
+
+:host ::ng-deep .specialized-card-2 {
+  animation: slideUp 0.6s ease-out 0.1s both;
+}
+
+:host ::ng-deep .specialized-card-3 {
+  animation: slideUp 0.6s ease-out 0.2s both;
+}
+
+:host ::ng-deep .specialized-card-4 {
+  animation: slideUp 0.6s ease-out 0.3s both;
+}
+
+/* Category Cards Staggered */
+:host ::ng-deep .category-card-1 { animation-delay: 0s; }
+:host ::ng-deep .category-card-2 { animation-delay: 0.05s; }
+:host ::ng-deep .category-card-3 { animation-delay: 0.1s; }
+:host ::ng-deep .category-card-4 { animation-delay: 0.15s; }
+:host ::ng-deep .category-card-5 { animation-delay: 0.2s; }
+:host ::ng-deep .category-card-6 { animation-delay: 0.25s; }
+:host ::ng-deep .category-card-7 { animation-delay: 0.3s; }
+:host ::ng-deep .category-card-8 { animation-delay: 0.35s; }
+:host ::ng-deep .category-card-9 { animation-delay: 0.4s; }
+:host ::ng-deep .category-card-10 { animation-delay: 0.45s; }
+:host ::ng-deep .category-card-11 { animation-delay: 0.5s; }
+:host ::ng-deep .category-card-12 { animation-delay: 0.55s; }
+
+:host ::ng-deep .category-card {
+  animation: slideUp 0.5s ease-out forwards;
+}
+
+/* Service Icon Float on Hover */
+:host ::ng-deep .service-card:hover .service-icon {
+  animation: float 1.5s ease-in-out infinite;
+}
+
+/* Enhanced Service Card Styling */
+:host ::ng-deep .service-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 1) 100%);
+}
+
+:host ::ng-deep .service-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+  z-index: 1;
+}
+
+:host ::ng-deep .service-card:hover::before {
+  left: 100%;
+}
+
+:host ::ng-deep .service-card > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Service Card Border Gradient on Hover */
+:host ::ng-deep .service-card {
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: all 0.3s ease;
+}
+
+:host ::ng-deep .service-card:hover {
+  border-color: rgba(99, 102, 241, 0.3);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 1) 100%);
+}
+
+/* Background Patterns */
+:host ::ng-deep .section-gradient {
+  background: linear-gradient(135deg, rgba(248, 250, 252, 1) 0%, rgba(241, 245, 249, 1) 100%);
+  position: relative;
+}
+
+:host ::ng-deep .section-gradient::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* Trending Products Stagger */
+:host ::ng-deep .trending-item-1 { animation-delay: 0s; }
+:host ::ng-deep .trending-item-2 { animation-delay: 0.1s; }
+:host ::ng-deep .trending-item-3 { animation-delay: 0.2s; }
+:host ::ng-deep .trending-item-4 { animation-delay: 0.3s; }
+
+:host ::ng-deep .trending-item {
+  animation: slideUp 0.5s ease-out forwards;
+}
+
+/* Section Title Animation */
+:host ::ng-deep .section-title {
+  animation: slideUp 0.6s ease-out;
+}
+
+:host ::ng-deep .section-subtitle {
+  animation: slideUp 0.6s ease-out 0.1s both;
+}
+
+/* CTA Button Animation */
+:host ::ng-deep .cta-button {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+:host ::ng-deep .cta-button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+:host ::ng-deep .cta-button:hover::after {
+  width: 300px;
+  height: 300px;
+}
+
+/* Location Cards */
+:host ::ng-deep .location-card-1 { animation-delay: 0s; }
+:host ::ng-deep .location-card-2 { animation-delay: 0.1s; }
+:host ::ng-deep .location-card-3 { animation-delay: 0.2s; }
+:host ::ng-deep .location-card-4 { animation-delay: 0.3s; }
+
+:host ::ng-deep .location-card {
+  animation: slideUp 0.5s ease-out forwards;
+}

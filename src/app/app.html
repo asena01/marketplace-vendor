@@ -1,0 +1,19 @@
+
+
+    <router-outlet></router-outlet>
+
+    <!-- Global Login Modal -->
+    <div *ngIf="authModal.isLoginOpen()" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 relative">
+        <button (click)="authModal.closeModal()" class="absolute top-3 right-3 text-gray-600 hover:text-gray-900 font-bold">✖</button>
+        <app-login-overlay></app-login-overlay>
+      </div>
+    </div>
+
+    <!-- Global Signup Modal -->
+    <div *ngIf="authModal.isSignupOpen()" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 relative">
+        <button (click)="authModal.closeModal()" class="absolute top-3 right-3 text-gray-600 hover:text-gray-900 font-bold">✖</button>
+        <app-signup-overlay></app-signup-overlay>
+      </div>
+    </div>

@@ -1,0 +1,170 @@
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+  <app-header></app-header>
+
+  <!-- Hero Section -->
+  <section class="pt-12 pb-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-cyan-600 to-blue-600">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-white text-center mb-12">
+        <h1 class="text-5xl font-bold mb-4">Explore Amazing Experiences</h1>
+        <p class="text-xl text-cyan-50">Discover tours, cruises, and adventures around the world</p>
+      </div>
+
+      <!-- Categories -->
+      <div class="grid md:grid-cols-3 gap-6">
+        @for (category of categories; track category.id) {
+          <button (click)="scrollToTours()" type="button" class="group text-left w-full cursor-pointer">
+            <div class="bg-white rounded-xl p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+              <span class="material-icons text-5xl mb-4">{{ category.icon }}</span>
+              <h3 class="text-xl font-bold text-slate-900 mb-2 group-hover:text-cyan-600 transition-colors">
+                {{ category.name }}
+              </h3>
+              <p class="text-gray-600 text-sm">{{ category.description }}</p>
+              <div class="mt-4 flex items-center text-cyan-600 font-semibold text-sm group-hover:translate-x-2 transition-transform">
+                Explore
+                <span class="material-icons text-sm ml-1">arrow_forward</span>
+              </div>
+            </div>
+          </button>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Tours -->
+  <section data-section="featured-tours" class="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+    <div class="max-w-7xl mx-auto">
+      <div class="mb-12">
+        <h2 class="text-4xl font-bold text-slate-900 mb-2">Top Tours & Experiences</h2>
+        <p class="text-gray-600 text-lg">Explore the best-rated tours loved by travelers worldwide</p>
+      </div>
+
+      @if (isLoading()) {
+        <div class="flex justify-center items-center py-20">
+          <span class="material-icons animate-spin text-6xl text-cyan-600">autorenew</span>
+        </div>
+      } @else if (featuredTours().length === 0) {
+        <div class="text-center py-20">
+          <span class="material-icons text-6xl text-gray-400 mb-4">confirmation_number</span>
+          <h3 class="text-2xl font-bold text-slate-900 mb-2">No Tours Available Yet</h3>
+          <p class="text-gray-600 mb-4">The database hasn't been populated with tour data yet.</p>
+          <p class="text-gray-500 text-sm mb-8">To populate the database with sample tours, run:</p>
+          <div class="inline-block bg-gray-900 text-white px-4 py-3 rounded-lg font-mono text-sm mb-8">
+            npm run seed
+          </div>
+          <p class="text-gray-600">This will create 4 sample tours that you can view here.</p>
+        </div>
+      } @else {
+        <div class="grid md:grid-cols-2 lg:grid-cols-2 gap-8">
+          @for (tour of featuredTours(); track tour.id || tour._id) {
+            <div class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 group">
+              <!-- Image Section -->
+              <div class="relative h-64 bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center text-8xl overflow-hidden">
+                <div class="group-hover:scale-110 transition-transform duration-300">
+                  <span class="material-icons text-8xl">{{ tour.image }}</span>
+                </div>
+                <div class="absolute top-4 right-4 bg-white px-3 py-1 rounded-full text-sm font-semibold text-gray-700 shadow-md">
+                  {{ tour.difficulty }}
+                </div>
+              </div>
+
+              <!-- Content Section -->
+              <div class="p-6">
+                <!-- Title and Location -->
+                <h3 class="text-xl font-bold text-slate-900 mb-2">{{ tour.name }}</h3>
+                <p class="text-gray-600 mb-4">
+                  <span class="material-icons align-middle text-sm">place</span> {{ tour.destination }}
+                </p>
+
+                <!-- Rating and Reviews -->
+                <div class="flex items-center gap-3 mb-4">
+                  <div class="flex items-center gap-1">
+                    <span class="material-icons text-yellow-400">star</span>
+                    <span class="font-semibold text-gray-900">{{ tour.rating }}</span>
+                  </div>
+                  <span class="text-sm text-gray-600">({{ tour.reviews }} reviews)</span>
+                </div>
+
+                <!-- Tour Highlights -->
+                <div class="mb-4">
+                  <p class="text-sm font-semibold text-gray-700 mb-2">Highlights:</p>
+                  <div class="flex flex-wrap gap-2">
+                    @for (highlight of tour.highlights.slice(0, 3); track highlight) {
+                      <span class="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-md">{{ highlight }}</span>
+                    }
+                  </div>
+                </div>
+
+                <!-- Tour Details -->
+                <div class="grid grid-cols-3 gap-3 mb-4 pb-4 border-b border-gray-200 text-center">
+                  <div>
+                    <p class="text-xs text-gray-600">Duration</p>
+                    <p class="font-semibold text-gray-900">{{ tour.duration }}</p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-600">Group Size</p>
+                    <p class="font-semibold text-gray-900 text-sm">{{ tour.groupSize }}</p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-600">What's Included</p>
+                    <p class="font-semibold text-gray-900 text-sm">{{ tour.includes.length }} items</p>
+                  </div>
+                </div>
+
+                <!-- Price and CTA -->
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm text-gray-600">From per person</p>
+                    <p class="text-3xl font-bold text-cyan-600">{{ tour.price }}</p>
+                  </div>
+                  <a [routerLink]="['/tours', tour.id]" class="inline-block bg-gradient-to-r from-cyan-600 to-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                    See Details
+                  </a>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- Why Choose Us -->
+  <section class="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-cyan-50 to-white">
+    <div class="max-w-6xl mx-auto">
+      <h2 class="text-4xl font-bold text-slate-900 mb-4 text-center">Why Travelers Trust Us</h2>
+      <p class="text-gray-600 text-center mb-12 text-lg">We connect you with the world's best tour operators</p>
+
+      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white border border-gray-200 rounded-lg p-8 text-center hover:shadow-lg transition-shadow">
+          <span class="material-icons text-6xl mb-4">public</span>
+          <h3 class="text-lg font-bold text-slate-900 mb-2">500+ Destinations</h3>
+          <p class="text-gray-600 text-sm">Explore amazing places all over the globe</p>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-lg p-8 text-center hover:shadow-lg transition-shadow">
+          <span class="material-icons text-6xl mb-4">group</span>
+          <h3 class="text-lg font-bold text-slate-900 mb-2">Expert Local Guides</h3>
+          <p class="text-gray-600 text-sm">Knowledgeable guides who love their cities</p>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-lg p-8 text-center hover:shadow-lg transition-shadow">
+          <span class="material-icons text-6xl mb-4">attach_money</span>
+          <h3 class="text-lg font-bold text-slate-900 mb-2">Best Value</h3>
+          <p class="text-gray-600 text-sm">Direct pricing with the best rates available</p>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-lg p-8 text-center hover:shadow-lg transition-shadow">
+          <span class="material-icons text-6xl mb-4">check_circle</span>
+          <h3 class="text-lg font-bold text-slate-900 mb-2">Verified Traveler Reviews</h3>
+          <p class="text-gray-600 text-sm">Honest reviews from verified tourists</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Back to Home -->
+  <section class="py-16 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto text-center">
+      <a href="/" class="inline-block px-8 py-4 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-lg hover:shadow-lg transition font-semibold">
+        Back to Home
+      </a>
+    </div>
+  </section>
+</div>

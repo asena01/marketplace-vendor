@@ -1,0 +1,483 @@
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+  <app-header></app-header>
+
+  <!-- Header Section -->
+  <section class="bg-gradient-to-r from-green-600 to-emerald-600 text-white py-16 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+      <h1 class="text-4xl sm:text-5xl font-bold mb-4">🏋️ Gym Equipment Store</h1>
+      <p class="text-lg text-green-100">Professional fitness equipment for every level - beginner to advanced</p>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <section class="py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid lg:grid-cols-4 gap-8">
+        
+        <!-- Sidebar: Filters -->
+        <div class="lg:col-span-1">
+          <div class="bg-white rounded-lg shadow-lg p-6 sticky top-8 space-y-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">🔍 Filters</h3>
+
+            <!-- Search -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+              <div class="flex gap-2">
+                <input
+                  type="text"
+                  [(ngModel)]="searchQuery"
+                  placeholder="Search equipment..."
+                  class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                />
+                <button (click)="search()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg">
+                  🔎
+                </button>
+              </div>
+            </div>
+
+            <!-- Fitness Level -->
+            <div>
+              <label class="block text-sm font-bold text-gray-800 mb-3">Fitness Level</label>
+              <div class="space-y-2">
+                @for (level of fitnessLevels(); track level) {
+                  <button
+                    (click)="filterByFitnessLevel(level)"
+                    [class]="'w-full text-left px-4 py-2 rounded-lg transition text-sm ' +
+                      (selectedFitnessLevel() === level
+                        ? 'bg-green-100 text-green-700 font-semibold border border-green-300'
+                        : 'text-gray-700 hover:bg-gray-100')"
+                  >
+                    {{ getFitnessLevelLabel(level) }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Target Muscle -->
+            <div>
+              <label class="block text-sm font-bold text-gray-800 mb-3">Target Muscle</label>
+              <div class="space-y-2 max-h-48 overflow-y-auto">
+                @for (muscle of targetMuscles(); track muscle) {
+                  <button
+                    (click)="filterByTargetMuscle(muscle)"
+                    [class]="'w-full text-left px-4 py-2 rounded-lg transition text-sm ' +
+                      (selectedTargetMuscle() === muscle
+                        ? 'bg-green-100 text-green-700 font-semibold border border-green-300'
+                        : 'text-gray-700 hover:bg-gray-100')"
+                  >
+                    {{ getMuscleIcon(muscle) }} {{ muscle | titlecase }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Categories -->
+            <div>
+              <label class="block text-sm font-bold text-gray-800 mb-3">Category</label>
+              <div class="space-y-2 max-h-56 overflow-y-auto">
+                @for (cat of categories(); track cat.id) {
+                  <button
+                    (click)="filterByCategory(cat.id)"
+                    [class]="'w-full text-left px-4 py-2 rounded-lg transition text-sm ' +
+                      (selectedCategory() === cat.id
+                        ? 'bg-green-100 text-green-700 font-semibold border border-green-300'
+                        : 'text-gray-700 hover:bg-gray-100')"
+                  >
+                    {{ cat.icon }} {{ cat.name }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Price Range -->
+            <div>
+              <label class="block text-sm font-bold text-gray-800 mb-3">Price Range</label>
+              <input
+                type="range"
+                min="0"
+                max="5000"
+                step="100"
+                [(ngModel)]="maxPrice"
+                (change)="loadEquipment()"
+                class="w-full"
+              />
+              <p class="text-sm text-gray-600 mt-2">{{ getPriceRange() }}</p>
+            </div>
+
+            <!-- Cart Button -->
+            <button
+              (click)="showCart.set(!showCart())"
+              class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition flex items-center justify-center gap-2"
+            >
+              🛒 Cart ({{ cartItemCount() }})
+            </button>
+          </div>
+        </div>
+
+        <!-- Products Grid -->
+        <div class="lg:col-span-3">
+          @if (isLoading()) {
+            <div class="text-center py-12">
+              <div class="inline-block animate-spin text-4xl mb-4">⏳</div>
+              <p class="text-gray-600">Loading gym equipment...</p>
+            </div>
+          } @else if (filteredEquipment().length > 0) {
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              @for (item of filteredEquipment(); track item.id) {
+                <div class="bg-white rounded-lg shadow-lg hover:shadow-xl transition overflow-hidden border border-gray-100">
+                  <!-- Image -->
+                  <div class="h-48 bg-gradient-to-br from-green-100 to-emerald-100 flex items-center justify-center text-6xl">
+                    🏋️
+                  </div>
+
+                  <!-- Content -->
+                  <div class="p-4">
+                    <h3 class="font-bold text-gray-800 mb-1">{{ item.name }}</h3>
+                    <p class="text-sm text-gray-600 mb-2">{{ item.category | titlecase }}</p>
+
+                    <!-- Fitness Level Badge -->
+                    @if (item.specifications?.fitnessLevel) {
+                      <span [class]="'inline-block px-3 py-1 rounded-full text-xs font-semibold mb-2 ' +
+                        (item.specifications.fitnessLevel === 'beginner' ? 'bg-green-100 text-green-700' :
+                         item.specifications.fitnessLevel === 'intermediate' ? 'bg-yellow-100 text-yellow-700' :
+                         item.specifications.fitnessLevel === 'advanced' ? 'bg-red-100 text-red-700' :
+                         'bg-blue-100 text-blue-700')">
+                        {{ getFitnessLevelLabel(item.specifications.fitnessLevel) }}
+                      </span>
+                    }
+
+                    <!-- Target Muscles -->
+                    @if (item.targetMuscles && item.targetMuscles.length > 0) {
+                      <div class="text-xs text-gray-600 mb-2 flex flex-wrap gap-1">
+                        @for (muscle of item.targetMuscles.slice(0, 2); track muscle) {
+                          <span class="bg-gray-100 px-2 py-1 rounded">{{ getMuscleIcon(muscle) }} {{ muscle }}</span>
+                        }
+                        @if (item.targetMuscles.length > 2) {
+                          <span class="bg-gray-100 px-2 py-1 rounded">+{{ item.targetMuscles.length - 2 }}</span>
+                        }
+                      </div>
+                    }
+
+                    <!-- Rating -->
+                    <div class="flex items-center gap-2 mb-3">
+                      <span class="text-yellow-500">⭐</span>
+                      <span class="text-sm font-semibold">{{ item.rating.average }}/5</span>
+                      <span class="text-xs text-gray-500">({{ item.rating.count }})</span>
+                    </div>
+
+                    <!-- Price -->
+                    <div class="mb-4">
+                      @if (item.discountPrice) {
+                        <div class="flex gap-2">
+                          <span class="text-2xl font-bold text-green-600">${{ item.discountPrice }}</span>
+                          <span class="text-lg text-gray-400 line-through">${{ item.price }}</span>
+                        </div>
+                      } @else {
+                        <span class="text-2xl font-bold text-green-600">${{ item.price }}</span>
+                      }
+                    </div>
+
+                    <!-- Stock -->
+                    <div class="text-sm mb-4">
+                      @if (item.stock > 0) {
+                        <span class="text-green-600 font-semibold">✅ In Stock ({{ item.stock }})</span>
+                      } @else {
+                        <span class="text-red-600 font-semibold">❌ Out of Stock</span>
+                      }
+                    </div>
+
+                    <!-- Add to Cart -->
+                    <button
+                      (click)="addToCart(item)"
+                      [disabled]="item.stock === 0"
+                      [class]="'w-full py-2 rounded-lg font-bold transition ' +
+                        (item.stock > 0
+                          ? 'bg-green-600 hover:bg-green-700 text-white'
+                          : 'bg-gray-300 text-gray-600 cursor-not-allowed')"
+                    >
+                      🛒 Add to Cart
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="text-center py-12 bg-white rounded-lg">
+              <div class="text-6xl mb-4">📭</div>
+              <p class="text-gray-600 text-lg">No gym equipment found matching your criteria</p>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Cart Sidebar -->
+  @if (showCart()) {
+    <div class="fixed right-0 top-0 h-screen w-96 bg-white shadow-2xl z-[9998] overflow-y-auto">
+      <div class="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
+        <h2 class="text-2xl font-bold">🛒 Shopping Cart</h2>
+        <button (click)="showCart.set(false)" class="text-2xl">✕</button>
+      </div>
+
+      @if (cart().length > 0) {
+        <div class="p-6 space-y-4">
+          @for (item of cart(); track item.id) {
+            <div class="flex gap-4 pb-4 border-b border-gray-200">
+              <div class="w-16 h-16 bg-gray-100 rounded flex items-center justify-center text-2xl">
+                🏋️
+              </div>
+              <div class="flex-1">
+                <p class="font-semibold text-gray-800">{{ item.name }}</p>
+                <p class="text-sm text-gray-600">${{ item.price.toFixed(2) }}</p>
+                @if (item.targetMuscles && item.targetMuscles.length > 0) {
+                  <p class="text-xs text-green-600">{{ item.targetMuscles[0] | titlecase }}</p>
+                }
+                <div class="flex items-center gap-2 mt-2">
+                  <button
+                    (click)="updateQuantity(item.id, item.quantity - 1)"
+                    class="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm"
+                  >
+                    −
+                  </button>
+                  <span class="w-8 text-center text-sm font-semibold">{{ item.quantity }}</span>
+                  <button
+                    (click)="updateQuantity(item.id, item.quantity + 1)"
+                    class="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm"
+                  >
+                    +
+                  </button>
+                  <button
+                    (click)="removeFromCart(item.id)"
+                    class="text-red-600 hover:text-red-800 ml-auto text-lg"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- Delivery Options -->
+          <div class="mt-6 pt-4 border-t border-gray-200">
+            <button
+              (click)="openDeliveryOptions()"
+              class="w-full flex items-center gap-2 px-4 py-3 rounded-lg bg-green-50 hover:bg-green-100 text-green-700 font-semibold transition text-sm"
+            >
+              <mat-icon class="text-lg">local_shipping</mat-icon>
+              <span>
+                @if (selectedDeliveryService()) {
+                  {{ selectedDeliveryService()!.name }} - ${{ deliveryPrice().toFixed(2) }}
+                } @else {
+                  Select Delivery Service
+                }
+              </span>
+            </button>
+          </div>
+
+          <!-- Totals -->
+          <div class="mt-4 pt-4 border-t-2 border-gray-300 space-y-2">
+            <div class="flex justify-between text-lg">
+              <span>Subtotal:</span>
+              <span class="font-bold">${{ cartTotal().toFixed(2) }}</span>
+            </div>
+            <div class="flex justify-between text-lg">
+              <span>Tax (10%):</span>
+              <span class="font-bold">${{ cartTax().toFixed(2) }}</span>
+            </div>
+            @if (deliveryPrice() > 0) {
+              <div class="flex justify-between text-lg">
+                <span>Delivery:</span>
+                <span class="font-bold text-green-600">${{ deliveryPrice().toFixed(2) }}</span>
+              </div>
+            }
+            <div class="flex justify-between text-2xl font-bold text-green-600 py-2">
+              <span>Total:</span>
+              <span>${{ cartGrandTotal().toFixed(2) }}</span>
+            </div>
+          </div>
+
+          <!-- Checkout -->
+          <button
+            (click)="showCheckout.set(true)"
+            class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg mt-4 transition"
+          >
+            💳 Proceed to Checkout
+          </button>
+        </div>
+      } @else {
+        <div class="p-12 text-center text-gray-600">
+          <div class="text-6xl mb-4">🛒</div>
+          <p>Your cart is empty</p>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Checkout Modal -->
+  @if (showCheckout()) {
+    <div class="fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center p-4">
+      <div class="bg-white rounded-lg shadow-2xl max-w-md w-full p-8 max-h-96 overflow-y-auto">
+        <h2 class="text-2xl font-bold mb-6">💳 Checkout</h2>
+
+        <!-- Error Message -->
+        @if (paymentError()) {
+          <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+            <p class="text-red-700 text-sm">{{ paymentError() }}</p>
+          </div>
+        }
+
+        <div class="space-y-4 mb-6">
+          <!-- Customer Information -->
+          <input
+            type="text"
+            [(ngModel)]="customerName"
+            placeholder="Full Name"
+            [disabled]="isProcessingPayment()"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 disabled:bg-gray-100"
+          />
+          <input
+            type="email"
+            [(ngModel)]="customerEmail"
+            placeholder="Email"
+            [disabled]="isProcessingPayment()"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 disabled:bg-gray-100"
+          />
+          <input
+            type="tel"
+            [(ngModel)]="customerPhone"
+            placeholder="Phone"
+            [disabled]="isProcessingPayment()"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 disabled:bg-gray-100"
+          />
+          <textarea
+            [(ngModel)]="customerAddress"
+            placeholder="Delivery Address"
+            rows="3"
+            [disabled]="isProcessingPayment()"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 disabled:bg-gray-100"
+          ></textarea>
+
+          <!-- Order Summary -->
+          <div class="border-t-2 pt-4 mt-4">
+            <p class="flex justify-between text-sm mb-2">
+              <span>Subtotal:</span>
+              <span class="font-semibold">${{ cartTotal().toFixed(2) }}</span>
+            </p>
+            <p class="flex justify-between text-sm mb-2">
+              <span>Tax (10%):</span>
+              <span class="font-semibold">${{ cartTax().toFixed(2) }}</span>
+            </p>
+            <p class="flex justify-between text-lg font-bold text-green-600">
+              <span>Total:</span>
+              <span>${{ cartGrandTotal().toFixed(2) }}</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Payment Button -->
+        <button
+          (click)="checkout()"
+          [disabled]="isProcessingPayment()"
+          class="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold py-3 rounded-lg mb-3 transition flex items-center justify-center gap-2"
+        >
+          @if (isProcessingPayment()) {
+            <span class="animate-spin">⏳</span>
+            Processing...
+          } @else {
+            ✅ Complete Order
+          }
+        </button>
+
+        <!-- Back Button -->
+        <button
+          (click)="showCheckout.set(false)"
+          [disabled]="isProcessingPayment()"
+          class="w-full bg-gray-300 hover:bg-gray-400 disabled:bg-gray-200 text-gray-800 font-bold py-3 rounded-lg disabled:text-gray-400"
+        >
+          ← Back to Cart
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Delivery Options Panel -->
+  @if (showDeliveryOptions()) {
+    <div class="fixed inset-0 bg-black/40 z-[9998]" (click)="closeDeliveryOptions()"></div>
+    <div class="fixed right-0 top-0 h-screen w-96 bg-white border-l border-gray-200 overflow-y-auto z-[9999] shadow-2xl p-6">
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+          <mat-icon>local_shipping</mat-icon>
+          <span>Delivery Options</span>
+        </h3>
+        <button (click)="closeDeliveryOptions()" class="text-gray-500 hover:text-gray-700">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <!-- Delivery Address -->
+      <div class="mb-6">
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Delivery Address *</label>
+        <textarea
+          [(ngModel)]="deliveryAddress"
+          placeholder="Enter delivery address"
+          rows="3"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+        ></textarea>
+      </div>
+
+      <!-- Estimated Distance -->
+      <div class="mb-6">
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Distance (km)</label>
+        <input
+          type="number"
+          [(ngModel)]="estimatedDistance"
+          placeholder="0"
+          min="0"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+        />
+        <p class="text-xs text-gray-500 mt-1">Leave blank for default (10km)</p>
+      </div>
+
+      <!-- Available Services -->
+      <div class="mb-6">
+        <h4 class="text-sm font-semibold text-gray-900 mb-3">Select Service</h4>
+        <div class="space-y-2">
+          @for (service of deliveryServices(); track service.id) {
+            <button
+              (click)="selectDeliveryService(service)"
+              [class]="'w-full p-3 rounded-lg border-2 transition text-left ' +
+                (selectedDeliveryService()?.id === service.id
+                  ? 'border-green-600 bg-green-50'
+                  : 'border-gray-200 bg-white hover:border-green-300')"
+            >
+              <div class="flex justify-between items-start mb-1">
+                <span class="font-semibold text-gray-900 text-sm">{{ service.name }}</span>
+                <span class="text-green-600 font-bold text-xs">${{ service.pricing.basePrice.toFixed(2) }}</span>
+              </div>
+              <p class="text-xs text-gray-600">{{ service.description }}</p>
+              <p class="text-xs text-gray-500 mt-1">Est. {{ formatDeliveryTime(service) }}</p>
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Confirm Button -->
+      <button
+        (click)="closeDeliveryOptions()"
+        class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition"
+      >
+        <mat-icon class="inline mr-1">check</mat-icon>
+        Confirm Delivery
+      </button>
+    </div>
+  }
+
+  <!-- Footer -->
+  <footer class="bg-slate-900 text-gray-400 py-12 px-4 sm:px-6 lg:px-8 mt-12">
+    <div class="max-w-7xl mx-auto text-center">
+      <p>© 2024 MarketHub Gym Equipment. Build your dream physique with professional equipment!</p>
+    </div>
+  </footer>
+</div>

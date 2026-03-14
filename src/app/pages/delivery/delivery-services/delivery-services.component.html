@@ -1,0 +1,297 @@
+<div class="p-8 space-y-6">
+  <!-- Header -->
+  <div>
+    <h2 class="text-3xl font-bold text-gray-800 mb-2">Delivery Services</h2>
+    <p class="text-gray-600">Manage the services your delivery company offers (restaurant, retail, furniture, etc.)</p>
+  </div>
+
+  <!-- Add New Service Button -->
+  <div class="flex justify-between items-center">
+    <div class="text-sm text-gray-600">Total Services: {{ services().length }}</div>
+    <button
+      (click)="toggleAddForm()"
+      [class.bg-gray-600]="showAddForm()"
+      class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg font-medium transition flex items-center gap-2"
+    >
+      <mat-icon>{{ showAddForm() ? 'close' : 'add' }}</mat-icon>
+      {{ showAddForm() ? 'Cancel' : 'Add Service' }}
+    </button>
+  </div>
+
+  <!-- Add Service Form -->
+  <div *ngIf="showAddForm()" class="bg-white rounded-lg shadow-md p-6">
+    <h3 class="text-lg font-bold text-gray-800 mb-4">Add New Service</h3>
+    <form [formGroup]="serviceForm" (ngSubmit)="addService()" class="space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Service Name -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Service Name *</label>
+          <input
+            type="text"
+            formControlName="name"
+            placeholder="e.g., Express Food Delivery"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-teal-500"
+          />
+        </div>
+
+        <!-- Category -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Service Category *</label>
+          <select
+            formControlName="category"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-teal-500"
+          >
+            <option value="">Select Category</option>
+            <option value="food">Food Delivery</option>
+            <option value="retail">Retail Delivery</option>
+            <option value="furniture">Furniture Delivery</option>
+            <option value="packages">Package Delivery</option>
+            <option value="pharmacy">Pharmacy Delivery</option>
+            <option value="grocery">Grocery Delivery</option>
+            <option value="luggage">Luggage/Travel</option>
+            <option value="perishable">Perishable Goods</option>
+          </select>
+        </div>
+
+        <!-- Base Price -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Base Price ($) *</label>
+          <input
+            type="number"
+            formControlName="basePrice"
+            placeholder="5.00"
+            step="0.01"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-teal-500"
+          />
+        </div>
+
+        <!-- Per KM Rate -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Per KM Rate ($/km) *</label>
+          <input
+            type="number"
+            formControlName="perKmRate"
+            placeholder="1.50"
+            step="0.01"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-teal-500"
+          />
+        </div>
+
+        <!-- Per KG Rate -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Per KG Rate ($/kg) (Optional)</label>
+          <input
+            type="number"
+            formControlName="perKgRate"
+            placeholder="0.50"
+            step="0.01"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-teal-500"
+          />
+        </div>
+
+        <!-- Estimated Delivery Time -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Estimated Delivery Time (minutes) *</label>
+          <input
+            type="number"
+            formControlName="estimatedDeliveryTime"
+            placeholder="30"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-teal-500"
+          />
+        </div>
+
+        <!-- Max Distance -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Max Distance (km) (Optional)</label>
+          <input
+            type="number"
+            formControlName="maxDistance"
+            placeholder="50"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-teal-500"
+          />
+        </div>
+
+        <!-- Max Weight -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Max Weight (kg) (Optional)</label>
+          <input
+            type="number"
+            formControlName="maxWeight"
+            placeholder="100"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-teal-500"
+          />
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+        <textarea
+          formControlName="description"
+          placeholder="Describe this service..."
+          rows="3"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-teal-500"
+        ></textarea>
+      </div>
+
+      <!-- Features Checkboxes -->
+      <div class="bg-gray-50 p-4 rounded-lg">
+        <p class="text-sm font-medium text-gray-700 mb-3">Features</p>
+        <div class="grid grid-cols-2 gap-3">
+          <label class="flex items-center gap-2">
+            <input type="checkbox" formControlName="realTimeTracking" class="rounded" />
+            <span class="text-sm text-gray-700">Real-time Tracking</span>
+          </label>
+          <label class="flex items-center gap-2">
+            <input type="checkbox" formControlName="insurance" class="rounded" />
+            <span class="text-sm text-gray-700">Insurance</span>
+          </label>
+          <label class="flex items-center gap-2">
+            <input type="checkbox" formControlName="temperature_control" class="rounded" />
+            <span class="text-sm text-gray-700">Temperature Control</span>
+          </label>
+          <label class="flex items-center gap-2">
+            <input type="checkbox" formControlName="signature_required" class="rounded" />
+            <span class="text-sm text-gray-700">Signature Required</span>
+          </label>
+          <label class="flex items-center gap-2">
+            <input type="checkbox" formControlName="scheduled_delivery" class="rounded" />
+            <span class="text-sm text-gray-700">Scheduled Delivery</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <div class="flex gap-2 justify-end">
+        <button
+          type="button"
+          (click)="toggleAddForm()"
+          class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          [disabled]="!serviceForm.valid || isSubmitting()"
+          class="px-4 py-2 bg-teal-600 hover:bg-teal-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition"
+        >
+          {{ isSubmitting() ? 'Adding...' : 'Add Service' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Services Grid -->
+  <div *ngIf="isLoading()" class="text-center py-12">
+    <p class="text-gray-600">Loading services...</p>
+  </div>
+
+  <div *ngIf="!isLoading() && services().length === 0" class="bg-white rounded-lg shadow-md p-12 text-center">
+    <mat-icon class="text-6xl text-gray-300 mx-auto mb-4">local_shipping</mat-icon>
+    <p class="text-gray-600 text-lg">No services added yet</p>
+    <p class="text-gray-500 text-sm mt-2">Click "Add Service" to start offering delivery services</p>
+  </div>
+
+  <div *ngIf="!isLoading() && services().length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div *ngFor="let service of services(); trackBy: trackByServiceId" class="bg-white rounded-lg shadow-md overflow-hidden border-l-4 border-teal-500 hover:shadow-lg transition">
+      <!-- Service Header -->
+      <div class="bg-gradient-to-r from-teal-500 to-teal-600 p-4 text-white">
+        <div class="flex items-start justify-between">
+          <div>
+            <h3 class="text-lg font-bold">{{ service.name }}</h3>
+            <p class="text-xs text-teal-100 mt-1">{{ getCategoryLabel(service.category) }}</p>
+          </div>
+          <span
+            [ngClass]="service.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
+            class="text-xs font-bold px-2 py-1 rounded"
+          >
+            {{ service.isActive ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Service Details -->
+      <div class="p-4 space-y-3">
+        <!-- Description -->
+        <p *ngIf="service.description" class="text-sm text-gray-600">{{ service.description }}</p>
+
+        <!-- Pricing -->
+        <div class="border-t border-gray-200 pt-3">
+          <p class="text-xs font-medium text-gray-700 uppercase mb-2">Pricing</p>
+          <div class="space-y-1 text-sm">
+            <div class="flex justify-between">
+              <span class="text-gray-600">Base Price:</span>
+              <span class="font-bold">${{ formatPrice(service.basePrice) }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">Per KM:</span>
+              <span class="font-bold">${{ formatPrice(service.perKmRate) }}/km</span>
+            </div>
+            <div *ngIf="service.perKgRate" class="flex justify-between">
+              <span class="text-gray-600">Per KG:</span>
+              <span class="font-bold">${{ formatPrice(service.perKgRate) }}/kg</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Delivery Info -->
+        <div class="border-t border-gray-200 pt-3">
+          <p class="text-xs font-medium text-gray-700 uppercase mb-2">Delivery Info</p>
+          <div class="space-y-1 text-sm">
+            <div class="flex justify-between">
+              <span class="text-gray-600">Est. Time:</span>
+              <span class="font-bold">{{ service.estimatedDeliveryTime }} min</span>
+            </div>
+            <div *ngIf="service.maxDistance" class="flex justify-between">
+              <span class="text-gray-600">Max Distance:</span>
+              <span class="font-bold">{{ service.maxDistance }} km</span>
+            </div>
+            <div *ngIf="service.maxWeight" class="flex justify-between">
+              <span class="text-gray-600">Max Weight:</span>
+              <span class="font-bold">{{ service.maxWeight }} kg</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Features -->
+        <div class="border-t border-gray-200 pt-3">
+          <p class="text-xs font-medium text-gray-700 uppercase mb-2">Features</p>
+          <div class="space-y-1 text-sm">
+            <p *ngIf="service.features.realTimeTracking" class="flex items-center gap-2">
+              <mat-icon class="text-green-600 text-sm">check</mat-icon> Real-time Tracking
+            </p>
+            <p *ngIf="service.features.insurance" class="flex items-center gap-2">
+              <mat-icon class="text-green-600 text-sm">check</mat-icon> Insurance
+            </p>
+            <p *ngIf="service.features.temperature_control" class="flex items-center gap-2">
+              <mat-icon class="text-green-600 text-sm">check</mat-icon> Temperature Control
+            </p>
+            <p *ngIf="service.features.signature_required" class="flex items-center gap-2">
+              <mat-icon class="text-green-600 text-sm">check</mat-icon> Signature Required
+            </p>
+            <p *ngIf="service.features.scheduled_delivery" class="flex items-center gap-2">
+              <mat-icon class="text-green-600 text-sm">check</mat-icon> Scheduled Delivery
+            </p>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="border-t border-gray-200 pt-3 flex gap-2">
+          <button
+            (click)="toggleService(service)"
+            [ngClass]="service.isActive ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'"
+            class="flex-1 text-white px-3 py-2 rounded-lg text-sm font-medium transition"
+          >
+            {{ service.isActive ? 'Deactivate' : 'Activate' }}
+          </button>
+          <button
+            (click)="deleteService(service.id)"
+            class="flex-1 bg-red-100 hover:bg-red-200 text-red-700 px-3 py-2 rounded-lg text-sm font-medium transition"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

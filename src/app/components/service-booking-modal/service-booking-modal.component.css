@@ -1,0 +1,11 @@
+/* Service Booking Modal Styles */
+:host {
+  display: block;
+}
+
+/* Smooth transitions */
+.bg-purple-600,
+.text-purple-600,
+.border-purple-600 {
+  transition: all 0.3s ease;
+}
