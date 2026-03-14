@@ -16,17 +16,21 @@ export class AngularFireUploadService {
   /**
    * Upload a single image to backend
    * @param file - Image file to upload
-   * @param folder - Folder name (e.g., 'products')
+   * @param folder - Folder name (e.g., 'products' or 'products/vendorId/productId')
    * @returns Observable with the download URL
    */
   uploadImage(file: File, folder: string): Observable<string> {
     const formData = new FormData();
     formData.append('image', file);
 
+    // Extract the first part of the folder path (e.g., 'products' from 'products/vendorId/productId')
+    const folderName = folder.split('/')[0] || 'products';
+
     console.log(`📤 Uploading: ${file.name} to folder: ${folder}`);
+    console.log(`📤 Backend endpoint: ${this.apiUrl}/single/${folderName}`);
 
     return this.http.post<{success: boolean, url: string}>(
-      `${this.apiUrl}/single/${folder}`,
+      `${this.apiUrl}/single/${folderName}`,
       formData
     ).pipe(
       map((response: any) => {
@@ -43,7 +47,7 @@ export class AngularFireUploadService {
   /**
    * Upload multiple images to backend
    * @param files - Array of image files to upload
-   * @param folderPath - Folder name for storage (e.g., 'products')
+   * @param folderPath - Folder name for storage (e.g., 'products' or 'products/vendorId/productId')
    * @returns Observable with an array of download URLs
    */
   uploadMultipleImages(files: File[], folderPath: string): Observable<string[]> {
@@ -52,15 +56,20 @@ export class AngularFireUploadService {
       formData.append('images', file);
     });
 
+    // Extract the first part of the folder path (e.g., 'products' from 'products/vendorId/productId')
+    const folderName = folderPath.split('/')[0] || 'products';
+
     console.log(`📤 Starting upload of ${files.length} file(s) to folder: ${folderPath}`);
+    console.log(`📤 Backend endpoint: ${this.apiUrl}/multiple/${folderName}`);
 
     return this.http.post<{success: boolean, urls: string[]}>(
-      `${this.apiUrl}/multiple/${folderPath}`,
+      `${this.apiUrl}/multiple/${folderName}`,
       formData
     ).pipe(
       map((response: any) => {
         if (response.success && response.urls && response.urls.length > 0) {
-          console.log(`✅ All files uploaded successfully!`);
+          console.log(`✅ All files uploaded successfully! Count: ${response.urls.length}`);
+          console.log(`📸 URLs:`, response.urls);
           return response.urls;
         } else {
           throw new Error(`Failed to upload images: ${response.message}`);
