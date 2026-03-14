@@ -1,11 +1,10 @@
 <div class="min-h-screen bg-white">
   <app-header></app-header>
 
-  <!-- Sticky Header with Search -->
-  <div class="sticky top-16 z-20 bg-white border-b border-gray-200 shadow-sm">
-    <div class="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4">
-      <!-- Mobile Layout (single row) -->
-      <div class="flex items-center justify-between gap-3 md:hidden">
+  <!-- Sticky Header with Search (Mobile Only) -->
+  <div class="sticky top-16 z-20 bg-white border-b border-gray-200 shadow-sm lg:hidden">
+    <div class="max-w-full px-3 py-3">
+      <div class="flex items-center justify-between gap-3">
         <!-- Mobile Search Bar -->
         <div class="flex-1 min-w-0">
           <div class="relative">
@@ -21,7 +20,7 @@
           </div>
         </div>
 
-        <!-- Mobile Cart Button Only -->
+        <!-- Mobile Cart Button -->
         <button
           (click)="showCart.set(!showCart())"
           class="relative bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-full font-semibold transition flex items-center gap-1 min-h-[44px] min-w-[44px]"
@@ -34,9 +33,13 @@
           }
         </button>
       </div>
+    </div>
+  </div>
 
-      <!-- Desktop Layout (search + currency + cart) -->
-      <div class="hidden md:flex items-center justify-between gap-4">
+  <!-- Desktop Header with Search (Desktop Only) -->
+  <div class="hidden lg:block sticky top-16 z-20 bg-white border-b border-gray-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8 py-4">
+      <div class="flex items-center justify-between gap-4">
         <!-- Search Bar -->
         <div class="flex-1">
           <div class="relative">
@@ -184,8 +187,8 @@
           </div>
         </div>
       } @else {
-      <!-- Products Grid - Mobile First -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5 lg:gap-6">
+      <!-- Products Grid - Mobile First (1 col on mobile, 2 on tablet, 3+ on desktop) -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-5">
         @for (product of filteredProducts; track product.id) {
           <div class="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 group cursor-pointer active:scale-95 sm:active:scale-100" (click)="openQuickView(product)">
             <!-- Product Image Container -->
