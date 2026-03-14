@@ -131,7 +131,7 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 p-3 sm:p-4 md:p-6">
+    <main class="flex-1 p-3 sm:p-4 md:p-6 w-full overflow-hidden">
       <!-- Mobile Filters -->
       <div class="lg:hidden flex gap-2 mb-4 sm:mb-6 overflow-x-auto pb-2 sm:pb-4">
         <button
@@ -187,8 +187,8 @@
           </div>
         </div>
       } @else {
-      <!-- Products Grid - Mobile First (1 col on mobile, 2 on tablet, 3+ on desktop) -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+      <!-- Products Grid: 1 col mobile, 2 col tablet (640px+), 3 col desktop (1024px+), 4 col xl (1280px+) -->
+      <div class="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
         @for (product of filteredProducts; track product.id) {
           <div class="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 group cursor-pointer active:scale-95 sm:active:scale-100" (click)="openQuickView(product)">
             <!-- Product Image Container -->
