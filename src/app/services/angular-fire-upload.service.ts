@@ -7,10 +7,11 @@ import { Observable, from } from 'rxjs';
 })
 export class AngularFireUploadService {
   // Dependency injection for Firebase storage
-  private storage = inject(Storage);
+  private storage: Storage;
 
   constructor() {
-    console.log('✅ AngularFireUploadService initialized');
+    this.storage = inject(Storage);
+    console.log('✅ AngularFireUploadService initialized with Firebase Storage');
   }
 
   /**
