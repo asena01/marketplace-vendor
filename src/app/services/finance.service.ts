@@ -47,8 +47,8 @@ export interface FinanceData {
   providedIn: 'root'
 })
 export class FinanceService {
-  private apiUrl = 'http://localhost:5001/finance';
-  //private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/finance';
+  //private apiUrl = 'http://localhost:5001/finance';
+  private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/finance';
   constructor(private http: HttpClient) {}
 
   /**

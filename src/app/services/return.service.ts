@@ -67,10 +67,10 @@ export interface ReturnResponse {
 })
 // Updated interface with additional properties for customer profile display
 export class ReturnService {
-  private apiUrl = 'http://localhost:5001/returns';
-  private reasonsUrl = 'http://localhost:5001/return-reasons';
-  /*private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/returns';
-  private reasonsUrl = 'https://api-qpczzmaezq-uc.a.run.app/return-reasons';*/
+  /*private apiUrl = 'http://localhost:5001/returns';
+  private reasonsUrl = 'http://localhost:5001/return-reasons';*/
+  private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/returns';
+  private reasonsUrl = 'https://api-qpczzmaezq-uc.a.run.app/return-reasons';
   constructor(private http: HttpClient) {}
 
   // ==================== RETURN MANAGEMENT ====================

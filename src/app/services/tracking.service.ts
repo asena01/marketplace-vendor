@@ -36,8 +36,8 @@ export interface TrackingResponse {
   providedIn: 'root'
 })
 export class TrackingService {
-  private apiUrl = 'http://localhost:5001/orders';
-  //private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/tours';
+  //private apiUrl = 'http://localhost:5001/orders';
+  private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/tours';
   constructor(private http: HttpClient) {}
 
   /**

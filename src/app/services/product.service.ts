@@ -148,8 +148,8 @@ export class ProductService {
   // ⚠️ REPLACED: Firebase Cloud Functions endpoint with local backend API
   // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api/products'
   // NEW: Local Node.js/Express backend
-  private apiUrl = 'http://localhost:5001/products';
-  //private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/products';
+  //private apiUrl = 'http://localhost:5001/products';
+  private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/products';
   constructor(private http: HttpClient) {}
 
   // Get all products with optional filters

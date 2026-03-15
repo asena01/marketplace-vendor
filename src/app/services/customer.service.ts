@@ -50,8 +50,10 @@ export interface CustomerResponse<T> {
   providedIn: 'root'
 })
 export class CustomerService {
-  private apiUrl = 'http://localhost:5001/customers';
-  //private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/customers';
+  //private apiUrl = 'http://localhost:5001/customers';
+  //private apiUrl2 = 'http://localhost:5001';
+  private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/customers';
+  private apiUrl2 = 'https://api-qpczzmaezq-uc.a.run.app';
   constructor(private http: HttpClient) {}
 
   // Get business customers
@@ -150,12 +152,12 @@ export class CustomerService {
     if (!userId) {
       console.warn('⚠️ No user ID found in localStorage');
       return this.http.get<CustomerResponse<any>>(
-        `http://localhost:5001/orders?page=${page}&limit=${limit}`
+        `${this.apiUrl2}/orders?page=${page}&limit=${limit}`
       );
     }
     // Call the orders API with customer ID endpoint
     return this.http.get<CustomerResponse<any>>(
-      `http://localhost:5001/orders/customer/${userId}`
+      `${this.apiUrl2}/orders/customer/${userId}`
     );
   }
 
@@ -173,7 +175,7 @@ export class CustomerService {
     }
     // Call restaurants API to get orders by customer ID
     return this.http.get<CustomerResponse<any>>(
-      `http://localhost:5001/restaurants/customer/${userId}`
+      `${this.apiUrl2}/restaurants/customer/${userId}`
     );
   }
 
@@ -183,18 +185,28 @@ export class CustomerService {
     if (!userId) {
       console.warn('⚠️ No user ID found in localStorage for shopping orders');
       return this.http.get<CustomerResponse<any>>(
-        `http://localhost:5001/orders?type=shopping`
+        `${this.apiUrl2}/orders?type=shopping`
       );
     }
     // Call the orders API with customer ID endpoint filtered by shopping service type
     return this.http.get<CustomerResponse<any>>(
-      `http://localhost:5001/orders/customer/${userId}?type=shopping`
+      `${this.apiUrl2}/orders/customer/${userId}?type=shopping`
     );
   }
 
   // Hotel bookings
   getMyHotelBookings(): Observable<CustomerResponse<any>> {
-    return this.http.get<CustomerResponse<any>>(`${this.apiUrl}/hotel-bookings`);
+     const userId = localStorage.getItem('userId');
+    if (!userId) {
+      console.warn('⚠️ No user ID found in localStorage for food orders');
+      // Return empty response
+      return of({
+        success: false,
+        data: [],
+        message: 'No user ID found'
+      } as any);
+    }
+    return this.http.get<CustomerResponse<any>>(`${this.apiUrl2}/hotel-bookings/customer/${userId}`);
   }
 
   orderRoomService(roomServiceData: any): Observable<CustomerResponse<any>> {
@@ -203,7 +215,17 @@ export class CustomerService {
 
   // Service bookings
   getServiceBookings(): Observable<CustomerResponse<any>> {
-    return this.http.get<CustomerResponse<any>>(`${this.apiUrl}/service-bookings`);
+      const userId = localStorage.getItem('userId');
+    if (!userId) {
+      console.warn('⚠️ No user ID found in localStorage for food orders');
+      // Return empty response
+      return of({
+        success: false,
+        data: [],
+        message: 'No user ID found'
+      } as any);
+    }
+    return this.http.get<CustomerResponse<any>>(`${this.apiUrl2}/service-bookings/customer/${userId}`);
   }
 
   getCustomerServices(page: number = 1, limit: number = 20): Observable<CustomerResponse<any>> {
@@ -221,7 +243,17 @@ export class CustomerService {
 
   // Tour bookings
   getMyTourBookings(): Observable<CustomerResponse<any>> {
-    return this.http.get<CustomerResponse<any>>(`${this.apiUrl}/tour-bookings`);
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      console.warn('⚠️ No user ID found in localStorage for food orders');
+      // Return empty response
+      return of({
+        success: false,
+        data: [],
+        message: 'No user ID found'
+      } as any);
+    }
+    return this.http.get<CustomerResponse<any>>(`${this.apiUrl2}/tour-bookings/customer/${userId}`);
   }
 
   // Reviews
@@ -237,7 +269,7 @@ export class CustomerService {
   getVendorChats(): Observable<CustomerResponse<any>> {
     const userId = localStorage.getItem('userId');
     const params = userId ? `?userId=${userId}` : '';
-    return this.http.get<CustomerResponse<any>>(`${this.apiUrl}/vendor-chats${params}`);
+    return this.http.get<CustomerResponse<any>>(`${this.apiUrl2}/customers/vendor-chats${params}`);
   }
 
   startVendorChat(vendorType?: string, bookingId?: string, vendorName?: string): Observable<CustomerResponse<any>> {

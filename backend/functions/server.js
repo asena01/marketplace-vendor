@@ -510,10 +510,10 @@ app.use((req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+/*app.listen(PORT, () => {
   console.log(`🚀 MarketHub Backend running on http://localhost:${PORT}`);
   console.log(`📊 API Health Check: http://localhost:${PORT}/health`);
   console.log('✅ All routes loaded successfully');
-});
+});*/
 
 export default app;

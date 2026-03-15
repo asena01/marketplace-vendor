@@ -191,14 +191,14 @@ import { AuthModalService } from '../../services/auth-modal.service';
             >
               💇 Hair Salon
             </button>
-            <!--<button
+            <button
               type="button"
               (click)="loginAsDemo('gym')"
               [disabled]="isLoading()"
               class="border border-yellow-600 text-yellow-700 font-semibold py-2 rounded-lg hover:bg-yellow-50 transition disabled:opacity-50 text-xs"
             >
               🏋️ Gym
-            </button>-->
+            </button>
             <button
               type="button"
               (click)="loginAsDemo('tours')"
@@ -421,13 +421,13 @@ export class LoginOverlayComponent implements OnInit {
       'furniture': ['/retail-dashboard'],
       'hair-salon': ['/service-dashboard'],
       'pet-store': ['/retail-dashboard'],
-      'gym': ['/service-dashboard'],
+      'gym': ['/retail-dashboard'],
       'car-rental': ['/service-dashboard'],
       'event-center': ['/service-dashboard'],
       'salon-spa': ['/service-dashboard']
     };
 
-    const route = dashboardRoutes[vendorType] || ['/vendor-dashboard', vendorType];
+    const route = dashboardRoutes[vendorType] || ['/retail-dashboard', vendorType];
     this.router.navigate(route);
   }
 }

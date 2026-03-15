@@ -69,8 +69,8 @@ export interface OrderResponse {
   providedIn: 'root'
 })
 export class OrderService {
-  private apiUrl = 'http://localhost:5001/orders';
-  //private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/orders';
+  //private apiUrl = 'http://localhost:5001/orders';
+  private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/orders';
   constructor(private http: HttpClient) {}
 
   /**

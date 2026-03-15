@@ -1,128 +1,91 @@
-import {inject, Injectable} from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
-import { apiConfig } from '../config/api-config';
+import { inject, Injectable } from '@angular/core';
+import { AngularFireStorage } from '@angular/fire/compat/storage'; // If using compat
+import { Storage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from '@angular/fire/storage';
+import { Observable, from } from 'rxjs';
+import { finalize, switchMap } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AngularFireUploadService {
-  private apiUrl: string;
-  private http = inject(HttpClient);
+  private storage = inject(Storage);
 
   constructor() {
-    this.apiUrl = `${apiConfig.getApiBaseUrl()}/api/upload`;
-    console.log('✅ AngularFireUploadService initialized with API URL:', this.apiUrl);
+    console.log('✅ AngularFireUploadService initialized with Firebase Storage');
   }
 
   /**
-   * Upload a single image to backend
-   * @param file - Image file to upload
-   * @param folder - Folder name (e.g., 'products' or 'products/vendorId/productId')
-   * @returns Observable with the download URL
+   * Upload a single file directly to Firebase Storage
+   * @param file - File to upload
+   * @param folderPath - Folder path in storage, e.g., 'products/vendorId'
+   * @returns Observable of the download URL
    */
-  uploadImage(file: File, folder: string): Observable<string> {
-    const formData = new FormData();
-    formData.append('image', file);
+  uploadImage(file: File, folderPath: string): Observable<string> {
+    const timestamp = Date.now();
+    const folder = folderPath || 'products';
+    const storageRef = ref(this.storage, `${folder}/${timestamp}-${file.name}`);
 
-    // Extract the first part of the folder path (e.g., 'products' from 'products/vendorId/productId')
-    const folderName = folder.split('/')[0] || 'products';
+    const task = uploadBytesResumable(storageRef, file);
 
-    console.log(`📤 Uploading: ${file.name} to folder: ${folder}`);
-    console.log(`📤 Backend endpoint: ${this.apiUrl}/single/${folderName}`);
-
-    return this.http.post<{success: boolean, url: string}>(
-      `${this.apiUrl}/single/${folderName}`,
-      formData
-    ).pipe(
-      map((response: any) => {
-        if (response.success && response.url) {
-          // Convert relative URL to absolute URL if needed
-          const absoluteUrl = response.url.startsWith('http')
-            ? response.url
-            : `http://localhost:5001${response.url}`;
-
-          console.log(`🔗 Upload successful for ${file.name}: ${absoluteUrl}`);
-          return absoluteUrl;
-        } else {
-          throw new Error(`Failed to upload ${file.name}: ${response.message}`);
+    return new Observable<string>((observer) => {
+      task.on(
+        'state_changed',
+        (snapshot) => {
+          // Optional: progress tracking
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log(`📤 Upload progress: ${progress.toFixed(2)}%`);
+        },
+        (error) => {
+          console.error('❌ Upload error:', error);
+          observer.error(error);
+        },
+        async () => {
+          try {
+            const downloadUrl = await getDownloadURL(task.snapshot.ref);
+            console.log('✅ Upload complete:', downloadUrl);
+            observer.next(downloadUrl);
+            observer.complete();
+          } catch (err) {
+            observer.error(err);
+          }
         }
-      })
-    );
+      );
+    });
   }
 
   /**
-   * Upload multiple images to backend
-   * @param files - Array of image files to upload
-   * @param folderPath - Folder name for storage (e.g., 'products' or 'products/vendorId/productId')
-   * @returns Observable with an array of download URLs
+   * Upload multiple files
+   * @param files - Array of files
+   * @param folderPath - Folder path in storage
+   * @returns Observable with array of download URLs
    */
   uploadMultipleImages(files: File[], folderPath: string): Observable<string[]> {
-    const formData = new FormData();
-    files.forEach((file, index) => {
-      formData.append('images', file);
-    });
+  const promises = files.map(file =>
+    this.uploadImage(file, folderPath).toPromise()
+  );
 
-    // Extract the first part of the folder path (e.g., 'products' from 'products/vendorId/productId')
-    const folderName = folderPath.split('/')[0] || 'products';
-
-    console.log(`📤 Starting upload of ${files.length} file(s) to folder: ${folderPath}`);
-    console.log(`📤 Backend endpoint: ${this.apiUrl}/multiple/${folderName}`);
-
-    return this.http.post<{success: boolean, urls: string[]}>(
-      `${this.apiUrl}/multiple/${folderName}`,
-      formData
-    ).pipe(
-      map((response: any) => {
-        if (response.success && response.urls && response.urls.length > 0) {
-          // Convert relative URLs to absolute URLs if needed
-          const absoluteUrls = response.urls.map((url: string) => {
-            if (url.startsWith('http')) {
-              return url; // Already absolute
-            } else {
-              return `http://localhost:5001${url}`; // Make it absolute
-            }
-          });
-
-          console.log(`✅ All files uploaded successfully! Count: ${absoluteUrls.length}`);
-          console.log(`📸 URLs:`, absoluteUrls);
-          return absoluteUrls;
-        } else {
-          throw new Error(`Failed to upload images: ${response.message}`);
-        }
-      })
-    );
-  }
+  return from(
+    Promise.all(promises).then(urls => urls.filter((u): u is string => !!u))
+  );
+}
 
   /**
-   * Delete an image from backend
-   * @param downloadUrl - The download URL of the image to delete
-   * @returns Observable<void>
+   * Delete a file by its Firebase Storage URL
+   * @param downloadUrl - Full Firebase Storage URL
+   * @returns Promise<void>
    */
-  deleteImage(downloadUrl: string): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-      try {
-        console.log(`🗑️ Deleting: ${downloadUrl}`);
-
-        this.http.post(`${this.apiUrl}/delete-by-url`, { url: downloadUrl })
-          .subscribe({
-            next: (response: any) => {
-              if (response.success) {
-                console.log(`✅ Deleted successfully`);
-                resolve();
-              } else {
-                reject(new Error(response.message || 'Failed to delete image'));
-              }
-            },
-            error: (error: any) => {
-              console.error(`❌ Failed to delete:`, error.message);
-              reject(error);
-            }
-          });
-      } catch (error: any) {
-        console.error(`❌ Error during deletion:`, error.message);
-        reject(error);
-      }
-    });
+  async deleteImage(downloadUrl: string): Promise<void> {
+    try {
+      // Convert URL to storage path
+      const storageBase = `https://firebasestorage.googleapis.com/v0/b/${environment.firebaseConfig.storageBucket}/o/`;
+      const encodedPath = downloadUrl.replace(storageBase, '').split('?')[0];
+      const fileRef = ref(this.storage, decodeURIComponent(encodedPath));
+      await deleteObject(fileRef);
+      console.log('🗑️ File deleted successfully:', downloadUrl);
+    } catch (error) {
+      console.error('❌ Error deleting file:', error);
+      throw error;
+    }
   }
 }

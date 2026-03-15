@@ -35,15 +35,15 @@ export class ApiConfigService {
     // Development environment (localhost)
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
       return {
-        apiBaseUrl: 'http://localhost:5001',
-        uploadBaseUrl: 'http://localhost:5001/uploads',
+        apiBaseUrl: 'http://127.0.0.1:5001/uni-backend01/us-central1/api',
+        uploadBaseUrl: 'http://127.0.0.1:5001/uni-backend01/us-central1/api/uploads',
         environment: 'development'
       };
     }
 
     // Production environment
     // Update these URLs based on your production domain
-    const productionDomain = 'https://api.yourdomain.com'; // Update with your domain
+    const productionDomain = 'https://api-qpczzmaezq-uc.a.run.app'; // Update with your domain
     return {
       apiBaseUrl: productionDomain,
       uploadBaseUrl: `${productionDomain}/uploads`,

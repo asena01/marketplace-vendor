@@ -61,8 +61,8 @@ export class ServiceService {
   // ⚠️ REPLACED: Firebase Cloud Functions endpoint with local backend API
   // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api/services'
   // NEW: Local Node.js/Express backend
-  private apiUrl = 'http://localhost:5001/services';
-  //private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/services';
+  //private apiUrl = 'http://localhost:5001/services';
+  private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/services';
   constructor(private http: HttpClient) {}
 
   /**

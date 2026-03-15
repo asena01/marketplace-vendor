@@ -31,8 +31,8 @@ export class AuthService {
   // ⚠️ REPLACED: Firebase Cloud Functions endpoint with local backend API
   // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api'
   // NEW: Local Node.js/Express backend
-  private apiUrl = 'http://localhost:5001';
-  //private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app';
+  //private apiUrl = 'http://localhost:5001';
+  private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app';
   private tokenKey = 'token';
   private userKey = 'user';
 

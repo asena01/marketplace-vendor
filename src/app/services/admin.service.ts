@@ -17,8 +17,8 @@ export class AdminService {
   // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api/admin'
   // NEW: Local Node.js/Express backend 'https://api-qpczzmaezq-uc.a.run.app'
   //private apiUrl = 'http://localhost:5001/admin';
-  private apiUrl = 'http://localhost:5001/admin';
-  //private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/admin';
+  //private apiUrl = 'http://localhost:5001/admin';
+  private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/admin';
 
   constructor(private http: HttpClient) {}
 

@@ -39,8 +39,8 @@ export interface NotificationResponse<T> {
   providedIn: 'root'
 })
 export class NotificationService {
-  private apiUrl = 'http://localhost:5001/notifications';
-  //private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/notifications';
+  //private apiUrl = 'http://localhost:5001/notifications';
+  private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/notifications';
   private userId: string = '';
   private businessId: string = '';
   private businessType: string = '';

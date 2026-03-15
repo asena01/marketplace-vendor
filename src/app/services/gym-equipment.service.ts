@@ -36,8 +36,8 @@ export class GymEquipmentService {
   // ⚠️ REPLACED: Firebase Cloud Functions endpoint with local backend API
   // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api/gym-equipment'
   // NEW: Local Node.js/Express backend
-  private apiUrl = 'http://localhost:5001/gym-equipment';
-  //private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/gym-equipment';
+  //private apiUrl = 'http://localhost:5001/gym-equipment';
+  private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/gym-equipment';
   constructor(private http: HttpClient) {}
 
   getAllEquipment(page: number = 1, limit: number = 10, filters?: any): Observable<GymResponse> {

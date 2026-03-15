@@ -6,8 +6,8 @@ import { Observable, BehaviorSubject } from 'rxjs';
   providedIn: 'root'
 })
 export class PermissionService {
-  private apiUrl = 'http://localhost:5001/admin';
-  //private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/admin';
+  //private apiUrl = 'http://localhost:5001/admin';
+  private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/admin';
   userPermissions = signal<string[]>([]);
   userRole = signal<any>(null);
   isLoading = signal(false);
