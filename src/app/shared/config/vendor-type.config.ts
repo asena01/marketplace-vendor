@@ -245,6 +245,54 @@ export const VENDOR_TYPE_CONFIG: { [key: string]: VendorTypeConfig } = {
       { name: 'material', label: 'Material', type: 'text', required: false, group: 'Details' },
       { name: 'difficulty', label: 'Difficulty Level', type: 'select', required: false, options: ['Beginner', 'Intermediate', 'Advanced'], group: 'Details' }
     ]
+  },
+
+  furniture: {
+    id: 'furniture',
+    name: 'Furniture',
+    displayName: 'Furniture Store',
+    icon: 'chair',
+    dashboardTitle: 'Furniture Store Management',
+    dashboardDescription: 'Manage furniture inventory, specifications, shipping, and assembly details.',
+    productLabel: 'Furniture Item',
+    color: 'from-amber-700 to-yellow-600',
+    emoji: '🪑',
+    categories: [
+      'sofas',
+      'chairs',
+      'tables',
+      'beds',
+      'cabinets',
+      'shelves',
+      'desks',
+      'outdoor-furniture',
+      'lighting',
+      'decor'
+    ],
+    productFields: [
+      { name: 'name', label: 'Furniture Name', type: 'text', required: true, placeholder: 'e.g., Modern Leather Sofa' },
+      { name: 'category', label: 'Category', type: 'select', required: true },
+      { name: 'description', label: 'Description', type: 'textarea', required: true },
+      { name: 'price', label: 'Price', type: 'number', required: true, placeholder: '299.99' },
+      { name: 'originalPrice', label: 'Original Price', type: 'number', required: false },
+      { name: 'stock', label: 'Stock Quantity', type: 'number', required: true },
+      { name: 'sku', label: 'SKU', type: 'text', required: false },
+      { name: 'images', label: 'Product Images', type: 'array', required: true },
+      { name: 'material', label: 'Material', type: 'multiselect', required: false, group: 'Specifications', options: ['Wood', 'Metal', 'Leather', 'Fabric', 'Glass', 'Plastic', 'Composite', 'Upholstery'] },
+      { name: 'finish', label: 'Finish', type: 'select', required: false, group: 'Specifications', options: ['Matte', 'Glossy', 'Satin', 'Rustic', 'Polished', 'Natural'] },
+      { name: 'color', label: 'Available Colors', type: 'multiselect', required: false, group: 'Variants', options: ['Black', 'White', 'Brown', 'Gray', 'Beige', 'Cream', 'Red', 'Blue', 'Green', 'Natural Wood', 'Walnut', 'Oak'] },
+      { name: 'style', label: 'Style', type: 'select', required: false, group: 'Details', options: ['Modern', 'Contemporary', 'Classic', 'Traditional', 'Rustic', 'Industrial', 'Minimalist', 'Scandinavian', 'Mid-Century'] },
+      { name: 'brand', label: 'Brand', type: 'text', required: false, group: 'Details' },
+      { name: 'width', label: 'Width (inches)', type: 'number', required: false, group: 'Dimensions' },
+      { name: 'height', label: 'Height (inches)', type: 'number', required: false, group: 'Dimensions' },
+      { name: 'depth', label: 'Depth (inches)', type: 'number', required: false, group: 'Dimensions' },
+      { name: 'weight', label: 'Weight (lbs)', type: 'number', required: false, group: 'Dimensions' },
+      { name: 'warranty', label: 'Warranty Period (years)', type: 'number', required: false, group: 'Details' },
+      { name: 'assembly', label: 'Assembly Required', type: 'checkbox', required: false, group: 'Shipping & Assembly' },
+      { name: 'assemblyTime', label: 'Assembly Time (minutes)', type: 'number', required: false, group: 'Shipping & Assembly' },
+      { name: 'shipping', label: 'Free Shipping Available', type: 'checkbox', required: false, group: 'Shipping & Assembly' },
+      { name: 'isFeatured', label: 'Featured Product', type: 'checkbox', required: false }
+    ]
   }
 };
 
