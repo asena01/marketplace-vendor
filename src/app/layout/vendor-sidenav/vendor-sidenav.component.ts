@@ -164,7 +164,7 @@ export class VendorSidenavComponent implements OnInit {
         },
         error: (error) => console.log('Error loading rooms:', error)
       });
-    } else if (this.vendorType === 'retail' || this.vendorType === 'pet-store') {
+    } else if (this.vendorType === 'retail' || this.vendorType === 'pet-store' || this.vendorType === 'furniture') {
       // Load low stock products count for this vendor
       const storeId = localStorage.getItem('storeId') || '';
       if (storeId) {
@@ -241,6 +241,7 @@ export class VendorSidenavComponent implements OnInit {
       'hotel': '🏨',
       'restaurant': '🍽️',
       'retail': '🛍️',
+      'furniture': '🪑',
       'pet-store': '🐾',
       'gym': '🏋️',
       'service': '💇',
@@ -255,6 +256,7 @@ export class VendorSidenavComponent implements OnInit {
       'hotel': 'hotel',
       'restaurant': 'restaurant',
       'retail': 'shopping_cart',
+      'furniture': 'chair',
       'pet-store': 'pets',
       'gym': 'fitness_center',
       'service': 'miscellaneous_services',
@@ -314,6 +316,7 @@ export class VendorSidenavComponent implements OnInit {
     const dashboardPath = this.vendorType === 'restaurant' ? '/restaurant-dashboard' :
                           this.vendorType === 'hotel' ? '/hotel-dashboard' :
                           this.vendorType === 'retail' ? '/retail-dashboard' :
+                          this.vendorType === 'furniture' ? '/retail-dashboard' :
                           this.vendorType === 'pet-store' ? '/retail-dashboard' :
                           this.vendorType === 'gym' ? '/retail-dashboard' :
                           this.vendorType === 'service' ? '/service-dashboard' : '/dashboard';
@@ -385,6 +388,21 @@ export class VendorSidenavComponent implements OnInit {
         { label: 'Trainers', icon: '👨‍🏫', route: `${dashboardPath}/trainers` },
         { label: 'Payments', icon: '💳', route: `${dashboardPath}/payments` },
         { label: 'Notifications', icon: '🔔', route: `${dashboardPath}/notifications`, badge: 0 },
+        { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` },
+        { label: 'Finance', icon: '💼', route: `${dashboardPath}/finance` }
+      );
+    } else if (this.vendorType === 'furniture') {
+      items.push(
+        { label: 'Products', icon: '📦', route: `${dashboardPath}/products`, badge: 0 },
+        { label: 'Inventory', icon: '📊', route: `${dashboardPath}/inventory` },
+        { label: 'Orders', icon: '📋', route: `${dashboardPath}/orders`, badge: 0 },
+        { label: 'Payments', icon: '💳', route: `${dashboardPath}/payments` },
+        { label: 'Returns', icon: '↩️', route: `${dashboardPath}/returns` },
+        { label: 'Customers', icon: '👥', route: `${dashboardPath}/customers` },
+        { label: 'Notifications', icon: '🔔', route: `${dashboardPath}/notifications`, badge: 0 },
+        { label: 'Shipping', icon: '🚚', route: `${dashboardPath}/shipping` },
+        { label: 'Delivery Integrations', icon: '🔗', route: `${dashboardPath}/delivery-integrations` },
+        { label: 'Delivery Tracking', icon: '📍', route: `${dashboardPath}/delivery-tracking` },
         { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` },
         { label: 'Finance', icon: '💼', route: `${dashboardPath}/finance` }
       );
