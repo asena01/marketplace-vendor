@@ -15,7 +15,7 @@ export const MARKETPLACE_SERVICES: Service[] = [
       { id: 'shoes', name: 'Shoes & Footwear', description: 'Casual, sports, formal shoes', icon: 'directions_walk', color: 'text-amber-600' },
       { id: 'accessories', name: 'Accessories', description: 'Bags, belts, hats & more', icon: 'shopping_bag', color: 'text-purple-600' },
       { id: 'sportswear', name: 'Sportswear', description: 'Athletic & gym wear', icon: 'sports', color: 'text-red-600' },
-      { id: 'formal-wear', name: 'Formal Wear', description: 'Dresses, suits & formal attire', icon: 'suits', color: 'text-slate-600' },
+      { id: 'formal-wear', name: 'Formal Wear', description: 'Dresses, suits & formal attire', icon: 'dress_code', color: 'text-slate-600' },
       { id: 'jewelry', name: 'Jewelry', description: 'Rings, necklaces & accessories', icon: 'diamond', color: 'text-yellow-600' },
       { id: 'supermarket', name: 'Groceries', description: 'Groceries & essentials', icon: 'shopping_cart', color: 'text-green-600' },
     ]

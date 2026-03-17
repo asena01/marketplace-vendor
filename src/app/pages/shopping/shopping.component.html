@@ -132,26 +132,38 @@
 
     <!-- Main Content -->
     <main class="flex-1 p-3 sm:p-4 md:p-6 w-full overflow-hidden">
-      <!-- Mobile Filters - Icons with Tooltips -->
-      <div class="lg:hidden flex gap-2 mb-4 sm:mb-6 overflow-x-auto pb-2 sm:pb-4">
+      <!-- Mobile Filters - Icons with Visible Tooltips -->
+      <div class="lg:hidden flex gap-2 mb-4 sm:mb-6 overflow-x-auto pb-2 sm:pb-4 group/categories">
         <!-- All Categories Button -->
-        <button
-          (click)="selectedCategory.set('all')"
-          [title]="'All Products'"
-          [class]="'p-2 sm:p-2.5 rounded-full transition min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0 ' + (selectedCategory() === 'all' ? 'bg-red-500 text-white font-bold shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200')"
-        >
-          <mat-icon class="text-lg sm:text-xl">apps</mat-icon>
-        </button>
+        <div class="relative group flex-shrink-0">
+          <button
+            (click)="selectedCategory.set('all')"
+            [class]="'p-2 sm:p-2.5 rounded-full transition min-h-[44px] min-w-[44px] flex items-center justify-center ' + (selectedCategory() === 'all' ? 'bg-red-500 text-white font-bold shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200')"
+          >
+            <mat-icon class="text-lg sm:text-xl">apps</mat-icon>
+          </button>
+          <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition pointer-events-none z-10">
+            All Products
+          </div>
+        </div>
 
         <!-- Category Icon Buttons -->
         @for (category of categories; track category.id) {
-          <button
-            (click)="selectedCategory.set(category.id)"
-            [title]="category.name"
-            [class]="'p-2 sm:p-2.5 rounded-full transition min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0 ' + (selectedCategory() === category.id ? 'bg-red-500 text-white font-bold shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200')"
-          >
-            <mat-icon class="text-lg sm:text-xl">{{ category.icon }}</mat-icon>
-          </button>
+          <div class="relative group flex-shrink-0">
+            <button
+              (click)="selectedCategory.set(category.id)"
+              [class]="'p-2 sm:p-2.5 rounded-full transition min-h-[44px] min-w-[44px] flex items-center justify-center ' + (selectedCategory() === category.id ? 'bg-red-500 text-white font-bold shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200')"
+            >
+              @if (category.icon) {
+                <mat-icon class="text-lg sm:text-xl">{{ category.icon }}</mat-icon>
+              } @else {
+                <span class="text-xs font-bold">?</span>
+              }
+            </button>
+            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition pointer-events-none z-10">
+              {{ category.name }}
+            </div>
+          </div>
         }
       </div>
 
