@@ -183,6 +183,11 @@ export class RetailDashboardComponent implements OnInit {
       this.dashboardTitle = this.vendorConfig.dashboardTitle;
       this.dashboardDescription = this.vendorConfig.dashboardDescription;
       this.dashboardGradient = this.vendorConfig.color;
+    } else {
+      // Fallback for unknown vendor types
+      this.dashboardTitle = 'Retail Management';
+      this.dashboardDescription = 'Manage your retail store operations';
+      this.dashboardGradient = 'from-green-600 to-green-700';
     }
 
     console.log('store', this.storeId)

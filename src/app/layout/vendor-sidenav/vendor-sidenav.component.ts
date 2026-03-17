@@ -164,8 +164,8 @@ export class VendorSidenavComponent implements OnInit {
         },
         error: (error) => console.log('Error loading rooms:', error)
       });
-    } else if (this.vendorType === 'retail' || this.vendorType === 'pet-store' || this.vendorType === 'furniture') {
-      // Load low stock products count for this vendor
+    } else if (this.vendorType === 'retail' || this.vendorType === 'clothing-store' || this.vendorType === 'jewelry' || this.vendorType === 'supermarket' || this.vendorType === 'pet-store' || this.vendorType === 'furniture') {
+      // Load low stock products count for retail-based vendors
       const storeId = localStorage.getItem('storeId') || '';
       if (storeId) {
         this.productService.getVendorProducts(storeId, 1, 100).subscribe({
@@ -241,6 +241,9 @@ export class VendorSidenavComponent implements OnInit {
       'hotel': '🏨',
       'restaurant': '🍽️',
       'retail': '🛍️',
+      'clothing-store': '👕',
+      'jewelry': '💍',
+      'supermarket': '🛒',
       'furniture': '🪑',
       'pet-store': '🐾',
       'gym': '🏋️',
@@ -256,6 +259,9 @@ export class VendorSidenavComponent implements OnInit {
       'hotel': 'hotel',
       'restaurant': 'restaurant',
       'retail': 'shopping_cart',
+      'clothing-store': 'checkroom',
+      'jewelry': 'diamond',
+      'supermarket': 'shopping_basket',
       'furniture': 'chair',
       'pet-store': 'pets',
       'gym': 'fitness_center',
@@ -316,6 +322,9 @@ export class VendorSidenavComponent implements OnInit {
     const dashboardPath = this.vendorType === 'restaurant' ? '/restaurant-dashboard' :
                           this.vendorType === 'hotel' ? '/hotel-dashboard' :
                           this.vendorType === 'retail' ? '/retail-dashboard' :
+                          this.vendorType === 'clothing-store' ? '/retail-dashboard' :
+                          this.vendorType === 'jewelry' ? '/retail-dashboard' :
+                          this.vendorType === 'supermarket' ? '/retail-dashboard' :
                           this.vendorType === 'furniture' ? '/retail-dashboard' :
                           this.vendorType === 'pet-store' ? '/retail-dashboard' :
                           this.vendorType === 'gym' ? '/retail-dashboard' :
@@ -351,7 +360,37 @@ export class VendorSidenavComponent implements OnInit {
         { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` },
         { label: 'Finance', icon: '💼', route: `${dashboardPath}/finance` }
       );
-    } else if (this.vendorType === 'retail') {
+    } else if (this.vendorType === 'jewelry') {
+      items.push(
+        { label: 'Products', icon: '💍', route: `${dashboardPath}/products`, badge: 0 },
+        { label: 'Inventory', icon: '📊', route: `${dashboardPath}/inventory` },
+        { label: 'Orders', icon: '📋', route: `${dashboardPath}/orders`, badge: 0 },
+        { label: 'Payments', icon: '💳', route: `${dashboardPath}/payments` },
+        { label: 'Returns', icon: '↩️', route: `${dashboardPath}/returns` },
+        { label: 'Customers', icon: '👥', route: `${dashboardPath}/customers` },
+        { label: 'Notifications', icon: '🔔', route: `${dashboardPath}/notifications`, badge: 0 },
+        { label: 'Shipping', icon: '🚚', route: `${dashboardPath}/shipping` },
+        { label: 'Delivery Integrations', icon: '🔗', route: `${dashboardPath}/delivery-integrations` },
+        { label: 'Delivery Tracking', icon: '📍', route: `${dashboardPath}/delivery-tracking` },
+        { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` },
+        { label: 'Finance', icon: '💼', route: `${dashboardPath}/finance` }
+      );
+    } else if (this.vendorType === 'supermarket') {
+      items.push(
+        { label: 'Products', icon: '🛒', route: `${dashboardPath}/products`, badge: 0 },
+        { label: 'Inventory', icon: '📊', route: `${dashboardPath}/inventory` },
+        { label: 'Orders', icon: '📋', route: `${dashboardPath}/orders`, badge: 0 },
+        { label: 'Payments', icon: '💳', route: `${dashboardPath}/payments` },
+        { label: 'Returns', icon: '↩️', route: `${dashboardPath}/returns` },
+        { label: 'Customers', icon: '👥', route: `${dashboardPath}/customers` },
+        { label: 'Notifications', icon: '🔔', route: `${dashboardPath}/notifications`, badge: 0 },
+        { label: 'Shipping', icon: '🚚', route: `${dashboardPath}/shipping` },
+        { label: 'Delivery Integrations', icon: '🔗', route: `${dashboardPath}/delivery-integrations` },
+        { label: 'Delivery Tracking', icon: '📍', route: `${dashboardPath}/delivery-tracking` },
+        { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` },
+        { label: 'Finance', icon: '💼', route: `${dashboardPath}/finance` }
+      );
+    } else if (this.vendorType === 'retail' || this.vendorType === 'clothing-store') {
       items.push(
         { label: 'Products', icon: '📦', route: `${dashboardPath}/products`, badge: 0 },
         { label: 'Inventory', icon: '📊', route: `${dashboardPath}/inventory` },

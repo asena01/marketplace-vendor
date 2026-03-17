@@ -642,7 +642,7 @@ export class RetailProductsComponent implements OnInit {
     'activities',
   ];
 
-  // Category mapping by vendorType
+  // Category mapping by vendorType - now uses vendor-type config as primary source
   private categoryByVendorType: { [key: string]: string[] } = {
     'retail': ['adult-wear', 'children-wear', 'jewelry', 'supermarket'],
     'clothing-store': ['adult-wear', 'children-wear'],
@@ -668,6 +668,13 @@ export class RetailProductsComponent implements OnInit {
 
   get productCategories(): string[] {
     const vendorType = this.getVendorType();
+
+    // First, try to get categories from vendor-type config
+    if (this.vendorConfig && this.vendorConfig.categories && this.vendorConfig.categories.length > 0) {
+      return this.vendorConfig.categories;
+    }
+
+    // Fall back to hardcoded mapping
     return this.categoryByVendorType[vendorType] || this.allProductCategories;
   }
 
