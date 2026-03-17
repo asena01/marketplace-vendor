@@ -240,6 +240,112 @@ export const VENDOR_TYPE_CONFIG: { [key: string]: VendorTypeConfig } = {
     ]
   },
 
+  'hair-salon': {
+    id: 'hair-salon',
+    name: 'Hair Salon',
+    displayName: 'Hair Salon',
+    icon: 'scissors',
+    dashboardTitle: 'Hair Salon Management',
+    dashboardDescription: 'Manage haircut services, stylists, appointments, and customer bookings.',
+    productLabel: 'Hair Service',
+    color: 'from-pink-600 to-rose-600',
+    emoji: '💇',
+    categories: [
+      'hair-cut',
+      'hair-color',
+      'hair-treatment',
+      'styling',
+      'extensions',
+      'perms',
+      'blow-dry'
+    ],
+    productFields: [
+      { name: 'name', label: 'Service Name', type: 'text', required: true, placeholder: 'e.g., Haircut & Styling' },
+      { name: 'category', label: 'Service Category', type: 'select', required: true },
+      { name: 'description', label: 'Service Description', type: 'textarea', required: true },
+      { name: 'price', label: 'Service Price', type: 'number', required: true },
+      { name: 'stock', label: 'Daily Slots Available', type: 'number', required: true },
+      { name: 'images', label: 'Service Images', type: 'array', required: false },
+      { name: 'duration', label: 'Duration (minutes)', type: 'number', required: true, group: 'Details' },
+      { name: 'serviceType', label: 'Service Type', type: 'multiselect', required: false, options: ['Men', 'Women', 'Kids', 'Unisex'], group: 'Details' },
+      { name: 'skillLevel', label: 'Stylist Level Required', type: 'select', required: true, options: ['Junior', 'Senior', 'Master', 'Expert'], group: 'Details' },
+      { name: 'productIncluded', label: 'Products Included', type: 'checkbox', required: false, group: 'Details' },
+      { name: 'consultationIncluded', label: 'Free Consultation', type: 'checkbox', required: false, group: 'Details' }
+    ]
+  },
+
+  'gym': {
+    id: 'gym',
+    name: 'Gym/Fitness',
+    displayName: 'Gym/Fitness Center',
+    icon: 'fitness_center',
+    dashboardTitle: 'Gym Management',
+    dashboardDescription: 'Manage memberships, classes, equipment, and fitness programs.',
+    productLabel: 'Class/Program',
+    color: 'from-red-600 to-orange-600',
+    emoji: '🏋️',
+    categories: [
+      'cardio',
+      'strength-training',
+      'yoga',
+      'pilates',
+      'zumba',
+      'boxing',
+      'crossfit',
+      'personal-training'
+    ],
+    productFields: [
+      { name: 'name', label: 'Class/Program Name', type: 'text', required: true, placeholder: 'e.g., HIIT Training' },
+      { name: 'category', label: 'Class Category', type: 'select', required: true },
+      { name: 'description', label: 'Description', type: 'textarea', required: true },
+      { name: 'price', label: 'Price per Session', type: 'number', required: true },
+      { name: 'stock', label: 'Class Capacity', type: 'number', required: true },
+      { name: 'images', label: 'Class Images', type: 'array', required: false },
+      { name: 'duration', label: 'Duration (minutes)', type: 'number', required: true, group: 'Details' },
+      { name: 'difficulty', label: 'Difficulty Level', type: 'select', required: true, options: ['Beginner', 'Intermediate', 'Advanced', 'Expert'], group: 'Details' },
+      { name: 'instructor', label: 'Instructor Name', type: 'text', required: false, group: 'Details' },
+      { name: 'targetAudience', label: 'Target Audience', type: 'multiselect', required: false, options: ['Men', 'Women', 'Mixed', 'Kids', 'Seniors'], group: 'Details' },
+      { name: 'equipment', label: 'Equipment Required', type: 'array', required: false, group: 'Details' },
+      { name: 'certification', label: 'Instructor Certification', type: 'text', required: false, group: 'Details' }
+    ]
+  },
+
+  'salon-spa': {
+    id: 'salon-spa',
+    name: 'Salon & Spa',
+    displayName: 'Salon & Spa',
+    icon: 'spa',
+    dashboardTitle: 'Salon & Spa Management',
+    dashboardDescription: 'Manage beauty, wellness services, treatments, and spa appointments.',
+    productLabel: 'Treatment/Service',
+    color: 'from-purple-600 to-indigo-600',
+    emoji: '💅',
+    categories: [
+      'facial',
+      'massage',
+      'manicure',
+      'pedicure',
+      'body-treatment',
+      'waxing',
+      'makeup',
+      'skin-care'
+    ],
+    productFields: [
+      { name: 'name', label: 'Treatment Name', type: 'text', required: true, placeholder: 'e.g., Swedish Massage' },
+      { name: 'category', label: 'Treatment Category', type: 'select', required: true },
+      { name: 'description', label: 'Treatment Description', type: 'textarea', required: true },
+      { name: 'price', label: 'Service Price', type: 'number', required: true },
+      { name: 'stock', label: 'Daily Slots Available', type: 'number', required: true },
+      { name: 'images', label: 'Treatment Images', type: 'array', required: false },
+      { name: 'duration', label: 'Duration (minutes)', type: 'number', required: true, group: 'Details' },
+      { name: 'treatmentType', label: 'Treatment Type', type: 'select', required: true, options: ['Relaxation', 'Therapeutic', 'Aesthetic', 'Medical'], group: 'Details' },
+      { name: 'productsUsed', label: 'Products/Brands Used', type: 'array', required: false, group: 'Details' },
+      { name: 'therapistLevel', label: 'Therapist Level Required', type: 'select', required: true, options: ['Junior', 'Senior', 'Master', 'Specialist'], group: 'Details' },
+      { name: 'suitableFor', label: 'Suitable For', type: 'multiselect', required: false, options: ['Men', 'Women', 'Both', 'Kids', 'Pregnant'], group: 'Details' },
+      { name: 'contraindications', label: 'Contraindications', type: 'array', required: false, group: 'Details' }
+    ]
+  },
+
   service: {
     id: 'service',
     name: 'Service Provider',
@@ -309,39 +415,6 @@ export const VENDOR_TYPE_CONFIG: { [key: string]: VendorTypeConfig } = {
       { name: 'ageRange', label: 'Age Range (Puppy/Adult/Senior)', type: 'text', required: false, group: 'Details' },
       { name: 'isOrganic', label: 'Organic', type: 'checkbox', required: false, group: 'Details' },
       { name: 'allergenFree', label: 'Allergen-Free', type: 'checkbox', required: false, group: 'Details' }
-    ]
-  },
-
-  gym: {
-    id: 'gym',
-    name: 'Gym/Fitness',
-    displayName: 'Gym/Fitness Center',
-    icon: 'fitness_center',
-    dashboardTitle: 'Gym Management',
-    dashboardDescription: 'Manage equipment, classes, memberships, and training programs.',
-    productLabel: 'Equipment/Class',
-    color: 'from-red-600 to-pink-600',
-    emoji: '🏋️',
-    categories: [
-      'cardio',
-      'free-weights',
-      'machines',
-      'accessories',
-      'classes',
-      'training-programs'
-    ],
-    productFields: [
-      { name: 'name', label: 'Item/Class Name', type: 'text', required: true, placeholder: 'e.g., Treadmill Pro 3000' },
-      { name: 'category', label: 'Category', type: 'select', required: true },
-      { name: 'description', label: 'Description', type: 'textarea', required: true },
-      { name: 'price', label: 'Price', type: 'number', required: true },
-      { name: 'stock', label: 'Available Quantity', type: 'number', required: true },
-      { name: 'images', label: 'Images', type: 'array', required: false },
-      { name: 'equipmentType', label: 'Equipment Type', type: 'select', required: false, options: ['Cardio', 'Free Weight', 'Machine', 'Functional'], group: 'Details' },
-      { name: 'weightCapacity', label: 'Weight Capacity (lbs)', type: 'number', required: false, group: 'Details' },
-      { name: 'targetMuscles', label: 'Target Muscles', type: 'array', required: false, group: 'Details' },
-      { name: 'material', label: 'Material', type: 'text', required: false, group: 'Details' },
-      { name: 'difficulty', label: 'Difficulty Level', type: 'select', required: false, options: ['Beginner', 'Intermediate', 'Advanced'], group: 'Details' }
     ]
   },
 

@@ -196,7 +196,7 @@ export class VendorSidenavComponent implements OnInit {
           error: (error) => console.log('Error loading equipment:', error)
         });
       }
-    } else if (this.vendorType === 'service') {
+    } else if (this.vendorType === 'hair-salon' || this.vendorType === 'salon-spa' || this.vendorType === 'service') {
       // Load actual badge counts for service provider from API
       const providerId = localStorage.getItem('userId') || '';
       this.serviceProviderService.getBadgeCounts(providerId).subscribe({
@@ -206,6 +206,12 @@ export class VendorSidenavComponent implements OnInit {
             const appointmentsItem = this.sidenavItems.find(item => item.label === 'Appointments');
             if (appointmentsItem) {
               appointmentsItem.badge = response.data.pendingAppointments || 0;
+            }
+
+            // Update Services/Treatments badge
+            const servicesItem = this.sidenavItems.find(item => item.label === 'Services' || item.label === 'Treatments');
+            if (servicesItem) {
+              servicesItem.badge = response.data.pendingServices || 0;
             }
 
             // Update Reviews badge
@@ -247,6 +253,8 @@ export class VendorSidenavComponent implements OnInit {
       'furniture': '🪑',
       'pet-store': '🐾',
       'gym': '🏋️',
+      'hair-salon': '💇',
+      'salon-spa': '💅',
       'service': '💇',
       'tours': '✈️',
       'delivery': '🚚'
@@ -265,6 +273,8 @@ export class VendorSidenavComponent implements OnInit {
       'furniture': 'chair',
       'pet-store': 'pets',
       'gym': 'fitness_center',
+      'hair-salon': 'scissors',
+      'salon-spa': 'spa',
       'service': 'miscellaneous_services',
       'tours': 'flight',
       'delivery': 'local_shipping'
@@ -328,6 +338,8 @@ export class VendorSidenavComponent implements OnInit {
                           this.vendorType === 'furniture' ? '/retail-dashboard' :
                           this.vendorType === 'pet-store' ? '/retail-dashboard' :
                           this.vendorType === 'gym' ? '/retail-dashboard' :
+                          this.vendorType === 'hair-salon' ? '/service-dashboard' :
+                          this.vendorType === 'salon-spa' ? '/service-dashboard' :
                           this.vendorType === 'service' ? '/service-dashboard' : '/dashboard';
 
     const items: SidenavItem[] = [{ label: 'Dashboard', icon: '📊', route: dashboardPath }];
@@ -443,6 +455,30 @@ export class VendorSidenavComponent implements OnInit {
         { label: 'Delivery Integrations', icon: '🔗', route: `${dashboardPath}/delivery-integrations` },
         { label: 'Delivery Tracking', icon: '📍', route: `${dashboardPath}/delivery-tracking` },
         { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` },
+        { label: 'Finance', icon: '💼', route: `${dashboardPath}/finance` }
+      );
+    } else if (this.vendorType === 'hair-salon') {
+      items.push(
+        { label: 'Appointments', icon: '📅', route: `${dashboardPath}/appointments`, badge: 0 },
+        { label: 'Services', icon: '✂️', route: `${dashboardPath}/services`, badge: 0 },
+        { label: 'Staff', icon: '👥', route: `${dashboardPath}/staff` },
+        { label: 'Clients', icon: '👤', route: `${dashboardPath}/clients` },
+        { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` },
+        { label: 'Incidents', icon: '⚠️', route: `${dashboardPath}/incidents` },
+        { label: 'Reports', icon: '📊', route: `${dashboardPath}/reports` },
+        { label: 'Notifications', icon: '🔔', route: `${dashboardPath}/notifications` },
+        { label: 'Finance', icon: '💼', route: `${dashboardPath}/finance` }
+      );
+    } else if (this.vendorType === 'salon-spa') {
+      items.push(
+        { label: 'Appointments', icon: '📅', route: `${dashboardPath}/appointments`, badge: 0 },
+        { label: 'Treatments', icon: '💆', route: `${dashboardPath}/services`, badge: 0 },
+        { label: 'Staff', icon: '👥', route: `${dashboardPath}/staff` },
+        { label: 'Clients', icon: '👤', route: `${dashboardPath}/clients` },
+        { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` },
+        { label: 'Incidents', icon: '⚠️', route: `${dashboardPath}/incidents` },
+        { label: 'Reports', icon: '📊', route: `${dashboardPath}/reports` },
+        { label: 'Notifications', icon: '🔔', route: `${dashboardPath}/notifications` },
         { label: 'Finance', icon: '💼', route: `${dashboardPath}/finance` }
       );
     } else if (this.vendorType === 'service') {
