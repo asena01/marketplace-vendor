@@ -34,13 +34,24 @@ export const VENDOR_TYPE_CONFIG: { [key: string]: VendorTypeConfig } = {
     displayName: 'Clothing Store',
     icon: 'checkroom',
     dashboardTitle: 'Clothing Store Management',
-    dashboardDescription: 'Manage apparel inventory, sizes, colors, and customer orders.',
+    dashboardDescription: 'Manage apparel, footwear, and accessories inventory with sizes, colors, and customer orders.',
     productLabel: 'Clothing Item',
     color: 'from-blue-600 to-cyan-600',
     emoji: '👕',
     categories: [
       'adult-wear',
-      'children-wear'
+      'children-wear',
+      'shoes',
+      'footwear',
+      'accessories',
+      'sportswear',
+      'formal-wear',
+      'casual-wear',
+      'activewear',
+      'outerwear',
+      'undergarments',
+      'swimwear',
+      'seasonal'
     ],
     productFields: [
       { name: 'name', label: 'Product Name', type: 'text', required: true, placeholder: 'e.g., Blue T-Shirt' },

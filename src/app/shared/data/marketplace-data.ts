@@ -10,10 +10,14 @@ export const MARKETPLACE_SERVICES: Service[] = [
     color: 'from-blue-500 to-blue-600',
     bgColor: 'bg-blue-50',
     categories: [
-      { id: 'adult-wear', name: 'Adult Wears', description: 'Clothing for adults', icon: 'checkroom', color: 'text-blue-600' },
-      { id: 'children-wear', name: 'Children Wears', description: 'Kids clothing', icon: 'child_care', color: 'text-pink-600' },
-      { id: 'jewelry', name: 'Jewelry', description: 'Jewelry & accessories', icon: 'diamond', color: 'text-yellow-600' },
-      { id: 'supermarket', name: 'Supermarkets', description: 'Groceries & essentials', icon: 'shopping_cart', color: 'text-green-600' },
+      { id: 'adult-wear', name: 'Clothing', description: 'Men & women clothing', icon: 'checkroom', color: 'text-blue-600' },
+      { id: 'children-wear', name: 'Kids Wear', description: 'Clothing for children', icon: 'child_care', color: 'text-pink-600' },
+      { id: 'shoes', name: 'Shoes & Footwear', description: 'Casual, sports, formal shoes', icon: 'directions_walk', color: 'text-amber-600' },
+      { id: 'accessories', name: 'Accessories', description: 'Bags, belts, hats & more', icon: 'shopping_bag', color: 'text-purple-600' },
+      { id: 'sportswear', name: 'Sportswear', description: 'Athletic & gym wear', icon: 'sports', color: 'text-red-600' },
+      { id: 'formal-wear', name: 'Formal Wear', description: 'Dresses, suits & formal attire', icon: 'suits', color: 'text-slate-600' },
+      { id: 'jewelry', name: 'Jewelry', description: 'Rings, necklaces & accessories', icon: 'diamond', color: 'text-yellow-600' },
+      { id: 'supermarket', name: 'Groceries', description: 'Groceries & essentials', icon: 'shopping_cart', color: 'text-green-600' },
     ]
   },
   {
