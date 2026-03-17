@@ -30,6 +30,7 @@ import furnitureRoutes from './routes/furniture.js';
 import hairRoutes from './routes/hair.js';
 import petsRoutes from './routes/pets.js';
 import gymEquipmentRoutes from './routes/gymEquipment.js';
+import gymRoutes from './routes/gym.js';
 import paymentRoutes from './routes/payments.js';
 import vendorRoutes from './routes/vendors.js';
 import vendorAnalyticsRoutes from './routes/vendorAnalytics.js';
@@ -336,7 +337,17 @@ const createDemoAccounts = async () => {
         userType: 'vendor',
         vendorType: 'gym',
         businessName: 'Fitness Gym',
-        businessDescription: 'Modern gym with personal training'
+        businessDescription: 'Modern gym with personal training & yoga classes'
+      },
+      {
+        name: 'Gym Equipment Wholesale',
+        email: 'gym-equipment@demo.com',
+        password: 'demo123456',
+        phone: '+1234567864',
+        userType: 'vendor',
+        vendorType: 'gym-equipment',
+        businessName: 'Gym Equipment Wholesale',
+        businessDescription: 'Premium gym equipment & fitness products'
       },
 
       // ========== VENDOR ACCOUNTS - TOURS & TRAVEL ==========
@@ -451,6 +462,7 @@ app.use('/furniture', furnitureRoutes);
 app.use('/hair', hairRoutes);
 app.use('/pets', petsRoutes);
 app.use('/gym-equipment', gymEquipmentRoutes);
+app.use('/gym', gymRoutes);
 
 // Payment Routes
 app.use('/payments', paymentRoutes);

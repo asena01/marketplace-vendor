@@ -642,19 +642,19 @@ export class RetailProductsComponent implements OnInit {
     'activities',
   ];
 
-  // Category mapping by vendorType
+  // Category mapping by vendorType - now uses vendor-type config as primary source
   private categoryByVendorType: { [key: string]: string[] } = {
-    'retail': ['adult-wear', 'children-wear', 'jewelry', 'supermarket'],
-    'clothing-store': ['adult-wear', 'children-wear'],
+    'retail': ['adult-wear', 'children-wear', 'jewelry', 'supermarket', 'shoes', 'accessories'],
+    'clothing-store': ['adult-wear', 'children-wear', 'shoes', 'footwear', 'accessories', 'sportswear', 'formal-wear', 'casual-wear', 'activewear', 'outerwear', 'undergarments', 'swimwear', 'seasonal'],
     'jewelry': ['jewelry'],
     'supermarket': ['supermarket', 'groceries'],
     'furniture': ['furniture'],
+    'gym-equipment': ['gym'],
+    'pet-store': ['pets'],
     'hair-salon': ['hair'],
     'hair': ['hair'],
-    'pet-store': ['pets'],
     'pets': ['pets'],
     'gym': ['gym'],
-    'gym-equipment': ['gym'],
     'restaurant': ['restaurants', 'fast-food', 'groceries'],
     'hotel': ['hotels', 'apartments', 'rooms'],
     'service': ['activities', 'tours'],
@@ -663,11 +663,18 @@ export class RetailProductsComponent implements OnInit {
     'salon-spa': ['hair', 'activities'],
     'event-center': ['activities'],
     'delivery': ['supermarket', 'groceries'],
-    'general': ['adult-wear', 'children-wear', 'jewelry', 'supermarket', 'furniture', 'hair', 'pets', 'gym', 'restaurants', 'fast-food', 'groceries', 'hotels', 'apartments', 'rooms', 'tours', 'boat-cruise', 'activities'],
+    'general': ['adult-wear', 'children-wear', 'shoes', 'accessories', 'jewelry', 'supermarket', 'furniture', 'gym', 'pets', 'restaurants', 'fast-food', 'groceries', 'hotels', 'apartments', 'rooms', 'tours', 'boat-cruise', 'activities'],
   };
 
   get productCategories(): string[] {
     const vendorType = this.getVendorType();
+
+    // First, try to get categories from vendor-type config
+    if (this.vendorConfig && this.vendorConfig.categories && this.vendorConfig.categories.length > 0) {
+      return this.vendorConfig.categories;
+    }
+
+    // Fall back to hardcoded mapping
     return this.categoryByVendorType[vendorType] || this.allProductCategories;
   }
 

@@ -164,8 +164,8 @@ export class VendorSidenavComponent implements OnInit {
         },
         error: (error) => console.log('Error loading rooms:', error)
       });
-    } else if (this.vendorType === 'retail' || this.vendorType === 'pet-store' || this.vendorType === 'furniture') {
-      // Load low stock products count for this vendor
+    } else if (this.vendorType === 'retail' || this.vendorType === 'clothing-store' || this.vendorType === 'jewelry' || this.vendorType === 'supermarket' || this.vendorType === 'pet-store' || this.vendorType === 'furniture' || this.vendorType === 'gym-equipment') {
+      // Load low stock products count for retail-based vendors
       const storeId = localStorage.getItem('storeId') || '';
       if (storeId) {
         this.productService.getVendorProducts(storeId, 1, 100).subscribe({
@@ -173,7 +173,8 @@ export class VendorSidenavComponent implements OnInit {
             if (response.success && response.data) {
               const lowStockCount = response.data.filter((product: any) => product.stock < 10).length;
               this.productsBadge.set(lowStockCount);
-              const productsItem = this.sidenavItems.find(item => item.label === 'Products');
+              // Find the products/equipment item depending on vendor type
+              const productsItem = this.sidenavItems.find(item => item.label === 'Products' || item.label === 'Equipment');
               if (productsItem) productsItem.badge = lowStockCount;
             }
           },
@@ -196,7 +197,7 @@ export class VendorSidenavComponent implements OnInit {
           error: (error) => console.log('Error loading equipment:', error)
         });
       }
-    } else if (this.vendorType === 'service') {
+    } else if (this.vendorType === 'hair-salon' || this.vendorType === 'salon-spa' || this.vendorType === 'service') {
       // Load actual badge counts for service provider from API
       const providerId = localStorage.getItem('userId') || '';
       this.serviceProviderService.getBadgeCounts(providerId).subscribe({
@@ -206,6 +207,12 @@ export class VendorSidenavComponent implements OnInit {
             const appointmentsItem = this.sidenavItems.find(item => item.label === 'Appointments');
             if (appointmentsItem) {
               appointmentsItem.badge = response.data.pendingAppointments || 0;
+            }
+
+            // Update Services/Treatments badge
+            const servicesItem = this.sidenavItems.find(item => item.label === 'Services' || item.label === 'Treatments');
+            if (servicesItem) {
+              servicesItem.badge = response.data.pendingServices || 0;
             }
 
             // Update Reviews badge
@@ -241,9 +248,15 @@ export class VendorSidenavComponent implements OnInit {
       'hotel': '🏨',
       'restaurant': '🍽️',
       'retail': '🛍️',
+      'clothing-store': '👕',
+      'jewelry': '💍',
+      'supermarket': '🛒',
       'furniture': '🪑',
+      'gym-equipment': '🏋️',
       'pet-store': '🐾',
       'gym': '🏋️',
+      'hair-salon': '💇',
+      'salon-spa': '💅',
       'service': '💇',
       'tours': '✈️',
       'delivery': '🚚'
@@ -256,9 +269,15 @@ export class VendorSidenavComponent implements OnInit {
       'hotel': 'hotel',
       'restaurant': 'restaurant',
       'retail': 'shopping_cart',
+      'clothing-store': 'checkroom',
+      'jewelry': 'diamond',
+      'supermarket': 'shopping_basket',
       'furniture': 'chair',
+      'gym-equipment': 'fitness_center',
       'pet-store': 'pets',
       'gym': 'fitness_center',
+      'hair-salon': 'scissors',
+      'salon-spa': 'spa',
       'service': 'miscellaneous_services',
       'tours': 'flight',
       'delivery': 'local_shipping'
@@ -316,9 +335,15 @@ export class VendorSidenavComponent implements OnInit {
     const dashboardPath = this.vendorType === 'restaurant' ? '/restaurant-dashboard' :
                           this.vendorType === 'hotel' ? '/hotel-dashboard' :
                           this.vendorType === 'retail' ? '/retail-dashboard' :
+                          this.vendorType === 'clothing-store' ? '/retail-dashboard' :
+                          this.vendorType === 'jewelry' ? '/retail-dashboard' :
+                          this.vendorType === 'supermarket' ? '/retail-dashboard' :
                           this.vendorType === 'furniture' ? '/retail-dashboard' :
+                          this.vendorType === 'gym-equipment' ? '/retail-dashboard' :
                           this.vendorType === 'pet-store' ? '/retail-dashboard' :
-                          this.vendorType === 'gym' ? '/retail-dashboard' :
+                          this.vendorType === 'gym' ? '/service-dashboard' :
+                          this.vendorType === 'hair-salon' ? '/service-dashboard' :
+                          this.vendorType === 'salon-spa' ? '/service-dashboard' :
                           this.vendorType === 'service' ? '/service-dashboard' : '/dashboard';
 
     const items: SidenavItem[] = [{ label: 'Dashboard', icon: '📊', route: dashboardPath }];
@@ -351,7 +376,52 @@ export class VendorSidenavComponent implements OnInit {
         { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` },
         { label: 'Finance', icon: '💼', route: `${dashboardPath}/finance` }
       );
-    } else if (this.vendorType === 'retail') {
+    } else if (this.vendorType === 'jewelry') {
+      items.push(
+        { label: 'Products', icon: '💍', route: `${dashboardPath}/products`, badge: 0 },
+        { label: 'Inventory', icon: '📊', route: `${dashboardPath}/inventory` },
+        { label: 'Orders', icon: '📋', route: `${dashboardPath}/orders`, badge: 0 },
+        { label: 'Payments', icon: '💳', route: `${dashboardPath}/payments` },
+        { label: 'Returns', icon: '↩️', route: `${dashboardPath}/returns` },
+        { label: 'Customers', icon: '👥', route: `${dashboardPath}/customers` },
+        { label: 'Notifications', icon: '🔔', route: `${dashboardPath}/notifications`, badge: 0 },
+        { label: 'Shipping', icon: '🚚', route: `${dashboardPath}/shipping` },
+        { label: 'Delivery Integrations', icon: '🔗', route: `${dashboardPath}/delivery-integrations` },
+        { label: 'Delivery Tracking', icon: '📍', route: `${dashboardPath}/delivery-tracking` },
+        { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` },
+        { label: 'Finance', icon: '💼', route: `${dashboardPath}/finance` }
+      );
+    } else if (this.vendorType === 'supermarket') {
+      items.push(
+        { label: 'Products', icon: '🛒', route: `${dashboardPath}/products`, badge: 0 },
+        { label: 'Inventory', icon: '📊', route: `${dashboardPath}/inventory` },
+        { label: 'Orders', icon: '📋', route: `${dashboardPath}/orders`, badge: 0 },
+        { label: 'Payments', icon: '💳', route: `${dashboardPath}/payments` },
+        { label: 'Returns', icon: '↩️', route: `${dashboardPath}/returns` },
+        { label: 'Customers', icon: '👥', route: `${dashboardPath}/customers` },
+        { label: 'Notifications', icon: '🔔', route: `${dashboardPath}/notifications`, badge: 0 },
+        { label: 'Shipping', icon: '🚚', route: `${dashboardPath}/shipping` },
+        { label: 'Delivery Integrations', icon: '🔗', route: `${dashboardPath}/delivery-integrations` },
+        { label: 'Delivery Tracking', icon: '📍', route: `${dashboardPath}/delivery-tracking` },
+        { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` },
+        { label: 'Finance', icon: '💼', route: `${dashboardPath}/finance` }
+      );
+    } else if (this.vendorType === 'gym-equipment') {
+      items.push(
+        { label: 'Equipment', icon: '🏋️', route: `${dashboardPath}/products`, badge: 0 },
+        { label: 'Inventory', icon: '📊', route: `${dashboardPath}/inventory` },
+        { label: 'Orders', icon: '📋', route: `${dashboardPath}/orders`, badge: 0 },
+        { label: 'Payments', icon: '💳', route: `${dashboardPath}/payments` },
+        { label: 'Returns', icon: '↩️', route: `${dashboardPath}/returns` },
+        { label: 'Customers', icon: '👥', route: `${dashboardPath}/customers` },
+        { label: 'Notifications', icon: '🔔', route: `${dashboardPath}/notifications`, badge: 0 },
+        { label: 'Shipping', icon: '🚚', route: `${dashboardPath}/shipping` },
+        { label: 'Delivery Integrations', icon: '🔗', route: `${dashboardPath}/delivery-integrations` },
+        { label: 'Delivery Tracking', icon: '📍', route: `${dashboardPath}/delivery-tracking` },
+        { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` },
+        { label: 'Finance', icon: '💼', route: `${dashboardPath}/finance` }
+      );
+    } else if (this.vendorType === 'retail' || this.vendorType === 'clothing-store') {
       items.push(
         { label: 'Products', icon: '📦', route: `${dashboardPath}/products`, badge: 0 },
         { label: 'Inventory', icon: '📊', route: `${dashboardPath}/inventory` },
@@ -404,6 +474,30 @@ export class VendorSidenavComponent implements OnInit {
         { label: 'Delivery Integrations', icon: '🔗', route: `${dashboardPath}/delivery-integrations` },
         { label: 'Delivery Tracking', icon: '📍', route: `${dashboardPath}/delivery-tracking` },
         { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` },
+        { label: 'Finance', icon: '💼', route: `${dashboardPath}/finance` }
+      );
+    } else if (this.vendorType === 'hair-salon') {
+      items.push(
+        { label: 'Appointments', icon: '📅', route: `${dashboardPath}/appointments`, badge: 0 },
+        { label: 'Services', icon: '✂️', route: `${dashboardPath}/services`, badge: 0 },
+        { label: 'Staff', icon: '👥', route: `${dashboardPath}/staff` },
+        { label: 'Clients', icon: '👤', route: `${dashboardPath}/clients` },
+        { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` },
+        { label: 'Incidents', icon: '⚠️', route: `${dashboardPath}/incidents` },
+        { label: 'Reports', icon: '📊', route: `${dashboardPath}/reports` },
+        { label: 'Notifications', icon: '🔔', route: `${dashboardPath}/notifications` },
+        { label: 'Finance', icon: '💼', route: `${dashboardPath}/finance` }
+      );
+    } else if (this.vendorType === 'salon-spa') {
+      items.push(
+        { label: 'Appointments', icon: '📅', route: `${dashboardPath}/appointments`, badge: 0 },
+        { label: 'Treatments', icon: '💆', route: `${dashboardPath}/services`, badge: 0 },
+        { label: 'Staff', icon: '👥', route: `${dashboardPath}/staff` },
+        { label: 'Clients', icon: '👤', route: `${dashboardPath}/clients` },
+        { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` },
+        { label: 'Incidents', icon: '⚠️', route: `${dashboardPath}/incidents` },
+        { label: 'Reports', icon: '📊', route: `${dashboardPath}/reports` },
+        { label: 'Notifications', icon: '🔔', route: `${dashboardPath}/notifications` },
         { label: 'Finance', icon: '💼', route: `${dashboardPath}/finance` }
       );
     } else if (this.vendorType === 'service') {

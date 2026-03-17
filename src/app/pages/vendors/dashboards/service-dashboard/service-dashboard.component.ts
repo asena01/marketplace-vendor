@@ -5,6 +5,7 @@ import { AuthService } from '../../../../services/auth.service';
 import { VendorSidenavComponent } from '../../../../layout/vendor-sidenav/vendor-sidenav.component';
 import { ServiceProviderService, Appointment, ServiceStaff } from '../../../../services/service-provider.service';
 import { ReviewService } from '../../../../services/review.service';
+import { getVendorTypeConfig, VendorTypeConfig } from '../../../../shared/config/vendor-type.config';
 import { forkJoin } from 'rxjs';
 
 @Component({
@@ -15,7 +16,7 @@ import { forkJoin } from 'rxjs';
     <div class="flex h-screen bg-slate-50">
       <!-- Sidenav -->
       <app-vendor-sidenav
-        vendorType="service"
+        [vendorType]="vendorType"
         [sidenavItems]="serviceSidenavItems"
         (logout)="onLogout()"
       ></app-vendor-sidenav>
@@ -29,9 +30,9 @@ import { forkJoin } from 'rxjs';
         @if (!hasChildRoute()) {
         <div class="p-8 space-y-8">
       <!-- Welcome Section -->
-      <div class="bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl p-8 text-white shadow-lg">
-        <h1 class="text-3xl font-bold mb-2">Service Provider Dashboard</h1>
-        <p class="text-purple-100">Manage appointments, staff schedules, services, and client interactions.</p>
+      <div [ngClass]="'bg-gradient-to-r ' + dashboardGradient" class="rounded-xl p-8 text-white shadow-lg">
+        <h1 class="text-3xl font-bold mb-2">{{ dashboardTitle }}</h1>
+        <p class="opacity-90">{{ dashboardDescription }}</p>
       </div>
 
       <!-- Loading State -->
@@ -200,12 +201,36 @@ export class ServiceDashboardComponent implements OnInit {
     { label: 'Settings', icon: '⚙️', route: '/service-dashboard/settings' }
   ];
 
+  public vendorType: string = '';
+  public dashboardTitle: string = '';
+  public dashboardDescription: string = '';
+  public dashboardGradient: string = 'from-purple-600 to-purple-700';
+  public vendorConfig: VendorTypeConfig | null = null;
+
   constructor(
     private authService: AuthService,
     private activatedRoute: ActivatedRoute,
     private serviceProviderService: ServiceProviderService,
     private router: Router
-  ) {}
+  ) {
+    // Load vendor type from localStorage
+    this.vendorType = localStorage.getItem('vendorType') || 'service';
+
+    // Load vendor-specific configuration
+    this.vendorConfig = getVendorTypeConfig(this.vendorType);
+    if (this.vendorConfig) {
+      this.dashboardTitle = this.vendorConfig.dashboardTitle;
+      this.dashboardDescription = this.vendorConfig.dashboardDescription;
+      this.dashboardGradient = this.vendorConfig.color;
+    } else {
+      // Fallback for unknown vendor types
+      this.dashboardTitle = 'Service Provider Dashboard';
+      this.dashboardDescription = 'Manage appointments, staff schedules, services, and client interactions.';
+      this.dashboardGradient = 'from-purple-600 to-purple-700';
+    }
+
+    console.log('vendorType:', this.vendorType);
+  }
 
   ngOnInit(): void {
     this.loadDashboardData();
