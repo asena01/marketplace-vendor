@@ -103,8 +103,8 @@
           </button>
           @for (category of categories; track category.id) {
             <button
-              (click)="selectedCategory.set(category.name)"
-              [class]="'w-full text-left px-4 py-2 rounded-lg transition flex items-center gap-2 ' + (selectedCategory() === category.name ? 'bg-red-500 text-white font-bold' : 'text-gray-700 hover:bg-gray-100')"
+              (click)="selectedCategory.set(category.id)"
+              [class]="'w-full text-left px-4 py-2 rounded-lg transition flex items-center gap-2 ' + (selectedCategory() === category.id ? 'bg-red-500 text-white font-bold' : 'text-gray-700 hover:bg-gray-100')"
             >
               <mat-icon class="text-lg">{{ category.icon }}</mat-icon>
               <span>{{ category.name }}</span>
@@ -132,20 +132,25 @@
 
     <!-- Main Content -->
     <main class="flex-1 p-3 sm:p-4 md:p-6 w-full overflow-hidden">
-      <!-- Mobile Filters -->
+      <!-- Mobile Filters - Icons with Tooltips -->
       <div class="lg:hidden flex gap-2 mb-4 sm:mb-6 overflow-x-auto pb-2 sm:pb-4">
+        <!-- All Categories Button -->
         <button
           (click)="selectedCategory.set('all')"
-          [class]="'px-3 sm:px-4 py-1.5 sm:py-2 rounded-full whitespace-nowrap transition text-xs sm:text-sm ' + (selectedCategory() === 'all' ? 'bg-red-500 text-white font-bold' : 'bg-gray-100 text-gray-700')"
+          [title]="'All Products'"
+          [class]="'p-2 sm:p-2.5 rounded-full transition min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0 ' + (selectedCategory() === 'all' ? 'bg-red-500 text-white font-bold shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200')"
         >
-          All
+          <mat-icon class="text-lg sm:text-xl">apps</mat-icon>
         </button>
+
+        <!-- Category Icon Buttons -->
         @for (category of categories; track category.id) {
           <button
-            (click)="selectedCategory.set(category.name)"
-            [class]="'px-3 sm:px-4 py-1.5 sm:py-2 rounded-full whitespace-nowrap transition text-xs sm:text-sm ' + (selectedCategory() === category.name ? 'bg-red-500 text-white font-bold' : 'bg-gray-100 text-gray-700')"
+            (click)="selectedCategory.set(category.id)"
+            [title]="category.name"
+            [class]="'p-2 sm:p-2.5 rounded-full transition min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0 ' + (selectedCategory() === category.id ? 'bg-red-500 text-white font-bold shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200')"
           >
-            {{ category.name }}
+            <mat-icon class="text-lg sm:text-xl">{{ category.icon }}</mat-icon>
           </button>
         }
       </div>
