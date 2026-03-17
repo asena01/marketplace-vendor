@@ -276,13 +276,13 @@ export const VENDOR_TYPE_CONFIG: { [key: string]: VendorTypeConfig } = {
 
   'gym': {
     id: 'gym',
-    name: 'Gym/Fitness',
+    name: 'Gym/Fitness Center',
     displayName: 'Gym/Fitness Center',
     icon: 'fitness_center',
-    dashboardTitle: 'Gym Management',
-    dashboardDescription: 'Manage memberships, classes, equipment, and fitness programs.',
+    dashboardTitle: 'Fitness Center Management',
+    dashboardDescription: 'Manage fitness classes, programs, memberships, and trainer schedules.',
     productLabel: 'Class/Program',
-    color: 'from-red-600 to-orange-600',
+    color: 'from-orange-600 to-red-600',
     emoji: '🏋️',
     categories: [
       'cardio',
@@ -415,6 +415,47 @@ export const VENDOR_TYPE_CONFIG: { [key: string]: VendorTypeConfig } = {
       { name: 'ageRange', label: 'Age Range (Puppy/Adult/Senior)', type: 'text', required: false, group: 'Details' },
       { name: 'isOrganic', label: 'Organic', type: 'checkbox', required: false, group: 'Details' },
       { name: 'allergenFree', label: 'Allergen-Free', type: 'checkbox', required: false, group: 'Details' }
+    ]
+  },
+
+  'gym-equipment': {
+    id: 'gym-equipment',
+    name: 'Gym Equipment Store',
+    displayName: 'Gym Equipment Store',
+    icon: 'fitness_center',
+    dashboardTitle: 'Gym Equipment Store Management',
+    dashboardDescription: 'Manage gym equipment inventory, specifications, and fitness product sales.',
+    productLabel: 'Equipment',
+    color: 'from-red-600 to-pink-600',
+    emoji: '🏋️',
+    categories: [
+      'cardio',
+      'free-weights',
+      'machines',
+      'accessories',
+      'supplements',
+      'apparel'
+    ],
+    productFields: [
+      { name: 'name', label: 'Equipment Name', type: 'text', required: true, placeholder: 'e.g., Treadmill Pro 3000' },
+      { name: 'category', label: 'Category', type: 'select', required: true },
+      { name: 'description', label: 'Description', type: 'textarea', required: true },
+      { name: 'price', label: 'Price', type: 'number', required: true },
+      { name: 'originalPrice', label: 'Original Price', type: 'number', required: false },
+      { name: 'stock', label: 'Stock Quantity', type: 'number', required: true },
+      { name: 'sku', label: 'SKU', type: 'text', required: false },
+      { name: 'images', label: 'Product Images', type: 'array', required: true },
+      { name: 'equipmentType', label: 'Equipment Type', type: 'select', required: true, options: ['Cardio', 'Free Weight', 'Machine', 'Functional', 'Supplement', 'Apparel'], group: 'Specifications' },
+      { name: 'brand', label: 'Brand', type: 'text', required: false, group: 'Specifications' },
+      { name: 'weightCapacity', label: 'Weight Capacity (lbs)', type: 'number', required: false, group: 'Specifications' },
+      { name: 'material', label: 'Material', type: 'multiselect', required: false, group: 'Specifications', options: ['Steel', 'Cast Iron', 'Rubber', 'Plastic', 'Aluminum', 'Wood', 'Fabric'] },
+      { name: 'dimensions', label: 'Dimensions', type: 'text', required: false, group: 'Specifications' },
+      { name: 'weight', label: 'Weight (lbs)', type: 'number', required: false, group: 'Specifications' },
+      { name: 'color', label: 'Available Colors', type: 'multiselect', required: false, group: 'Variants', options: ['Black', 'Red', 'Blue', 'Silver', 'Gray', 'White', 'Multi-color'] },
+      { name: 'warranty', label: 'Warranty Period (years)', type: 'number', required: false, group: 'Details' },
+      { name: 'targetMuscles', label: 'Target Muscles', type: 'array', required: false, group: 'Details' },
+      { name: 'assemblyRequired', label: 'Assembly Required', type: 'checkbox', required: false, group: 'Details' },
+      { name: 'isFeatured', label: 'Featured Product', type: 'checkbox', required: false }
     ]
   },
 

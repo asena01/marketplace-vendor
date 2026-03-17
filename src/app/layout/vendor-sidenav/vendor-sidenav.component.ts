@@ -164,7 +164,7 @@ export class VendorSidenavComponent implements OnInit {
         },
         error: (error) => console.log('Error loading rooms:', error)
       });
-    } else if (this.vendorType === 'retail' || this.vendorType === 'clothing-store' || this.vendorType === 'jewelry' || this.vendorType === 'supermarket' || this.vendorType === 'pet-store' || this.vendorType === 'furniture') {
+    } else if (this.vendorType === 'retail' || this.vendorType === 'clothing-store' || this.vendorType === 'jewelry' || this.vendorType === 'supermarket' || this.vendorType === 'pet-store' || this.vendorType === 'furniture' || this.vendorType === 'gym-equipment') {
       // Load low stock products count for retail-based vendors
       const storeId = localStorage.getItem('storeId') || '';
       if (storeId) {
@@ -173,7 +173,8 @@ export class VendorSidenavComponent implements OnInit {
             if (response.success && response.data) {
               const lowStockCount = response.data.filter((product: any) => product.stock < 10).length;
               this.productsBadge.set(lowStockCount);
-              const productsItem = this.sidenavItems.find(item => item.label === 'Products');
+              // Find the products/equipment item depending on vendor type
+              const productsItem = this.sidenavItems.find(item => item.label === 'Products' || item.label === 'Equipment');
               if (productsItem) productsItem.badge = lowStockCount;
             }
           },
@@ -251,6 +252,7 @@ export class VendorSidenavComponent implements OnInit {
       'jewelry': '💍',
       'supermarket': '🛒',
       'furniture': '🪑',
+      'gym-equipment': '🏋️',
       'pet-store': '🐾',
       'gym': '🏋️',
       'hair-salon': '💇',
@@ -271,6 +273,7 @@ export class VendorSidenavComponent implements OnInit {
       'jewelry': 'diamond',
       'supermarket': 'shopping_basket',
       'furniture': 'chair',
+      'gym-equipment': 'fitness_center',
       'pet-store': 'pets',
       'gym': 'fitness_center',
       'hair-salon': 'scissors',
@@ -336,8 +339,9 @@ export class VendorSidenavComponent implements OnInit {
                           this.vendorType === 'jewelry' ? '/retail-dashboard' :
                           this.vendorType === 'supermarket' ? '/retail-dashboard' :
                           this.vendorType === 'furniture' ? '/retail-dashboard' :
+                          this.vendorType === 'gym-equipment' ? '/retail-dashboard' :
                           this.vendorType === 'pet-store' ? '/retail-dashboard' :
-                          this.vendorType === 'gym' ? '/retail-dashboard' :
+                          this.vendorType === 'gym' ? '/service-dashboard' :
                           this.vendorType === 'hair-salon' ? '/service-dashboard' :
                           this.vendorType === 'salon-spa' ? '/service-dashboard' :
                           this.vendorType === 'service' ? '/service-dashboard' : '/dashboard';
@@ -390,6 +394,21 @@ export class VendorSidenavComponent implements OnInit {
     } else if (this.vendorType === 'supermarket') {
       items.push(
         { label: 'Products', icon: '🛒', route: `${dashboardPath}/products`, badge: 0 },
+        { label: 'Inventory', icon: '📊', route: `${dashboardPath}/inventory` },
+        { label: 'Orders', icon: '📋', route: `${dashboardPath}/orders`, badge: 0 },
+        { label: 'Payments', icon: '💳', route: `${dashboardPath}/payments` },
+        { label: 'Returns', icon: '↩️', route: `${dashboardPath}/returns` },
+        { label: 'Customers', icon: '👥', route: `${dashboardPath}/customers` },
+        { label: 'Notifications', icon: '🔔', route: `${dashboardPath}/notifications`, badge: 0 },
+        { label: 'Shipping', icon: '🚚', route: `${dashboardPath}/shipping` },
+        { label: 'Delivery Integrations', icon: '🔗', route: `${dashboardPath}/delivery-integrations` },
+        { label: 'Delivery Tracking', icon: '📍', route: `${dashboardPath}/delivery-tracking` },
+        { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` },
+        { label: 'Finance', icon: '💼', route: `${dashboardPath}/finance` }
+      );
+    } else if (this.vendorType === 'gym-equipment') {
+      items.push(
+        { label: 'Equipment', icon: '🏋️', route: `${dashboardPath}/products`, badge: 0 },
         { label: 'Inventory', icon: '📊', route: `${dashboardPath}/inventory` },
         { label: 'Orders', icon: '📋', route: `${dashboardPath}/orders`, badge: 0 },
         { label: 'Payments', icon: '💳', route: `${dashboardPath}/payments` },

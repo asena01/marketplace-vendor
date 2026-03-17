@@ -649,12 +649,12 @@ export class RetailProductsComponent implements OnInit {
     'jewelry': ['jewelry'],
     'supermarket': ['supermarket', 'groceries'],
     'furniture': ['furniture'],
+    'gym-equipment': ['gym'],
+    'pet-store': ['pets'],
     'hair-salon': ['hair'],
     'hair': ['hair'],
-    'pet-store': ['pets'],
     'pets': ['pets'],
     'gym': ['gym'],
-    'gym-equipment': ['gym'],
     'restaurant': ['restaurants', 'fast-food', 'groceries'],
     'hotel': ['hotels', 'apartments', 'rooms'],
     'service': ['activities', 'tours'],
@@ -663,7 +663,7 @@ export class RetailProductsComponent implements OnInit {
     'salon-spa': ['hair', 'activities'],
     'event-center': ['activities'],
     'delivery': ['supermarket', 'groceries'],
-    'general': ['adult-wear', 'children-wear', 'jewelry', 'supermarket', 'furniture', 'hair', 'pets', 'gym', 'restaurants', 'fast-food', 'groceries', 'hotels', 'apartments', 'rooms', 'tours', 'boat-cruise', 'activities'],
+    'general': ['adult-wear', 'children-wear', 'jewelry', 'supermarket', 'furniture', 'gym', 'pets', 'restaurants', 'fast-food', 'groceries', 'hotels', 'apartments', 'rooms', 'tours', 'boat-cruise', 'activities'],
   };
 
   get productCategories(): string[] {
