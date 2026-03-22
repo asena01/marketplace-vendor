@@ -171,15 +171,15 @@ import { TourService } from '../../../../../services/tour.service';
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Difficulty Level</label>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Difficulty Level *</label>
                 <select
                   [(ngModel)]="tourForm.difficulty"
                   class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
                 >
                   <option value="">Select difficulty</option>
-                  <option value="easy">Easy</option>
-                  <option value="moderate">Moderate</option>
-                  <option value="hard">Hard</option>
+                  <option value="Easy">Easy</option>
+                  <option value="Moderate">Moderate</option>
+                  <option value="Hard">Hard</option>
                 </select>
               </div>
 
@@ -370,7 +370,13 @@ export class ToursDashboardToursComponent implements OnInit {
     this.formError.set('');
 
     if (!this.tourForm.name || !this.tourForm.destination || !this.tourForm.duration || !this.tourForm.price || !this.tourForm.maxParticipants) {
-      this.formError.set('Please fill in all required fields');
+      this.formError.set('Please fill in all required fields (name, destination, duration, price, capacity)');
+      return;
+    }
+
+    // Validate difficulty level
+    if (!this.tourForm.difficulty || !['Easy', 'Moderate', 'Hard'].includes(this.tourForm.difficulty)) {
+      this.formError.set('Please select a valid difficulty level (Easy, Moderate, or Hard)');
       return;
     }
 
