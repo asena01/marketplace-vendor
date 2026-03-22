@@ -807,7 +807,8 @@ export class OrdersComponent implements OnInit, AfterViewChecked {
     private productService: ProductService,
     private trackingService: TrackingService
   ) {
-    this.vendorId = localStorage.getItem('storeId') || '';
+    // Try to get storeId, fallback to userId for backward compatibility with existing sessions
+    this.vendorId = localStorage.getItem('storeId') || localStorage.getItem('userId') || '';
     this.vendorName = localStorage.getItem('storeName') || 'Store';
   }
 
