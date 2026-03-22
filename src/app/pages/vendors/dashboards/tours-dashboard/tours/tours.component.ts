@@ -238,6 +238,28 @@ import { TourService } from '../../../../../services/tour.service';
                 </select>
               </div>
 
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Tour Highlights</label>
+                <textarea
+                  [(ngModel)]="highlightsText"
+                  rows="4"
+                  placeholder="Enter each highlight on a new line&#10;Example:&#10;Eiffel Tower visit&#10;Seine River cruise&#10;French cuisine dinner"
+                  class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
+                ></textarea>
+                <p class="text-xs text-slate-500 mt-1">One highlight per line</p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">What's Included</label>
+                <textarea
+                  [(ngModel)]="includesText"
+                  rows="4"
+                  placeholder="Enter each item on a new line&#10;Example:&#10;3 nights hotel accommodation&#10;Daily breakfast&#10;Airport transfers&#10;Guided city tour"
+                  class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
+                ></textarea>
+                <p class="text-xs text-slate-500 mt-1">One item per line</p>
+              </div>
+
               <div class="flex items-center gap-2">
                 <input
                   [(ngModel)]="tourForm.isActive"
@@ -326,6 +348,8 @@ export class ToursDashboardToursComponent implements OnInit {
     isActive: boolean;
     image: string;
     images: string[];
+    highlights: string[];
+    includes: string[];
   } = {
     name: '',
     destination: '',
@@ -336,8 +360,14 @@ export class ToursDashboardToursComponent implements OnInit {
     difficulty: '',
     isActive: true,
     image: '',
-    images: []
+    images: [],
+    highlights: [],
+    includes: []
   };
+
+  // For textarea inputs (one item per line)
+  highlightsText = '';
+  includesText = '';
 
   editingTourId = '';
   private vendorId: string = '';
@@ -412,8 +442,14 @@ export class ToursDashboardToursComponent implements OnInit {
       difficulty: tour.difficulty || '',
       isActive: tour.isActive !== false,
       image: tour.image || '',
-      images: tour.images || []
+      images: tour.images || [],
+      highlights: tour.highlights || [],
+      includes: tour.includes || []
     };
+
+    // Load highlights and includes for display
+    this.highlightsText = (tour.highlights || []).join('\n');
+    this.includesText = (tour.includes || []).join('\n');
 
     // Load existing images for preview
     if (tour.images && Array.isArray(tour.images) && tour.images.length > 0) {
@@ -448,8 +484,12 @@ export class ToursDashboardToursComponent implements OnInit {
       difficulty: '',
       isActive: true,
       image: '',
-      images: []
+      images: [],
+      highlights: [],
+      includes: []
     };
+    this.highlightsText = '';
+    this.includesText = '';
     this.uploadedImages.set([]);
     this.formError.set('');
   }
@@ -632,12 +672,24 @@ export class ToursDashboardToursComponent implements OnInit {
       return;
     }
 
+    // Parse highlights from textarea (one per line)
+    const highlights = this.highlightsText
+      .split('\n')
+      .map(h => h.trim())
+      .filter(h => h.length > 0);
+
+    // Parse includes from textarea (one per line)
+    const includes = this.includesText
+      .split('\n')
+      .map(i => i.trim())
+      .filter(i => i.length > 0);
+
     const tourData: any = {
       ...this.tourForm,
       duration: this.tourForm.duration.toString(),
       groupSize: 'group',
-      highlights: [],
-      includes: [],
+      highlights: highlights,
+      includes: includes,
       rating: 0,
       reviews: 0,
       currentParticipants: 0,
@@ -652,6 +704,7 @@ export class ToursDashboardToursComponent implements OnInit {
 
     console.log('📝 Creating tour with data:', tourData);
     console.log(`📸 Tour images: ${tourData.images.length} image(s) uploaded`);
+    console.log(`⭐ Highlights: ${tourData.highlights.length}, Includes: ${tourData.includes.length}`);
 
     if (this.isEditing()) {
       this.tourService.updateTour(this.editingTourId, tourData).subscribe({
