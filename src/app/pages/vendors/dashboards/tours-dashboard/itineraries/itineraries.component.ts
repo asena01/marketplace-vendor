@@ -47,7 +47,7 @@ import { TourService } from '../../../../../services/tour.service';
                     <p class="text-slate-600 text-sm">{{ tour.destination }}</p>
                     <div class="flex items-center justify-between pt-3 border-t border-slate-200">
                       <span class="text-sm text-slate-600">Duration:</span>
-                      <span class="font-semibold">{{ tour.duration || 0 }} days</span>
+                      <span class="font-semibold">{{ formatDuration(tour.duration) }}</span>
                     </div>
                     <div class="flex items-center justify-between">
                       <span class="text-sm text-slate-600">Itinerary Days:</span>
@@ -401,5 +401,25 @@ export class ToursItinerariesComponent implements OnInit {
         setTimeout(() => this.errorMessage.set(''), 3000);
       }
     });
+  }
+
+  /**
+   * Format duration display (hours -> days+hours or just hours)
+   * @param duration Duration in hours
+   * @returns Formatted string
+   */
+  formatDuration(duration: string | number): string {
+    if (!duration) return '-';
+    const h = typeof duration === 'string' ? parseInt(duration, 10) : duration;
+    const days = Math.floor(h / 24);
+    const remainingHours = h % 24;
+
+    if (days > 0 && remainingHours > 0) {
+      return `${days}d ${remainingHours}h`;
+    } else if (days > 0) {
+      return `${days}d`;
+    } else {
+      return `${h}h`;
+    }
   }
 }

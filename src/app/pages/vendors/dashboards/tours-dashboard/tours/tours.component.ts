@@ -64,7 +64,7 @@ import { TourService } from '../../../../../services/tour.service';
                       <span class="font-medium text-slate-900">{{ tour.name }}</span>
                     </td>
                     <td class="px-6 py-4 text-slate-600">{{ tour.destination || '-' }}</td>
-                    <td class="px-6 py-4 text-slate-600">{{ tour.duration || '-' }} days</td>
+                    <td class="px-6 py-4 text-slate-600">{{ formatDuration(tour.duration) }}</td>
                     <td class="px-6 py-4 text-slate-900 font-medium">{{ tour.price | currency }}</td>
                     <td class="px-6 py-4 text-slate-600">{{ tour.currentParticipants || 0 }}/{{ tour.maxParticipants || 0 }}</td>
                     <td class="px-6 py-4">
@@ -128,13 +128,14 @@ import { TourService } from '../../../../../services/tour.service';
                 </div>
 
                 <div>
-                  <label class="block text-sm font-medium text-slate-700 mb-1">Duration (days) *</label>
+                  <label class="block text-sm font-medium text-slate-700 mb-1">Duration (hours) *</label>
                   <input
                     [(ngModel)]="tourForm.duration"
                     type="number"
-                    placeholder="e.g., 7"
+                    placeholder="e.g., 24, 48, 72"
                     class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
                   />
+                  <p class="text-xs text-slate-500 mt-1">Tour duration in hours. For example: 24 hours, 48 hours, etc.</p>
                 </div>
               </div>
 
@@ -507,5 +508,35 @@ export class ToursDashboardToursComponent implements OnInit {
         setTimeout(() => this.errorMessage.set(''), 3000);
       }
     });
+  }
+
+  /**
+   * Convert hours to minutes for itinerary creation
+   * @param hours Duration in hours
+   * @returns Duration in minutes
+   */
+  convertHoursToMinutes(hours: string | number): number {
+    const h = typeof hours === 'string' ? parseInt(hours, 10) : hours;
+    return h * 60;
+  }
+
+  /**
+   * Format duration display (hours)
+   * @param duration Duration in hours
+   * @returns Formatted string
+   */
+  formatDuration(duration: string | number): string {
+    if (!duration) return '-';
+    const h = typeof duration === 'string' ? parseInt(duration, 10) : duration;
+    const days = Math.floor(h / 24);
+    const remainingHours = h % 24;
+
+    if (days > 0 && remainingHours > 0) {
+      return `${days}d ${remainingHours}h`;
+    } else if (days > 0) {
+      return `${days}d`;
+    } else {
+      return `${h}h`;
+    }
   }
 }

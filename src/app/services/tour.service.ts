@@ -24,8 +24,8 @@ export interface Tour {
   name: string;
   destination: string;
   price: number;
-  duration: string;
-  difficulty: string;
+  duration: string; // Duration in hours (e.g., "24", "48", "72")
+  difficulty: string; // Must be one of: 'Easy', 'Moderate', 'Hard'
   groupSize: string;
   highlights: string[];
   includes: string[];
@@ -36,7 +36,7 @@ export interface Tour {
   maxParticipants?: number;
   currentParticipants?: number;
   description?: string;
-  tourOperator?: string;
+  tourOperator?: string; // ObjectId reference to User
   operatorName?: string;
   operatorPhone?: string;
   operatorEmail?: string;
