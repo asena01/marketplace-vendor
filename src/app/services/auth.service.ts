@@ -67,6 +67,17 @@ export class AuthService {
           // Store userId for all users
           localStorage.setItem('userId', response.user._id);
 
+          // Store user email and basic info
+          if (response.user.email) {
+            localStorage.setItem('email', response.user.email);
+          }
+          if (response.user.phone) {
+            localStorage.setItem('phone', response.user.phone);
+          }
+          if (response.user.businessName) {
+            localStorage.setItem('businessName', response.user.businessName);
+          }
+
           // Store admin role if admin user
           if (response.user.userType === 'admin') {
             localStorage.setItem('adminRole', response.user.adminRole || 'admin');
@@ -130,6 +141,17 @@ export class AuthService {
           // Store userId for all users
           localStorage.setItem('userId', response.user._id);
 
+          // Store user email and basic info
+          if (response.user.email) {
+            localStorage.setItem('email', response.user.email);
+          }
+          if (response.user.phone) {
+            localStorage.setItem('phone', response.user.phone);
+          }
+          if (response.user.businessName) {
+            localStorage.setItem('businessName', response.user.businessName);
+          }
+
           // Store admin role if admin user
           if (response.user.userType === 'admin') {
             localStorage.setItem('adminRole', response.user.adminRole || 'admin');
@@ -176,6 +198,10 @@ export class AuthService {
     localStorage.removeItem('userEmail');
     localStorage.removeItem('userName');
     localStorage.removeItem('vendorType');
+    localStorage.removeItem('email');
+    localStorage.removeItem('phone');
+    localStorage.removeItem('businessName');
+    localStorage.removeItem('serviceProviderId');
     this.isAuthenticated.set(false);
     this.currentUser.set(null);
     this.userType.set(null);

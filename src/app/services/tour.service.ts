@@ -167,10 +167,12 @@ export class TourService {
    * Get vendor-specific tours by tourOperator/agencyId
    */
   getVendorTours(vendorId: string, page: number = 1, limit: number = 100): Observable<ApiResponse> {
-    let params = new HttpParams()
+    const params = new HttpParams()
       .set('page', page.toString())
-      .set('limit', limit.toString())
-      .set('tourOperator', vendorId);
+      .set('limit', limit.toString());
+
+    // Store vendorId in service for use in other methods
+    this.agencyId = vendorId;
 
     return this.http.get<ApiResponse>(this.apiUrl, { params }).pipe(
       catchError((error) => {

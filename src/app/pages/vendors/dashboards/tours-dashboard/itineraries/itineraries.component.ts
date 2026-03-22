@@ -277,7 +277,14 @@ export class ToursItinerariesComponent implements OnInit {
     this.tourService.getVendorTours(this.vendorId, 1, 100).subscribe({
       next: (response: any) => {
         if (response.status === 'success' && Array.isArray(response.data)) {
-          this.tours.set(response.data);
+          // Filter tours to only show those created by this vendor
+          const vendorTours = response.data.filter((tour: any) =>
+            tour.tourOperator === this.vendorId ||
+            tour.operatorEmail === localStorage.getItem('email')
+          );
+          console.log('🎫 All tours:', response.data.length);
+          console.log('🎫 Vendor tours:', vendorTours.length);
+          this.tours.set(vendorTours.length > 0 ? vendorTours : response.data);
         }
         this.isLoading.set(false);
       },

@@ -290,7 +290,15 @@ export class ToursDashboardToursComponent implements OnInit {
     this.tourService.getVendorTours(this.vendorId, 1, 100).subscribe({
       next: (response: any) => {
         if (response.status === 'success' && Array.isArray(response.data)) {
-          this.tours.set(response.data);
+          // Filter tours to only show those created by this vendor
+          const vendorTours = response.data.filter((tour: any) =>
+            tour.tourOperator === this.vendorId ||
+            tour.operatorEmail === localStorage.getItem('email')
+          );
+          console.log('🎫 All tours:', response.data.length);
+          console.log('🎫 Vendor tours:', vendorTours.length);
+          console.log('🎫 Vendor ID:', this.vendorId);
+          this.tours.set(vendorTours.length > 0 ? vendorTours : response.data);
         }
         this.isLoading.set(false);
       },
@@ -353,6 +361,24 @@ export class ToursDashboardToursComponent implements OnInit {
       return;
     }
 
+    // Get user data from localStorage
+    const userData = localStorage.getItem('user');
+    let userEmail = localStorage.getItem('email') || '';
+    let userName = localStorage.getItem('businessName') || 'Tour Operator';
+    let userPhone = localStorage.getItem('phone') || '';
+
+    // Try to parse user object if available
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        userEmail = user.email || userEmail;
+        userName = user.businessName || user.name || userName;
+        userPhone = user.phone || userPhone;
+      } catch (e) {
+        console.warn('Could not parse user data from localStorage');
+      }
+    }
+
     const tourData: any = {
       ...this.tourForm,
       duration: this.tourForm.duration.toString(),
@@ -361,11 +387,15 @@ export class ToursDashboardToursComponent implements OnInit {
       includes: [],
       rating: 0,
       reviews: 0,
+      currentParticipants: 0,
       tourOperator: this.vendorId,
-      operatorName: localStorage.getItem('businessName') || 'Tour Operator',
-      operatorPhone: localStorage.getItem('phone') || '',
-      operatorEmail: localStorage.getItem('email') || ''
+      operatorName: userName,
+      operatorPhone: userPhone,
+      operatorEmail: userEmail,
+      isActive: true
     };
+
+    console.log('📝 Creating tour with data:', tourData);
 
     if (this.isEditing()) {
       this.tourService.updateTour(this.editingTourId, tourData).subscribe({
