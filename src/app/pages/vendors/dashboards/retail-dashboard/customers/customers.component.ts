@@ -265,7 +265,8 @@ export class RetailCustomersComponent implements OnInit {
   private businessType: string = 'retail';
 
   constructor(private customerService: CustomerService) {
-    this.storeId = localStorage.getItem('storeId') || '';
+    // Try to get storeId, fallback to userId for backward compatibility with existing sessions
+    this.storeId = localStorage.getItem('storeId') || localStorage.getItem('userId') || '';
   }
 
   ngOnInit(): void {

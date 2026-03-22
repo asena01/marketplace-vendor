@@ -85,12 +85,22 @@ import { AngularFireUploadService } from '../../../../../services/angular-fire-u
             <div class="p-6 space-y-4">
               <!-- Service Image Upload -->
               <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Service Photo</label>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Service Photo</label>
+
+                @if (isUploadingImage()) {
+                  <div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div class="flex items-center gap-2">
+                      <div class="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                      <span class="text-sm font-medium text-blue-900">Uploading photo...</span>
+                    </div>
+                  </div>
+                }
+
                 <div class="flex items-center gap-4">
                   @if (currentForm.serviceImage) {
-                    <img [src]="currentForm.serviceImage" alt="Service" class="w-24 h-24 rounded-lg object-cover">
+                    <img [src]="currentForm.serviceImage" alt="Service" class="w-24 h-24 rounded-lg object-cover border-2 border-blue-300">
                   } @else {
-                    <div class="w-24 h-24 rounded-lg bg-gray-200 flex items-center justify-center text-gray-400">
+                    <div class="w-24 h-24 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 border-2 border-slate-300">
                       🖼️
                     </div>
                   }
@@ -100,15 +110,23 @@ import { AngularFireUploadService } from '../../../../../services/angular-fire-u
                       #serviceImageInput
                       accept="image/*"
                       (change)="onServiceImageSelected($event)"
+                      [disabled]="isUploadingImage()"
                       class="hidden"
                     />
-                    <button
+                    <div
+                      class="border-2 border-dashed border-blue-300 rounded-lg p-4 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition"
+                      (dragover)="$event.preventDefault(); isDragging.set(true)"
+                      (dragleave)="isDragging.set(false)"
+                      (drop)="onDropServiceImage($event)"
+                      [class.border-blue-500]="isDragging()"
+                      [class.bg-blue-50]="isDragging()"
+                      [class.opacity-50]="isUploadingImage()"
+                      [class.pointer-events-none]="isUploadingImage()"
                       (click)="serviceImageInput.click()"
-                      [disabled]="isUploadingImage()"
-                      class="px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg font-medium transition disabled:opacity-50"
                     >
-                      {{ isUploadingImage() ? 'Uploading...' : 'Choose Photo' }}
-                    </button>
+                      <p class="text-sm font-medium text-slate-700">Click to upload or drag photo</p>
+                      <p class="text-xs text-slate-500 mt-1">PNG, JPG, GIF up to 10MB</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -244,6 +262,7 @@ export class ServiceServicesComponent implements OnInit {
   showModal = signal(false);
   isEditing = signal(false);
   isUploadingImage = signal(false);
+  isDragging = signal(false);
 
   services = signal<any[]>([]);
 
@@ -425,5 +444,19 @@ export class ServiceServicesComponent implements OnInit {
       return false;
     }
     return true;
+  }
+
+  onDropServiceImage(event: DragEvent): void {
+    event.preventDefault();
+    this.isDragging.set(false);
+    const file = event.dataTransfer?.files?.[0];
+    if (file) {
+      const syntheticEvent = {
+        target: {
+          files: event.dataTransfer!.files
+        }
+      } as any;
+      this.onServiceImageSelected(syntheticEvent);
+    }
   }
 }

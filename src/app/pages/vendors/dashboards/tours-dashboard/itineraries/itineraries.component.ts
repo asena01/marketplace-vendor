@@ -47,7 +47,7 @@ import { TourService } from '../../../../../services/tour.service';
                     <p class="text-slate-600 text-sm">{{ tour.destination }}</p>
                     <div class="flex items-center justify-between pt-3 border-t border-slate-200">
                       <span class="text-sm text-slate-600">Duration:</span>
-                      <span class="font-semibold">{{ tour.duration || 0 }} days</span>
+                      <span class="font-semibold">{{ formatDuration(tour.duration) }}</span>
                     </div>
                     <div class="flex items-center justify-between">
                       <span class="text-sm text-slate-600">Itinerary Days:</span>
@@ -70,29 +70,35 @@ import { TourService } from '../../../../../services/tour.service';
                 ← Back to Tours
               </button>
               <h2 class="text-2xl font-bold text-slate-900">{{ selectedTourName() }} - Itinerary</h2>
+              <p class="text-sm text-slate-600 mt-1">
+                Total Duration: {{ selectedTourDuration() }}
+                @if (itineraryDays().length > 0) {
+                  | {{ itineraryDays().length }} segments
+                }
+              </p>
             </div>
             <button
               (click)="openCreateDayModal()"
               class="bg-pink-600 hover:bg-pink-700 text-white font-medium py-2 px-6 rounded-lg transition"
             >
-              + Add Day
+              + Add Segment
             </button>
           </div>
 
           @if (itineraryDays().length === 0) {
             <div class="bg-white rounded-lg p-12 shadow-md text-center">
-              <p class="text-slate-600 font-semibold text-lg">No itinerary days added</p>
-              <p class="text-slate-500 mt-2">Click "Add Day" to create the tour itinerary</p>
+              <p class="text-slate-600 font-semibold text-lg">No itinerary segments added</p>
+              <p class="text-slate-500 mt-2">Click "Add Segment" to create the tour itinerary timeline</p>
             </div>
           } @else {
             <div class="space-y-4">
               @for (day of itineraryDays(); track day.day) {
-                <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-pink-500">
                   <div class="flex items-start justify-between mb-4">
                     <div class="flex-1">
                       <div class="flex items-center gap-3 mb-2">
-                        <div class="w-12 h-12 rounded-full bg-pink-100 flex items-center justify-center">
-                          <span class="font-bold text-pink-600 text-lg">{{ day.day }}</span>
+                        <div class="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center">
+                          <span class="font-bold text-pink-600 text-sm">Seg {{ day.day }}</span>
                         </div>
                         <h3 class="font-bold text-slate-900 text-lg">{{ day.title }}</h3>
                       </div>
@@ -134,20 +140,31 @@ import { TourService } from '../../../../../services/tour.service';
       @if (showModal()) {
         <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div class="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
-            <h2 class="text-2xl font-bold text-slate-900 mb-6">
-              {{ isEditingDay() ? 'Edit Day' : 'Add Day to Itinerary' }}
-            </h2>
+            <div class="mb-6">
+              <h2 class="text-2xl font-bold text-slate-900 mb-2">
+                {{ isEditingDay() ? 'Edit Itinerary Segment' : 'Add Itinerary Segment' }}
+              </h2>
+              <p class="text-sm text-slate-600">Tour Duration: {{ selectedTourDuration() }}</p>
+            </div>
 
             <div class="space-y-4">
+              <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <p class="text-sm text-blue-900">
+                  <strong>Tip:</strong> Create time-based itinerary segments. Each segment represents a part of your tour timeline.
+                  The day number should indicate the sequence (1, 2, 3, etc.).
+                </p>
+              </div>
+
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Day Number *</label>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Segment Number *</label>
                 <input
                   [(ngModel)]="dayForm.day"
                   type="number"
                   min="1"
-                  placeholder="e.g., 1"
+                  placeholder="e.g., 1, 2, 3, etc."
                   class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
                 />
+                <p class="text-xs text-slate-500 mt-1">Sequential number for this itinerary segment</p>
               </div>
 
               <div>
@@ -198,7 +215,7 @@ import { TourService } from '../../../../../services/tour.service';
                 (click)="saveDay()"
                 class="flex-1 px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white font-medium rounded-lg transition"
               >
-                {{ isEditingDay() ? 'Update Day' : 'Add Day' }}
+                {{ isEditingDay() ? 'Update Segment' : 'Add Segment' }}
               </button>
             </div>
           </div>
@@ -208,9 +225,9 @@ import { TourService } from '../../../../../services/tour.service';
       @if (showDeleteConfirm()) {
         <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div class="bg-white rounded-lg p-8 max-w-sm w-full mx-4">
-            <h3 class="text-lg font-bold text-slate-900 mb-4">Delete Day</h3>
+            <h3 class="text-lg font-bold text-slate-900 mb-4">Delete Segment</h3>
             <p class="text-slate-600 mb-6">
-              Are you sure you want to delete Day {{ deleteConfirmDay() }}? This action cannot be undone.
+              Are you sure you want to delete Segment {{ deleteConfirmDay() }}? This action cannot be undone.
             </p>
             <div class="flex gap-3">
               <button
@@ -237,6 +254,7 @@ export class ToursItinerariesComponent implements OnInit {
   tours = signal<any[]>([]);
   selectedTourId = signal('');
   selectedTourName = signal('');
+  selectedTourDuration = signal(''); // Track tour duration in hours
   itineraryDays = signal<any[]>([]);
 
   showModal = signal(false);
@@ -257,19 +275,34 @@ export class ToursItinerariesComponent implements OnInit {
 
   activitiesText = '';
   editingDayNumber = 0;
+  private vendorId: string = '';
 
-  constructor(private tourService: TourService) {}
+  constructor(private tourService: TourService) {
+    // Get vendor ID from localStorage (set during login)
+    this.vendorId = localStorage.getItem('agencyId') || localStorage.getItem('userId') || '';
+  }
 
   ngOnInit(): void {
     this.loadTours();
   }
 
   loadTours(): void {
+    if (!this.vendorId) {
+      this.errorMessage.set('Vendor ID not found. Please log in again.');
+      return;
+    }
     this.isLoading.set(true);
-    this.tourService.getTours(1, 100).subscribe({
+    this.tourService.getVendorTours(this.vendorId, 1, 100).subscribe({
       next: (response: any) => {
         if (response.status === 'success' && Array.isArray(response.data)) {
-          this.tours.set(response.data);
+          // Filter tours to only show those created by this vendor
+          const vendorTours = response.data.filter((tour: any) =>
+            tour.tourOperator === this.vendorId ||
+            tour.operatorEmail === localStorage.getItem('email')
+          );
+          console.log('🎫 All tours:', response.data.length);
+          console.log('🎫 Vendor tours:', vendorTours.length);
+          this.tours.set(vendorTours.length > 0 ? vendorTours : response.data);
         }
         this.isLoading.set(false);
       },
@@ -285,7 +318,9 @@ export class ToursItinerariesComponent implements OnInit {
   selectTour(tour: any): void {
     this.selectedTourId.set(tour._id);
     this.selectedTourName.set(tour.name);
+    this.selectedTourDuration.set(this.formatDuration(tour.duration) || 'N/A');
     this.itineraryDays.set(tour.itinerary || []);
+    console.log('🎫 Selected tour:', tour.name, 'Duration:', tour.duration, 'hours');
   }
 
   openCreateDayModal(): void {
@@ -353,7 +388,7 @@ export class ToursItinerariesComponent implements OnInit {
   updateItinerary(itinerary: any[]): void {
     this.tourService.updateTour(this.selectedTourId(), { itinerary }).subscribe({
       next: () => {
-        this.successMessage.set(this.isEditingDay() ? 'Day updated successfully' : 'Day added successfully');
+        this.successMessage.set(this.isEditingDay() ? 'Segment updated successfully' : 'Segment added successfully');
         this.itineraryDays.set(itinerary);
         this.closeModal();
         setTimeout(() => this.successMessage.set(''), 3000);
@@ -374,17 +409,37 @@ export class ToursItinerariesComponent implements OnInit {
     const updatedItinerary = this.itineraryDays().filter(day => day.day !== this.deleteConfirmDay());
     this.tourService.updateTour(this.selectedTourId(), { itinerary: updatedItinerary }).subscribe({
       next: () => {
-        this.successMessage.set('Day deleted successfully');
+        this.successMessage.set('Segment deleted successfully');
         this.itineraryDays.set(updatedItinerary);
         this.showDeleteConfirm.set(false);
         setTimeout(() => this.successMessage.set(''), 3000);
       },
       error: (error) => {
-        console.error('Error deleting day:', error);
-        this.errorMessage.set('Failed to delete day');
+        console.error('Error deleting segment:', error);
+        this.errorMessage.set('Failed to delete segment');
         this.showDeleteConfirm.set(false);
         setTimeout(() => this.errorMessage.set(''), 3000);
       }
     });
+  }
+
+  /**
+   * Format duration display (hours -> days+hours or just hours)
+   * @param duration Duration in hours
+   * @returns Formatted string
+   */
+  formatDuration(duration: string | number): string {
+    if (!duration) return '-';
+    const h = typeof duration === 'string' ? parseInt(duration, 10) : duration;
+    const days = Math.floor(h / 24);
+    const remainingHours = h % 24;
+
+    if (days > 0 && remainingHours > 0) {
+      return `${days}d ${remainingHours}h`;
+    } else if (days > 0) {
+      return `${days}d`;
+    } else {
+      return `${h}h`;
+    }
   }
 }

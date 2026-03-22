@@ -319,7 +319,8 @@ export class RetailInventoryComponent implements OnInit {
   private storeId: string = '';
 
   constructor(private productService: ProductService) {
-    this.storeId = localStorage.getItem('storeId') || '';
+    // Try to get storeId, fallback to userId for backward compatibility
+    this.storeId = localStorage.getItem('storeId') || localStorage.getItem('userId') || '';
   }
 
   ngOnInit(): void {

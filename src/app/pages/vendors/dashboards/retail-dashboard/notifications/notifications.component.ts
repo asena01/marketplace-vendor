@@ -194,7 +194,8 @@ export class RetailNotificationsComponent implements OnInit, OnDestroy {
   private autoRefreshInterval: any;
 
   constructor(private notificationService: NotificationService) {
-    this.storeId = localStorage.getItem('storeId') || '';
+    // Try to get storeId, fallback to userId for backward compatibility with existing sessions
+    this.storeId = localStorage.getItem('storeId') || localStorage.getItem('userId') || '';
   }
 
   ngOnInit(): void {

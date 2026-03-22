@@ -172,7 +172,8 @@ export class RestaurantDashboardComponent implements OnInit {
     private restaurantService: RestaurantService,
     private router: Router
   ) {
-    this.restaurantId = localStorage.getItem('storeId') || '';
+    // Try to get restaurantId, fallback to userId for backward compatibility with existing sessions
+    this.restaurantId = localStorage.getItem('restaurantId') || localStorage.getItem('userId') || '';
     this.vendorType = localStorage.getItem('vendorType') || 'restaurant';
 
     // Load vendor type configuration

@@ -67,6 +67,17 @@ export class AuthService {
           // Store userId for all users
           localStorage.setItem('userId', response.user._id);
 
+          // Store user email and basic info
+          if (response.user.email) {
+            localStorage.setItem('email', response.user.email);
+          }
+          if (response.user.phone) {
+            localStorage.setItem('phone', response.user.phone);
+          }
+          if (response.user.businessName) {
+            localStorage.setItem('businessName', response.user.businessName);
+          }
+
           // Store admin role if admin user
           if (response.user.userType === 'admin') {
             localStorage.setItem('adminRole', response.user.adminRole || 'admin');
@@ -76,21 +87,36 @@ export class AuthService {
           // Set business ID from signup response for vendors
           if (response.user.userType === 'vendor') {
             const userId = response.user._id;
-            console.log('✅ Signup: Setting business ID for vendor type:', response.user.vendorType);
+            const vendorType = response.user.vendorType;
+            console.log('✅ Signup: Setting business ID for vendor type:', vendorType);
 
-            if (response.user.vendorType === 'hotel') {
+            // Store vendorType for all vendors
+            localStorage.setItem('vendorType', vendorType);
+
+            // Map vendor types to their business IDs
+            const retailVendorTypes = [
+              'retail', 'clothing-store', 'jewelry', 'supermarket',
+              'furniture', 'pet-store', 'gym', 'salon-spa',
+              'car-rental', 'event-center', 'general'
+            ];
+
+            if (vendorType === 'hotel') {
               localStorage.setItem('hotelId', userId);
               console.log('✅ Hotel ID stored:', userId);
-            } else if (response.user.vendorType === 'tour-operator') {
+            } else if (vendorType === 'tour-operator') {
               localStorage.setItem('agencyId', userId);
               console.log('✅ Agency ID stored:', userId);
-            } else if (response.user.vendorType === 'restaurant') {
+            } else if (vendorType === 'restaurant') {
               localStorage.setItem('restaurantId', userId);
               console.log('✅ Restaurant ID stored:', userId);
-            } else if (response.user.vendorType === 'retail') {
+            } else if (vendorType === 'hair-salon' || vendorType === 'service') {
+              localStorage.setItem('serviceProviderId', userId);
+              console.log('✅ Service Provider ID stored:', userId);
+            } else if (retailVendorTypes.includes(vendorType)) {
+              // All retail types use storeId
               localStorage.setItem('storeId', userId);
-              console.log('✅ Store ID stored:', userId);
-            } else if (response.user.vendorType === 'delivery') {
+              console.log('✅ Store ID stored for vendor type:', vendorType, userId);
+            } else if (vendorType === 'delivery') {
               const deliveryId = response.user.deliveryPartnerId || userId;
               localStorage.setItem('deliveryId', deliveryId);
               console.log('✅ Delivery ID stored:', deliveryId);
@@ -115,6 +141,17 @@ export class AuthService {
           // Store userId for all users
           localStorage.setItem('userId', response.user._id);
 
+          // Store user email and basic info
+          if (response.user.email) {
+            localStorage.setItem('email', response.user.email);
+          }
+          if (response.user.phone) {
+            localStorage.setItem('phone', response.user.phone);
+          }
+          if (response.user.businessName) {
+            localStorage.setItem('businessName', response.user.businessName);
+          }
+
           // Store admin role if admin user
           if (response.user.userType === 'admin') {
             localStorage.setItem('adminRole', response.user.adminRole || 'admin');
@@ -124,14 +161,22 @@ export class AuthService {
           // Set business ID from seed data for vendor logins
           if (response.user.userType === 'vendor') {
             localStorage.setItem('vendorType', response.user.vendorType || 'vendor-type-default');
+            console.log('🔑 Login: Vendor Type set to:', response.user.vendorType);
+
             if (response.user.vendorType === 'hotel') {
               localStorage.setItem('hotelId', '69a72226003a6f0406e3afb1');
+              console.log('✅ Hotel ID stored');
             } else if (response.user.vendorType === 'tour-operator') {
-              localStorage.setItem('agencyId', response.user._id || 'tour-agency-default');
+              const agencyId = response.user._id || 'tour-agency-default';
+              localStorage.setItem('agencyId', agencyId);
+              console.log('✅ Login: Agency ID stored:', agencyId);
+              console.log('✅ Login: response.user._id:', response.user._id);
             } else if (response.user.vendorType === 'restaurant') {
               localStorage.setItem('restaurantId', response.user._id || 'restaurant-default');
+              console.log('✅ Restaurant ID stored');
             } else if (response.user.vendorType === 'retail') {
               localStorage.setItem('storeId', response.user._id || 'retail-default');
+              console.log('✅ Store ID stored');
             } else if (response.user.vendorType === 'delivery') {
               // Use deliveryPartnerId if available, otherwise use userId
               const deliveryId = response.user.deliveryPartnerId || response.user._id || 'delivery-default';
@@ -161,6 +206,10 @@ export class AuthService {
     localStorage.removeItem('userEmail');
     localStorage.removeItem('userName');
     localStorage.removeItem('vendorType');
+    localStorage.removeItem('email');
+    localStorage.removeItem('phone');
+    localStorage.removeItem('businessName');
+    localStorage.removeItem('serviceProviderId');
     this.isAuthenticated.set(false);
     this.currentUser.set(null);
     this.userType.set(null);

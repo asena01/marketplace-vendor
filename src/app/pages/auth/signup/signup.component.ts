@@ -138,7 +138,7 @@ export class SignupComponent {
         // Redirect based on user type
         setTimeout(() => {
           if (this.userType() === 'vendor') {
-            this.router.navigate([`/vendor-dashboard/${this.vendorType()}`]);
+            this.router.navigate([this.getDashboardRoute(this.vendorType())]);
           } else {
             this.router.navigate(['/']);
           }
@@ -170,5 +170,30 @@ export class SignupComponent {
   getVendorTypeLabel(): string {
     const vendor = this.vendorTypes.find(v => v.id === this.vendorType());
     return vendor ? vendor.name : '';
+  }
+
+  private getDashboardRoute(vendorType: string): string {
+    // Map vendor types to their appropriate dashboard routes
+    const dashboardMap: { [key: string]: string } = {
+      'hotel': '/hotel-dashboard',
+      'restaurant': '/restaurant-dashboard',
+      'tour-operator': '/tours-dashboard',
+      // All retail vendor types map to retail dashboard
+      'clothing-store': '/retail-dashboard',
+      'jewelry': '/retail-dashboard',
+      'supermarket': '/retail-dashboard',
+      'furniture': '/retail-dashboard',
+      'pet-store': '/retail-dashboard',
+      'gym': '/retail-dashboard',
+      'salon-spa': '/retail-dashboard',
+      // Service types
+      'hair-salon': '/service-dashboard',
+      // Default fallbacks
+      'car-rental': '/retail-dashboard',
+      'event-center': '/retail-dashboard',
+      'general': '/retail-dashboard',
+    };
+
+    return dashboardMap[vendorType] || '/vendor-dashboard/home';
   }
 }

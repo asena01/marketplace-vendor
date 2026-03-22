@@ -467,84 +467,95 @@ interface Product {
                 </div>
               }
 
-              <!-- Image Upload Section (Hidden Input) -->
-              <input
-                #imageInput
-                type="file"
-                multiple
-                accept="image/*"
-                (change)="onImageSelected($event)"
-                style="display: none"
-                class="hidden"
-              />
+              <!-- Image Upload Section -->
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Product Images</label>
 
-              <!-- Upload Progress with Debug Steps -->
-              @if (isUploadingImages()) {
-                <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div class="flex items-center gap-3 mb-3">
-                    <div class="animate-spin">
-                      <mat-icon class="text-blue-600">hourglass_empty</mat-icon>
+                @if (isUploadingImages()) {
+                  <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div class="flex items-center gap-2 mb-3">
+                      <div class="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                      <span class="font-medium text-blue-900">Uploading images...</span>
+                      <button
+                        type="button"
+                        (click)="stopUpload()"
+                        class="ml-auto text-xs px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
+                      >
+                        Force Stop
+                      </button>
                     </div>
-                    <span class="text-slate-700 font-medium">Uploading images...</span>
-                    <button
-                      type="button"
-                      (click)="stopUpload()"
-                      class="ml-auto text-xs px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
-                    >
-                      Force Stop
-                    </button>
-                  </div>
 
-                  <!-- Upload Steps Display -->
-                  <div class="bg-white border border-blue-200 rounded-lg p-3 max-h-48 overflow-y-auto">
-                    <p class="text-xs font-semibold text-blue-700 mb-2">📋 Upload Progress:</p>
-                    @for (step of uploadSteps(); track step) {
-                      <div class="text-xs text-slate-700 py-1 border-b border-blue-100 last:border-b-0">
-                        {{ step }}
-                      </div>
-                    }
-                  </div>
-                </div>
-              }
-
-              <!-- Uploaded Images List -->
-              @if (newProduct.images && newProduct.images.length > 0) {
-                <div class="mt-4">
-                  <label class="block text-sm font-medium text-slate-700 mb-3">📸 Uploaded Images ({{ newProduct.images.length }})</label>
-                  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    @for (image of newProduct.images; track image) {
-                      <div class="relative group">
-                        <img
-                          [src]="image"
-                          alt="Product image"
-                          class="w-full h-24 object-cover rounded-lg border-2 border-slate-300 group-hover:opacity-75 transition"
-                        />
-                        @if (!image.startsWith('data:')) {
-                          <span class="absolute top-1 right-1 bg-green-500 text-white text-xs px-2 py-1 rounded-full">✓ Uploaded</span>
+                    <!-- Upload Steps Display -->
+                    @if (uploadSteps().length > 0) {
+                      <div class="bg-white border border-blue-200 rounded-lg p-3 max-h-48 overflow-y-auto">
+                        <p class="text-xs font-semibold text-blue-700 mb-2">📋 Upload Progress:</p>
+                        @for (step of uploadSteps(); track step) {
+                          <div class="text-xs text-slate-700 py-1 border-b border-blue-100 last:border-b-0">
+                            {{ step }}
+                          </div>
                         }
-                        <button
-                          type="button"
-                          (click)="removeImage(image)"
-                          class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white opacity-0 group-hover:opacity-100 transition rounded-lg"
-                        >
-                          <mat-icon>delete</mat-icon>
-                        </button>
                       </div>
                     }
                   </div>
-                </div>
-              }
+                }
 
-              <!-- Add Images Button -->
-              <div class="mt-6 flex gap-3">
-                <button
-                  type="button"
-                  (click)="triggerFileInput()"
-                  class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition"
+                <!-- Drag and Drop Zone -->
+                <div
+                  class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition"
+                  (dragover)="$event.preventDefault(); $event.stopPropagation()"
+                  (dragleave)="$event.preventDefault(); $event.stopPropagation()"
+                  (drop)="onDropImages($event)"
+                  [class.border-blue-500]="isDraggingImages()"
+                  [class.bg-blue-50]="isDraggingImages()"
+                  [class.opacity-50]="isUploadingImages()"
+                  [class.pointer-events-none]="isUploadingImages()"
+                  (mouseenter)="isDraggingImages.set(true)"
+                  (mouseleave)="isDraggingImages.set(false)"
                 >
-                  <mat-icon>add_photo_alternate</mat-icon>
-                  <span>Add Images</span>
-                </button>
+                  <input
+                    #imageInput
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    (change)="onImageSelected($event)"
+                    [disabled]="isUploadingImages()"
+                    style="display: none"
+                    class="hidden"
+                  />
+                  <div (click)="triggerFileInput()" [class.cursor-not-allowed]="isUploadingImages()">
+                    <p class="text-sm font-medium text-slate-700">Click to upload or drag and drop</p>
+                    <p class="text-xs text-slate-500 mt-1">PNG, JPG, GIF up to 10MB each</p>
+                  </div>
+                </div>
+
+                <!-- Uploaded Images List -->
+                @if (newProduct.images && newProduct.images.length > 0) {
+                  <div class="mt-4">
+                    <label class="block text-sm font-medium text-slate-700 mb-3">Uploaded Images ({{ newProduct.images.length }})</label>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      @for (image of newProduct.images; track image) {
+                        <div class="relative group">
+                          <img
+                            [src]="image"
+                            alt="Product image"
+                            class="w-full h-24 object-cover rounded-lg border-2 border-slate-300 group-hover:opacity-75 transition"
+                          />
+                          @if (!image.startsWith('data:')) {
+                            <span class="absolute top-1 right-1 bg-green-500 text-white text-xs px-2 py-1 rounded-full">✓</span>
+                          }
+                          <button
+                            type="button"
+                            (click)="removeImage(image)"
+                            [disabled]="isUploadingImages()"
+                            class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white opacity-0 group-hover:opacity-100 transition rounded-lg disabled:opacity-50"
+                          >
+                            <span class="text-2xl">×</span>
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
               </div>
 
               <!-- Featured & Active -->
@@ -690,6 +701,7 @@ export class RetailProductsComponent implements OnInit {
   errorMessage = signal('');
   isLoading = signal(false);
   isUploadingImages = signal(false);
+  isDraggingImages = signal(false);
   validationError = signal('');
   uploadProgress = signal(''); // For UI debugging
   uploadSteps = signal<string[]>([]); // Show upload steps
@@ -1407,6 +1419,21 @@ export class RetailProductsComponent implements OnInit {
       console.log('✅ File input clicked successfully');
     } else {
       console.error('❌ File input reference not found');
+    }
+  }
+
+  onDropImages(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDraggingImages.set(false);
+    const files = event.dataTransfer?.files;
+    if (files) {
+      const syntheticEvent = {
+        target: {
+          files: files
+        }
+      } as any;
+      this.onImageSelected(syntheticEvent);
     }
   }
 

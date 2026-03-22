@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HotelService } from '../../../../../services/hotel.service';
 import { AuthService } from '../../../../../services/auth.service';
+import { ImageUploadService } from '../../../../../services/image-upload.service';
 
 interface Room {
   _id?: string;
@@ -274,6 +275,67 @@ interface Room {
                 </div>
               </div>
 
+              <!-- Room Images -->
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Room Images</label>
+
+                @if (isUploadingImages()) {
+                  <div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div class="flex items-center gap-2">
+                      <div class="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                      <span class="text-sm font-medium text-blue-900">Uploading images...</span>
+                    </div>
+                  </div>
+                }
+
+                <div
+                  class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition"
+                  (dragover)="$event.preventDefault(); isDragging.set(true)"
+                  (dragleave)="isDragging.set(false)"
+                  (drop)="onDropImages($event)"
+                  [class.border-blue-500]="isDragging()"
+                  [class.bg-blue-50]="isDragging()"
+                  [class.opacity-50]="isUploadingImages()"
+                  [class.pointer-events-none]="isUploadingImages()"
+                >
+                  <input
+                    #imageInput
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    (change)="onImageSelected($event)"
+                    [disabled]="isUploadingImages()"
+                    style="display: none"
+                    class="hidden"
+                  />
+                  <div (click)="imageInput.click()" [class.cursor-not-allowed]="isUploadingImages()">
+                    <p class="text-sm font-medium text-slate-700">Click to upload or drag and drop</p>
+                    <p class="text-xs text-slate-500 mt-1">PNG, JPG, GIF up to 10MB each</p>
+                  </div>
+                </div>
+
+                @if (newRoom.images && newRoom.images.length > 0) {
+                  <div class="mt-4">
+                    <label class="block text-sm font-medium text-slate-700 mb-3">Room Images ({{ newRoom.images.length }})</label>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      @for (img of newRoom.images; track img) {
+                        <div class="relative group">
+                          <img [src]="img" alt="Room image" class="w-full h-24 object-cover rounded-lg border-2 border-slate-300 group-hover:opacity-75 transition" />
+                          <button
+                            type="button"
+                            (click)="removeImage(img)"
+                            [disabled]="isUploadingImages()"
+                            class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white opacity-0 group-hover:opacity-100 transition rounded-lg disabled:opacity-50"
+                          >
+                            <span class="text-2xl">×</span>
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+
               <!-- Description -->
               <div>
                 <label class="block text-sm font-medium text-slate-700 mb-2">Description</label>
@@ -337,6 +399,8 @@ export class HotelRoomsComponent implements OnInit {
   successMessage = signal('');
   errorMessage = signal('');
   isLoading = signal(false);
+  isUploadingImages = signal(false);
+  isDragging = signal(false);
 
   newRoom: Room = this.getEmptyRoom();
 
@@ -344,11 +408,13 @@ export class HotelRoomsComponent implements OnInit {
 
   constructor(
     private hotelService: HotelService,
-    private authService: AuthService
+    private authService: AuthService,
+    private imageUploadService: ImageUploadService
   ) {}
 
   ngOnInit() {
-    this.hotelId = localStorage.getItem('hotelId') || '';
+    // Try to get hotelId, fallback to userId for backward compatibility with existing sessions
+    this.hotelId = localStorage.getItem('hotelId') || localStorage.getItem('userId') || '';
     this.loadRooms();
   }
 
@@ -511,6 +577,91 @@ export class HotelRoomsComponent implements OnInit {
           console.error('Error deleting room:', error);
         }
       });
+    }
+  }
+
+  onImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const files: File[] = Array.from(input.files || []);
+
+    if (!files.length) return;
+
+    // Validate files
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
+    for (const file of files) {
+      if (file.size > maxSize) {
+        this.errorMessage.set(`File "${file.name}" is too large. Max size is 10MB.`);
+        return;
+      }
+
+      if (!validTypes.includes(file.type)) {
+        this.errorMessage.set(`File "${file.name}" is not a valid image format.`);
+        return;
+      }
+    }
+
+    this.isUploadingImages.set(true);
+
+    // Generate upload path
+    const uploadPath = `rooms/${this.hotelId}/${this.newRoom.roomNumber || 'new'}`;
+
+    // Use ImageUploadService to upload multiple images
+    this.imageUploadService.uploadMultipleImages(files, uploadPath).subscribe({
+      next: (imageUrls: string[]) => {
+        if (!imageUrls.length) {
+          this.errorMessage.set('Upload failed: No image URLs returned');
+          this.isUploadingImages.set(false);
+          return;
+        }
+
+        // Initialize images array if not exists
+        if (!this.newRoom.images) {
+          this.newRoom.images = [];
+        }
+
+        // Add new images to existing ones
+        this.newRoom.images = [...this.newRoom.images, ...imageUrls];
+
+        this.isUploadingImages.set(false);
+        this.successMessage.set(`✅ ${imageUrls.length} image(s) uploaded successfully`);
+
+        console.log(`✅ Room images uploaded: ${imageUrls.length} total`);
+
+        setTimeout(() => this.successMessage.set(''), 3000);
+      },
+      error: (error: any) => {
+        this.isUploadingImages.set(false);
+        const errorMsg = error?.message || 'Unknown error';
+        this.errorMessage.set(`Upload failed: ${errorMsg}`);
+        console.error('❌ Image upload error:', error);
+      }
+    });
+
+    // Clear input
+    input.value = '';
+  }
+
+  removeImage(image: string): void {
+    if (this.newRoom.images) {
+      this.newRoom.images = this.newRoom.images.filter(img => img !== image);
+      console.log('🗑️ Room image removed');
+    }
+  }
+
+  onDropImages(event: DragEvent): void {
+    event.preventDefault();
+    this.isDragging.set(false);
+    const files = event.dataTransfer?.files;
+    if (files) {
+      // Create a synthetic event
+      const syntheticEvent = {
+        target: {
+          files: files
+        }
+      } as any;
+      this.onImageSelected(syntheticEvent);
     }
   }
 

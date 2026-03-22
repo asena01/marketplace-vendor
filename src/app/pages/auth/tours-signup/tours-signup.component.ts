@@ -265,9 +265,13 @@ export class ToursSignupComponent {
     this.authService.signup(signupData).subscribe({
       next: (response) => {
         if (response.success) {
+          console.log('✅ Tour operator signup successful:', response);
           this.successMessage.set('Welcome to MarketHub! Setting up your dashboard...');
           setTimeout(() => {
-            this.router.navigate(['/vendor-dashboard/tours']);
+            // Verify agencyId is stored after signup
+            const agencyId = localStorage.getItem('agencyId');
+            console.log('🎫 agencyId stored:', agencyId);
+            this.router.navigate(['/tours-dashboard/tours']);
           }, 2000);
         }
       },

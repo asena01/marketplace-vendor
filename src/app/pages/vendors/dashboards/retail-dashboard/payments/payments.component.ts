@@ -728,7 +728,8 @@ export class PaymentsComponent implements OnInit {
   private vendorId: string = '';
 
   constructor(private paymentService: PaymentService) {
-    this.vendorId = localStorage.getItem('storeId') || '';
+    // Try to get storeId, fallback to userId for backward compatibility with existing sessions
+    this.vendorId = localStorage.getItem('storeId') || localStorage.getItem('userId') || '';
   }
 
   ngOnInit(): void {
