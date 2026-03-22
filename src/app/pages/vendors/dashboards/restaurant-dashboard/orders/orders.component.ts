@@ -616,12 +616,11 @@ export class RestaurantOrdersComponent implements OnInit {
       storeId
     });
 
-    if (restaurantId || storeId) {
-      const id = restaurantId || storeId;
-      if (id) {
-        this.restaurantId.set(id);
-        this.loadOrders();
-      }
+    // Try restaurantId first, then storeId, then userId for backward compatibility
+    const id = restaurantId || storeId || userId;
+    if (id) {
+      this.restaurantId.set(id);
+      this.loadOrders();
     } else {
       this.errorMessage.set('Restaurant ID not found. Please log in again.');
     }

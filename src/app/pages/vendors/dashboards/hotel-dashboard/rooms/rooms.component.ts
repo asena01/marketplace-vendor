@@ -348,7 +348,8 @@ export class HotelRoomsComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.hotelId = localStorage.getItem('hotelId') || '';
+    // Try to get hotelId, fallback to userId for backward compatibility with existing sessions
+    this.hotelId = localStorage.getItem('hotelId') || localStorage.getItem('userId') || '';
     this.loadRooms();
   }
 

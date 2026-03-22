@@ -422,7 +422,8 @@ export class RestaurantMenuComponent implements OnInit {
 
   ngOnInit() {
     // Get restaurant ID from localStorage (set during login)
-    const restaurantId = localStorage.getItem('restaurantId') || localStorage.getItem('storeId');
+    // Try restaurantId first, then storeId, then userId for backward compatibility
+    const restaurantId = localStorage.getItem('restaurantId') || localStorage.getItem('storeId') || localStorage.getItem('userId');
     if (restaurantId) {
       this.restaurantId.set(restaurantId);
       this.loadMenuItems();
