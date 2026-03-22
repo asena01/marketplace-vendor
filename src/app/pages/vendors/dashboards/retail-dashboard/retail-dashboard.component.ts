@@ -174,7 +174,8 @@ export class RetailDashboardComponent implements OnInit {
     private productService: ProductService,
     private router: Router
   ) {
-    this.storeId = localStorage.getItem('storeId') || '';
+    // Try to get storeId, fallback to userId for backward compatibility with existing sessions
+    this.storeId = localStorage.getItem('storeId') || localStorage.getItem('userId') || '';
     this.vendorType = localStorage.getItem('vendorType') || 'retail';
 
     // Load vendor type configuration
