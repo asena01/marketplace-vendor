@@ -1,9 +1,10 @@
 import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { FoodService } from '../../../../../services/food.service';
-import { AngularFireUploadService } from '../../../../../services/angular-fire-upload.service';
+import { ImageUploadService } from '../../../../../services/image-upload.service';
 
 interface MenuItem {
   _id?: string;
@@ -284,19 +285,47 @@ interface MenuItem {
 
               <!-- Image Upload -->
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">Menu Item Image</label>
-                <div class="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center bg-orange-50 hover:bg-orange-100 transition cursor-pointer"
-                     (click)="imageInput.click()">
+                <label class="block text-sm font-medium text-slate-700 mb-1">Menu Item Image</label>
+
+                @if (isUploadingMenuImage()) {
+                  <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div class="flex items-center gap-2 mb-3">
+                      <div class="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                      <span class="font-medium text-blue-900">Uploading image...</span>
+                    </div>
+
+                    @if (uploadSteps().length > 0) {
+                      <div class="space-y-1">
+                        @for (step of uploadSteps(); track $index) {
+                          <div class="text-sm text-blue-800">{{ step }}</div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+
+                <div
+                  class="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center bg-orange-50 hover:bg-orange-100 transition cursor-pointer"
+                  (dragover)="isDraggingImage.set(true)"
+                  (dragleave)="isDraggingImage.set(false)"
+                  (drop)="isDraggingImage.set(false); onMenuImageSelected($event); $event.dataTransfer?.files"
+                  [class.border-orange-500]="isDraggingImage()"
+                  [class.bg-orange-100]="isDraggingImage()"
+                  [class.opacity-50]="isUploadingMenuImage()"
+                  [class.pointer-events-none]="isUploadingMenuImage()"
+                  (click)="imageInput.click()"
+                >
                   <input
                     #imageInput
                     type="file"
                     accept="image/*"
                     (change)="onMenuImageSelected($event)"
+                    [disabled]="isUploadingMenuImage()"
                     style="display: none"
                   />
                   <mat-icon class="text-4xl text-orange-400 mb-2 block">image</mat-icon>
-                  <p class="text-slate-700 font-medium">Click or drag image here</p>
-                  <p class="text-slate-500 text-sm">Supported formats: JPG, PNG, GIF</p>
+                  <p class="text-slate-700 font-medium">Click to upload or drag image here</p>
+                  <p class="text-slate-500 text-sm">PNG, JPG, GIF up to 10MB</p>
                 </div>
 
                 <!-- Image Preview -->
@@ -312,22 +341,11 @@ interface MenuItem {
                       <button
                         type="button"
                         (click)="removeMenuImage()"
-                        class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 transform translate-x-2 -translate-y-2 hover:bg-red-600"
+                        [disabled]="isUploadingMenuImage()"
+                        class="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center transform translate-x-2 -translate-y-2 hover:bg-red-600 disabled:opacity-50"
                       >
-                        <mat-icon class="text-sm">close</mat-icon>
+                        ×
                       </button>
-                    </div>
-                  </div>
-                }
-
-                <!-- Upload Progress -->
-                @if (isUploadingMenuImage()) {
-                  <div class="mt-4">
-                    <div class="flex items-center gap-3">
-                      <div class="animate-spin">
-                        <mat-icon class="text-orange-600">hourglass_empty</mat-icon>
-                      </div>
-                      <span class="text-slate-700">Uploading image...</span>
                     </div>
                   </div>
                 }
@@ -412,12 +430,15 @@ export class RestaurantMenuComponent implements OnInit {
 
   restaurantId = signal<string>('');
   isUploadingMenuImage = signal(false);
+  uploadProgress = signal('');
+  uploadSteps = signal<string[]>([]);
+  isDraggingImage = signal(false);
 
   newMenuItem: MenuItem = this.getEmptyMenuItem();
 
   constructor(
     private foodService: FoodService,
-    private imageUploadService: AngularFireUploadService
+    private imageUploadService: ImageUploadService
   ) {}
 
   ngOnInit() {
@@ -625,30 +646,68 @@ export class RestaurantMenuComponent implements OnInit {
     }
   }
 
+  /**
+   * Add upload step to progress tracking
+   */
+  private addUploadStep(step: string): void {
+    const steps = this.uploadSteps();
+    this.uploadSteps.set([...steps, step]);
+    this.uploadProgress.set(step);
+    console.log('📋 Upload step:', step);
+  }
+
   onMenuImageSelected(event: any) {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    this.addUploadStep(`📸 Image selected - ${file.name}`);
+
+    // Validate file
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
+    if (file.size > maxSize) {
+      this.errorMessage.set(`File is too large. Max size is 10MB.`);
+      this.addUploadStep(`❌ File too large: ${file.name}`);
+      return;
+    }
+
+    if (!validTypes.includes(file.type)) {
+      this.errorMessage.set('Invalid image format. Use PNG, JPG, GIF, or WebP.');
+      this.addUploadStep(`❌ Invalid format: ${file.name}`);
+      return;
+    }
+
     this.isUploadingMenuImage.set(true);
-    const uploadPath = `menu-items/${this.newMenuItem._id || 'new'}`;
+    this.addUploadStep('🚀 Starting image upload...');
+
+    const uploadPath = `menu-items/${this.restaurantId()}`;
+    this.addUploadStep(`📤 Upload path: ${uploadPath}`);
 
     this.imageUploadService.uploadImage(file, uploadPath).subscribe({
       next: (imageUrl: string) => {
+        this.addUploadStep('🎉 Upload complete!');
         this.newMenuItem.image = imageUrl;
         this.isUploadingMenuImage.set(false);
-        this.successMessage.set('Image uploaded successfully!');
+        this.uploadSteps.set([]);
+        this.uploadProgress.set('');
+        this.successMessage.set('✅ Image uploaded successfully!');
+        console.log('✅ Menu item image uploaded:', imageUrl);
         setTimeout(() => this.successMessage.set(''), 3000);
       },
       error: (error: any) => {
         this.isUploadingMenuImage.set(false);
-        this.errorMessage.set('Failed to upload image. Please try again.');
-        console.error('Image upload error:', error);
+        const errorMsg = error?.message || 'Unknown error';
+        this.errorMessage.set(`Failed to upload image: ${errorMsg}`);
+        this.addUploadStep(`❌ Upload failed: ${errorMsg}`);
+        console.error('❌ Image upload error:', error);
       }
     });
   }
 
   removeMenuImage() {
     this.newMenuItem.image = undefined;
+    console.log('🗑️ Menu item image removed');
   }
 
   private getEmptyMenuItem(): MenuItem {
