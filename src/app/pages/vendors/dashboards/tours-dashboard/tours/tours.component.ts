@@ -315,7 +315,18 @@ export class ToursDashboardToursComponent implements OnInit {
   uploadedImages = signal<any[]>([]);
   isDragging = signal(false);
 
-  tourForm = {
+  tourForm: {
+    name: string;
+    destination: string;
+    duration: number | string;
+    price: number;
+    maxParticipants: number;
+    description: string;
+    difficulty: string;
+    isActive: boolean;
+    image: string;
+    images: string[];
+  } = {
     name: '',
     destination: '',
     duration: 0,
@@ -324,8 +335,8 @@ export class ToursDashboardToursComponent implements OnInit {
     description: '',
     difficulty: '',
     isActive: true,
-    image: '', // Primary image
-    images: [] // Array of image URLs/base64
+    image: '',
+    images: []
   };
 
   editingTourId = '';
