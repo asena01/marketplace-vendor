@@ -289,7 +289,13 @@ export class ToursDashboardToursComponent implements OnInit {
   }
 
   loadTours(): void {
+    console.log('🎫 loadTours() called - vendorId:', this.vendorId);
+
     if (!this.vendorId) {
+      console.error('❌ CRITICAL: vendorId is empty in loadTours()');
+      console.log('   agencyId:', localStorage.getItem('agencyId'));
+      console.log('   userId:', localStorage.getItem('userId'));
+      console.log('   All localStorage keys:', Object.keys(localStorage));
       this.errorMessage.set('Vendor ID not found. Please log in again.');
       return;
     }
@@ -394,8 +400,22 @@ export class ToursDashboardToursComponent implements OnInit {
 
     // Check if vendorId is empty and show warning
     if (!this.vendorId) {
+      const storageDebug = {
+        agencyId: localStorage.getItem('agencyId'),
+        userId: localStorage.getItem('userId'),
+        vendorType: localStorage.getItem('vendorType'),
+        email: localStorage.getItem('email'),
+        businessName: localStorage.getItem('businessName')
+      };
       console.error('❌ CRITICAL: vendorId is empty! Required fields will be missing.');
-      this.formError.set('Error: Vendor ID not found. Please log out and log in again as a tour operator.');
+      console.error('   Storage values:', storageDebug);
+      console.error('   All localStorage keys:', Object.keys(localStorage));
+      this.formError.set(
+        'Error: Vendor ID not found. ' +
+        (storageDebug.vendorType === 'tour-operator'
+          ? 'Please refresh the page and try again.'
+          : 'Please log out and log in again as a tour operator (vendorType must be "tour-operator").')
+      );
       return;
     }
 

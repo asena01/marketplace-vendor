@@ -161,14 +161,22 @@ export class AuthService {
           // Set business ID from seed data for vendor logins
           if (response.user.userType === 'vendor') {
             localStorage.setItem('vendorType', response.user.vendorType || 'vendor-type-default');
+            console.log('🔑 Login: Vendor Type set to:', response.user.vendorType);
+
             if (response.user.vendorType === 'hotel') {
               localStorage.setItem('hotelId', '69a72226003a6f0406e3afb1');
+              console.log('✅ Hotel ID stored');
             } else if (response.user.vendorType === 'tour-operator') {
-              localStorage.setItem('agencyId', response.user._id || 'tour-agency-default');
+              const agencyId = response.user._id || 'tour-agency-default';
+              localStorage.setItem('agencyId', agencyId);
+              console.log('✅ Login: Agency ID stored:', agencyId);
+              console.log('✅ Login: response.user._id:', response.user._id);
             } else if (response.user.vendorType === 'restaurant') {
               localStorage.setItem('restaurantId', response.user._id || 'restaurant-default');
+              console.log('✅ Restaurant ID stored');
             } else if (response.user.vendorType === 'retail') {
               localStorage.setItem('storeId', response.user._id || 'retail-default');
+              console.log('✅ Store ID stored');
             } else if (response.user.vendorType === 'delivery') {
               // Use deliveryPartnerId if available, otherwise use userId
               const deliveryId = response.user.deliveryPartnerId || response.user._id || 'delivery-default';
