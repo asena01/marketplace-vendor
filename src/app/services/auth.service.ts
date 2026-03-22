@@ -76,21 +76,36 @@ export class AuthService {
           // Set business ID from signup response for vendors
           if (response.user.userType === 'vendor') {
             const userId = response.user._id;
-            console.log('✅ Signup: Setting business ID for vendor type:', response.user.vendorType);
+            const vendorType = response.user.vendorType;
+            console.log('✅ Signup: Setting business ID for vendor type:', vendorType);
 
-            if (response.user.vendorType === 'hotel') {
+            // Store vendorType for all vendors
+            localStorage.setItem('vendorType', vendorType);
+
+            // Map vendor types to their business IDs
+            const retailVendorTypes = [
+              'retail', 'clothing-store', 'jewelry', 'supermarket',
+              'furniture', 'pet-store', 'gym', 'salon-spa',
+              'car-rental', 'event-center', 'general'
+            ];
+
+            if (vendorType === 'hotel') {
               localStorage.setItem('hotelId', userId);
               console.log('✅ Hotel ID stored:', userId);
-            } else if (response.user.vendorType === 'tour-operator') {
+            } else if (vendorType === 'tour-operator') {
               localStorage.setItem('agencyId', userId);
               console.log('✅ Agency ID stored:', userId);
-            } else if (response.user.vendorType === 'restaurant') {
+            } else if (vendorType === 'restaurant') {
               localStorage.setItem('restaurantId', userId);
               console.log('✅ Restaurant ID stored:', userId);
-            } else if (response.user.vendorType === 'retail') {
+            } else if (vendorType === 'hair-salon' || vendorType === 'service') {
+              localStorage.setItem('serviceProviderId', userId);
+              console.log('✅ Service Provider ID stored:', userId);
+            } else if (retailVendorTypes.includes(vendorType)) {
+              // All retail types use storeId
               localStorage.setItem('storeId', userId);
-              console.log('✅ Store ID stored:', userId);
-            } else if (response.user.vendorType === 'delivery') {
+              console.log('✅ Store ID stored for vendor type:', vendorType, userId);
+            } else if (vendorType === 'delivery') {
               const deliveryId = response.user.deliveryPartnerId || userId;
               localStorage.setItem('deliveryId', deliveryId);
               console.log('✅ Delivery ID stored:', deliveryId);
