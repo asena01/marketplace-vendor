@@ -274,10 +274,17 @@ export class ToursDashboardToursComponent implements OnInit {
 
   constructor(private tourService: TourService) {
     // Get vendor ID from localStorage (set during login)
-    this.vendorId = localStorage.getItem('agencyId') || localStorage.getItem('userId') || '';
+    const agencyId = localStorage.getItem('agencyId');
+    const userId = localStorage.getItem('userId');
+    this.vendorId = agencyId || userId || '';
+    console.log('🏗️ Tours Component Constructor:');
+    console.log('   agencyId from localStorage:', agencyId);
+    console.log('   userId from localStorage:', userId);
+    console.log('   vendorId set to:', this.vendorId);
   }
 
   ngOnInit(): void {
+    console.log('🎫 ngOnInit called - vendorId:', this.vendorId);
     this.loadTours();
   }
 
@@ -361,6 +368,12 @@ export class ToursDashboardToursComponent implements OnInit {
       return;
     }
 
+    // DEBUG: Check localStorage values
+    console.log('🔍 DEBUG - localStorage values:');
+    console.log('  agencyId:', localStorage.getItem('agencyId'));
+    console.log('  userId:', localStorage.getItem('userId'));
+    console.log('  vendorId (component):', this.vendorId);
+
     // Get user data from localStorage
     const userData = localStorage.getItem('user');
     let userEmail = localStorage.getItem('email') || '';
@@ -377,6 +390,13 @@ export class ToursDashboardToursComponent implements OnInit {
       } catch (e) {
         console.warn('Could not parse user data from localStorage');
       }
+    }
+
+    // Check if vendorId is empty and show warning
+    if (!this.vendorId) {
+      console.error('❌ CRITICAL: vendorId is empty! Required fields will be missing.');
+      this.formError.set('Error: Vendor ID not found. Please log out and log in again as a tour operator.');
+      return;
     }
 
     const tourData: any = {
