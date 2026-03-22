@@ -399,7 +399,13 @@ export class ToursDashboardToursComponent implements OnInit {
 
     if (this.isEditing()) {
       this.tourService.updateTour(this.editingTourId, tourData).subscribe({
-        next: () => {
+        next: (response: any) => {
+          console.log('📝 Update response:', response);
+          // Check if response indicates success
+          if (response.status === 'error' || response.message?.toLowerCase().includes('error')) {
+            this.formError.set('Failed to update tour: ' + (response.message || 'Unknown error'));
+            return;
+          }
           this.successMessage.set('Tour updated successfully');
           this.closeModal();
           this.loadTours();
@@ -407,20 +413,28 @@ export class ToursDashboardToursComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error updating tour:', error);
-          this.formError.set('Failed to update tour');
+          this.formError.set('Failed to update tour: ' + (error.error?.message || error.message || 'Unknown error'));
         }
       });
     } else {
       this.tourService.createTour(tourData).subscribe({
-        next: () => {
+        next: (response: any) => {
+          console.log('📝 Create response:', response);
+          // Check if response indicates success
+          if (response.status === 'error' || response.message?.toLowerCase().includes('error')) {
+            this.formError.set('Failed to create tour: ' + (response.message || 'Unknown error'));
+            console.error('❌ Tour creation failed:', response);
+            return;
+          }
           this.successMessage.set('Tour created successfully');
           this.closeModal();
-          this.loadTours();
+          // Reload tours after creation
+          setTimeout(() => this.loadTours(), 500);
           setTimeout(() => this.successMessage.set(''), 3000);
         },
         error: (error) => {
-          console.error('Error creating tour:', error);
-          this.formError.set('Failed to create tour');
+          console.error('❌ Error creating tour:', error);
+          this.formError.set('Failed to create tour: ' + (error.error?.message || error.message || 'Unknown error'));
         }
       });
     }

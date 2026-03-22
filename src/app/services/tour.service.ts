@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, catchError, of } from 'rxjs';
+import { Observable, catchError, of, tap } from 'rxjs';
 
 export interface Itinerary {
   day: number;
@@ -174,9 +174,13 @@ export class TourService {
     // Store vendorId in service for use in other methods
     this.agencyId = vendorId;
 
+    console.log('🎫 Fetching vendor tours from:', this.apiUrl, 'Vendor ID:', vendorId);
     return this.http.get<ApiResponse>(this.apiUrl, { params }).pipe(
+      tap((response: any) => {
+        console.log('✅ Vendor tours fetched:', response.data?.length || 0, 'tours');
+      }),
       catchError((error) => {
-        console.error('Error fetching vendor tours:', error);
+        console.error('❌ Error fetching vendor tours:', error);
         return of({ status: 'success', data: [] });
       })
     );
@@ -208,9 +212,13 @@ export class TourService {
       }
     }
 
+    console.log('🎫 Fetching all tours from:', this.apiUrl);
     return this.http.get<ApiResponse>(this.apiUrl, { params }).pipe(
+      tap((response: any) => {
+        console.log('✅ All tours fetched:', response.data?.length || 0, 'tours');
+      }),
       catchError((error) => {
-        console.error('Error fetching tours:', error);
+        console.error('❌ Error fetching tours:', error);
         return of({ status: 'error', data: [] });
       })
     );
@@ -284,10 +292,18 @@ export class TourService {
    * Create new tour
    */
   createTour(tour: Tour): Observable<any> {
+    console.log('🚀 Creating tour via API:', this.apiUrl);
+    console.log('📦 Tour data:', tour);
     return this.http.post<any>(this.apiUrl, tour).pipe(
+      tap((response: any) => {
+        console.log('✅ Tour created successfully:', response);
+      }),
       catchError((error) => {
-        console.error('Error creating tour:', error);
-        return of({ status: 'error', message: error.message });
+        console.error('❌ Error creating tour:', error);
+        console.error('  - Status:', error.status);
+        console.error('  - Message:', error.message);
+        console.error('  - Error details:', error.error);
+        return of({ status: 'error', message: error.error?.message || error.message || 'Failed to create tour' });
       })
     );
   }
