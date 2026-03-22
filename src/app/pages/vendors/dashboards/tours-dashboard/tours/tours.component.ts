@@ -48,6 +48,7 @@ import { TourService } from '../../../../../services/tour.service';
             <table class="w-full">
               <thead class="bg-slate-100 border-b border-slate-200">
                 <tr>
+                  <th class="px-6 py-4 text-left text-sm font-semibold text-slate-900">Image</th>
                   <th class="px-6 py-4 text-left text-sm font-semibold text-slate-900">Tour Name</th>
                   <th class="px-6 py-4 text-left text-sm font-semibold text-slate-900">Destination</th>
                   <th class="px-6 py-4 text-left text-sm font-semibold text-slate-900">Duration</th>
@@ -60,6 +61,15 @@ import { TourService } from '../../../../../services/tour.service';
               <tbody class="divide-y divide-slate-200">
                 @for (tour of tours(); track tour._id) {
                   <tr class="hover:bg-slate-50">
+                    <td class="px-6 py-4">
+                      @if (tour.image) {
+                        <img [src]="tour.image" alt="{{ tour.name }}" class="w-12 h-12 object-cover rounded-lg border border-slate-300" />
+                      } @else {
+                        <div class="w-12 h-12 bg-slate-100 rounded-lg border border-slate-300 flex items-center justify-center text-slate-400">
+                          <span class="text-xs">No image</span>
+                        </div>
+                      }
+                    </td>
                     <td class="px-6 py-4">
                       <span class="font-medium text-slate-900">{{ tour.name }}</span>
                     </td>
@@ -172,6 +182,50 @@ import { TourService } from '../../../../../services/tour.service';
               </div>
 
               <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Upload Tour Images</label>
+                <div
+                  class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center cursor-pointer hover:border-pink-500 transition"
+                  (dragover)="onDragOver($event)"
+                  (dragleave)="onDragLeave($event)"
+                  (drop)="onDrop($event)"
+                  [class.border-pink-500]="isDragging()"
+                  [class.bg-pink-50]="isDragging()"
+                >
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    #imageInput
+                    (change)="onImageSelected($event)"
+                    class="hidden"
+                  />
+                  <div (click)="imageInput.click()">
+                    <p class="text-sm font-medium text-slate-700">Click to upload or drag and drop</p>
+                    <p class="text-xs text-slate-500 mt-1">PNG, JPG, GIF up to 10MB each</p>
+                  </div>
+                </div>
+                @if (uploadedImages().length > 0) {
+                  <div class="mt-4 space-y-2">
+                    <p class="text-sm font-medium text-slate-700">Uploaded Images ({{ uploadedImages().length }})</p>
+                    <div class="grid grid-cols-3 gap-3">
+                      @for (img of uploadedImages(); track $index) {
+                        <div class="relative">
+                          <img [src]="img.preview" alt="Preview" class="w-full h-24 object-cover rounded-lg border border-slate-300" />
+                          <button
+                            type="button"
+                            (click)="removeImage($index)"
+                            class="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold transition"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">Difficulty Level *</label>
                 <select
                   [(ngModel)]="tourForm.difficulty"
@@ -258,6 +312,8 @@ export class ToursDashboardToursComponent implements OnInit {
   formError = signal('');
   deleteConfirmName = signal('');
   deleteConfirmId = signal('');
+  uploadedImages = signal<any[]>([]);
+  isDragging = signal(false);
 
   tourForm = {
     name: '',
@@ -267,7 +323,9 @@ export class ToursDashboardToursComponent implements OnInit {
     maxParticipants: 0,
     description: '',
     difficulty: '',
-    isActive: true
+    isActive: true,
+    image: '', // Primary image
+    images: [] // Array of image URLs/base64
   };
 
   editingTourId = '';
@@ -341,8 +399,23 @@ export class ToursDashboardToursComponent implements OnInit {
       maxParticipants: tour.maxParticipants || 0,
       description: tour.description || '',
       difficulty: tour.difficulty || '',
-      isActive: tour.isActive !== false
+      isActive: tour.isActive !== false,
+      image: tour.image || '',
+      images: tour.images || []
     };
+
+    // Load existing images for preview
+    if (tour.images && Array.isArray(tour.images) && tour.images.length > 0) {
+      const existingImages = tour.images.map((img: string, index: number) => ({
+        name: `image-${index + 1}`,
+        preview: img,
+        file: img
+      }));
+      this.uploadedImages.set(existingImages);
+    } else {
+      this.uploadedImages.set([]);
+    }
+
     this.editingTourId = tour._id;
     this.isEditing.set(true);
     this.showModal.set(true);
@@ -362,9 +435,131 @@ export class ToursDashboardToursComponent implements OnInit {
       maxParticipants: 0,
       description: '',
       difficulty: '',
-      isActive: true
+      isActive: true,
+      image: '',
+      images: []
     };
+    this.uploadedImages.set([]);
     this.formError.set('');
+  }
+
+  /**
+   * Handle image file selection
+   */
+  onImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const files = input.files;
+
+    if (!files) return;
+
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
+    Array.from(files).forEach((file) => {
+      // Validate file size
+      if (file.size > maxSize) {
+        this.formError.set(`File "${file.name}" is too large. Max size is 10MB.`);
+        return;
+      }
+
+      // Validate file type
+      if (!validTypes.includes(file.type)) {
+        this.formError.set(`File "${file.name}" is not a valid image format. Use PNG, JPG, GIF, or WebP.`);
+        return;
+      }
+
+      // Read file as base64
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64String = e.target?.result as string;
+        const imageObj = {
+          name: file.name,
+          preview: base64String,
+          file: base64String // Store as base64 for API
+        };
+
+        const currentImages = this.uploadedImages();
+        this.uploadedImages.set([...currentImages, imageObj]);
+
+        // Update tour form images array
+        this.tourForm.images = this.uploadedImages().map(img => img.file);
+
+        // Set first image as primary image
+        if (this.uploadedImages().length === 1) {
+          this.tourForm.image = imageObj.file;
+        }
+
+        console.log(`✅ Image uploaded: ${file.name}, Total images: ${this.uploadedImages().length}`);
+      };
+
+      reader.onerror = () => {
+        this.formError.set(`Failed to read file "${file.name}"`);
+      };
+
+      reader.readAsDataURL(file);
+    });
+
+    // Clear input so same file can be selected again if needed
+    input.value = '';
+  }
+
+  /**
+   * Remove uploaded image by index
+   */
+  removeImage(index: number): void {
+    const currentImages = this.uploadedImages();
+    const updatedImages = currentImages.filter((_, i) => i !== index);
+    this.uploadedImages.set(updatedImages);
+
+    // Update tour form images array
+    this.tourForm.images = updatedImages.map(img => img.file);
+
+    // Update primary image
+    if (updatedImages.length > 0) {
+      this.tourForm.image = updatedImages[0].file;
+    } else {
+      this.tourForm.image = '';
+    }
+
+    console.log(`🗑️ Image removed. Remaining images: ${updatedImages.length}`);
+  }
+
+  /**
+   * Handle drag over event
+   */
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging.set(true);
+  }
+
+  /**
+   * Handle drag leave event
+   */
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging.set(false);
+  }
+
+  /**
+   * Handle drop event
+   */
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging.set(false);
+
+    const files = event.dataTransfer?.files;
+    if (files) {
+      // Create a synthetic event to reuse onImageSelected
+      const syntheticEvent = {
+        target: {
+          files: files
+        }
+      } as any;
+      this.onImageSelected(syntheticEvent);
+    }
   }
 
   saveTour(): void {
@@ -435,6 +630,8 @@ export class ToursDashboardToursComponent implements OnInit {
       rating: 0,
       reviews: 0,
       currentParticipants: 0,
+      image: this.tourForm.image || null,
+      images: this.tourForm.images || [],
       tourOperator: this.vendorId,
       operatorName: userName,
       operatorPhone: userPhone,
@@ -443,6 +640,7 @@ export class ToursDashboardToursComponent implements OnInit {
     };
 
     console.log('📝 Creating tour with data:', tourData);
+    console.log(`📸 Tour images: ${tourData.images.length} image(s) uploaded`);
 
     if (this.isEditing()) {
       this.tourService.updateTour(this.editingTourId, tourData).subscribe({
