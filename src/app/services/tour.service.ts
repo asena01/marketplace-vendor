@@ -164,6 +164,23 @@ export class TourService {
   }
 
   /**
+   * Get vendor-specific tours by tourOperator/agencyId
+   */
+  getVendorTours(vendorId: string, page: number = 1, limit: number = 100): Observable<ApiResponse> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('limit', limit.toString())
+      .set('tourOperator', vendorId);
+
+    return this.http.get<ApiResponse>(this.apiUrl, { params }).pipe(
+      catchError((error) => {
+        console.error('Error fetching vendor tours:', error);
+        return of({ status: 'success', data: [] });
+      })
+    );
+  }
+
+  /**
    * Get all tours with pagination and filters
    */
   getTours(page: number = 1, limit: number = 10, filters?: any): Observable<ApiResponse> {

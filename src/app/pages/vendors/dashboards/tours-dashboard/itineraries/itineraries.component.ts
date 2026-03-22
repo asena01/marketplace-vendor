@@ -257,16 +257,24 @@ export class ToursItinerariesComponent implements OnInit {
 
   activitiesText = '';
   editingDayNumber = 0;
+  private vendorId: string = '';
 
-  constructor(private tourService: TourService) {}
+  constructor(private tourService: TourService) {
+    // Get vendor ID from localStorage (set during login)
+    this.vendorId = localStorage.getItem('agencyId') || localStorage.getItem('userId') || '';
+  }
 
   ngOnInit(): void {
     this.loadTours();
   }
 
   loadTours(): void {
+    if (!this.vendorId) {
+      this.errorMessage.set('Vendor ID not found. Please log in again.');
+      return;
+    }
     this.isLoading.set(true);
-    this.tourService.getTours(1, 100).subscribe({
+    this.tourService.getVendorTours(this.vendorId, 1, 100).subscribe({
       next: (response: any) => {
         if (response.status === 'success' && Array.isArray(response.data)) {
           this.tours.set(response.data);
