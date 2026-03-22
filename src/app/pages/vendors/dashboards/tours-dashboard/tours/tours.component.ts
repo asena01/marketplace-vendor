@@ -2,6 +2,7 @@ import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TourService } from '../../../../../services/tour.service';
+import { ImageUploadService } from '../../../../../services/image-upload.service';
 
 @Component({
   selector: 'app-tours',
@@ -183,6 +184,25 @@ import { TourService } from '../../../../../services/tour.service';
 
               <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">Upload Tour Images</label>
+
+                @if (isUploadingImages()) {
+                  <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div class="flex items-center gap-2 mb-3">
+                      <div class="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                      <span class="font-medium text-blue-900">Uploading images...</span>
+                    </div>
+
+                    <!-- Upload Progress Steps -->
+                    @if (uploadSteps().length > 0) {
+                      <div class="space-y-1">
+                        @for (step of uploadSteps(); track $index) {
+                          <div class="text-sm text-blue-800">{{ step }}</div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+
                 <div
                   class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center cursor-pointer hover:border-pink-500 transition"
                   (dragover)="onDragOver($event)"
@@ -190,6 +210,8 @@ import { TourService } from '../../../../../services/tour.service';
                   (drop)="onDrop($event)"
                   [class.border-pink-500]="isDragging()"
                   [class.bg-pink-50]="isDragging()"
+                  [class.opacity-50]="isUploadingImages()"
+                  [class.pointer-events-none]="isUploadingImages()"
                 >
                   <input
                     type="file"
@@ -197,13 +219,15 @@ import { TourService } from '../../../../../services/tour.service';
                     accept="image/*"
                     #imageInput
                     (change)="onImageSelected($event)"
+                    [disabled]="isUploadingImages()"
                     class="hidden"
                   />
-                  <div (click)="imageInput.click()">
+                  <div (click)="imageInput.click()" [class.cursor-not-allowed]="isUploadingImages()">
                     <p class="text-sm font-medium text-slate-700">Click to upload or drag and drop</p>
                     <p class="text-xs text-slate-500 mt-1">PNG, JPG, GIF up to 10MB each</p>
                   </div>
                 </div>
+
                 @if (uploadedImages().length > 0) {
                   <div class="mt-4 space-y-2">
                     <p class="text-sm font-medium text-slate-700">Uploaded Images ({{ uploadedImages().length }})</p>
@@ -214,7 +238,8 @@ import { TourService } from '../../../../../services/tour.service';
                           <button
                             type="button"
                             (click)="removeImage($index)"
-                            class="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold transition"
+                            [disabled]="isUploadingImages()"
+                            class="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold transition disabled:opacity-50"
                           >
                             ×
                           </button>
@@ -336,6 +361,9 @@ export class ToursDashboardToursComponent implements OnInit {
   deleteConfirmId = signal('');
   uploadedImages = signal<any[]>([]);
   isDragging = signal(false);
+  isUploadingImages = signal(false);
+  uploadProgress = signal('');
+  uploadSteps = signal<string[]>([]);
 
   tourForm: {
     name: string;
@@ -372,7 +400,10 @@ export class ToursDashboardToursComponent implements OnInit {
   editingTourId = '';
   private vendorId: string = '';
 
-  constructor(private tourService: TourService) {
+  constructor(
+    private tourService: TourService,
+    private imageUploadService: ImageUploadService
+  ) {
     // Get vendor ID from localStorage (set during login)
     const agencyId = localStorage.getItem('agencyId');
     const userId = localStorage.getItem('userId');
@@ -426,6 +457,9 @@ export class ToursDashboardToursComponent implements OnInit {
 
   openCreateModal(): void {
     this.resetForm();
+    this.uploadSteps.set([]);
+    this.uploadProgress.set('');
+    this.isUploadingImages.set(false);
     this.isEditing.set(false);
     this.editingTourId = '';
     this.showModal.set(true);
@@ -491,66 +525,107 @@ export class ToursDashboardToursComponent implements OnInit {
     this.highlightsText = '';
     this.includesText = '';
     this.uploadedImages.set([]);
+    this.uploadSteps.set([]);
+    this.uploadProgress.set('');
+    this.isUploadingImages.set(false);
     this.formError.set('');
   }
 
   /**
-   * Handle image file selection
+   * Add upload step to progress tracking
+   */
+  private addUploadStep(step: string): void {
+    const steps = this.uploadSteps();
+    this.uploadSteps.set([...steps, step]);
+    this.uploadProgress.set(step);
+    console.log('📋 Upload step:', step);
+  }
+
+  /**
+   * Handle image file selection using ImageUploadService
    */
   onImageSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    const files = input.files;
+    const files: File[] = Array.from(input.files || []);
 
-    if (!files) return;
+    if (!files.length) {
+      this.addUploadStep('⚠️ No files selected');
+      return;
+    }
 
+    this.addUploadStep(`📸 Images selected - ${files.length} file(s)`);
+
+    // Validate files
     const maxSize = 10 * 1024 * 1024; // 10MB
     const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
-    Array.from(files).forEach((file) => {
-      // Validate file size
+    for (const file of files) {
       if (file.size > maxSize) {
         this.formError.set(`File "${file.name}" is too large. Max size is 10MB.`);
+        this.addUploadStep(`❌ File too large: ${file.name}`);
         return;
       }
 
-      // Validate file type
       if (!validTypes.includes(file.type)) {
-        this.formError.set(`File "${file.name}" is not a valid image format. Use PNG, JPG, GIF, or WebP.`);
+        this.formError.set(`File "${file.name}" is not a valid image format.`);
+        this.addUploadStep(`❌ Invalid format: ${file.name}`);
         return;
       }
+    }
 
-      // Read file as base64
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const base64String = e.target?.result as string;
-        const imageObj = {
-          name: file.name,
-          preview: base64String,
-          file: base64String // Store as base64 for API
-        };
+    this.isUploadingImages.set(true);
+    this.addUploadStep('🚀 Starting image upload...');
 
+    // Generate upload path
+    const uploadPath = `tours/${this.vendorId}`;
+    this.addUploadStep(`📤 Upload path: ${uploadPath}`);
+
+    // Use ImageUploadService to upload multiple images
+    this.imageUploadService.uploadMultipleImages(files, uploadPath).subscribe({
+      next: (imageUrls: string[]) => {
+        this.addUploadStep(`🎉 Upload complete! Received ${imageUrls.length} URLs`);
+
+        if (!imageUrls.length) {
+          this.formError.set('Upload failed: No image URLs returned');
+          this.isUploadingImages.set(false);
+          return;
+        }
+
+        // Create image objects with previews
+        const newImages = imageUrls.map((url, index) => ({
+          name: `image-${index + 1}`,
+          preview: url,
+          file: url
+        }));
+
+        // Add to uploaded images
         const currentImages = this.uploadedImages();
-        this.uploadedImages.set([...currentImages, imageObj]);
+        this.uploadedImages.set([...currentImages, ...newImages]);
 
         // Update tour form images array
         this.tourForm.images = this.uploadedImages().map(img => img.file);
 
-        // Set first image as primary image
-        if (this.uploadedImages().length === 1) {
-          this.tourForm.image = imageObj.file;
+        // Set first image as primary if not already set
+        if (!this.tourForm.image || this.tourForm.image === '') {
+          this.tourForm.image = imageUrls[0];
         }
 
-        console.log(`✅ Image uploaded: ${file.name}, Total images: ${this.uploadedImages().length}`);
-      };
+        this.isUploadingImages.set(false);
+        this.formError.set('');
+        this.addUploadStep(`✅ ${imageUrls.length} image(s) uploaded successfully`);
 
-      reader.onerror = () => {
-        this.formError.set(`Failed to read file "${file.name}"`);
-      };
-
-      reader.readAsDataURL(file);
+        console.log(`✅ Images uploaded: ${imageUrls.length} total`);
+      },
+      error: (error: any) => {
+        this.isUploadingImages.set(false);
+        const errorMsg = error?.message || 'Unknown error';
+        this.formError.set(`Upload failed: ${errorMsg}`);
+        this.addUploadStep(`❌ Upload failed: ${errorMsg}`);
+        console.error('❌ Image upload error:', error);
+      }
     });
 
-    // Clear input so same file can be selected again if needed
+    // Clear input so same file can be selected again
     input.value = '';
   }
 
