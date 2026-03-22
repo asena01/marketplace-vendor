@@ -117,7 +117,7 @@ import { AngularFireUploadService } from '../../../../../services/angular-fire-u
                       class="border-2 border-dashed border-blue-300 rounded-lg p-4 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition"
                       (dragover)="$event.preventDefault(); isDragging.set(true)"
                       (dragleave)="isDragging.set(false)"
-                      (drop)="$event.preventDefault(); isDragging.set(false); onServiceImageSelected($event as any)"
+                      (drop)="onDropServiceImage($event)"
                       [class.border-blue-500]="isDragging()"
                       [class.bg-blue-50]="isDragging()"
                       [class.opacity-50]="isUploadingImage()"
@@ -444,5 +444,19 @@ export class ServiceServicesComponent implements OnInit {
       return false;
     }
     return true;
+  }
+
+  onDropServiceImage(event: DragEvent): void {
+    event.preventDefault();
+    this.isDragging.set(false);
+    const file = event.dataTransfer?.files?.[0];
+    if (file) {
+      const syntheticEvent = {
+        target: {
+          files: event.dataTransfer!.files
+        }
+      } as any;
+      this.onServiceImageSelected(syntheticEvent);
+    }
   }
 }

@@ -1,5 +1,4 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HotelService } from '../../../../../services/hotel.service';
@@ -293,7 +292,7 @@ interface Room {
                   class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition"
                   (dragover)="$event.preventDefault(); isDragging.set(true)"
                   (dragleave)="isDragging.set(false)"
-                  (drop)="$event.preventDefault(); isDragging.set(false); onImageSelected($event as any)"
+                  (drop)="onDropImages($event)"
                   [class.border-blue-500]="isDragging()"
                   [class.bg-blue-50]="isDragging()"
                   [class.opacity-50]="isUploadingImages()"
@@ -648,6 +647,21 @@ export class HotelRoomsComponent implements OnInit {
     if (this.newRoom.images) {
       this.newRoom.images = this.newRoom.images.filter(img => img !== image);
       console.log('🗑️ Room image removed');
+    }
+  }
+
+  onDropImages(event: DragEvent): void {
+    event.preventDefault();
+    this.isDragging.set(false);
+    const files = event.dataTransfer?.files;
+    if (files) {
+      // Create a synthetic event
+      const syntheticEvent = {
+        target: {
+          files: files
+        }
+      } as any;
+      this.onImageSelected(syntheticEvent);
     }
   }
 

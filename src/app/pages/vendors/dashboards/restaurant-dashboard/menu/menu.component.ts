@@ -1,5 +1,4 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -308,7 +307,7 @@ interface MenuItem {
                   class="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center bg-orange-50 hover:bg-orange-100 transition cursor-pointer"
                   (dragover)="isDraggingImage.set(true)"
                   (dragleave)="isDraggingImage.set(false)"
-                  (drop)="isDraggingImage.set(false); onMenuImageSelected($event); $event.dataTransfer?.files"
+                  (drop)="onDropMenuImage($event)"
                   [class.border-orange-500]="isDraggingImage()"
                   [class.bg-orange-100]="isDraggingImage()"
                   [class.opacity-50]="isUploadingMenuImage()"
@@ -708,6 +707,20 @@ export class RestaurantMenuComponent implements OnInit {
   removeMenuImage() {
     this.newMenuItem.image = undefined;
     console.log('🗑️ Menu item image removed');
+  }
+
+  onDropMenuImage(event: DragEvent): void {
+    event.preventDefault();
+    this.isDraggingImage.set(false);
+    const file = event.dataTransfer?.files?.[0];
+    if (file) {
+      const syntheticEvent = {
+        target: {
+          files: event.dataTransfer!.files
+        }
+      } as any;
+      this.onMenuImageSelected(syntheticEvent);
+    }
   }
 
   private getEmptyMenuItem(): MenuItem {

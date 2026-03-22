@@ -504,7 +504,7 @@ interface Product {
                   class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition"
                   (dragover)="$event.preventDefault(); $event.stopPropagation()"
                   (dragleave)="$event.preventDefault(); $event.stopPropagation()"
-                  (drop)="$event.preventDefault(); $event.stopPropagation(); onImageSelected($event as any)"
+                  (drop)="onDropImages($event)"
                   [class.border-blue-500]="isDraggingImages()"
                   [class.bg-blue-50]="isDraggingImages()"
                   [class.opacity-50]="isUploadingImages()"
@@ -1419,6 +1419,21 @@ export class RetailProductsComponent implements OnInit {
       console.log('✅ File input clicked successfully');
     } else {
       console.error('❌ File input reference not found');
+    }
+  }
+
+  onDropImages(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDraggingImages.set(false);
+    const files = event.dataTransfer?.files;
+    if (files) {
+      const syntheticEvent = {
+        target: {
+          files: files
+        }
+      } as any;
+      this.onImageSelected(syntheticEvent);
     }
   }
 
