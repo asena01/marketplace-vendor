@@ -48,7 +48,7 @@ import { forkJoin } from 'rxjs';
       }
 
       <!-- Key Metrics -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-blue-500">
           <p class="text-slate-600 text-sm font-medium mb-1">Occupancy Rate</p>
           <p class="text-3xl font-bold text-slate-900">{{ getOccupancyRate() }}%</p>
@@ -61,7 +61,7 @@ import { forkJoin } from 'rxjs';
           <p class="mt-2 text-sm text-slate-500">{{ bookings().length }} occupied, {{ getAvailableRooms() }} available</p>
         </div>
 
-        <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-blue-500">
+        <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-emerald-500">
           <p class="text-slate-600 text-sm font-medium mb-1">Today's Revenue</p>
           <p class="text-3xl font-bold text-slate-900">$ {{ getTotalRevenue() }}</p>
           <p class="mt-2 text-sm text-emerald-600">Updated: Real-time data</p>
@@ -72,10 +72,16 @@ import { forkJoin } from 'rxjs';
           <p class="text-3xl font-bold text-slate-900">{{ bookings().length }}</p>
           <p class="mt-2 text-sm text-slate-500">{{ stats()?.checkInsToday || 0 }} check-ins today</p>
         </div>
+
+        <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-amber-500">
+          <p class="text-slate-600 text-sm font-medium mb-1">Avg. Room Rate</p>
+          <p class="text-3xl font-bold text-slate-900">₦ {{ averageRoomRate() | number }}</p>
+          <p class="mt-2 text-sm text-amber-600">{{ pricingRates().length }} rates configured</p>
+        </div>
       </div>
 
-      <!-- Room Status & Bookings -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Room Status & Bookings & Pricing -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Room Status -->
         <div class="bg-white rounded-lg p-6 shadow-md">
           <h3 class="text-lg font-bold text-slate-900 mb-6">Room Status Overview</h3>
@@ -151,6 +157,37 @@ import { forkJoin } from 'rxjs';
             }
           </div>
         </div>
+
+        <!-- Pricing Overview -->
+        <div class="bg-white rounded-lg p-6 shadow-md">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-bold text-slate-900">Pricing Overview</h3>
+            <button
+              (click)="navigateTo('/hotel-dashboard/pricing')"
+              class="text-sm text-amber-600 hover:text-amber-700 font-medium"
+            >
+              Manage →
+            </button>
+          </div>
+          @if (pricingRates().length === 0) {
+            <p class="text-slate-600 text-center py-4">No pricing rates configured</p>
+          } @else {
+            <div class="space-y-3">
+              @for (rate of pricingRates().slice(0, 5); track rate._id) {
+                <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                  <div>
+                    <p class="font-medium text-slate-900 capitalize">{{ rate.roomType }}</p>
+                    <p class="text-xs text-slate-600">Min stay: {{ rate.minStay || 1 }} night(s)</p>
+                  </div>
+                  <p class="font-semibold text-amber-600">₦ {{ rate.basePrice | number }}</p>
+                </div>
+              }
+              @if (pricingRates().length > 5) {
+                <p class="text-xs text-slate-500 text-center pt-2">+{{ pricingRates().length - 5 }} more rates</p>
+              }
+            </div>
+          }
+        </div>
       </div>
 
       <!-- Staff -->
@@ -221,6 +258,8 @@ export class HotelDashboardComponent implements OnInit {
   staffMembers = signal<any[]>([]);
   roomStatusSummary = signal<any>(null);
   totalRoomsCount = signal<number>(0);
+  pricingRates = signal<any[]>([]);
+  averageRoomRate = signal<number>(0);
   isLoading = signal(false);
   errorMessage = signal('');
 
@@ -258,7 +297,8 @@ export class HotelDashboardComponent implements OnInit {
       stats: this.hotelService.getHotelStats(),
       bookings: this.hotelService.getHotelBookings(1, 5),
       staff: this.hotelService.getStaff(1, 10),
-      rooms: this.hotelService.getRooms(1, 100)
+      rooms: this.hotelService.getRooms(1, 100),
+      pricing: this.hotelService.getPricingRates()
     }).subscribe({
       next: (results: any) => {
         // Load hotel details
@@ -290,6 +330,14 @@ export class HotelDashboardComponent implements OnInit {
           this.roomStatusSummary.set(roomSummary);
           this.totalRoomsCount.set(results.rooms.data.length);
           console.log('✅ Room status summary calculated:', roomSummary);
+        }
+
+        // Load pricing rates
+        if (results.pricing.status === 'success' && Array.isArray(results.pricing.data)) {
+          this.pricingRates.set(results.pricing.data);
+          const avgRate = this.calculateAverageRate(results.pricing.data);
+          this.averageRoomRate.set(avgRate);
+          console.log('✅ Pricing rates loaded:', results.pricing.data);
         }
 
         this.isLoading.set(false);
@@ -360,6 +408,16 @@ export class HotelDashboardComponent implements OnInit {
       .join('')
       .toUpperCase()
       .slice(0, 2);
+  }
+
+  private calculateAverageRate(rates: any[]): number {
+    if (!rates || rates.length === 0) return 0;
+
+    const total = rates.reduce((sum, rate) => {
+      return sum + (rate.basePrice || 0);
+    }, 0);
+
+    return Math.round(total / rates.length);
   }
 
   navigateTo(route: string): void {

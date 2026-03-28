@@ -239,8 +239,9 @@ interface CalendarDay {
 export class AvailabilityCalendarComponent implements OnInit {
   rooms = signal<any[]>([]);
   filteredRooms = signal<any[]>([]);
+  bookings = signal<any[]>([]);
   calendarDays = signal<CalendarDay[]>([]);
-  
+
   currentDate = signal(new Date());
   viewMode = 'month';
   selectedRoomFilter = '';
@@ -266,6 +267,7 @@ export class AvailabilityCalendarComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadRooms();
+    this.loadBookings();
     this.loadCalendarData();
   }
 
@@ -281,6 +283,17 @@ export class AvailabilityCalendarComponent implements OnInit {
     });
   }
 
+  loadBookings(): void {
+    this.hotelService.getHotelBookings(1, 1000).subscribe({
+      next: (response: any) => {
+        if (response.status === 'success' && Array.isArray(response.data)) {
+          this.bookings.set(response.data);
+        }
+      },
+      error: (error) => console.error('Error loading bookings:', error)
+    });
+  }
+
   loadCalendarData(): void {
     const year = this.currentDate().getFullYear();
     const month = this.currentDate().getMonth();
@@ -290,6 +303,9 @@ export class AvailabilityCalendarComponent implements OnInit {
     } else {
       this.generateWeekCalendar();
     }
+
+    // Refresh bookings when calendar updates
+    this.loadBookings();
   }
 
   generateMonthCalendar(year: number, month: number): void {
@@ -364,8 +380,39 @@ export class AvailabilityCalendarComponent implements OnInit {
   }
 
   getRoomStatus(roomId: string, date: Date): string {
-    // In real implementation, fetch from API
-    // For now, return 'available' as default
+    // Check if room has a booking on this date
+    const booking = this.bookings().find(b => {
+      // Match the room ID
+      if (b.roomId !== roomId && b.room?._id !== roomId && b.roomNumber !== roomId) {
+        return false;
+      }
+
+      // Check if date falls within booking period
+      const checkInDate = new Date(b.checkInDate || b.checkIn);
+      const checkOutDate = new Date(b.checkOutDate || b.checkOut);
+
+      // Reset time for date comparison
+      checkInDate.setHours(0, 0, 0, 0);
+      checkOutDate.setHours(0, 0, 0, 0);
+      const compareDate = new Date(date);
+      compareDate.setHours(0, 0, 0, 0);
+
+      return compareDate >= checkInDate && compareDate < checkOutDate;
+    });
+
+    if (booking && (booking.status === 'confirmed' || booking.status === 'pending')) {
+      return 'booked';
+    }
+
+    // Check room status from room data
+    const room = this.rooms().find(r => r._id === roomId);
+    if (room) {
+      // If room status is blocked or maintenance, return that
+      if (room.status === 'maintenance' || room.status === 'blocked') {
+        return room.status;
+      }
+    }
+
     return 'available';
   }
 
