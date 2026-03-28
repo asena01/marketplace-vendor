@@ -290,7 +290,7 @@ export class AdminDashboardComponent implements OnInit {
     this.currentCategory.set(categoryId);
     this.currentSubPage.set('vendors');
     this.expandedCategory.set(categoryId === this.expandedCategory() ? null : categoryId);
-    this.closeSidebarOnMobile();
+    // Don't close sidebar on category expand/collapse
   }
 
   selectSubPage(subPage: string): void {
