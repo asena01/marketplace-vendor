@@ -111,17 +111,21 @@ export class RoleGuard implements CanActivate {
 
     // Check if user has the required role via PermissionService
     if (this.permissionService.hasRole(requiredRole)) {
+      console.log(`✅ RoleGuard: User has required role '${requiredRole}' (via PermissionService)`);
       return true;
     }
 
     // Fallback: Check localStorage if permission service hasn't loaded yet
     // This is needed right after login before async permission loading completes
     const adminRole = localStorage.getItem('adminRole');
+    console.log(`🔍 RoleGuard: Checking localStorage adminRole '${adminRole}' against required '${requiredRole}'`);
+
     if (adminRole === requiredRole) {
+      console.log(`✅ RoleGuard: User has required role '${requiredRole}' (via localStorage fallback)`);
       return true;
     }
 
-    console.warn(`Access denied: Role '${requiredRole}' required for route '${state.url}'`);
+    console.warn(`❌ RoleGuard: Access denied for '${state.url}'. Required role '${requiredRole}', but user has '${adminRole || 'none'}'`);
     this.router.navigate(['/']);
     return false;
   }

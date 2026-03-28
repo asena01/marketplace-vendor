@@ -126,8 +126,16 @@ router.post('/login', async (req, res) => {
     if (user.userType === 'vendor') {
       console.log('🏢 Vendor type:', user.vendorType);
     }
+    if (user.userType === 'admin') {
+      console.log('🔐 Admin role:', user.adminRole);
+    }
 
     const userResponse = user.toJSON();
+
+    // Log the response to verify adminRole is included
+    if (user.userType === 'admin') {
+      console.log('📤 Admin login response includes adminRole:', userResponse.adminRole);
+    }
 
     // Include deliveryPartnerId if user is a delivery vendor
     if (user.userType === 'vendor' && user.vendorType === 'delivery' && user.deliveryPartnerId) {

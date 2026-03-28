@@ -154,8 +154,14 @@ export class AuthService {
 
           // Store admin role if admin user
           if (response.user.userType === 'admin') {
-            localStorage.setItem('adminRole', response.user.adminRole || 'admin');
+            const adminRole = response.user.adminRole || 'admin';
+            localStorage.setItem('adminRole', adminRole);
             console.log('✅ Admin logged in with role:', response.user.adminRole);
+            console.log('💾 Stored in localStorage as adminRole:', adminRole);
+
+            // Verify it was stored
+            const storedRole = localStorage.getItem('adminRole');
+            console.log('✔️ Verified adminRole in localStorage:', storedRole);
           }
 
           // Set business ID from seed data for vendor logins
@@ -317,6 +323,25 @@ export class AuthService {
   getVendorType(): string | null {
     const user = this.currentUser();
     return user?.vendorType || null;
+  }
+
+  /**
+   * Get admin role (for admins only)
+   */
+  getAdminRole(): string | null {
+    // First check from localStorage (set during login)
+    const adminRole = localStorage.getItem('adminRole');
+    if (adminRole) {
+      return adminRole;
+    }
+
+    // Fallback to user object adminRole if available
+    const user = this.currentUser();
+    if (user && (user as any).adminRole) {
+      return (user as any).adminRole;
+    }
+
+    return null;
   }
 
   /**
