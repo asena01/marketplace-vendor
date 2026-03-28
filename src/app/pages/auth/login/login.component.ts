@@ -331,13 +331,22 @@ export class LoginComponent implements OnInit {
         this.isLoading.set(false);
 
         if (response.success) {
+          console.log('📡 Login response:', response);
+          console.log('👤 User from response:', response.user);
+          console.log('🔐 AdminRole from response:', response.user?.adminRole);
+
           this.successMessage.set('Welcome back! Redirecting...');
 
           // Redirect based on user type and role
           setTimeout(() => {
             const userType = this.authService.getUserType();
+            console.log('📍 userType:', userType);
+
             if (userType === 'admin') {
               const adminRole = this.authService.getAdminRole();
+              console.log('🔐 adminRole from getAdminRole():', adminRole);
+              console.log('💾 adminRole from localStorage:', localStorage.getItem('adminRole'));
+
               if (adminRole === 'super-admin') {
                 console.log('✅ Super-admin logged in, redirecting to admin dashboard');
                 this.router.navigate(['/admin-dashboard']);

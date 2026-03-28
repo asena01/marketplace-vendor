@@ -22,6 +22,8 @@ export interface User {
   openingTime?: string;
   closingTime?: string;
   deliveryPartnerId?: string;
+  adminRole?: string; // Admin role for access control
+  adminPermissions?: any; // Admin permissions
 }
 
 @Injectable({

@@ -165,11 +165,22 @@ router.post('/create-demo-accounts', async (req, res) => {
 
     const demoAccounts = [
       {
-        name: 'Admin User',
+        name: 'Super Admin',
         email: 'admin@demo.com',
         password: 'admin123456',
         phone: '+1234567890',
-        userType: 'admin'
+        userType: 'admin',
+        adminRole: 'super-admin',
+        adminPermissions: {
+          manageOrganizations: true,
+          manageUsers: true,
+          manageDevices: true,
+          processPayments: true,
+          viewAnalytics: true,
+          manageSettings: true,
+          manageSuspensions: true,
+          viewLogs: true
+        }
       },
       {
         name: 'Demo Customer',
