@@ -348,6 +348,84 @@ interface Room {
                 ></textarea>
               </div>
 
+              <!-- Device Assignment Section (Collapsed) -->
+              @if (isEditing() && newRoom._id) {
+                <div class="border-t pt-6 mt-6">
+                  <div class="flex items-center justify-between mb-4">
+                    <div>
+                      <h4 class="font-bold text-slate-900">🔌 Device Assignment</h4>
+                      <p class="text-sm text-slate-500 mt-1">Assign smart devices to this room</p>
+                    </div>
+                    <button
+                      type="button"
+                      (click)="toggleDeviceAssignment()"
+                      class="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-medium transition text-sm"
+                    >
+                      {{ showDeviceForm() ? 'Hide' : 'Show' }} Devices
+                    </button>
+                  </div>
+
+                  @if (showDeviceForm()) {
+                    <div class="space-y-4 bg-cyan-50 p-4 rounded-lg">
+                      <!-- Auto-Assign Button -->
+                      <div class="flex gap-2">
+                        <button
+                          type="button"
+                          (click)="autoAssignDevices()"
+                          [disabled]="isAutoAssigning()"
+                          class="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white rounded-lg font-medium transition text-sm"
+                        >
+                          {{ isAutoAssigning() ? '⏳ Auto-Assigning...' : '✨ Auto-Assign Devices' }}
+                        </button>
+                        <button
+                          type="button"
+                          (click)="viewDeviceAssignment()"
+                          class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition text-sm"
+                        >
+                          📍 View All Devices
+                        </button>
+                      </div>
+
+                      <!-- Assigned Devices List -->
+                      @if (roomDevices().length > 0) {
+                        <div>
+                          <p class="text-sm font-semibold text-slate-900 mb-2">Assigned Devices ({{ roomDevices().length }})</p>
+                          <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            @for (device of roomDevices(); track device._id) {
+                              <div class="bg-white rounded-lg p-3 border border-cyan-200 flex items-center justify-between">
+                                <div class="flex-1">
+                                  <p class="font-medium text-slate-900 text-sm">{{ device.deviceId }}</p>
+                                  <p class="text-xs text-slate-500">{{ getDeviceTypeLabel(device.deviceType) }}</p>
+                                </div>
+                                <span class="px-2 py-1 rounded text-xs font-medium" [ngClass]="{
+                                  'bg-green-100 text-green-700': device.status,
+                                  'bg-red-100 text-red-700': !device.status
+                                }">
+                                  {{ device.status ? 'Online' : 'Offline' }}
+                                </span>
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      } @else {
+                        <p class="text-sm text-slate-600 italic">No devices assigned yet. Click "Auto-Assign Devices" to add them.</p>
+                      }
+
+                      <!-- Compatibility Info -->
+                      <div class="bg-white rounded-lg p-3 border border-cyan-200 text-sm">
+                        <p class="font-semibold text-slate-900 mb-2">📋 Room Requirements</p>
+                        @if (getRequiredDevices().length > 0) {
+                          <p class="text-slate-700"><span class="font-medium">Required:</span> {{ getRequiredDevices().join(', ') }}</p>
+                        }
+                        @if (getRecommendedDevices().length > 0) {
+                          <p class="text-slate-700"><span class="font-medium">Recommended:</span> {{ getRecommendedDevices().join(', ') }}</p>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+
               <!-- Modal Actions -->
               <div class="flex justify-end gap-3">
                 <button
@@ -391,7 +469,9 @@ interface Room {
 export class HotelRoomsComponent implements OnInit {
   rooms = signal<Room[]>([]);
   filteredRooms = signal<Room[]>([]);
+  roomDevices = signal<any[]>([]);
   showRoomModal = signal(false);
+  showDeviceForm = signal(false);
   isEditing = signal(false);
   searchQuery = signal('');
   selectedType = signal('');
@@ -401,6 +481,7 @@ export class HotelRoomsComponent implements OnInit {
   isLoading = signal(false);
   isUploadingImages = signal(false);
   isDragging = signal(false);
+  isAutoAssigning = signal(false);
 
   newRoom: Room = this.getEmptyRoom();
 
@@ -475,18 +556,28 @@ export class HotelRoomsComponent implements OnInit {
     this.isEditing.set(false);
     this.newRoom = this.getEmptyRoom();
     this.showRoomModal.set(true);
+    this.showDeviceForm.set(false);
+    this.roomDevices.set([]);
   }
 
   editRoom(room: Room) {
     this.isEditing.set(true);
     this.newRoom = { ...room };
     this.showRoomModal.set(true);
+    this.showDeviceForm.set(false);
+
+    // Load devices for this room
+    if (room._id) {
+      this.loadRoomDevices();
+    }
   }
 
   closeRoomModal() {
     this.showRoomModal.set(false);
+    this.showDeviceForm.set(false);
     this.newRoom = this.getEmptyRoom();
     this.isEditing.set(false);
+    this.roomDevices.set([]);
   }
 
   saveRoom() {
@@ -674,5 +765,97 @@ export class HotelRoomsComponent implements OnInit {
       pricePerNight: 0,
       status: 'available'
     };
+  }
+
+  // ==================== DEVICE ASSIGNMENT ====================
+
+  toggleDeviceAssignment(): void {
+    this.showDeviceForm.set(!this.showDeviceForm());
+  }
+
+  loadRoomDevices(): void {
+    if (!this.newRoom._id) return;
+
+    this.hotelService.getRoomDevices(this.newRoom._id).subscribe({
+      next: (response: any) => {
+        if (response.status === 'success') {
+          this.roomDevices.set(response.data?.devices || []);
+          console.log('✅ Room devices loaded:', response.data);
+        }
+      },
+      error: (error) => {
+        console.error('❌ Failed to load room devices:', error);
+      }
+    });
+  }
+
+  getRequiredDevices(): string[] {
+    const compatibility: any = {
+      single: ['🔐 Smart Lock'],
+      double: ['🔐 Smart Lock'],
+      suite: ['🔐 Smart Lock', '🌡️ Thermostat'],
+      deluxe: ['🔐 Smart Lock', '🌡️ Thermostat', '💡 Smart Light'],
+      presidential: ['🔐 Smart Lock', '🌡️ Thermostat', '💡 Smart Light', '📹 Camera']
+    };
+    return compatibility[this.newRoom.roomType] || ['🔐 Smart Lock'];
+  }
+
+  getRecommendedDevices(): string[] {
+    const compatibility: any = {
+      single: ['🎯 Motion Sensor', '💡 Smart Light'],
+      double: ['🎯 Motion Sensor', '💡 Smart Light', '🌡️ Thermostat'],
+      suite: ['🎯 Motion Sensor', '💡 Smart Light', '🔊 Smart Speaker'],
+      deluxe: ['🎯 Motion Sensor', '💡 Smart Light', '🔊 Smart Speaker', '📹 Camera'],
+      presidential: ['🎯 Motion Sensor', '💡 Smart Light', '🔊 Smart Speaker', '📹 Camera']
+    };
+    return compatibility[this.newRoom.roomType] || ['🎯 Motion Sensor'];
+  }
+
+  getDeviceTypeLabel(type: string): string {
+    const labels: { [key: string]: string } = {
+      'smart_lock': '🔐 Smart Lock',
+      'motion_sensor': '🎯 Motion Sensor',
+      'thermostat': '🌡️ Thermostat',
+      'light': '💡 Smart Light',
+      'camera': '📹 Camera',
+      'speaker': '🔊 Smart Speaker'
+    };
+    return labels[type] || type;
+  }
+
+  autoAssignDevices(): void {
+    if (!this.newRoom._id) {
+      this.errorMessage.set('Please save the room first before assigning devices');
+      return;
+    }
+
+    this.isAutoAssigning.set(true);
+
+    this.hotelService.autoAssignDevices(this.newRoom._id, {
+      includeRequired: true,
+      includeRecommended: true,
+      includeOptional: false
+    }).subscribe({
+      next: (response: any) => {
+        if (response.status === 'success') {
+          this.loadRoomDevices();
+          this.successMessage.set(`✅ ${response.data.summary.assigned} device(s) auto-assigned`);
+          setTimeout(() => this.successMessage.set(''), 3000);
+          console.log('✅ Auto-assignment complete:', response.data);
+        }
+        this.isAutoAssigning.set(false);
+      },
+      error: (error) => {
+        console.error('❌ Auto-assignment failed:', error);
+        this.errorMessage.set('Failed to auto-assign devices');
+        this.isAutoAssigning.set(false);
+        setTimeout(() => this.errorMessage.set(''), 3000);
+      }
+    });
+  }
+
+  viewDeviceAssignment(): void {
+    // Navigate to device assignment page
+    window.location.href = '/hotel-dashboard/device-assignment';
   }
 }

@@ -1124,4 +1124,78 @@ export class HotelService {
     );
   }
 
+  // ==================== AUTO-ASSIGNMENT ====================
+  /**
+   * Get auto-assignment suggestion for a room based on type
+   */
+  getAutoAssignmentSuggestion(roomId: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/rooms/${roomId}/device-suggestion`
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Auto-assignment suggestion retrieved:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to get suggestion:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  /**
+   * Get available unassigned devices for a room
+   */
+  getAvailableDevicesForRoom(roomId: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/rooms/${roomId}/available-devices`
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Available devices retrieved:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to get available devices:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  /**
+   * Auto-assign devices to a room
+   */
+  autoAssignDevices(
+    roomId: string,
+    options: { includeRequired: boolean; includeRecommended: boolean; includeOptional: boolean }
+  ): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/rooms/${roomId}/auto-assign`,
+      options
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Devices auto-assigned:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to auto-assign:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  /**
+   * Bulk auto-assign devices to multiple rooms
+   */
+  bulkAutoAssignDevices(roomIds: string[], options: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/bulk-auto-assign`,
+      { roomIds, ...options }
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Bulk auto-assignment completed:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed bulk auto-assignment:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
 }
