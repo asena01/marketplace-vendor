@@ -135,14 +135,37 @@ interface CalendarDay {
                       {{ getStatusLabel(day.availability[selectedRoomFilter]) }}
                     </div>
                   } @else if (day.isCurrentMonth) {
-                    <div class="text-xs space-y-1">
+                    <div class="text-xs space-y-1 relative group">
                       @if (getAvailabilityCount(day.date, 'available'); as count) {
                         <div class="text-green-600">✓ {{ count }} avail</div>
+                      }
+                      @if (getAvailabilityCount(day.date, 'booked'); as count) {
+                        @if (count > 0) {
+                          <div class="text-blue-600 cursor-help">📅 {{ count }} booked</div>
+                        }
                       }
                       @if (getAvailabilityCount(day.date, 'blocked'); as count) {
                         @if (count > 0) {
                           <div class="text-red-600">⊗ {{ count }} blocked</div>
                         }
+                      }
+
+                      <!-- Tooltip with booked rooms -->
+                      @if (getBookedRoomsForDate(day.date).length > 0) {
+                        <div class="absolute z-50 invisible group-hover:visible bg-slate-900 text-white text-xs rounded-lg p-3 whitespace-nowrap shadow-lg bottom-full left-1/2 transform -translate-x-1/2 mb-2 min-w-max">
+                          <p class="font-semibold mb-2 border-b border-slate-700 pb-2">Booked Rooms:</p>
+                          <div class="space-y-1">
+                            @for (booking of getBookedRoomsForDate(day.date); track booking._id) {
+                              <div class="flex items-center gap-2">
+                                <span class="font-medium">Room {{ booking.roomNumber }}</span>
+                                <span class="text-slate-300">({{ booking.roomType }})</span>
+                              </div>
+                              <p class="text-slate-300 text-xs">📌 {{ booking.customerName || 'Guest' }}</p>
+                            }
+                          </div>
+                          <!-- Tooltip arrow -->
+                          <div class="absolute w-2 h-2 bg-slate-900 transform rotate-45 left-1/2 -translate-x-1/2 -bottom-1"></div>
+                        </div>
                       }
                     </div>
                   }
@@ -496,6 +519,27 @@ export class AvailabilityCalendarComponent implements OnInit {
     this.selectedRoomFilter = '';
     this.selectedDates.set([]);
     this.loadCalendarData();
+  }
+
+  getBookedRoomsForDate(date: Date): any[] {
+    const compareDate = new Date(date);
+    compareDate.setHours(0, 0, 0, 0);
+
+    return this.bookings().filter(booking => {
+      // Check if booking is confirmed or pending
+      if (booking.status !== 'confirmed' && booking.status !== 'pending') {
+        return false;
+      }
+
+      // Check if date falls within booking period
+      const checkInDate = new Date(booking.checkInDate || booking.checkIn);
+      const checkOutDate = new Date(booking.checkOutDate || booking.checkOut);
+
+      checkInDate.setHours(0, 0, 0, 0);
+      checkOutDate.setHours(0, 0, 0, 0);
+
+      return compareDate >= checkInDate && compareDate < checkOutDate;
+    });
   }
 
   formatDayHeader(date: Date): string {
