@@ -269,7 +269,7 @@ export class LoginComponent implements OnInit {
     if (this.authService.isLoggedIn()) {
       const userType = this.authService.getUserType();
       if (userType === 'admin') {
-        this.router.navigate(['/admin-dashboard']);
+        this.redirectAdminToDashboard();
       } else if (userType === 'vendor') {
         const vendorType = this.authService.getVendorType();
         this.redirectVendorToDashboard(vendorType);
@@ -303,6 +303,24 @@ export class LoginComponent implements OnInit {
     this.router.navigate(route);
   }
 
+  private redirectAdminToDashboard(): void {
+    // Map admin roles to their specific dashboards
+    // Currently all admins go to the same dashboard, but this structure
+    // allows easy addition of role-specific dashboards in the future
+    const adminDashboardRoutes: Record<string, string[]> = {
+      'super-admin': ['/admin-dashboard'],
+      'finance-manager': ['/admin-dashboard'], // Can be changed to ['/finance-dashboard'] later
+      'support-manager': ['/admin-dashboard'], // Can be changed to ['/support-dashboard'] later
+      'compliance-manager': ['/admin-dashboard'], // Can be changed to ['/compliance-dashboard'] later
+      // Default admin role
+      'admin': ['/admin-dashboard'],
+    };
+
+    const adminRole = this.authService.getAdminRole() || 'admin';
+    const route = adminDashboardRoutes[adminRole] || ['/admin-dashboard'];
+    this.router.navigate(route);
+  }
+
   togglePasswordVisibility(): void {
     this.showPassword.update(value => !value);
   }
@@ -331,7 +349,7 @@ export class LoginComponent implements OnInit {
           setTimeout(() => {
             const userType = this.authService.getUserType();
             if (userType === 'admin') {
-              this.router.navigate(['/admin-dashboard']);
+              this.redirectAdminToDashboard();
             } else if (userType === 'vendor') {
               const vendorType = this.authService.getVendorType();
               this.redirectVendorToDashboard(vendorType);
