@@ -186,17 +186,17 @@ import { DeliveryAdminComponent } from '../admin-categories/delivery-admin/deliv
           } @else if (currentPage() === 'roles') {
             <app-roles></app-roles>
           } @else if (currentCategory() === 'hotels') {
-            <app-hotels-admin></app-hotels-admin>
+            <app-hotels-admin [currentTabInput]="currentSubPage()"></app-hotels-admin>
           } @else if (currentCategory() === 'restaurants') {
-            <app-restaurants-admin></app-restaurants-admin>
+            <app-restaurants-admin [currentTabInput]="currentSubPage()"></app-restaurants-admin>
           } @else if (currentCategory() === 'retail') {
-            <app-retail-admin></app-retail-admin>
+            <app-retail-admin [currentTabInput]="currentSubPage()"></app-retail-admin>
           } @else if (currentCategory() === 'services') {
-            <app-services-admin></app-services-admin>
+            <app-services-admin [currentTabInput]="currentSubPage()"></app-services-admin>
           } @else if (currentCategory() === 'tours') {
-            <app-tours-admin></app-tours-admin>
+            <app-tours-admin [currentTabInput]="currentSubPage()"></app-tours-admin>
           } @else if (currentCategory() === 'delivery') {
-            <app-delivery-admin></app-delivery-admin>
+            <app-delivery-admin [currentTabInput]="currentSubPage()"></app-delivery-admin>
           }
         </main>
       </div>

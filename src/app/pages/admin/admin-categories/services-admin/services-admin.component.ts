@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { VendorDirectoryComponent } from '../../admin-vendors/vendor-directory.component';
 import { AdminUsersComponent } from '../../admin-users/admin-users.component';
@@ -75,6 +75,10 @@ import { AdminPaymentsComponent } from '../../admin-payments/admin-payments.comp
 })
 export class ServicesAdminComponent {
   currentTab = signal<string>('vendors');
+
+  @Input() set currentTabInput(value: string) {
+    this.currentTab.set(value);
+  }
 
   tabs = [
     { id: 'vendors', label: 'Vendors', icon: 'business' },
