@@ -73,6 +73,7 @@ import { ServiceReportsComponent } from './pages/vendors/dashboards/service-dash
 import { ServiceNotificationsComponent } from './pages/vendors/dashboards/service-dashboard/notifications/notifications.component';
 import { SmartLockUnlockComponent } from './pages/smart-lock/unlock.component';
 import { BookingConfirmationComponent } from './pages/customer/booking-confirmation.component';
+import { RoomDeviceAssignmentComponent } from './pages/vendors/dashboards/hotel-dashboard/room-device-assignment/room-device-assignment.component';
 import { VendorGuard } from './guards/vendor.guard';
 import { AdminGuard } from './guards/admin.guard';
 import { PermissionGuard, PermissionsGuard, RoleGuard, RolesGuard } from './guards/permission.guard';
@@ -99,6 +100,7 @@ export const routes: Routes = [
       { path: 'calendar', component: AvailabilityCalendarComponent },
       { path: 'pricing', component: PricingComponent },
       { path: 'devices', component: HotelDevicesComponent },
+      { path: 'device-assignment', component: RoomDeviceAssignmentComponent },
       { path: 'rooms', component: HotelRoomsComponent },
       { path: 'staff', component: HotelStaffComponent },
       { path: 'bookings', component: HotelBookingsComponent },
