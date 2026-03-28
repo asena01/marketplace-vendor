@@ -444,26 +444,119 @@ import { AngularFireUploadService } from '../../../../../services/angular-fire-u
             }
           </div>
 
-          <!-- Other Media Fields -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Logo Upload -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 pt-6 border-t border-slate-200">
             <div>
-              <label class="block text-sm font-semibold text-slate-700 mb-2">Logo URL</label>
-              <input
-                type="url"
-                [(ngModel)]="formData.logo"
-                placeholder="https://example.com/logo.png"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600"
-              />
+              <label class="block text-sm font-semibold text-slate-700 mb-3">Hotel Logo</label>
+
+              <!-- Logo Upload Zone -->
+              <div
+                class="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center cursor-pointer hover:border-blue-500 transition"
+                (dragover)="$event.preventDefault(); $event.stopPropagation()"
+                (dragleave)="$event.preventDefault(); $event.stopPropagation()"
+                (drop)="onDropLogo($event)"
+                [class.border-blue-500]="isDraggingLogo()"
+                [class.bg-blue-50]="isDraggingLogo()"
+                [class.opacity-50]="isUploadingLogo()"
+                [class.pointer-events-none]="isUploadingLogo()"
+                (mouseenter)="isDraggingLogo.set(true)"
+                (mouseleave)="isDraggingLogo.set(false)"
+              >
+                <input
+                  #logoInput
+                  type="file"
+                  accept="image/*"
+                  (change)="onLogoSelected($event)"
+                  [disabled]="isUploadingLogo()"
+                  style="display: none"
+                />
+                <div (click)="triggerLogoInput()" [class.cursor-not-allowed]="isUploadingLogo()">
+                  @if (isUploadingLogo()) {
+                    <div class="flex items-center justify-center gap-2">
+                      <div class="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                      <span class="text-sm font-medium text-blue-900">Uploading...</span>
+                    </div>
+                  } @else {
+                    <p class="text-sm font-medium text-slate-700">Click to upload or drag and drop</p>
+                    <p class="text-xs text-slate-500 mt-1">PNG, JPG (max 10MB)</p>
+                  }
+                </div>
+              </div>
+
+              <!-- Logo Preview -->
+              @if (formData.logo && !formData.logo.startsWith('data:')) {
+                <div class="mt-3">
+                  <img
+                    [src]="formData.logo"
+                    alt="Hotel logo"
+                    class="w-24 h-24 object-cover rounded-lg border-2 border-slate-300"
+                  />
+                  <button
+                    type="button"
+                    (click)="formData.logo = ''"
+                    class="mt-2 text-xs px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
+                  >
+                    Remove
+                  </button>
+                </div>
+              }
             </div>
 
+            <!-- Thumbnail Upload -->
             <div>
-              <label class="block text-sm font-semibold text-slate-700 mb-2">Thumbnail URL</label>
-              <input
-                type="url"
-                [(ngModel)]="formData.thumbnail"
-                placeholder="https://example.com/thumbnail.jpg"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600"
-              />
+              <label class="block text-sm font-semibold text-slate-700 mb-3">Hotel Thumbnail</label>
+
+              <!-- Thumbnail Upload Zone -->
+              <div
+                class="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center cursor-pointer hover:border-blue-500 transition"
+                (dragover)="$event.preventDefault(); $event.stopPropagation()"
+                (dragleave)="$event.preventDefault(); $event.stopPropagation()"
+                (drop)="onDropThumbnail($event)"
+                [class.border-blue-500]="isDraggingThumbnail()"
+                [class.bg-blue-50]="isDraggingThumbnail()"
+                [class.opacity-50]="isUploadingThumbnail()"
+                [class.pointer-events-none]="isUploadingThumbnail()"
+                (mouseenter)="isDraggingThumbnail.set(true)"
+                (mouseleave)="isDraggingThumbnail.set(false)"
+              >
+                <input
+                  #thumbnailInput
+                  type="file"
+                  accept="image/*"
+                  (change)="onThumbnailSelected($event)"
+                  [disabled]="isUploadingThumbnail()"
+                  style="display: none"
+                />
+                <div (click)="triggerThumbnailInput()" [class.cursor-not-allowed]="isUploadingThumbnail()">
+                  @if (isUploadingThumbnail()) {
+                    <div class="flex items-center justify-center gap-2">
+                      <div class="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                      <span class="text-sm font-medium text-blue-900">Uploading...</span>
+                    </div>
+                  } @else {
+                    <p class="text-sm font-medium text-slate-700">Click to upload or drag and drop</p>
+                    <p class="text-xs text-slate-500 mt-1">PNG, JPG (max 10MB)</p>
+                  }
+                </div>
+              </div>
+
+              <!-- Thumbnail Preview -->
+              @if (formData.thumbnail && !formData.thumbnail.startsWith('data:')) {
+                <div class="mt-3">
+                  <img
+                    [src]="formData.thumbnail"
+                    alt="Hotel thumbnail"
+                    class="w-24 h-24 object-cover rounded-lg border-2 border-slate-300"
+                  />
+                  <button
+                    type="button"
+                    (click)="formData.thumbnail = ''"
+                    class="mt-2 text-xs px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
+                  >
+                    Remove
+                  </button>
+                </div>
+              }
             </div>
 
             <div class="flex items-center gap-4">
@@ -495,6 +588,8 @@ import { AngularFireUploadService } from '../../../../../services/angular-fire-u
 })
 export class HotelProfileComponent implements OnInit {
   @ViewChild('imageInput') imageInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('logoInput') logoInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('thumbnailInput') thumbnailInput!: ElementRef<HTMLInputElement>;
 
   isLoading = signal(false);
   isSaving = signal(false);
@@ -503,6 +598,14 @@ export class HotelProfileComponent implements OnInit {
   isUploadingImages = signal(false);
   isDraggingImages = signal(false);
   uploadSteps = signal<string[]>([]);
+
+  // Logo upload signals
+  isUploadingLogo = signal(false);
+  isDraggingLogo = signal(false);
+
+  // Thumbnail upload signals
+  isUploadingThumbnail = signal(false);
+  isDraggingThumbnail = signal(false);
 
   amenitiesText = '';
   previewImageCount = 0;
@@ -577,9 +680,12 @@ export class HotelProfileComponent implements OnInit {
       return;
     }
 
-    // Check if images are still uploading
+    // Check if any images are still uploading
     const hasPreviewImages = this.formData.photos?.some((url: string) => url.startsWith('data:')) || false;
-    if (hasPreviewImages) {
+    const hasPreviewLogo = this.formData.logo?.startsWith('data:') || false;
+    const hasPreviewThumbnail = this.formData.thumbnail?.startsWith('data:') || false;
+
+    if (hasPreviewImages || hasPreviewLogo || hasPreviewThumbnail) {
       this.errorMessage.set('⏳ Images are still uploading. Please wait for the upload to complete before saving.');
       return;
     }
@@ -720,6 +826,108 @@ export class HotelProfileComponent implements OnInit {
       this.uploadAbortController.abort();
       this.isUploadingImages.set(false);
       this.errorMessage.set('Upload cancelled');
+    }
+  }
+
+  // ==================== LOGO UPLOAD METHODS ====================
+  triggerLogoInput(): void {
+    if (!this.isUploadingLogo()) {
+      this.logoInput?.nativeElement?.click();
+    }
+  }
+
+  onLogoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (!file) return;
+
+    this.isUploadingLogo.set(true);
+
+    const uploadPath = `hotels/${this.formData._id || 'new'}/logo`;
+
+    this.imageUploadService.uploadImage(file, uploadPath).subscribe({
+      next: (logoUrl: string) => {
+        this.formData.logo = logoUrl;
+        this.isUploadingLogo.set(false);
+        this.successMessage.set('✅ Logo uploaded successfully!');
+        input.value = '';
+      },
+      error: (error: any) => {
+        this.isUploadingLogo.set(false);
+        this.errorMessage.set(error?.message || 'Failed to upload logo');
+        input.value = '';
+      }
+    });
+  }
+
+  onDropLogo(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDraggingLogo.set(false);
+
+    const file = event.dataTransfer?.files?.[0];
+
+    if (file && file.type.startsWith('image/')) {
+      // Create a mock event for the file input handler
+      const mockEvent = {
+        target: {
+          files: [file]
+        }
+      } as unknown as Event;
+
+      this.onLogoSelected(mockEvent);
+    }
+  }
+
+  // ==================== THUMBNAIL UPLOAD METHODS ====================
+  triggerThumbnailInput(): void {
+    if (!this.isUploadingThumbnail()) {
+      this.thumbnailInput?.nativeElement?.click();
+    }
+  }
+
+  onThumbnailSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (!file) return;
+
+    this.isUploadingThumbnail.set(true);
+
+    const uploadPath = `hotels/${this.formData._id || 'new'}/thumbnail`;
+
+    this.imageUploadService.uploadImage(file, uploadPath).subscribe({
+      next: (thumbnailUrl: string) => {
+        this.formData.thumbnail = thumbnailUrl;
+        this.isUploadingThumbnail.set(false);
+        this.successMessage.set('✅ Thumbnail uploaded successfully!');
+        input.value = '';
+      },
+      error: (error: any) => {
+        this.isUploadingThumbnail.set(false);
+        this.errorMessage.set(error?.message || 'Failed to upload thumbnail');
+        input.value = '';
+      }
+    });
+  }
+
+  onDropThumbnail(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDraggingThumbnail.set(false);
+
+    const file = event.dataTransfer?.files?.[0];
+
+    if (file && file.type.startsWith('image/')) {
+      // Create a mock event for the file input handler
+      const mockEvent = {
+        target: {
+          files: [file]
+        }
+      } as unknown as Event;
+
+      this.onThumbnailSelected(mockEvent);
     }
   }
 
