@@ -783,7 +783,7 @@ export class HotelRoomsComponent implements OnInit {
           console.log('✅ Room devices loaded:', response.data);
         }
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('❌ Failed to load room devices:', error);
       }
     });

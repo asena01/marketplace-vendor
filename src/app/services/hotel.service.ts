@@ -1126,6 +1126,23 @@ export class HotelService {
 
   // ==================== AUTO-ASSIGNMENT ====================
   /**
+   * Get devices assigned to a specific room
+   */
+  getRoomDevices(roomId: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/rooms/${roomId}/devices`
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Room devices retrieved:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to fetch room devices:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  /**
    * Get auto-assignment suggestion for a room based on type
    */
   getAutoAssignmentSuggestion(roomId: string): Observable<ApiResponse<any>> {

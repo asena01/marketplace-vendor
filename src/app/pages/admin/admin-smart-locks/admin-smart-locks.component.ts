@@ -78,11 +78,13 @@ interface SmartLockAnalytics {
 
         <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-blue-500">
           <p class="text-slate-600 text-sm font-medium mb-2">Unlock Success Rate</p>
-          <p class="text-3xl font-bold text-blue-600">
-            {{ analytics()?.unlockAttempts?.total > 0 
-              ? (((analytics()?.unlockAttempts?.successful || 0) / (analytics()?.unlockAttempts?.total || 1)) * 100 | number: '1.0-0') + '%'
-              : 'N/A' }}
-          </p>
+          @if (analytics() && analytics()!.unlockAttempts && (analytics()!.unlockAttempts.total || 0) > 0) {
+            <p class="text-3xl font-bold text-blue-600">
+              {{ (((analytics()!.unlockAttempts.successful || 0) / (analytics()!.unlockAttempts.total || 1)) * 100 | number: '1.0-0') + '%' }}
+            </p>
+          } @else {
+            <p class="text-3xl font-bold text-blue-600">N/A</p>
+          }
         </div>
       </div>
 
