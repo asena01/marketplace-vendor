@@ -82,10 +82,7 @@ import { DeliveryAdminComponent } from '../admin-categories/delivery-admin/deliv
         <!-- Desktop: Always visible. Mobile: Toggles with sidebarOpen signal -->
         <aside
           class="w-72 h-screen lg:h-auto bg-white shadow-lg overflow-y-auto z-40"
-          [ngClass]="{
-            'hidden lg:block': !sidebarOpen(),
-            'block lg:block': sidebarOpen()
-          }"
+          [style.display]="(sidebarOpen() || isLargeScreen()) ? 'block' : 'none'"
         >
           <nav class="p-6 space-y-2">
             <!-- Top Level Menu -->
@@ -226,6 +223,7 @@ export class AdminDashboardComponent implements OnInit {
   currentSubPage = signal<string>('vendors');
   expandedCategory = signal<string | null>(null);
   sidebarOpen = signal<boolean>(true);
+  isLargeScreen = signal<boolean>(typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
 
   // Business categories with their sub-pages
   categories = [
@@ -282,6 +280,13 @@ export class AdminDashboardComponent implements OnInit {
     }
 
     console.log('✅ Admin dashboard loaded for:', this.getCurrentUserName());
+
+    // Listen for window resize to update screen size
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', () => {
+        this.isLargeScreen.set(window.innerWidth >= 1024);
+      });
+    }
   }
 
   setCurrentPage(page: string): void {
