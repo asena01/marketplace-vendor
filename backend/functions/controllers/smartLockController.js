@@ -3,6 +3,8 @@ import Hotel from '../models/Hotel.js';
 import Room from '../models/Room.js';
 import crypto from 'crypto';
 import QRCode from 'qrcode';
+import { sendSmartLockAccessEmail } from '../services/emailService.js';
+import tuyaSmartLockService from '../services/tuyaSmartLockService.js';
 
 /**
  * Generate a unique access token for a booking
@@ -38,12 +40,13 @@ export const generateQRCode = async (unlockUrl) => {
 export const createSmartLockAccess = async (req, res) => {
   try {
     const { bookingId } = req.params;
-    const { hotelId } = req.body;
+    const { hotelId, sendEmail = true, setupDevice = false } = req.body;
 
     // Fetch booking with related data
     const booking = await Booking.findById(bookingId)
       .populate('room')
-      .populate('guest');
+      .populate('guest')
+      .populate('hotel');
 
     if (!booking) {
       return res.status(404).json({
@@ -64,9 +67,9 @@ export const createSmartLockAccess = async (req, res) => {
     const accessToken = generateAccessToken(bookingId);
     const backupPin = generateBackupPin();
 
-    // Create unlock URL (frontend will handle this)
-    const unlockUrl = `${process.env.FRONTEND_URL}/unlock/${accessToken}`;
-    
+    // Create unlock URL
+    const unlockUrl = `${process.env.FRONTEND_URL || 'https://example.com'}/unlock?token=${accessToken}`;
+
     // Generate QR code
     const qrCode = await generateQRCode(unlockUrl);
 
@@ -82,6 +85,45 @@ export const createSmartLockAccess = async (req, res) => {
 
     await booking.save();
 
+    // Setup device temporary access if enabled
+    if (setupDevice && booking.room?.smartLockId) {
+      try {
+        const expiresIn = Math.floor((booking.checkOutDate - new Date()) / 1000); // seconds
+        await tuyaSmartLockService.addTemporaryAccess(
+          booking.room.smartLockId,
+          booking.guest?.name || 'Guest',
+          backupPin,
+          expiresIn
+        );
+        console.log('✅ Temporary device access created:', booking.room.smartLockId);
+      } catch (deviceError) {
+        console.warn('⚠️ Failed to set up device access:', deviceError.message);
+        // Don't fail the request if device setup fails
+      }
+    }
+
+    // Send email if enabled
+    let emailResult = null;
+    if (sendEmail && booking.guest?.email) {
+      try {
+        emailResult = await sendSmartLockAccessEmail(booking.guest.email, {
+          guestName: booking.guest.name || 'Guest',
+          hotelName: booking.hotel?.name || 'Our Hotel',
+          roomNumber: booking.room?.number || booking.room?.name || 'TBD',
+          accessToken,
+          backupPin,
+          qrCodeUrl: qrCode,
+          checkInDate: booking.checkInDate,
+          checkOutDate: booking.checkOutDate,
+          unlockPageUrl: unlockUrl
+        });
+        console.log('✅ Smart lock access email sent to:', booking.guest.email);
+      } catch (emailError) {
+        console.warn('⚠️ Failed to send email:', emailError.message);
+        // Don't fail the request if email fails
+      }
+    }
+
     return res.status(200).json({
       status: 'success',
       message: 'Smart lock access created',
@@ -93,16 +135,20 @@ export const createSmartLockAccess = async (req, res) => {
         expiresAt: booking.checkOutDate,
         bookingNumber: booking.bookingNumber,
         guestName: booking.guest?.name || 'Guest',
+        guestEmail: booking.guest?.email,
         roomNumber: booking.room?.number || booking.room?.name,
         checkInDate: booking.checkInDate,
-        checkOutDate: booking.checkOutDate
+        checkOutDate: booking.checkOutDate,
+        emailSent: !!emailResult?.success,
+        deviceSetup: setupDevice ? true : false
       }
     });
   } catch (error) {
     console.error('Error creating smart lock access:', error);
     return res.status(500).json({
       status: 'error',
-      message: 'Failed to create smart lock access'
+      message: 'Failed to create smart lock access',
+      error: error.message
     });
   }
 };
@@ -336,8 +382,7 @@ export const getUnlockHistory = async (req, res) => {
 };
 
 /**
- * Simulate or call actual Tuya API to unlock device
- * This will be replaced with actual Tuya device control
+ * Unlock actual Tuya smart lock device
  */
 const unlockSmartLockDevice = async (hotelId, deviceId) => {
   try {
@@ -346,12 +391,23 @@ const unlockSmartLockDevice = async (hotelId, deviceId) => {
       return false;
     }
 
-    // TODO: Implement actual Tuya API call
-    // For now, simulate successful unlock
-    console.log(`Unlocking device ${deviceId} for hotel ${hotelId}`);
-    
-    // Simulate device response
-    return true;
+    // Check if device is online first
+    const isOnline = await tuyaSmartLockService.isDeviceOnline(deviceId);
+    if (!isOnline) {
+      console.warn('Device offline:', deviceId);
+      return false;
+    }
+
+    // Send unlock command to device
+    const result = await tuyaSmartLockService.unlockDevice(deviceId);
+
+    if (result.success) {
+      console.log('✅ Device unlocked successfully:', deviceId);
+      return true;
+    } else {
+      console.error('❌ Failed to unlock device:', deviceId, result.error);
+      return false;
+    }
   } catch (error) {
     console.error('Error unlocking smart lock device:', error);
     return false;

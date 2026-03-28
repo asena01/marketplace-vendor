@@ -241,7 +241,7 @@ interface DeviceLog {
 
         @if (selectedDeviceId) {
           <!-- Device Status Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <!-- Online Status -->
           <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-purple-500">
             <p class="text-slate-600 text-sm font-medium mb-2">Device Status</p>
@@ -278,28 +278,28 @@ interface DeviceLog {
         <!-- Tabs -->
         <div class="flex gap-2 bg-white rounded-lg shadow-md p-2">
           <button
-            (click)="activeTab = 'timeline'"
-            [class.bg-purple-600]="activeTab === 'timeline'"
-            [class.text-white]="activeTab === 'timeline'"
-            [class.text-slate-700]="activeTab !== 'timeline'"
+            (click)="monitoringTab = 'timeline'"
+            [class.bg-purple-600]="monitoringTab === 'timeline'"
+            [class.text-white]="monitoringTab === 'timeline'"
+            [class.text-slate-700]="monitoringTab !== 'timeline'"
             class="flex-1 px-6 py-3 font-semibold rounded-lg transition"
           >
             📊 Timeline
           </button>
           <button
-            (click)="activeTab = 'logs'"
-            [class.bg-purple-600]="activeTab === 'logs'"
-            [class.text-white]="activeTab === 'logs'"
-            [class.text-slate-700]="activeTab !== 'logs'"
+            (click)="monitoringTab = 'logs'"
+            [class.bg-purple-600]="monitoringTab === 'logs'"
+            [class.text-white]="monitoringTab === 'logs'"
+            [class.text-slate-700]="monitoringTab !== 'logs'"
             class="flex-1 px-6 py-3 font-semibold rounded-lg transition"
           >
             📋 Logs
           </button>
           <button
-            (click)="activeTab = 'periods'"
-            [class.bg-purple-600]="activeTab === 'periods'"
-            [class.text-white]="activeTab === 'periods'"
-            [class.text-slate-700]="activeTab !== 'periods'"
+            (click)="monitoringTab = 'periods'"
+            [class.bg-purple-600]="monitoringTab === 'periods'"
+            [class.text-white]="monitoringTab === 'periods'"
+            [class.text-slate-700]="monitoringTab !== 'periods'"
             class="flex-1 px-6 py-3 font-semibold rounded-lg transition"
           >
             ⏱️ Long Periods
@@ -307,7 +307,7 @@ interface DeviceLog {
         </div>
 
         <!-- Timeline View -->
-        @if (activeTab === 'timeline') {
+        @if (monitoringTab === 'timeline') {
           <div class="bg-white rounded-lg shadow-md p-6 space-y-4">
             <h2 class="text-xl font-bold text-slate-900 mb-6">Device Activity Timeline</h2>
             
@@ -351,7 +351,7 @@ interface DeviceLog {
         }
 
         <!-- Raw Logs View -->
-        @if (activeTab === 'logs') {
+        @if (monitoringTab === 'logs') {
           <div class="bg-white rounded-lg shadow-md p-6">
             <h2 class="text-xl font-bold text-slate-900 mb-6">Device Logs</h2>
             
@@ -395,7 +395,7 @@ interface DeviceLog {
         }
 
         <!-- Long Duration Periods -->
-        @if (activeTab === 'periods') {
+        @if (monitoringTab === 'periods') {
           <div class="bg-white rounded-lg shadow-md p-6 space-y-4">
             <h2 class="text-xl font-bold text-slate-900 mb-6">Extended Motion Periods (>20 minutes)</h2>
             
@@ -451,6 +451,7 @@ interface DeviceLog {
             }
           </div>
         }
+        }
       }
     </div>
   `,
@@ -458,7 +459,8 @@ interface DeviceLog {
 })
 export class HotelDevicesComponent implements OnInit {
   selectedDeviceId = '';
-  activeTab = 'devices';
+  activeTab: 'devices' | 'monitoring' = 'devices';
+  monitoringTab: 'timeline' | 'logs' | 'periods' = 'timeline';
 
   isLoading = signal(false);
   errorMessage = signal('');

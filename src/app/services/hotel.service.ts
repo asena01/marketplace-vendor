@@ -771,39 +771,6 @@ export class HotelService {
     );
   }
 
-  // ==================== TUYA DEVICE STATUS ====================
-  getDeviceStatus(deviceId: string): Observable<any> {
-    return this.http.get<any>(`${API_URL}/tuya/devices/${deviceId}/status`).pipe(
-      catchError((error) => {
-        console.error('❌ Failed to fetch device status:', error);
-        return of({ error: 'Failed to fetch device status' });
-      })
-    );
-  }
-
-  getDeviceLogs(deviceId: string, startTime?: number, endTime?: number, codes?: string): Observable<any> {
-    let params = new HttpParams();
-    if (startTime) params = params.set('start_time', startTime.toString());
-    if (endTime) params = params.set('end_time', endTime.toString());
-    if (codes) params = params.set('codes', codes);
-
-    return this.http.get<any>(`${API_URL}/tuya/devices/${deviceId}/logs`, { params }).pipe(
-      catchError((error) => {
-        console.error('❌ Failed to fetch device logs:', error);
-        return of({ error: 'Failed to fetch device logs' });
-      })
-    );
-  }
-
-  getDeviceShadowProperties(deviceId: string): Observable<any> {
-    return this.http.get<any>(`${API_URL}/tuya/devices/${deviceId}/shadow-properties`).pipe(
-      catchError((error) => {
-        console.error('❌ Failed to fetch shadow properties:', error);
-        return of({ error: 'Failed to fetch shadow properties' });
-      })
-    );
-  }
-
   // ==================== AVAILABILITY CALENDAR ====================
   updateRoomAvailability(roomId: string, date: Date, status: string): Observable<ApiResponse<any>> {
     const dateStr = date.toISOString().split('T')[0];
