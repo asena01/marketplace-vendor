@@ -132,6 +132,12 @@ router.post('/login', async (req, res) => {
 
     const userResponse = user.toJSON();
 
+    // HOTFIX: Ensure demo super-admin has correct adminRole
+    if (email === 'admin@demo.com' && user.userType === 'admin') {
+      userResponse.adminRole = 'super-admin';
+      console.log('🔧 HOTFIX: Set demo super-admin role to super-admin');
+    }
+
     // Log the response to verify adminRole is included
     if (user.userType === 'admin') {
       console.log('📤 Admin login response includes adminRole:', userResponse.adminRole);
@@ -266,6 +272,52 @@ router.post('/create-demo-accounts', async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message,
+    });
+  }
+});
+
+// Reset demo accounts (delete and recreate)
+router.post('/reset-demo-accounts', async (req, res) => {
+  try {
+    console.log('🔄 Resetting demo accounts...');
+
+    // Delete existing demo account
+    await User.deleteOne({ email: 'admin@demo.com' });
+    console.log('🗑️ Deleted existing admin@demo.com');
+
+    // Recreate with correct adminRole
+    const superAdmin = new User({
+      name: 'Super Admin',
+      email: 'admin@demo.com',
+      password: 'admin123456',
+      phone: '+1234567890',
+      userType: 'admin',
+      adminRole: 'super-admin',
+      adminPermissions: {
+        manageOrganizations: true,
+        manageUsers: true,
+        manageDevices: true,
+        processPayments: true,
+        viewAnalytics: true,
+        manageSettings: true,
+        manageSuspensions: true,
+        viewLogs: true
+      }
+    });
+
+    await superAdmin.save();
+    console.log('✅ Recreated admin@demo.com with adminRole: super-admin');
+
+    res.status(200).json({
+      success: true,
+      message: 'Demo accounts reset successfully',
+      data: { email: 'admin@demo.com', adminRole: 'super-admin' }
+    });
+  } catch (error) {
+    console.error('❌ Error resetting demo accounts:', error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message
     });
   }
 });
