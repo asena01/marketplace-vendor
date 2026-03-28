@@ -12,7 +12,7 @@ interface DeviceLog {
 }
 
 @Component({
-  selector: 'app-devices',
+  selector: 'app-hotel-devices',
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
@@ -273,7 +273,7 @@ interface DeviceLog {
   `,
   styles: []
 })
-export class DevicesComponent implements OnInit {
+export class HotelDevicesComponent implements OnInit {
   selectedDeviceId = '';
   activeTab = 'timeline';
   
