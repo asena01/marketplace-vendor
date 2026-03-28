@@ -269,13 +269,7 @@ export class LoginComponent implements OnInit {
     if (this.authService.isLoggedIn()) {
       const userType = this.authService.getUserType();
       if (userType === 'admin') {
-        const adminRole = this.authService.getAdminRole();
-        if (adminRole === 'super-admin') {
-          this.router.navigate(['/admin-dashboard']);
-        } else {
-          console.warn('⚠️ Admin with role:', adminRole, 'cannot access admin dashboard');
-          this.router.navigate(['/']);
-        }
+        this.router.navigate(['/admin-dashboard']);
       } else if (userType === 'vendor') {
         const vendorType = this.authService.getVendorType();
         this.redirectVendorToDashboard(vendorType);
@@ -331,38 +325,19 @@ export class LoginComponent implements OnInit {
         this.isLoading.set(false);
 
         if (response.success) {
-          console.log('📡 Login response:', response);
-          console.log('👤 User from response:', response.user);
-          console.log('🔐 AdminRole from response:', response.user?.adminRole);
-
           this.successMessage.set('Welcome back! Redirecting...');
 
-          // Redirect based on user type and role
+          // Redirect based on user type
           setTimeout(() => {
             const userType = this.authService.getUserType();
-            console.log('📍 userType:', userType);
-
             if (userType === 'admin') {
-              const adminRole = this.authService.getAdminRole();
-              console.log('🔐 adminRole from getAdminRole():', adminRole);
-              console.log('💾 adminRole from localStorage:', localStorage.getItem('adminRole'));
-
-              if (adminRole === 'super-admin') {
-                console.log('✅ Super-admin logged in, redirecting to admin dashboard');
-                this.router.navigate(['/admin-dashboard']);
-              } else {
-                console.warn('⚠️ Admin with role:', adminRole, 'cannot access admin dashboard');
-                this.errorMessage.set(`⚠️ Your admin role (${adminRole}) does not have access to the admin dashboard. Only super-admins can access this area.`);
-                this.router.navigate(['/']);
-              }
+              this.router.navigate(['/admin-dashboard']);
             } else if (userType === 'vendor') {
               const vendorType = this.authService.getVendorType();
               this.redirectVendorToDashboard(vendorType);
             } else if (userType === 'customer') {
-              // Customer goes to customer dashboard
               this.router.navigate(['/customer-dashboard']);
             } else {
-              // Default to home
               this.router.navigate(['/']);
             }
           }, 1500);
