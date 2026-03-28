@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AdminService } from '../../../services/admin.service';
@@ -40,6 +40,13 @@ import { DeliveryAdminComponent } from '../admin-categories/delivery-admin/deliv
       <header class="bg-gradient-to-r from-slate-800 to-slate-900 text-white shadow-lg">
         <div class="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
           <div class="flex items-center gap-4">
+            <!-- Mobile Menu Toggle -->
+            <button
+              (click)="toggleSidebar()"
+              class="lg:hidden material-icons text-3xl hover:bg-slate-700 p-2 rounded transition"
+            >
+              {{ sidebarOpen() ? 'menu_open' : 'menu' }}
+            </button>
             <span class="material-icons text-4xl">admin_panel_settings</span>
             <div>
               <h1 class="text-3xl font-bold">Admin Dashboard</h1>
@@ -62,9 +69,20 @@ import { DeliveryAdminComponent } from '../admin-categories/delivery-admin/deliv
         </div>
       </header>
 
-      <div class="flex">
+      <div class="flex relative">
+        <!-- Mobile Overlay (Tailwind hides on lg+) -->
+        @if (sidebarOpen()) {
+          <div
+            (click)="sidebarOpen.set(false)"
+            class="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+          ></div>
+        }
+
         <!-- Sidebar Navigation -->
-        <aside class="w-72 bg-white shadow-lg min-h-screen overflow-y-auto">
+        <aside
+          [class]="'fixed lg:relative w-72 h-screen lg:h-auto bg-white shadow-lg overflow-y-auto transition-all duration-300 z-40 ' +
+            (sidebarOpen() ? 'translate-x-0' : '-translate-x-full lg:translate-x-0')"
+        >
           <nav class="p-6 space-y-2">
             <!-- Top Level Menu -->
             <p class="text-xs font-semibold text-gray-500 uppercase mb-4">System</p>
@@ -203,6 +221,7 @@ export class AdminDashboardComponent implements OnInit {
   currentCategory = signal<string | null>(null);
   currentSubPage = signal<string>('vendors');
   expandedCategory = signal<string | null>(null);
+  sidebarOpen = signal<boolean>(true);
 
   // Business categories with their sub-pages
   categories = [
@@ -264,16 +283,30 @@ export class AdminDashboardComponent implements OnInit {
   setCurrentPage(page: string): void {
     this.currentPage.set(page);
     this.currentCategory.set(null);
+    this.closeSidebarOnMobile();
   }
 
   selectCategory(categoryId: string): void {
     this.currentCategory.set(categoryId);
     this.currentSubPage.set('vendors');
     this.expandedCategory.set(categoryId === this.expandedCategory() ? null : categoryId);
+    this.closeSidebarOnMobile();
   }
 
   selectSubPage(subPage: string): void {
     this.currentSubPage.set(subPage);
+    this.closeSidebarOnMobile();
+  }
+
+  toggleSidebar(): void {
+    this.sidebarOpen.update(open => !open);
+  }
+
+  closeSidebarOnMobile(): void {
+    // Close sidebar on mobile (screen width < 1024px)
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      this.sidebarOpen.set(false);
+    }
   }
 
   getCategory(id: string) {
