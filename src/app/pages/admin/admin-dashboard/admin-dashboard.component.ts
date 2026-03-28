@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, effect } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AdminService } from '../../../services/admin.service';
@@ -70,7 +70,7 @@ import { DeliveryAdminComponent } from '../admin-categories/delivery-admin/deliv
       </header>
 
       <div class="flex relative">
-        <!-- Mobile Overlay (Tailwind hides on lg+) -->
+        <!-- Mobile Overlay -->
         @if (sidebarOpen()) {
           <div
             (click)="sidebarOpen.set(false)"
@@ -80,8 +80,11 @@ import { DeliveryAdminComponent } from '../admin-categories/delivery-admin/deliv
 
         <!-- Sidebar Navigation -->
         <aside
-          [class]="'fixed lg:relative w-72 h-screen lg:h-auto bg-white shadow-lg overflow-y-auto transition-all duration-300 z-40 ' +
-            (sidebarOpen() ? 'translate-x-0' : '-translate-x-full lg:translate-x-0')"
+          class="w-72 h-screen lg:h-auto bg-white shadow-lg overflow-y-auto transition-all duration-300 z-40"
+          [class.fixed]="true"
+          [class.lg:relative]="true"
+          [style.left.px]="sidebarOpen() ? 0 : -288"
+          [style.lg.left]="'auto'"
         >
           <nav class="p-6 space-y-2">
             <!-- Top Level Menu -->
@@ -290,7 +293,6 @@ export class AdminDashboardComponent implements OnInit {
     this.currentCategory.set(categoryId);
     this.currentSubPage.set('vendors');
     this.expandedCategory.set(categoryId === this.expandedCategory() ? null : categoryId);
-    // Don't close sidebar on category expand/collapse
   }
 
   selectSubPage(subPage: string): void {
