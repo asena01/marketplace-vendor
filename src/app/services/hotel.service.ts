@@ -8,7 +8,7 @@ import { AuthService } from './auth.service';
 // ⚠️ REPLACED: Firebase Cloud Functions endpoint with local backend API
 // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api'
 // NEW: Local Node.js/Express backend
-const API_URL = 'http://localhost:5001';
+const API_URL = 'http://localhost:5002';
 //const API_URL = 'https://api-qpczzmaezq-uc.a.run.app';
 interface ApiResponse<T> {
   status: string;
@@ -25,7 +25,7 @@ interface ApiResponse<T> {
   providedIn: 'root'
 })
 export class HotelService {
-  private hotelId = '69a72226003a6f0406e3afb1'; // Default Hotel ID from seed
+  private hotelId = '69c7d347459039a6e5bc5d84'; // Default Hotel ID from seed
   private authService = inject(AuthService);
 
   constructor(private http: HttpClient) {
@@ -771,39 +771,6 @@ export class HotelService {
     );
   }
 
-  // ==================== TUYA DEVICE STATUS ====================
-  getDeviceStatus(deviceId: string): Observable<any> {
-    return this.http.get<any>(`${API_URL}/tuya/devices/${deviceId}/status`).pipe(
-      catchError((error) => {
-        console.error('❌ Failed to fetch device status:', error);
-        return of({ error: 'Failed to fetch device status' });
-      })
-    );
-  }
-
-  getDeviceLogs(deviceId: string, startTime?: number, endTime?: number, codes?: string): Observable<any> {
-    let params = new HttpParams();
-    if (startTime) params = params.set('start_time', startTime.toString());
-    if (endTime) params = params.set('end_time', endTime.toString());
-    if (codes) params = params.set('codes', codes);
-
-    return this.http.get<any>(`${API_URL}/tuya/devices/${deviceId}/logs`, { params }).pipe(
-      catchError((error) => {
-        console.error('❌ Failed to fetch device logs:', error);
-        return of({ error: 'Failed to fetch device logs' });
-      })
-    );
-  }
-
-  getDeviceShadowProperties(deviceId: string): Observable<any> {
-    return this.http.get<any>(`${API_URL}/tuya/devices/${deviceId}/shadow-properties`).pipe(
-      catchError((error) => {
-        console.error('❌ Failed to fetch shadow properties:', error);
-        return of({ error: 'Failed to fetch shadow properties' });
-      })
-    );
-  }
-
   // ==================== AVAILABILITY CALENDAR ====================
   updateRoomAvailability(roomId: string, date: Date, status: string): Observable<ApiResponse<any>> {
     const dateStr = date.toISOString().split('T')[0];
@@ -999,6 +966,309 @@ export class HotelService {
     ).pipe(
       catchError((error) => {
         console.error('❌ Failed to delete special offer:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  // ==================== TUYA DEVICES ====================
+  /**
+   * Get device status from Tuya
+   * Returns real-time status of motion sensors and other IoT devices
+   */
+  getDeviceStatus(deviceId: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/devices/${deviceId}/status`
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Device status retrieved:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to fetch device status:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  /**
+   * Get device logs from Tuya
+   * Returns logs and calculated durations for motion sensor events
+   */
+  getDeviceLogs(deviceId: string, startTime?: number, endTime?: number, codes?: string): Observable<ApiResponse<any>> {
+    let params = new HttpParams();
+
+    if (startTime) params = params.set('start_time', startTime.toString());
+    if (endTime) params = params.set('end_time', endTime.toString());
+    if (codes) params = params.set('codes', codes);
+
+    return this.http.get<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/devices/${deviceId}/logs`,
+      { params }
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Device logs retrieved:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to fetch device logs:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  /**
+   * Get device shadow properties from Tuya
+   * Returns detailed device properties and configuration
+   */
+  getDeviceShadowProperties(deviceId: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/devices/${deviceId}/shadow`
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Device shadow properties retrieved:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to fetch device shadow properties:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  // ==================== SMART LOCK ACCESS ====================
+  /**
+   * Create smart lock access for a confirmed booking
+   * Generates access token, backup PIN, and QR code
+   */
+  createSmartLockAccess(bookingId: string): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/smart-lock/create-access/${bookingId}`,
+      { hotelId: this.hotelId }
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Smart lock access created:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to create smart lock access:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  /**
+   * Unlock room using access token
+   */
+  unlockRoom(accessToken: string): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/smart-lock/unlock`,
+      { accessToken }
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Room unlocked successfully:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to unlock room:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  /**
+   * Unlock room using backup PIN
+   */
+  unlockWithPin(backupPin: string, bookingNumber: string): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/smart-lock/unlock-with-pin`,
+      { backupPin, bookingNumber }
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Room unlocked with PIN:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to unlock with PIN:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  /**
+   * Get unlock attempt history for a booking
+   */
+  getUnlockHistory(bookingId: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${API_URL}/smart-lock/history/${bookingId}`
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Unlock history retrieved:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to fetch unlock history:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  /**
+   * Revoke smart lock access for a booking
+   */
+  revokeSmartLockAccess(bookingId: string): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/smart-lock/revoke/${bookingId}`,
+      {}
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Smart lock access revoked:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to revoke smart lock access:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  // ==================== AUTO-ASSIGNMENT ====================
+  /**
+   * Get devices assigned to a specific room
+   */
+  getRoomDevices(roomId: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/rooms/${roomId}/devices`
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Room devices retrieved:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to fetch room devices:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  /**
+   * Get auto-assignment suggestion for a room based on type
+   */
+  getAutoAssignmentSuggestion(roomId: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/rooms/${roomId}/device-suggestion`
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Auto-assignment suggestion retrieved:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to get suggestion:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  /**
+   * Get available unassigned devices for a room
+   */
+  getAvailableDevicesForRoom(roomId: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/rooms/${roomId}/available-devices`
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Available devices retrieved:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to get available devices:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  /**
+   * Auto-assign devices to a room
+   */
+  autoAssignDevices(
+    roomId: string,
+    options: { includeRequired: boolean; includeRecommended: boolean; includeOptional: boolean }
+  ): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/rooms/${roomId}/auto-assign`,
+      options
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Devices auto-assigned:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to auto-assign:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  /**
+   * Bulk auto-assign devices to multiple rooms
+   */
+  bulkAutoAssignDevices(roomIds: string[], options: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/bulk-auto-assign`,
+      { roomIds, ...options }
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Bulk auto-assignment completed:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed bulk auto-assignment:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  // ==================== AUTO-CONFIRMATION BOOKING ====================
+
+  /**
+   * Get hotel auto-confirmation setting
+   */
+  getHotelAutoConfirmationSetting(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/settings/auto-confirmation`
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Auto-confirmation setting retrieved:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to fetch auto-confirmation setting:', error);
+        return of({ status: 'error', data: { autoConfirmationEnabled: false }, message: error.message });
+      })
+    );
+  }
+
+  /**
+   * Update hotel auto-confirmation setting
+   */
+  updateHotelAutoConfirmationSetting(enabled: boolean): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/settings/auto-confirmation`,
+      { autoConfirmationEnabled: enabled }
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Auto-confirmation setting updated:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to update auto-confirmation setting:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  /**
+   * Create booking with auto-confirmation and identity verification
+   * This handles the complete flow: create booking -> verify identity -> generate smart lock access
+   */
+  createBookingWithAutoConfirmation(bookingData: any, identityVerification: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/bookings/auto-confirm`,
+      {
+        booking: bookingData,
+        identity: identityVerification
+      }
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Booking created with auto-confirmation:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to create booking with auto-confirmation:', error);
         return of({ status: 'error', data: null, message: error.message });
       })
     );

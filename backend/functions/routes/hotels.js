@@ -1,5 +1,10 @@
 import express from 'express';
 import Hotel from '../models/Hotel.js';
+import {
+  getDeviceStatus,
+  getDeviceLogs,
+  getDeviceShadowProperties
+} from '../controllers/deviceController.js';
 
 const router = express.Router();
 
@@ -116,5 +121,19 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ status: 'error', message: 'Internal Server Error' });
   }
 });
+
+// ==================== TUYA DEVICE ROUTES ====================
+
+// Get device status for a specific hotel
+// GET /hotels/:hotelId/devices/:deviceId/status
+router.get('/:hotelId/devices/:deviceId/status', getDeviceStatus);
+
+// Get device logs for a specific hotel
+// GET /hotels/:hotelId/devices/:deviceId/logs?start_time=xxx&end_time=xxx&codes=xxx
+router.get('/:hotelId/devices/:deviceId/logs', getDeviceLogs);
+
+// Get device shadow properties for a specific hotel
+// GET /hotels/:hotelId/devices/:deviceId/shadow
+router.get('/:hotelId/devices/:deviceId/shadow', getDeviceShadowProperties);
 
 export default router;

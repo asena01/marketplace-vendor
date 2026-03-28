@@ -348,6 +348,7 @@ interface Room {
                 ></textarea>
               </div>
 
+
               <!-- Modal Actions -->
               <div class="flex justify-end gap-3">
                 <button
@@ -675,4 +676,5 @@ export class HotelRoomsComponent implements OnInit {
       status: 'available'
     };
   }
+
 }

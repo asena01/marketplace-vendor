@@ -71,6 +71,10 @@ import { ServiceStaffComponent } from './pages/vendors/dashboards/service-dashbo
 import { ServiceClientsComponent } from './pages/vendors/dashboards/service-dashboard/clients/clients.component';
 import { ServiceReportsComponent } from './pages/vendors/dashboards/service-dashboard/reports/reports.component';
 import { ServiceNotificationsComponent } from './pages/vendors/dashboards/service-dashboard/notifications/notifications.component';
+import { SmartLockUnlockComponent } from './pages/smart-lock/unlock.component';
+import { BookingConfirmationComponent } from './pages/customer/booking-confirmation.component';
+import { RoomDeviceAssignmentComponent } from './pages/vendors/dashboards/hotel-dashboard/room-device-assignment/room-device-assignment.component';
+import { DeviceAssignmentManagerComponent } from './pages/admin/admin-dashboard/device-assignment-manager/device-assignment-manager.component';
 import { VendorGuard } from './guards/vendor.guard';
 import { AdminGuard } from './guards/admin.guard';
 import { PermissionGuard, PermissionsGuard, RoleGuard, RolesGuard } from './guards/permission.guard';
@@ -83,8 +87,10 @@ export const routes: Routes = [
   {
     path: 'admin-dashboard',
     component: AdminDashboardComponent,
-    canActivate: [AdminGuard, RoleGuard],
-    data: { role: 'super-admin' }
+    canActivate: [AdminGuard],
+    children: [
+      { path: 'device-assignment', component: DeviceAssignmentManagerComponent }
+    ]
   },
   { path: 'vendor-detail/:id', component: VendorDetailComponent, canActivate: [AdminGuard] },
   { path: 'delivery-dashboard', component: DeliveryDashboardComponent, canActivate: [VendorGuard] },
@@ -202,4 +208,7 @@ export const routes: Routes = [
   { path: 'gym', component: GymComponent },
   { path: 'vendor-dashboard/:vendorType', component: VendorDashboardComponent, canActivate: [VendorGuard] },
   { path: 'vendor-dashboard/:vendorType/:page', component: VendorDashboardComponent, canActivate: [VendorGuard] },
+  // Smart Lock Routes
+  { path: 'unlock', component: SmartLockUnlockComponent },
+  { path: 'booking-confirmation/:bookingId', component: BookingConfirmationComponent },
 ];

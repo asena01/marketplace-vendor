@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { HeaderComponent } from '../../components/header/header.component';
+import { IdentityVerificationComponent } from '../customer/identity-verification/identity-verification.component';
 import { MARKETPLACE_SERVICES } from '../../shared/data/marketplace-data';
 import { CurrencyService } from '../../services/currency.service';
 import { PaymentService } from '../../services/payment.service';
@@ -45,6 +46,7 @@ interface Hotel {
   description?: string;
   imageUrl?: string;
   thumbnail?: string;
+  contactlessCheckInEnabled?: boolean; // Smart lock & contactless check-in feature
 }
 
 interface Booking {
@@ -70,7 +72,7 @@ interface FilterOptions {
 @Component({
   selector: 'app-hotels',
   standalone: true,
-  imports: [CommonModule, HeaderComponent, FormsModule, HttpClientModule],
+  imports: [CommonModule, HeaderComponent, FormsModule, HttpClientModule, IdentityVerificationComponent],
   templateUrl: './hotels.component.html',
   styleUrl: './hotels.component.css'
 })
@@ -148,6 +150,11 @@ export class HotelsComponent implements OnInit {
   // Review Modal
   showReviewModal = signal<boolean>(false);
   selectedHotelForReview = signal<Hotel | null>(null);
+
+  // Auto-Confirmation Workflow
+  showIdentityVerification = signal<boolean>(false);
+  hotelAutoConfirmationEnabled = signal<boolean>(false);
+  isCheckingAutoConfirmation = signal<boolean>(false);
   reviewRating = signal<number>(0);
   reviewText = signal<string>('');
   
@@ -781,6 +788,54 @@ export class HotelsComponent implements OnInit {
       return;
     }
 
+    // Check if hotel has auto-confirmation enabled
+    this.checkHotelAutoConfirmation();
+  }
+
+  checkHotelAutoConfirmation(): void {
+    this.isCheckingAutoConfirmation.set(true);
+
+    // Check if the selected hotel has contactless check-in enabled
+    const hotel = this.selectedHotel();
+    if (!hotel) {
+      this.completeBookingFlow(null);
+      this.isCheckingAutoConfirmation.set(false);
+      return;
+    }
+
+    // Check the contactlessCheckInEnabled property from the hotel data
+    // If hotel data includes the property, use it; otherwise fetch it
+    const contactlessEnabled = (hotel as any).contactlessCheckInEnabled || false;
+    this.hotelAutoConfirmationEnabled.set(contactlessEnabled);
+
+    console.log(`✅ Hotel: ${hotel.name} - Contactless Check-In: ${contactlessEnabled ? 'ENABLED' : 'DISABLED'}`);
+
+    if (contactlessEnabled) {
+      // Show identity verification component
+      this.showIdentityVerification.set(true);
+    } else {
+      // Use traditional booking flow
+      this.completeBookingFlow(null);
+    }
+
+    this.isCheckingAutoConfirmation.set(false);
+  }
+
+  onIdentityVerified(verification: any): void {
+    console.log('✅ Identity verified:', verification);
+    this.showIdentityVerification.set(false);
+
+    // Complete booking with auto-confirmation
+    this.completeBookingFlow(verification);
+  }
+
+  onIdentityVerificationCancelled(): void {
+    console.log('❌ Identity verification cancelled');
+    this.showIdentityVerification.set(false);
+    this.bookingError.set('Identity verification cancelled. Please try again.');
+  }
+
+  completeBookingFlow(identityVerification: any): void {
     this.isLoadingBooking.set(true);
     this.bookingError.set('');
 
@@ -797,18 +852,42 @@ export class HotelsComponent implements OnInit {
       customerPhone: this.customerPhone()
     };
 
-    setTimeout(() => {
-      console.log('Booking submitted:', booking);
-      this.bookingSuccess.set(true);
+    // If identity verification is provided, use auto-confirmation flow
+    if (identityVerification) {
+      this.hotelService.createBookingWithAutoConfirmation(booking, identityVerification).subscribe({
+        next: (response: any) => {
+          console.log('✅ Booking created with auto-confirmation:', response.data);
+          this.bookingSuccess.set(true);
 
+          setTimeout(() => {
+            alert(`✅ Booking Confirmed!\n\nHotel: ${this.selectedHotel()!.name}\nRoom: ${this.selectedRoom()!.type}\nTotal: ${this.formatPrice(booking.totalPrice)}\n\n🔐 Smart Lock Access:\nYour access code and QR code have been sent to ${this.customerEmail()}`);
+            this.closeBooking();
+            this.bookingSuccess.set(false);
+          }, 1500);
+
+          this.isLoadingBooking.set(false);
+        },
+        error: (error: any) => {
+          console.error('Error creating booking with auto-confirmation:', error);
+          this.bookingError.set('Failed to complete booking. Please try again.');
+          this.isLoadingBooking.set(false);
+        }
+      });
+    } else {
+      // Traditional booking flow
       setTimeout(() => {
-        alert(`✅ Booking Confirmed!\n\nHotel: ${this.selectedHotel()!.name}\nRoom: ${this.selectedRoom()!.type}\nTotal: ${this.formatPrice(booking.totalPrice)}\n\nConfirmation email sent to ${this.customerEmail()}`);
-        this.closeBooking();
-        this.bookingSuccess.set(false);
-      }, 1500);
+        console.log('Booking submitted:', booking);
+        this.bookingSuccess.set(true);
 
-      this.isLoadingBooking.set(false);
-    }, 2000);
+        setTimeout(() => {
+          alert(`✅ Booking Confirmed!\n\nHotel: ${this.selectedHotel()!.name}\nRoom: ${this.selectedRoom()!.type}\nTotal: ${this.formatPrice(booking.totalPrice)}\n\nConfirmation email sent to ${this.customerEmail()}`);
+          this.closeBooking();
+          this.bookingSuccess.set(false);
+        }, 1500);
+
+        this.isLoadingBooking.set(false);
+      }, 2000);
+    }
   }
 
   resetBookingForm(): void {

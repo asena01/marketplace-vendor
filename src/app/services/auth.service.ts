@@ -22,6 +22,8 @@ export interface User {
   openingTime?: string;
   closingTime?: string;
   deliveryPartnerId?: string;
+  adminRole?: string; // Admin role for access control
+  adminPermissions?: any; // Admin permissions
 }
 
 @Injectable({
@@ -78,11 +80,6 @@ export class AuthService {
             localStorage.setItem('businessName', response.user.businessName);
           }
 
-          // Store admin role if admin user
-          if (response.user.userType === 'admin') {
-            localStorage.setItem('adminRole', response.user.adminRole || 'admin');
-            console.log('✅ Admin account created with role:', response.user.adminRole);
-          }
 
           // Set business ID from signup response for vendors
           if (response.user.userType === 'vendor') {
@@ -155,7 +152,7 @@ export class AuthService {
           // Store admin role if admin user
           if (response.user.userType === 'admin') {
             localStorage.setItem('adminRole', response.user.adminRole || 'admin');
-            console.log('✅ Admin logged in with role:', response.user.adminRole);
+            console.log('✅ Admin logged in with role:', response.user.adminRole || 'admin');
           }
 
           // Set business ID from seed data for vendor logins
@@ -317,6 +314,25 @@ export class AuthService {
   getVendorType(): string | null {
     const user = this.currentUser();
     return user?.vendorType || null;
+  }
+
+  /**
+   * Get admin role (for admins only)
+   */
+  getAdminRole(): string | null {
+    // First check from localStorage (set during login)
+    const adminRole = localStorage.getItem('adminRole');
+    if (adminRole) {
+      return adminRole;
+    }
+
+    // Fallback to user object adminRole if available
+    const user = this.currentUser();
+    if (user && (user as any).adminRole) {
+      return (user as any).adminRole;
+    }
+
+    return null;
   }
 
   /**

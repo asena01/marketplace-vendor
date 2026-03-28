@@ -42,6 +42,8 @@ import notificationRoutes from './routes/notifications.js';
 import reviewRoutes from './routes/reviews.js';
 import customerRoutes from './routes/customers.js';
 import financeRoutes from './routes/finance.js';
+import smartLockRoutes from './routes/smartLock.js';
+import deviceAssignmentRoutes from './routes/deviceAssignments.js';
 // Service Provider Dashboard Routes
 import serviceProviderRoutes from './routes/serviceProviders.js';
 import appointmentRoutes from './routes/appointments.js';
@@ -490,6 +492,12 @@ app.use('/customers', customerRoutes);
 
 app.use('/devices', deviceRoutes);
 
+// Smart Lock Routes (Booking Access & Room Unlocking)
+app.use('/smart-lock', smartLockRoutes);
+
+// Device Assignment Routes (Room-Device Connections)
+app.use('/', deviceAssignmentRoutes);
+
 // Service Provider Dashboard Routes (Frontend API Aliases)
 app.use('/service-providers', serviceProviderRoutes);
 app.use('/appointments', appointmentRoutes);
@@ -522,10 +530,10 @@ app.use((req, res) => {
 });
 
 // Start server
-/*app.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`🚀 MarketHub Backend running on http://localhost:${PORT}`);
   console.log(`📊 API Health Check: http://localhost:${PORT}/health`);
   console.log('✅ All routes loaded successfully');
-});*/
+});
 
 export default app;

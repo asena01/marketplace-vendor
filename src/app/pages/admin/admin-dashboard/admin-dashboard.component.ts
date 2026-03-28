@@ -6,16 +6,17 @@ import { AuthService } from '../../../services/auth.service';
 
 // Admin sub-pages
 import { AdminOverviewComponent } from '../admin-overview/admin-overview.component';
-import { AdminOrganizationsComponent } from '../admin-organizations/admin-organizations.component';
-import { AdminUsersComponent } from '../admin-users/admin-users.component';
-import { AdminPaymentsComponent } from '../admin-payments/admin-payments.component';
-import { AdminDevicesComponent } from '../admin-devices/admin-devices.component';
 import { AdminSettingsComponent } from '../admin-settings/admin-settings.component';
-import { AdminDeliveryComponent } from '../admin-delivery/admin-delivery.component';
 import { AdminProfileComponent } from '../admin-profile/admin-profile.component';
-import { VendorDirectoryComponent } from '../admin-vendors/vendor-directory.component';
-import { SettlementsComponent } from '../admin-settlements/settlements.component';
 import { RolesComponent } from '../admin-roles/roles.component';
+
+// Category-specific admin components
+import { HotelsAdminComponent } from '../admin-categories/hotels-admin/hotels-admin.component';
+import { RestaurantsAdminComponent } from '../admin-categories/restaurants-admin/restaurants-admin.component';
+import { RetailAdminComponent } from '../admin-categories/retail-admin/retail-admin.component';
+import { ServicesAdminComponent } from '../admin-categories/services-admin/services-admin.component';
+import { ToursAdminComponent } from '../admin-categories/tours-admin/tours-admin.component';
+import { DeliveryAdminComponent } from '../admin-categories/delivery-admin/delivery-admin.component';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -23,16 +24,15 @@ import { RolesComponent } from '../admin-roles/roles.component';
   imports: [
     CommonModule,
     AdminOverviewComponent,
-    AdminOrganizationsComponent,
-    AdminUsersComponent,
-    AdminPaymentsComponent,
-    AdminDevicesComponent,
     AdminSettingsComponent,
-    AdminDeliveryComponent,
     AdminProfileComponent,
-    VendorDirectoryComponent,
-    SettlementsComponent,
-    RolesComponent
+    RolesComponent,
+    HotelsAdminComponent,
+    RestaurantsAdminComponent,
+    RetailAdminComponent,
+    ServicesAdminComponent,
+    ToursAdminComponent,
+    DeliveryAdminComponent
   ],
   template: `
     <div class="min-h-screen bg-gray-100">
@@ -40,6 +40,13 @@ import { RolesComponent } from '../admin-roles/roles.component';
       <header class="bg-gradient-to-r from-slate-800 to-slate-900 text-white shadow-lg">
         <div class="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
           <div class="flex items-center gap-4">
+            <!-- Mobile Menu Toggle -->
+            <button
+              (click)="toggleSidebar()"
+              class="lg:hidden material-icons text-3xl hover:bg-slate-700 p-2 rounded transition"
+            >
+              {{ sidebarOpen() ? 'menu_open' : 'menu' }}
+            </button>
             <span class="material-icons text-4xl">admin_panel_settings</span>
             <div>
               <h1 class="text-3xl font-bold">Admin Dashboard</h1>
@@ -62,98 +69,34 @@ import { RolesComponent } from '../admin-roles/roles.component';
         </div>
       </header>
 
-      <div class="flex">
+      <div class="flex relative">
+        <!-- Mobile Overlay -->
+        @if (sidebarOpen()) {
+          <div
+            (click)="sidebarOpen.set(false)"
+            class="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+          ></div>
+        }
+
         <!-- Sidebar Navigation -->
-        <aside class="w-64 bg-white shadow-lg min-h-screen">
+        <!-- Desktop: Always visible. Mobile: Toggles with sidebarOpen signal -->
+        <aside
+          class="w-72 h-screen lg:h-auto bg-white shadow-lg overflow-y-auto z-40"
+          [style.display]="(sidebarOpen() || isLargeScreen()) ? 'block' : 'none'"
+        >
           <nav class="p-6 space-y-2">
-            <p class="text-xs font-semibold text-gray-500 uppercase mb-4">Menu</p>
+            <!-- Top Level Menu -->
+            <p class="text-xs font-semibold text-gray-500 uppercase mb-4">System</p>
 
             <button
               (click)="setCurrentPage('overview')"
               [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
-                (currentPage() === 'overview'
+                (currentPage() === 'overview' && !currentCategory()
                   ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
                   : 'text-gray-700 hover:bg-gray-100')"
             >
               <span class="material-icons">dashboard</span>
               Overview
-            </button>
-
-            <button
-              (click)="setCurrentPage('vendors')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
-                (currentPage() === 'vendors'
-                  ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
-                  : 'text-gray-700 hover:bg-gray-100')"
-            >
-              <span class="material-icons">business</span>
-              Vendors
-            </button>
-
-            <button
-              (click)="setCurrentPage('organizations')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
-                (currentPage() === 'organizations'
-                  ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
-                  : 'text-gray-700 hover:bg-gray-100')"
-            >
-              <span class="material-icons">apartment</span>
-              Organizations
-            </button>
-
-            <button
-              (click)="setCurrentPage('users')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
-                (currentPage() === 'users'
-                  ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
-                  : 'text-gray-700 hover:bg-gray-100')"
-            >
-              <span class="material-icons">people</span>
-              Users
-            </button>
-
-            <button
-              (click)="setCurrentPage('payments')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
-                (currentPage() === 'payments'
-                  ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
-                  : 'text-gray-700 hover:bg-gray-100')"
-            >
-              <span class="material-icons">payment</span>
-              Payments
-            </button>
-
-            <button
-              (click)="setCurrentPage('settlements')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
-                (currentPage() === 'settlements'
-                  ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
-                  : 'text-gray-700 hover:bg-gray-100')"
-            >
-              <span class="material-icons">account_balance_wallet</span>
-              Settlements
-            </button>
-
-            <button
-              (click)="setCurrentPage('devices')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
-                (currentPage() === 'devices'
-                  ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
-                  : 'text-gray-700 hover:bg-gray-100')"
-            >
-              <span class="material-icons">devices</span>
-              Devices
-            </button>
-
-            <button
-              (click)="setCurrentPage('delivery')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
-                (currentPage() === 'delivery'
-                  ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
-                  : 'text-gray-700 hover:bg-gray-100')"
-            >
-              <span class="material-icons">local_shipping</span>
-              Delivery
             </button>
 
             <button
@@ -188,33 +131,73 @@ import { RolesComponent } from '../admin-roles/roles.component';
               <span class="material-icons">security</span>
               Roles & Permissions
             </button>
+
+            <!-- Business Categories -->
+            <p class="text-xs font-semibold text-gray-500 uppercase mb-4 mt-8">Businesses</p>
+
+            @for (category of categories; track category.id) {
+              <div>
+                <!-- Category Header (Collapsible) -->
+                <button
+                  (click)="selectCategory(category.id)"
+                  [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center justify-between ' +
+                    (currentCategory() === category.id
+                      ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
+                      : 'text-gray-700 hover:bg-gray-100')"
+                >
+                  <div class="flex items-center gap-3">
+                    <span class="material-icons">{{ category.icon }}</span>
+                    <span>{{ category.name }}</span>
+                  </div>
+                  <span class="material-icons text-lg transition-transform" [style.transform]="expandedCategory() === category.id ? 'rotate(180deg)' : 'rotate(0deg)'">
+                    expand_more
+                  </span>
+                </button>
+
+                <!-- Sub Pages (Expandable) -->
+                @if (expandedCategory() === category.id) {
+                  <div class="ml-4 mt-2 space-y-1 border-l-2 border-gray-200">
+                    @for (subPage of category.subPages; track subPage) {
+                      <button
+                        (click)="selectSubPage(subPage)"
+                        [class]="'w-full text-left px-4 py-2 rounded-lg text-sm transition flex items-center gap-2 ' +
+                          (currentSubPage() === subPage && currentCategory() === category.id
+                            ? 'bg-blue-50 text-blue-700 font-semibold'
+                            : 'text-gray-600 hover:bg-gray-50')"
+                      >
+                        <span class="material-icons text-base">{{ getSubPageIcon(subPage) }}</span>
+                        <span class="capitalize">{{ subPage }}</span>
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+            }
           </nav>
         </aside>
 
         <!-- Main Content -->
         <main class="flex-1 p-8">
-          @if (currentPage() === 'overview') {
+          @if (currentPage() === 'overview' && !currentCategory()) {
             <app-admin-overview></app-admin-overview>
-          } @else if (currentPage() === 'vendors') {
-            <app-vendor-directory></app-vendor-directory>
-          } @else if (currentPage() === 'organizations') {
-            <app-admin-organizations></app-admin-organizations>
-          } @else if (currentPage() === 'users') {
-            <app-admin-users></app-admin-users>
-          } @else if (currentPage() === 'payments') {
-            <app-admin-payments></app-admin-payments>
-          } @else if (currentPage() === 'settlements') {
-            <app-settlements></app-settlements>
-          } @else if (currentPage() === 'devices') {
-            <app-admin-devices></app-admin-devices>
-          } @else if (currentPage() === 'delivery') {
-            <app-admin-delivery></app-admin-delivery>
           } @else if (currentPage() === 'profile') {
             <app-admin-profile></app-admin-profile>
           } @else if (currentPage() === 'settings') {
             <app-admin-settings></app-admin-settings>
           } @else if (currentPage() === 'roles') {
             <app-roles></app-roles>
+          } @else if (currentCategory() === 'hotels') {
+            <app-hotels-admin [currentTabInput]="currentSubPage()"></app-hotels-admin>
+          } @else if (currentCategory() === 'restaurants') {
+            <app-restaurants-admin [currentTabInput]="currentSubPage()"></app-restaurants-admin>
+          } @else if (currentCategory() === 'retail') {
+            <app-retail-admin [currentTabInput]="currentSubPage()"></app-retail-admin>
+          } @else if (currentCategory() === 'services') {
+            <app-services-admin [currentTabInput]="currentSubPage()"></app-services-admin>
+          } @else if (currentCategory() === 'tours') {
+            <app-tours-admin [currentTabInput]="currentSubPage()"></app-tours-admin>
+          } @else if (currentCategory() === 'delivery') {
+            <app-delivery-admin [currentTabInput]="currentSubPage()"></app-delivery-admin>
           }
         </main>
       </div>
@@ -236,6 +219,51 @@ import { RolesComponent } from '../admin-roles/roles.component';
 })
 export class AdminDashboardComponent implements OnInit {
   currentPage = signal<string>('overview');
+  currentCategory = signal<string | null>(null);
+  currentSubPage = signal<string>('vendors');
+  expandedCategory = signal<string | null>(null);
+  sidebarOpen = signal<boolean>(true);
+  isLargeScreen = signal<boolean>(typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
+
+  // Business categories with their sub-pages
+  categories = [
+    {
+      id: 'hotels',
+      name: 'Hotels',
+      icon: 'hotel',
+      subPages: ['vendors', 'users', 'devices', 'bookings', 'payments', 'reviews']
+    },
+    {
+      id: 'restaurants',
+      name: 'Restaurants',
+      icon: 'restaurant',
+      subPages: ['vendors', 'users', 'devices', 'orders', 'payments', 'reviews']
+    },
+    {
+      id: 'retail',
+      name: 'Retail Stores',
+      icon: 'storefront',
+      subPages: ['vendors', 'users', 'inventory', 'payments', 'reviews']
+    },
+    {
+      id: 'services',
+      name: 'Services',
+      icon: 'handyman',
+      subPages: ['vendors', 'users', 'appointments', 'payments', 'reviews']
+    },
+    {
+      id: 'tours',
+      name: 'Tours & Travel',
+      icon: 'flight_takeoff',
+      subPages: ['vendors', 'users', 'tours', 'bookings', 'payments', 'reviews']
+    },
+    {
+      id: 'delivery',
+      name: 'Delivery',
+      icon: 'local_shipping',
+      subPages: ['partners', 'drivers', 'orders', 'payments']
+    }
+  ];
 
   constructor(
     private adminService: AdminService,
@@ -252,10 +280,65 @@ export class AdminDashboardComponent implements OnInit {
     }
 
     console.log('✅ Admin dashboard loaded for:', this.getCurrentUserName());
+
+    // Listen for window resize to update screen size
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', () => {
+        this.isLargeScreen.set(window.innerWidth >= 1024);
+      });
+    }
   }
 
   setCurrentPage(page: string): void {
     this.currentPage.set(page);
+    this.currentCategory.set(null);
+    this.closeSidebarOnMobile();
+  }
+
+  selectCategory(categoryId: string): void {
+    this.currentCategory.set(categoryId);
+    this.currentSubPage.set('vendors');
+    this.expandedCategory.set(categoryId === this.expandedCategory() ? null : categoryId);
+  }
+
+  selectSubPage(subPage: string): void {
+    this.currentSubPage.set(subPage);
+    this.closeSidebarOnMobile();
+  }
+
+  toggleSidebar(): void {
+    this.sidebarOpen.update(open => !open);
+  }
+
+  closeSidebarOnMobile(): void {
+    // Close sidebar on mobile (screen width < 1024px)
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      this.sidebarOpen.set(false);
+    }
+  }
+
+  getCategory(id: string) {
+    return this.categories.find(c => c.id === id);
+  }
+
+  getSubPageIcon(subPage: string): string {
+    const iconMap: Record<string, string> = {
+      'vendors': 'business',
+      'users': 'people',
+      'staff': 'people',
+      'drivers': 'person_pin_circle',
+      'devices': 'devices',
+      'bookings': 'event',
+      'orders': 'shopping_cart',
+      'payments': 'payment',
+      'reviews': 'star_rate',
+      'inventory': 'inventory_2',
+      'appointments': 'schedule',
+      'tours': 'tour',
+      'partners': 'business',
+      'settings': 'settings'
+    };
+    return iconMap[subPage] || 'folder';
   }
 
   getCurrentUserName(): string {

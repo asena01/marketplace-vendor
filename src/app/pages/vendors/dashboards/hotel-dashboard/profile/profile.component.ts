@@ -1,7 +1,8 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HotelService } from '../../../../../services/hotel.service';
+import { AngularFireUploadService } from '../../../../../services/angular-fire-upload.service';
 
 @Component({
   selector: 'app-hotel-profile',
@@ -353,25 +354,209 @@ import { HotelService } from '../../../../../services/hotel.service';
         <!-- 7. STATUS & MEDIA -->
         <div class="bg-white rounded-lg p-8 shadow-md">
           <h2 class="text-2xl font-bold text-slate-900 mb-6 border-b pb-4">Status & Media</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label class="block text-sm font-semibold text-slate-700 mb-2">Logo URL</label>
+
+          <!-- Image Upload Section -->
+          <div class="mb-8">
+            <label class="block text-sm font-medium text-slate-700 mb-3 font-semibold">Hotel Images</label>
+
+            @if (isUploadingImages()) {
+              <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div class="flex items-center gap-2 mb-3">
+                  <div class="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                  <span class="font-medium text-blue-900">Uploading images...</span>
+                  <button
+                    type="button"
+                    (click)="stopUpload()"
+                    class="ml-auto text-xs px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
+                  >
+                    Force Stop
+                  </button>
+                </div>
+
+                @if (uploadSteps().length > 0) {
+                  <div class="bg-white border border-blue-200 rounded-lg p-3 max-h-48 overflow-y-auto">
+                    <p class="text-xs font-semibold text-blue-700 mb-2">📋 Upload Progress:</p>
+                    @for (step of uploadSteps(); track step) {
+                      <div class="text-xs text-slate-700 py-1 border-b border-blue-100 last:border-b-0">
+                        {{ step }}
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- Drag and Drop Zone -->
+            <div
+              class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition"
+              (dragover)="$event.preventDefault(); $event.stopPropagation()"
+              (dragleave)="$event.preventDefault(); $event.stopPropagation()"
+              (drop)="onDropImages($event)"
+              [class.border-blue-500]="isDraggingImages()"
+              [class.bg-blue-50]="isDraggingImages()"
+              [class.opacity-50]="isUploadingImages()"
+              [class.pointer-events-none]="isUploadingImages()"
+              (mouseenter)="isDraggingImages.set(true)"
+              (mouseleave)="isDraggingImages.set(false)"
+            >
               <input
-                type="url"
-                [(ngModel)]="formData.logo"
-                placeholder="https://example.com/logo.png"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600"
+                #imageInput
+                type="file"
+                multiple
+                accept="image/*"
+                (change)="onImageSelected($event)"
+                [disabled]="isUploadingImages()"
+                style="display: none"
+                class="hidden"
               />
+              <div (click)="triggerFileInput()" [class.cursor-not-allowed]="isUploadingImages()">
+                <p class="text-sm font-medium text-slate-700">Click to upload or drag and drop</p>
+                <p class="text-xs text-slate-500 mt-1">PNG, JPG, GIF up to 10MB each</p>
+              </div>
             </div>
 
+            <!-- Uploaded Images Grid -->
+            @if (formData.photos && formData.photos.length > 0) {
+              <div class="mt-4">
+                <label class="block text-sm font-medium text-slate-700 mb-3">
+                  Uploaded Images ({{ formData.photos.length }})
+                </label>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  @for (image of formData.photos; track image) {
+                    <div class="relative group">
+                      <img
+                        [src]="image"
+                        alt="Hotel image"
+                        class="w-full h-24 object-cover rounded-lg border-2 border-slate-300 group-hover:opacity-75 transition"
+                      />
+                      <button
+                        type="button"
+                        (click)="removeImage(image)"
+                        [disabled]="isUploadingImages()"
+                        class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white opacity-0 group-hover:opacity-100 transition rounded-lg disabled:opacity-50"
+                      >
+                        <span class="text-2xl">×</span>
+                      </button>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Logo Upload -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 pt-6 border-t border-slate-200">
             <div>
-              <label class="block text-sm font-semibold text-slate-700 mb-2">Thumbnail URL</label>
-              <input
-                type="url"
-                [(ngModel)]="formData.thumbnail"
-                placeholder="https://example.com/thumbnail.jpg"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600"
-              />
+              <label class="block text-sm font-semibold text-slate-700 mb-3">Hotel Logo</label>
+
+              <!-- Logo Upload Zone -->
+              <div
+                class="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center cursor-pointer hover:border-blue-500 transition"
+                (dragover)="$event.preventDefault(); $event.stopPropagation()"
+                (dragleave)="$event.preventDefault(); $event.stopPropagation()"
+                (drop)="onDropLogo($event)"
+                [class.border-blue-500]="isDraggingLogo()"
+                [class.bg-blue-50]="isDraggingLogo()"
+                [class.opacity-50]="isUploadingLogo()"
+                [class.pointer-events-none]="isUploadingLogo()"
+                (mouseenter)="isDraggingLogo.set(true)"
+                (mouseleave)="isDraggingLogo.set(false)"
+              >
+                <input
+                  #logoInput
+                  type="file"
+                  accept="image/*"
+                  (change)="onLogoSelected($event)"
+                  [disabled]="isUploadingLogo()"
+                  style="display: none"
+                />
+                <div (click)="triggerLogoInput()" [class.cursor-not-allowed]="isUploadingLogo()">
+                  @if (isUploadingLogo()) {
+                    <div class="flex items-center justify-center gap-2">
+                      <div class="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                      <span class="text-sm font-medium text-blue-900">Uploading...</span>
+                    </div>
+                  } @else {
+                    <p class="text-sm font-medium text-slate-700">Click to upload or drag and drop</p>
+                    <p class="text-xs text-slate-500 mt-1">PNG, JPG (max 10MB)</p>
+                  }
+                </div>
+              </div>
+
+              <!-- Logo Preview -->
+              @if (formData.logo && !formData.logo.startsWith('data:')) {
+                <div class="mt-3">
+                  <img
+                    [src]="formData.logo"
+                    alt="Hotel logo"
+                    class="w-24 h-24 object-cover rounded-lg border-2 border-slate-300"
+                  />
+                  <button
+                    type="button"
+                    (click)="formData.logo = ''"
+                    class="mt-2 text-xs px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
+                  >
+                    Remove
+                  </button>
+                </div>
+              }
+            </div>
+
+            <!-- Thumbnail Upload -->
+            <div>
+              <label class="block text-sm font-semibold text-slate-700 mb-3">Hotel Thumbnail</label>
+
+              <!-- Thumbnail Upload Zone -->
+              <div
+                class="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center cursor-pointer hover:border-blue-500 transition"
+                (dragover)="$event.preventDefault(); $event.stopPropagation()"
+                (dragleave)="$event.preventDefault(); $event.stopPropagation()"
+                (drop)="onDropThumbnail($event)"
+                [class.border-blue-500]="isDraggingThumbnail()"
+                [class.bg-blue-50]="isDraggingThumbnail()"
+                [class.opacity-50]="isUploadingThumbnail()"
+                [class.pointer-events-none]="isUploadingThumbnail()"
+                (mouseenter)="isDraggingThumbnail.set(true)"
+                (mouseleave)="isDraggingThumbnail.set(false)"
+              >
+                <input
+                  #thumbnailInput
+                  type="file"
+                  accept="image/*"
+                  (change)="onThumbnailSelected($event)"
+                  [disabled]="isUploadingThumbnail()"
+                  style="display: none"
+                />
+                <div (click)="triggerThumbnailInput()" [class.cursor-not-allowed]="isUploadingThumbnail()">
+                  @if (isUploadingThumbnail()) {
+                    <div class="flex items-center justify-center gap-2">
+                      <div class="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                      <span class="text-sm font-medium text-blue-900">Uploading...</span>
+                    </div>
+                  } @else {
+                    <p class="text-sm font-medium text-slate-700">Click to upload or drag and drop</p>
+                    <p class="text-xs text-slate-500 mt-1">PNG, JPG (max 10MB)</p>
+                  }
+                </div>
+              </div>
+
+              <!-- Thumbnail Preview -->
+              @if (formData.thumbnail && !formData.thumbnail.startsWith('data:')) {
+                <div class="mt-3">
+                  <img
+                    [src]="formData.thumbnail"
+                    alt="Hotel thumbnail"
+                    class="w-24 h-24 object-cover rounded-lg border-2 border-slate-300"
+                  />
+                  <button
+                    type="button"
+                    (click)="formData.thumbnail = ''"
+                    class="mt-2 text-xs px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
+                  >
+                    Remove
+                  </button>
+                </div>
+              }
             </div>
 
             <div class="flex items-center gap-4">
@@ -384,6 +569,84 @@ import { HotelService } from '../../../../../services/hotel.service';
               <label for="isActive" class="text-slate-700 font-medium">Hotel is Active</label>
             </div>
           </div>
+        </div>
+
+        <!-- 8. SMART LOCK & CONTACTLESS CHECK-IN SETTINGS -->
+        <div class="bg-white rounded-lg p-8 shadow-md">
+          <h2 class="text-2xl font-bold text-slate-900 mb-6 border-b pb-4">🔐 Smart Lock & Contactless Check-In</h2>
+
+          <!-- Contactless Check-In Toggle -->
+          <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-6 border border-purple-200 mb-6">
+            <div class="flex items-start justify-between">
+              <div class="flex-1">
+                <h3 class="text-lg font-bold text-slate-900 mb-2">🚪 Enable Contactless Check-In</h3>
+                <p class="text-slate-600 mb-4">
+                  Allow guests to skip reception and access their rooms directly using smart locks. Guests verify their identity once and receive instant access codes via email. Perfect for health-conscious and tech-savvy travelers.
+                </p>
+
+                <div class="space-y-3 bg-white rounded-lg p-4">
+                  <div class="flex items-start gap-3">
+                    <span class="text-lg">🚪</span>
+                    <div>
+                      <p class="font-medium text-slate-900">Direct Room Access</p>
+                      <p class="text-sm text-slate-600">Guests bypass reception and access rooms immediately</p>
+                    </div>
+                  </div>
+                  <div class="flex items-start gap-3">
+                    <span class="text-lg">🆔</span>
+                    <div>
+                      <p class="font-medium text-slate-900">Identity Verification</p>
+                      <p class="text-sm text-slate-600">Customers verify ID to ensure only registered guests check in</p>
+                    </div>
+                  </div>
+                  <div class="flex items-start gap-3">
+                    <span class="text-lg">📧</span>
+                    <div>
+                      <p class="font-medium text-slate-900">Instant Access Code</p>
+                      <p class="text-sm text-slate-600">QR code and PIN sent immediately after identity verification</p>
+                    </div>
+                  </div>
+                  <div class="flex items-start gap-3">
+                    <span class="text-lg">⏱️</span>
+                    <div>
+                      <p class="font-medium text-slate-900">Time-Limited Access</p>
+                      <p class="text-sm text-slate-600">Access codes expire at checkout time automatically</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Toggle Switch -->
+              <div class="ml-4">
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    [(ngModel)]="formData.contactlessCheckInEnabled"
+                    class="sr-only peer"
+                  />
+                  <div class="w-14 h-8 bg-slate-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-7 after:w-7 after:transition-all peer-checked:bg-purple-600"></div>
+                </label>
+                <p class="text-center mt-3 font-bold" [class]="formData.contactlessCheckInEnabled ? 'text-purple-600' : 'text-slate-600'">
+                  {{ formData.contactlessCheckInEnabled ? 'ENABLED' : 'DISABLED' }}
+                </p>
+              </div>
+            </div>
+
+            @if (formData.contactlessCheckInEnabled) {
+              <div class="mt-6 p-4 bg-green-50 border border-green-300 rounded-lg">
+                <p class="text-sm text-green-900">
+                  <strong>✓ Active:</strong> Contactless check-in is enabled. Guests will see the identity verification option during booking on your hotel's page.
+                </p>
+              </div>
+            } @else {
+              <div class="mt-6 p-4 bg-yellow-50 border border-yellow-300 rounded-lg">
+                <p class="text-sm text-yellow-900">
+                  <strong>ℹ️ Disabled:</strong> Guests will use traditional check-in at reception. Enable this to offer contactless access.
+                </p>
+              </div>
+            }
+          </div>
+
         </div>
       </div>
 
@@ -402,12 +665,29 @@ import { HotelService } from '../../../../../services/hotel.service';
   styles: []
 })
 export class HotelProfileComponent implements OnInit {
+  @ViewChild('imageInput') imageInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('logoInput') logoInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('thumbnailInput') thumbnailInput!: ElementRef<HTMLInputElement>;
+
   isLoading = signal(false);
   isSaving = signal(false);
   errorMessage = signal('');
   successMessage = signal('');
+  isUploadingImages = signal(false);
+  isDraggingImages = signal(false);
+  uploadSteps = signal<string[]>([]);
+
+  // Logo upload signals
+  isUploadingLogo = signal(false);
+  isDraggingLogo = signal(false);
+
+  // Thumbnail upload signals
+  isUploadingThumbnail = signal(false);
+  isDraggingThumbnail = signal(false);
 
   amenitiesText = '';
+  previewImageCount = 0;
+  private uploadAbortController: AbortController | null = null;
 
   formData: any = {
     name: '',
@@ -436,6 +716,8 @@ export class HotelProfileComponent implements OnInit {
       checkOut: '',
       cancellation: ''
     },
+    // Smart Lock & Contactless Check-In
+    contactlessCheckInEnabled: false,
     subscriptionPlan: 'basic',
     billingDuration: 'monthly',
     paymentStatus: 'pending',
@@ -444,7 +726,10 @@ export class HotelProfileComponent implements OnInit {
     logo: ''
   };
 
-  constructor(private hotelService: HotelService) {}
+  constructor(
+    private hotelService: HotelService,
+    private imageUploadService: AngularFireUploadService
+  ) {}
 
   ngOnInit(): void {
     this.loadProfile();
@@ -475,6 +760,16 @@ export class HotelProfileComponent implements OnInit {
       return;
     }
 
+    // Check if any images are still uploading
+    const hasPreviewImages = this.formData.photos?.some((url: string) => url.startsWith('data:')) || false;
+    const hasPreviewLogo = this.formData.logo?.startsWith('data:') || false;
+    const hasPreviewThumbnail = this.formData.thumbnail?.startsWith('data:') || false;
+
+    if (hasPreviewImages || hasPreviewLogo || hasPreviewThumbnail) {
+      this.errorMessage.set('⏳ Images are still uploading. Please wait for the upload to complete before saving.');
+      return;
+    }
+
     // Convert amenities text to array
     this.formData.amenities = this.amenitiesText
       .split(',')
@@ -499,5 +794,226 @@ export class HotelProfileComponent implements OnInit {
         this.isSaving.set(false);
       }
     });
+  }
+
+  // ==================== IMAGE UPLOAD METHODS ====================
+  triggerFileInput(): void {
+    if (!this.isUploadingImages()) {
+      this.imageInput?.nativeElement?.click();
+    }
+  }
+
+  onImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const files: File[] = Array.from(input.files || []);
+
+    this.addUploadStep(`📸 Image selected - ${files.length} file(s)`);
+
+    if (!files.length) {
+      this.addUploadStep('⚠️ No files selected');
+      return;
+    }
+
+    // Initialize photos array if not present
+    if (!this.formData.photos) {
+      this.formData.photos = [];
+    }
+
+    // Preview images locally first
+    this.previewImageCount = files.length;
+    const previewImages: string[] = [];
+
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (e: ProgressEvent<FileReader>) => {
+        const dataUrl = e.target?.result as string;
+        previewImages.push(dataUrl);
+        this.formData.photos.push(dataUrl);
+
+        // Set as thumbnail if not set
+        if (!this.formData.thumbnail) {
+          this.formData.thumbnail = dataUrl;
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+
+    this.isUploadingImages.set(true);
+
+    const uploadPath = `hotels/${this.formData._id || 'new'}`;
+
+    this.uploadAbortController = new AbortController();
+
+    this.imageUploadService.uploadMultipleImages(files, uploadPath).subscribe({
+      next: (imageUrls: string[]) => {
+        // Replace preview URLs with actual uploaded URLs
+        this.formData.photos = this.formData.photos.filter(
+          (url: string) => !url.startsWith('data:')
+        );
+        this.formData.photos = [...this.formData.photos, ...imageUrls];
+
+        // Update thumbnail if it was a preview
+        if (this.formData.thumbnail?.startsWith('data:')) {
+          this.formData.thumbnail = imageUrls[0];
+        }
+
+        this.isUploadingImages.set(false);
+        this.successMessage.set(`✅ ${imageUrls.length} image(s) uploaded successfully!`);
+        this.uploadSteps.set([]);
+        input.value = '';
+        this.uploadAbortController = null;
+      },
+      error: (error: any) => {
+        this.isUploadingImages.set(false);
+        this.errorMessage.set(error?.message || 'Failed to upload images');
+        input.value = '';
+        this.uploadAbortController = null;
+      }
+    });
+  }
+
+  onDropImages(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDraggingImages.set(false);
+
+    const files: File[] = Array.from(event.dataTransfer?.files || []).filter((file) =>
+      file.type.startsWith('image/')
+    );
+
+    if (files.length) {
+      // Create a mock event for the file input handler
+      const mockEvent = {
+        target: {
+          files: files
+        }
+      } as unknown as Event;
+
+      this.onImageSelected(mockEvent);
+    }
+  }
+
+  removeImage(image: string): void {
+    this.formData.photos = this.formData.photos.filter((url: string) => url !== image);
+
+    if (this.formData.thumbnail === image) {
+      this.formData.thumbnail = this.formData.photos[0] || '';
+    }
+  }
+
+  stopUpload(): void {
+    if (this.uploadAbortController) {
+      this.uploadAbortController.abort();
+      this.isUploadingImages.set(false);
+      this.errorMessage.set('Upload cancelled');
+    }
+  }
+
+  // ==================== LOGO UPLOAD METHODS ====================
+  triggerLogoInput(): void {
+    if (!this.isUploadingLogo()) {
+      this.logoInput?.nativeElement?.click();
+    }
+  }
+
+  onLogoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (!file) return;
+
+    this.isUploadingLogo.set(true);
+
+    const uploadPath = `hotels/${this.formData._id || 'new'}/logo`;
+
+    this.imageUploadService.uploadImage(file, uploadPath).subscribe({
+      next: (logoUrl: string) => {
+        this.formData.logo = logoUrl;
+        this.isUploadingLogo.set(false);
+        this.successMessage.set('✅ Logo uploaded successfully!');
+        input.value = '';
+      },
+      error: (error: any) => {
+        this.isUploadingLogo.set(false);
+        this.errorMessage.set(error?.message || 'Failed to upload logo');
+        input.value = '';
+      }
+    });
+  }
+
+  onDropLogo(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDraggingLogo.set(false);
+
+    const file = event.dataTransfer?.files?.[0];
+
+    if (file && file.type.startsWith('image/')) {
+      // Create a mock event for the file input handler
+      const mockEvent = {
+        target: {
+          files: [file]
+        }
+      } as unknown as Event;
+
+      this.onLogoSelected(mockEvent);
+    }
+  }
+
+  // ==================== THUMBNAIL UPLOAD METHODS ====================
+  triggerThumbnailInput(): void {
+    if (!this.isUploadingThumbnail()) {
+      this.thumbnailInput?.nativeElement?.click();
+    }
+  }
+
+  onThumbnailSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (!file) return;
+
+    this.isUploadingThumbnail.set(true);
+
+    const uploadPath = `hotels/${this.formData._id || 'new'}/thumbnail`;
+
+    this.imageUploadService.uploadImage(file, uploadPath).subscribe({
+      next: (thumbnailUrl: string) => {
+        this.formData.thumbnail = thumbnailUrl;
+        this.isUploadingThumbnail.set(false);
+        this.successMessage.set('✅ Thumbnail uploaded successfully!');
+        input.value = '';
+      },
+      error: (error: any) => {
+        this.isUploadingThumbnail.set(false);
+        this.errorMessage.set(error?.message || 'Failed to upload thumbnail');
+        input.value = '';
+      }
+    });
+  }
+
+  onDropThumbnail(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDraggingThumbnail.set(false);
+
+    const file = event.dataTransfer?.files?.[0];
+
+    if (file && file.type.startsWith('image/')) {
+      // Create a mock event for the file input handler
+      const mockEvent = {
+        target: {
+          files: [file]
+        }
+      } as unknown as Event;
+
+      this.onThumbnailSelected(mockEvent);
+    }
+  }
+
+  private addUploadStep(step: string): void {
+    const steps = [...this.uploadSteps()];
+    steps.push(step);
+    this.uploadSteps.set(steps);
   }
 }
