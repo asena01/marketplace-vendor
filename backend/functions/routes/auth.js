@@ -126,22 +126,8 @@ router.post('/login', async (req, res) => {
     if (user.userType === 'vendor') {
       console.log('🏢 Vendor type:', user.vendorType);
     }
-    if (user.userType === 'admin') {
-      console.log('🔐 Admin role:', user.adminRole);
-    }
 
     const userResponse = user.toJSON();
-
-    // HOTFIX: Ensure demo super-admin has correct adminRole
-    if (email === 'admin@demo.com' && user.userType === 'admin') {
-      userResponse.adminRole = 'super-admin';
-      console.log('🔧 HOTFIX: Set demo super-admin role to super-admin');
-    }
-
-    // Log the response to verify adminRole is included
-    if (user.userType === 'admin') {
-      console.log('📤 Admin login response includes adminRole:', userResponse.adminRole);
-    }
 
     // Include deliveryPartnerId if user is a delivery vendor
     if (user.userType === 'vendor' && user.vendorType === 'delivery' && user.deliveryPartnerId) {

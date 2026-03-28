@@ -87,8 +87,7 @@ export const routes: Routes = [
   {
     path: 'admin-dashboard',
     component: AdminDashboardComponent,
-    canActivate: [AdminGuard, RoleGuard],
-    data: { role: 'super-admin' },
+    canActivate: [AdminGuard],
     children: [
       { path: 'device-assignment', component: DeviceAssignmentManagerComponent }
     ]

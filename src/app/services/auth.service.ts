@@ -80,11 +80,6 @@ export class AuthService {
             localStorage.setItem('businessName', response.user.businessName);
           }
 
-          // Store admin role if admin user
-          if (response.user.userType === 'admin') {
-            localStorage.setItem('adminRole', response.user.adminRole || 'admin');
-            console.log('✅ Admin account created with role:', response.user.adminRole);
-          }
 
           // Set business ID from signup response for vendors
           if (response.user.userType === 'vendor') {
@@ -154,17 +149,6 @@ export class AuthService {
             localStorage.setItem('businessName', response.user.businessName);
           }
 
-          // Store admin role if admin user
-          if (response.user.userType === 'admin') {
-            const adminRole = response.user.adminRole || 'admin';
-            localStorage.setItem('adminRole', adminRole);
-            console.log('✅ Admin logged in with role:', response.user.adminRole);
-            console.log('💾 Stored in localStorage as adminRole:', adminRole);
-
-            // Verify it was stored
-            const storedRole = localStorage.getItem('adminRole');
-            console.log('✔️ Verified adminRole in localStorage:', storedRole);
-          }
 
           // Set business ID from seed data for vendor logins
           if (response.user.userType === 'vendor') {
@@ -204,7 +188,6 @@ export class AuthService {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.userKey);
     localStorage.removeItem('userType');
-    localStorage.removeItem('adminRole');
     localStorage.removeItem('userId');
     localStorage.removeItem('hotelId');
     localStorage.removeItem('restaurantId');
