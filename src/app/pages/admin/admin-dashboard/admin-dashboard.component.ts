@@ -6,17 +6,17 @@ import { AuthService } from '../../../services/auth.service';
 
 // Admin sub-pages
 import { AdminOverviewComponent } from '../admin-overview/admin-overview.component';
-import { AdminOrganizationsComponent } from '../admin-organizations/admin-organizations.component';
-import { AdminUsersComponent } from '../admin-users/admin-users.component';
-import { AdminPaymentsComponent } from '../admin-payments/admin-payments.component';
-import { AdminDevicesComponent } from '../admin-devices/admin-devices.component';
 import { AdminSettingsComponent } from '../admin-settings/admin-settings.component';
-import { AdminDeliveryComponent } from '../admin-delivery/admin-delivery.component';
 import { AdminProfileComponent } from '../admin-profile/admin-profile.component';
-import { VendorDirectoryComponent } from '../admin-vendors/vendor-directory.component';
-import { SettlementsComponent } from '../admin-settlements/settlements.component';
 import { RolesComponent } from '../admin-roles/roles.component';
-import { DeviceAssignmentManagerComponent } from '../admin-dashboard/device-assignment-manager/device-assignment-manager.component';
+
+// Category-specific admin components
+import { HotelsAdminComponent } from '../admin-categories/hotels-admin/hotels-admin.component';
+import { RestaurantsAdminComponent } from '../admin-categories/restaurants-admin/restaurants-admin.component';
+import { RetailAdminComponent } from '../admin-categories/retail-admin/retail-admin.component';
+import { ServicesAdminComponent } from '../admin-categories/services-admin/services-admin.component';
+import { ToursAdminComponent } from '../admin-categories/tours-admin/tours-admin.component';
+import { DeliveryAdminComponent } from '../admin-categories/delivery-admin/delivery-admin.component';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -24,17 +24,15 @@ import { DeviceAssignmentManagerComponent } from '../admin-dashboard/device-assi
   imports: [
     CommonModule,
     AdminOverviewComponent,
-    AdminOrganizationsComponent,
-    AdminUsersComponent,
-    AdminPaymentsComponent,
-    AdminDevicesComponent,
     AdminSettingsComponent,
-    AdminDeliveryComponent,
     AdminProfileComponent,
-    VendorDirectoryComponent,
-    SettlementsComponent,
     RolesComponent,
-    DeviceAssignmentManagerComponent
+    HotelsAdminComponent,
+    RestaurantsAdminComponent,
+    RetailAdminComponent,
+    ServicesAdminComponent,
+    ToursAdminComponent,
+    DeliveryAdminComponent
   ],
   template: `
     <div class="min-h-screen bg-gray-100">
@@ -169,93 +167,18 @@ import { DeviceAssignmentManagerComponent } from '../admin-dashboard/device-assi
             <app-admin-settings></app-admin-settings>
           } @else if (currentPage() === 'roles') {
             <app-roles></app-roles>
-          } @else if (currentCategory()) {
-            <!-- Category-Based Content -->
-            <div class="bg-white rounded-lg shadow p-6">
-              <div class="flex items-center gap-3 mb-6">
-                <span class="material-icons text-3xl text-blue-600">{{ getCategory(currentCategory()!)?.icon }}</span>
-                <div>
-                  <h2 class="text-2xl font-bold text-gray-800">{{ getCategory(currentCategory()!)?.name }}</h2>
-                  <p class="text-gray-600 capitalize">Managing {{ currentSubPage() }}</p>
-                </div>
-              </div>
-
-              <!-- Sub Page Content based on category and sub-page -->
-              @switch(currentSubPage()) {
-                @case ('vendors') {
-                  <div class="p-4 bg-blue-50 rounded border border-blue-200">
-                    <p class="text-gray-700">{{ getCategory(currentCategory()!)?.name }} Vendors Management</p>
-                    <p class="text-sm text-gray-600">Showing vendors filtered by category: <strong>{{ currentCategory() }}</strong></p>
-                  </div>
-                }
-                @case ('users') {
-                  <div class="p-4 bg-green-50 rounded border border-green-200">
-                    <p class="text-gray-700">{{ getCategory(currentCategory()!)?.name }} Staff & Users</p>
-                    <p class="text-sm text-gray-600">Showing staff members for: <strong>{{ currentCategory() }}</strong></p>
-                  </div>
-                }
-                @case ('devices') {
-                  <div class="p-4 bg-purple-50 rounded border border-purple-200">
-                    <p class="text-gray-700">{{ getCategory(currentCategory()!)?.name }} Smart Devices</p>
-                    <p class="text-sm text-gray-600">Managing devices for: <strong>{{ currentCategory() }}</strong></p>
-                  </div>
-                }
-                @case ('bookings') {
-                  <div class="p-4 bg-orange-50 rounded border border-orange-200">
-                    <p class="text-gray-700">{{ getCategory(currentCategory()!)?.name }} Bookings</p>
-                    <p class="text-sm text-gray-600">Viewing bookings for: <strong>{{ currentCategory() }}</strong></p>
-                  </div>
-                }
-                @case ('orders') {
-                  <div class="p-4 bg-orange-50 rounded border border-orange-200">
-                    <p class="text-gray-700">{{ getCategory(currentCategory()!)?.name }} Orders</p>
-                    <p class="text-sm text-gray-600">Viewing orders for: <strong>{{ currentCategory() }}</strong></p>
-                  </div>
-                }
-                @case ('payments') {
-                  <div class="p-4 bg-yellow-50 rounded border border-yellow-200">
-                    <p class="text-gray-700">{{ getCategory(currentCategory()!)?.name }} Payments</p>
-                    <p class="text-sm text-gray-600">Tracking payments for: <strong>{{ currentCategory() }}</strong></p>
-                  </div>
-                }
-                @case ('reviews') {
-                  <div class="p-4 bg-pink-50 rounded border border-pink-200">
-                    <p class="text-gray-700">{{ getCategory(currentCategory()!)?.name }} Reviews & Ratings</p>
-                    <p class="text-sm text-gray-600">Managing reviews for: <strong>{{ currentCategory() }}</strong></p>
-                  </div>
-                }
-                @case ('inventory') {
-                  <div class="p-4 bg-indigo-50 rounded border border-indigo-200">
-                    <p class="text-gray-700">{{ getCategory(currentCategory()!)?.name }} Inventory</p>
-                    <p class="text-sm text-gray-600">Managing inventory for: <strong>{{ currentCategory() }}</strong></p>
-                  </div>
-                }
-                @case ('appointments') {
-                  <div class="p-4 bg-cyan-50 rounded border border-cyan-200">
-                    <p class="text-gray-700">{{ getCategory(currentCategory()!)?.name }} Appointments</p>
-                    <p class="text-sm text-gray-600">Managing appointments for: <strong>{{ currentCategory() }}</strong></p>
-                  </div>
-                }
-                @case ('tours') {
-                  <div class="p-4 bg-teal-50 rounded border border-teal-200">
-                    <p class="text-gray-700">{{ getCategory(currentCategory()!)?.name }} Tours</p>
-                    <p class="text-sm text-gray-600">Managing tours for: <strong>{{ currentCategory() }}</strong></p>
-                  </div>
-                }
-                @case ('partners') {
-                  <div class="p-4 bg-red-50 rounded border border-red-200">
-                    <p class="text-gray-700">Delivery Partners</p>
-                    <p class="text-sm text-gray-600">Managing delivery partner businesses</p>
-                  </div>
-                }
-                @case ('drivers') {
-                  <div class="p-4 bg-red-50 rounded border border-red-200">
-                    <p class="text-gray-700">Delivery Drivers</p>
-                    <p class="text-sm text-gray-600">Managing delivery drivers</p>
-                  </div>
-                }
-              }
-            </div>
+          } @else if (currentCategory() === 'hotels') {
+            <app-hotels-admin></app-hotels-admin>
+          } @else if (currentCategory() === 'restaurants') {
+            <app-restaurants-admin></app-restaurants-admin>
+          } @else if (currentCategory() === 'retail') {
+            <app-retail-admin></app-retail-admin>
+          } @else if (currentCategory() === 'services') {
+            <app-services-admin></app-services-admin>
+          } @else if (currentCategory() === 'tours') {
+            <app-tours-admin></app-tours-admin>
+          } @else if (currentCategory() === 'delivery') {
+            <app-delivery-admin></app-delivery-admin>
           }
         </main>
       </div>
