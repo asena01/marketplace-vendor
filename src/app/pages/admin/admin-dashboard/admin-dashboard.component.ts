@@ -16,6 +16,7 @@ import { AdminProfileComponent } from '../admin-profile/admin-profile.component'
 import { VendorDirectoryComponent } from '../admin-vendors/vendor-directory.component';
 import { SettlementsComponent } from '../admin-settlements/settlements.component';
 import { RolesComponent } from '../admin-roles/roles.component';
+import { DeviceAssignmentManagerComponent } from '../admin-dashboard/device-assignment-manager/device-assignment-manager.component';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -32,7 +33,8 @@ import { RolesComponent } from '../admin-roles/roles.component';
     AdminProfileComponent,
     VendorDirectoryComponent,
     SettlementsComponent,
-    RolesComponent
+    RolesComponent,
+    DeviceAssignmentManagerComponent
   ],
   template: `
     <div class="min-h-screen bg-gray-100">
@@ -146,6 +148,17 @@ import { RolesComponent } from '../admin-roles/roles.component';
             </button>
 
             <button
+              (click)="setCurrentPage('device-assignment')"
+              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
+                (currentPage() === 'device-assignment'
+                  ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
+                  : 'text-gray-700 hover:bg-gray-100')"
+            >
+              <span class="material-icons">router</span>
+              Device Assignment
+            </button>
+
+            <button
               (click)="setCurrentPage('delivery')"
               [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
                 (currentPage() === 'delivery'
@@ -207,6 +220,8 @@ import { RolesComponent } from '../admin-roles/roles.component';
             <app-settlements></app-settlements>
           } @else if (currentPage() === 'devices') {
             <app-admin-devices></app-admin-devices>
+          } @else if (currentPage() === 'device-assignment') {
+            <app-device-assignment-manager></app-device-assignment-manager>
           } @else if (currentPage() === 'delivery') {
             <app-admin-delivery></app-admin-delivery>
           } @else if (currentPage() === 'profile') {

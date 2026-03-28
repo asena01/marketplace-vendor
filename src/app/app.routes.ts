@@ -74,6 +74,7 @@ import { ServiceNotificationsComponent } from './pages/vendors/dashboards/servic
 import { SmartLockUnlockComponent } from './pages/smart-lock/unlock.component';
 import { BookingConfirmationComponent } from './pages/customer/booking-confirmation.component';
 import { RoomDeviceAssignmentComponent } from './pages/vendors/dashboards/hotel-dashboard/room-device-assignment/room-device-assignment.component';
+import { DeviceAssignmentManagerComponent } from './pages/admin/admin-dashboard/device-assignment-manager/device-assignment-manager.component';
 import { VendorGuard } from './guards/vendor.guard';
 import { AdminGuard } from './guards/admin.guard';
 import { PermissionGuard, PermissionsGuard, RoleGuard, RolesGuard } from './guards/permission.guard';
@@ -87,7 +88,10 @@ export const routes: Routes = [
     path: 'admin-dashboard',
     component: AdminDashboardComponent,
     canActivate: [AdminGuard, RoleGuard],
-    data: { role: 'super-admin' }
+    data: { role: 'super-admin' },
+    children: [
+      { path: 'device-assignment', component: DeviceAssignmentManagerComponent }
+    ]
   },
   { path: 'vendor-detail/:id', component: VendorDetailComponent, canActivate: [AdminGuard] },
   { path: 'delivery-dashboard', component: DeliveryDashboardComponent, canActivate: [VendorGuard] },
@@ -100,7 +104,6 @@ export const routes: Routes = [
       { path: 'calendar', component: AvailabilityCalendarComponent },
       { path: 'pricing', component: PricingComponent },
       { path: 'devices', component: HotelDevicesComponent },
-      { path: 'device-assignment', component: RoomDeviceAssignmentComponent },
       { path: 'rooms', component: HotelRoomsComponent },
       { path: 'staff', component: HotelStaffComponent },
       { path: 'bookings', component: HotelBookingsComponent },
