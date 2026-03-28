@@ -71,6 +71,8 @@ import { ServiceStaffComponent } from './pages/vendors/dashboards/service-dashbo
 import { ServiceClientsComponent } from './pages/vendors/dashboards/service-dashboard/clients/clients.component';
 import { ServiceReportsComponent } from './pages/vendors/dashboards/service-dashboard/reports/reports.component';
 import { ServiceNotificationsComponent } from './pages/vendors/dashboards/service-dashboard/notifications/notifications.component';
+import { SmartLockUnlockComponent } from './pages/smart-lock/unlock.component';
+import { BookingConfirmationComponent } from './pages/customer/booking-confirmation.component';
 import { VendorGuard } from './guards/vendor.guard';
 import { AdminGuard } from './guards/admin.guard';
 import { PermissionGuard, PermissionsGuard, RoleGuard, RolesGuard } from './guards/permission.guard';
@@ -202,4 +204,7 @@ export const routes: Routes = [
   { path: 'gym', component: GymComponent },
   { path: 'vendor-dashboard/:vendorType', component: VendorDashboardComponent, canActivate: [VendorGuard] },
   { path: 'vendor-dashboard/:vendorType/:page', component: VendorDashboardComponent, canActivate: [VendorGuard] },
+  // Smart Lock Routes
+  { path: 'unlock', component: SmartLockUnlockComponent },
+  { path: 'booking-confirmation/:bookingId', component: BookingConfirmationComponent },
 ];

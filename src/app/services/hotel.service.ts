@@ -1066,4 +1066,95 @@ export class HotelService {
     );
   }
 
+  // ==================== SMART LOCK ACCESS ====================
+  /**
+   * Create smart lock access for a confirmed booking
+   * Generates access token, backup PIN, and QR code
+   */
+  createSmartLockAccess(bookingId: string): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/smart-lock/create-access/${bookingId}`,
+      { hotelId: this.hotelId }
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Smart lock access created:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to create smart lock access:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  /**
+   * Unlock room using access token
+   */
+  unlockRoom(accessToken: string): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/smart-lock/unlock`,
+      { accessToken }
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Room unlocked successfully:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to unlock room:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  /**
+   * Unlock room using backup PIN
+   */
+  unlockWithPin(backupPin: string, bookingNumber: string): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/smart-lock/unlock-with-pin`,
+      { backupPin, bookingNumber }
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Room unlocked with PIN:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to unlock with PIN:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  /**
+   * Get unlock attempt history for a booking
+   */
+  getUnlockHistory(bookingId: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${API_URL}/smart-lock/history/${bookingId}`
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Unlock history retrieved:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to fetch unlock history:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  /**
+   * Revoke smart lock access for a booking
+   */
+  revokeSmartLockAccess(bookingId: string): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/smart-lock/revoke/${bookingId}`,
+      {}
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Smart lock access revoked:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to revoke smart lock access:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
 }

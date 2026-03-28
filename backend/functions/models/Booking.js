@@ -62,6 +62,23 @@ const BookingSchema = new Schema({
     enum: ['credit_card', 'debit_card', 'cash', 'bank_transfer', 'online']
   },
   notes: String,
+  smartLockAccess: {
+    accessToken: String,
+    backupPin: String,
+    qrCode: String,
+    expiresAt: Date,
+    usedAt: Date,
+    unlockAttempts: [{
+      timestamp: Date,
+      success: Boolean,
+      deviceId: String,
+      error: String
+    }],
+    enabled: {
+      type: Boolean,
+      default: false
+    }
+  },
   createdAt: {
     type: Date,
     default: Date.now
