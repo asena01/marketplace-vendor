@@ -570,6 +570,78 @@ import { AngularFireUploadService } from '../../../../../services/angular-fire-u
             </div>
           </div>
         </div>
+
+        <!-- 8. SMART LOCK & AUTO-CONFIRMATION SETTINGS -->
+        <div class="bg-white rounded-lg p-8 shadow-md">
+          <h2 class="text-2xl font-bold text-slate-900 mb-6 border-b pb-4">Smart Lock & Booking Settings</h2>
+
+          <!-- Auto-Confirmation Toggle -->
+          <div class="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg p-6 border border-blue-200">
+            <div class="flex items-start justify-between">
+              <div class="flex-1">
+                <h3 class="text-lg font-bold text-slate-900 mb-2">⚡ Automatic Booking Confirmation</h3>
+                <p class="text-slate-600 mb-4">
+                  Enable automatic booking confirmation with smart lock access. When enabled, customers can verify their identity and receive instant smart lock access codes without waiting for reception check-in.
+                </p>
+
+                <div class="space-y-3 bg-white rounded-lg p-4">
+                  <div class="flex items-start gap-3">
+                    <span class="text-lg">✓</span>
+                    <div>
+                      <p class="font-medium text-slate-900">Instant Confirmation</p>
+                      <p class="text-sm text-slate-600">Bookings are automatically confirmed after identity verification</p>
+                    </div>
+                  </div>
+                  <div class="flex items-start gap-3">
+                    <span class="text-lg">🔐</span>
+                    <div>
+                      <p class="font-medium text-slate-900">Smart Lock Integration</p>
+                      <p class="text-sm text-slate-600">Customers receive QR code and PIN code immediately</p>
+                    </div>
+                  </div>
+                  <div class="flex items-start gap-3">
+                    <span class="text-lg">🚪</span>
+                    <div>
+                      <p class="font-medium text-slate-900">No Reception Needed</p>
+                      <p class="text-sm text-slate-600">Guests can access rooms directly without reception check-in</p>
+                    </div>
+                  </div>
+                  <div class="flex items-start gap-3">
+                    <span class="text-lg">🆔</span>
+                    <div>
+                      <p class="font-medium text-slate-900">Identity Verification</p>
+                      <p class="text-sm text-slate-600">Customers must verify their identity (ID type and number)</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Toggle Switch -->
+              <div class="ml-4">
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    [(ngModel)]="autoConfirmationEnabled"
+                    (change)="toggleAutoConfirmation()"
+                    class="sr-only peer"
+                  />
+                  <div class="w-14 h-8 bg-slate-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-7 after:w-7 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+                <p class="text-center mt-3 font-bold" [class]="autoConfirmationEnabled ? 'text-blue-600' : 'text-slate-600'">
+                  {{ autoConfirmationEnabled ? 'ENABLED' : 'DISABLED' }}
+                </p>
+              </div>
+            </div>
+
+            @if (autoConfirmationEnabled) {
+              <div class="mt-6 p-4 bg-green-50 border border-green-300 rounded-lg">
+                <p class="text-sm text-green-900">
+                  <strong>✓ Active:</strong> Automatic booking confirmation is enabled for your hotel. Customers will see the identity verification option during checkout.
+                </p>
+              </div>
+            }
+          </div>
+        </div>
       </div>
 
       <!-- Save Button -->
@@ -606,6 +678,9 @@ export class HotelProfileComponent implements OnInit {
   // Thumbnail upload signals
   isUploadingThumbnail = signal(false);
   isDraggingThumbnail = signal(false);
+
+  // Auto-confirmation signals
+  autoConfirmationEnabled = false;
 
   amenitiesText = '';
   previewImageCount = 0;
@@ -657,13 +732,27 @@ export class HotelProfileComponent implements OnInit {
 
   loadProfile(): void {
     this.isLoading.set(true);
+    // Load hotel details and auto-confirmation setting in parallel
     this.hotelService.getHotelDetails().subscribe({
       next: (response: any) => {
         if (response.status === 'success' && response.data) {
           this.formData = { ...response.data };
           this.amenitiesText = (this.formData.amenities || []).join(', ');
         }
-        this.isLoading.set(false);
+
+        // Load auto-confirmation setting
+        this.hotelService.getHotelAutoConfirmationSetting().subscribe({
+          next: (settingResponse: any) => {
+            if (settingResponse.status === 'success' && settingResponse.data) {
+              this.autoConfirmationEnabled = settingResponse.data.autoConfirmationEnabled || false;
+            }
+            this.isLoading.set(false);
+          },
+          error: (error: any) => {
+            console.error('Error loading auto-confirmation setting:', error);
+            this.isLoading.set(false);
+          }
+        });
       },
       error: (error: any) => {
         console.error('Error loading profile:', error);
@@ -703,8 +792,16 @@ export class HotelProfileComponent implements OnInit {
     this.hotelService.updateHotel(this.formData._id, this.formData).subscribe({
       next: (response: any) => {
         if (response.status === 'success') {
-          this.successMessage.set('Profile updated successfully!');
-          setTimeout(() => this.successMessage.set(''), 3000);
+          // Also save auto-confirmation setting
+          this.hotelService.updateHotelAutoConfirmationSetting(this.autoConfirmationEnabled).subscribe({
+            next: () => {
+              this.successMessage.set('Profile updated successfully!');
+              setTimeout(() => this.successMessage.set(''), 3000);
+            },
+            error: (error: any) => {
+              console.error('Error saving auto-confirmation setting:', error);
+            }
+          });
         }
         this.isSaving.set(false);
       },
@@ -714,6 +811,10 @@ export class HotelProfileComponent implements OnInit {
         this.isSaving.set(false);
       }
     });
+  }
+
+  toggleAutoConfirmation(): void {
+    console.log('Auto-confirmation toggled:', this.autoConfirmationEnabled);
   }
 
   // ==================== IMAGE UPLOAD METHODS ====================

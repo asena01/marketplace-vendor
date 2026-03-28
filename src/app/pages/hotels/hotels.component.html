@@ -599,7 +599,15 @@
     @let hotel = selectedHotel();
     @let room = selectedRoom();
     <div class="fixed inset-0 bg-black/60 z-50 flex items-start justify-center p-4 overflow-y-auto pt-4 md:pt-20">
-      <div class="bg-white rounded-lg max-w-3xl w-full shadow-2xl">
+      <!-- Identity Verification Overlay -->
+      @if (showIdentityVerification()) {
+        <app-identity-verification
+          (verified)="onIdentityVerified($event)"
+          (cancelled)="onIdentityVerificationCancelled()"
+        ></app-identity-verification>
+      }
+
+      <div class="bg-white rounded-lg max-w-3xl w-full shadow-2xl" [class.opacity-50]="showIdentityVerification()">
         <!-- Header -->
         <div class="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white p-6 border-b border-emerald-800">
           <div class="flex items-center justify-between">
@@ -930,15 +938,21 @@
           <!-- Action Buttons -->
           <div class="flex gap-3">
             <button
-              (click)="submitPayment()"
-              [disabled]="isProcessingPayment() || paymentSuccess() || !selectedPaymentMethod()"
+              (click)="submitBooking()"
+              [disabled]="isLoadingBooking() || isCheckingAutoConfirmation() || bookingSuccess() || (!selectedPaymentMethod() && !showIdentityVerification())"
               class="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded-lg transition"
             >
-              {{ isProcessingPayment() ? '⏳ Processing...' : '💳 Pay & Book' }}
+              @if (isLoadingBooking() || isCheckingAutoConfirmation()) {
+                <span>⏳ Processing...</span>
+              } @else if (hotelAutoConfirmationEnabled()) {
+                <span>🆔 Verify & Book</span>
+              } @else {
+                <span>💳 Pay & Book</span>
+              }
             </button>
             <button
               (click)="closeBooking()"
-              [disabled]="isProcessingPayment()"
+              [disabled]="isLoadingBooking()"
               class="flex-1 bg-white border-2 border-gray-300 hover:border-gray-400 text-gray-900 font-bold py-3 px-4 rounded-lg transition disabled:opacity-50"
             >
               Cancel

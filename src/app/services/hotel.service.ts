@@ -1215,4 +1215,63 @@ export class HotelService {
     );
   }
 
+  // ==================== AUTO-CONFIRMATION BOOKING ====================
+
+  /**
+   * Get hotel auto-confirmation setting
+   */
+  getHotelAutoConfirmationSetting(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/settings/auto-confirmation`
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Auto-confirmation setting retrieved:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to fetch auto-confirmation setting:', error);
+        return of({ status: 'error', data: { autoConfirmationEnabled: false }, message: error.message });
+      })
+    );
+  }
+
+  /**
+   * Update hotel auto-confirmation setting
+   */
+  updateHotelAutoConfirmationSetting(enabled: boolean): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/settings/auto-confirmation`,
+      { autoConfirmationEnabled: enabled }
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Auto-confirmation setting updated:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to update auto-confirmation setting:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  /**
+   * Create booking with auto-confirmation and identity verification
+   * This handles the complete flow: create booking -> verify identity -> generate smart lock access
+   */
+  createBookingWithAutoConfirmation(bookingData: any, identityVerification: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/bookings/auto-confirm`,
+      {
+        booking: bookingData,
+        identity: identityVerification
+      }
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Booking created with auto-confirmation:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to create booking with auto-confirmation:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
 }
