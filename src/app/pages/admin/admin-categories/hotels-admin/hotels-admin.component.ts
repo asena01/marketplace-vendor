@@ -1,4 +1,4 @@
-import { Component, signal, Input, computed } from '@angular/core';
+import { Component, signal, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { VendorDirectoryComponent } from '../../admin-vendors/vendor-directory.component';
 import { AdminUsersComponent } from '../../admin-users/admin-users.component';
@@ -89,12 +89,9 @@ import { AdminPaymentsComponent } from '../../admin-payments/admin-payments.comp
     `
   ]
 })
-export class HotelsAdminComponent {
+export class HotelsAdminComponent implements OnChanges {
+  @Input() currentTabInput: string = 'vendors';
   currentTab = signal<string>('vendors');
-
-  @Input() set currentTabInput(value: string) {
-    this.currentTab.set(value);
-  }
 
   tabs = [
     { id: 'vendors', label: 'Vendors', icon: 'business' },
@@ -104,6 +101,12 @@ export class HotelsAdminComponent {
     { id: 'payments', label: 'Payments', icon: 'payment' },
     { id: 'reviews', label: 'Reviews', icon: 'star_rate' }
   ];
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['currentTabInput']) {
+      this.currentTab.set(this.currentTabInput);
+    }
+  }
 
   setCurrentTab(tabId: string): void {
     this.currentTab.set(tabId);

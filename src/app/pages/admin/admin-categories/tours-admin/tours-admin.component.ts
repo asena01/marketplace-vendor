@@ -1,4 +1,4 @@
-import { Component, signal, Input } from '@angular/core';
+import { Component, signal, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { VendorDirectoryComponent } from '../../admin-vendors/vendor-directory.component';
 import { AdminUsersComponent } from '../../admin-users/admin-users.component';
@@ -81,11 +81,14 @@ import { AdminPaymentsComponent } from '../../admin-payments/admin-payments.comp
     `
   ]
 })
-export class ToursAdminComponent {
+export class ToursAdminComponent implements OnChanges {
+  @Input() currentTabInput: string = 'vendors';
   currentTab = signal<string>('vendors');
 
-  @Input() set currentTabInput(value: string) {
-    this.currentTab.set(value);
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['currentTabInput']) {
+      this.currentTab.set(this.currentTabInput);
+    }
   }
 
   tabs = [
