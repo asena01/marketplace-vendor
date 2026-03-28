@@ -66,107 +66,20 @@ import { DeviceAssignmentManagerComponent } from '../admin-dashboard/device-assi
 
       <div class="flex">
         <!-- Sidebar Navigation -->
-        <aside class="w-64 bg-white shadow-lg min-h-screen">
+        <aside class="w-72 bg-white shadow-lg min-h-screen overflow-y-auto">
           <nav class="p-6 space-y-2">
-            <p class="text-xs font-semibold text-gray-500 uppercase mb-4">Menu</p>
+            <!-- Top Level Menu -->
+            <p class="text-xs font-semibold text-gray-500 uppercase mb-4">System</p>
 
             <button
               (click)="setCurrentPage('overview')"
               [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
-                (currentPage() === 'overview'
+                (currentPage() === 'overview' && !currentCategory()
                   ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
                   : 'text-gray-700 hover:bg-gray-100')"
             >
               <span class="material-icons">dashboard</span>
               Overview
-            </button>
-
-            <button
-              (click)="setCurrentPage('vendors')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
-                (currentPage() === 'vendors'
-                  ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
-                  : 'text-gray-700 hover:bg-gray-100')"
-            >
-              <span class="material-icons">business</span>
-              Vendors
-            </button>
-
-            <button
-              (click)="setCurrentPage('organizations')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
-                (currentPage() === 'organizations'
-                  ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
-                  : 'text-gray-700 hover:bg-gray-100')"
-            >
-              <span class="material-icons">apartment</span>
-              Organizations
-            </button>
-
-            <button
-              (click)="setCurrentPage('users')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
-                (currentPage() === 'users'
-                  ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
-                  : 'text-gray-700 hover:bg-gray-100')"
-            >
-              <span class="material-icons">people</span>
-              Users
-            </button>
-
-            <button
-              (click)="setCurrentPage('payments')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
-                (currentPage() === 'payments'
-                  ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
-                  : 'text-gray-700 hover:bg-gray-100')"
-            >
-              <span class="material-icons">payment</span>
-              Payments
-            </button>
-
-            <button
-              (click)="setCurrentPage('settlements')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
-                (currentPage() === 'settlements'
-                  ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
-                  : 'text-gray-700 hover:bg-gray-100')"
-            >
-              <span class="material-icons">account_balance_wallet</span>
-              Settlements
-            </button>
-
-            <button
-              (click)="setCurrentPage('devices')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
-                (currentPage() === 'devices'
-                  ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
-                  : 'text-gray-700 hover:bg-gray-100')"
-            >
-              <span class="material-icons">devices</span>
-              Devices
-            </button>
-
-            <button
-              (click)="setCurrentPage('device-assignment')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
-                (currentPage() === 'device-assignment'
-                  ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
-                  : 'text-gray-700 hover:bg-gray-100')"
-            >
-              <span class="material-icons">router</span>
-              Device Assignment
-            </button>
-
-            <button
-              (click)="setCurrentPage('delivery')"
-              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
-                (currentPage() === 'delivery'
-                  ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
-                  : 'text-gray-700 hover:bg-gray-100')"
-            >
-              <span class="material-icons">local_shipping</span>
-              Delivery
             </button>
 
             <button
@@ -201,35 +114,148 @@ import { DeviceAssignmentManagerComponent } from '../admin-dashboard/device-assi
               <span class="material-icons">security</span>
               Roles & Permissions
             </button>
+
+            <!-- Business Categories -->
+            <p class="text-xs font-semibold text-gray-500 uppercase mb-4 mt-8">Businesses</p>
+
+            @for (category of categories; track category.id) {
+              <div>
+                <!-- Category Header (Collapsible) -->
+                <button
+                  (click)="selectCategory(category.id)"
+                  [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center justify-between ' +
+                    (currentCategory() === category.id
+                      ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
+                      : 'text-gray-700 hover:bg-gray-100')"
+                >
+                  <div class="flex items-center gap-3">
+                    <span class="material-icons">{{ category.icon }}</span>
+                    <span>{{ category.name }}</span>
+                  </div>
+                  <span class="material-icons text-lg transition-transform" [style.transform]="expandedCategory() === category.id ? 'rotate(180deg)' : 'rotate(0deg)'">
+                    expand_more
+                  </span>
+                </button>
+
+                <!-- Sub Pages (Expandable) -->
+                @if (expandedCategory() === category.id) {
+                  <div class="ml-4 mt-2 space-y-1 border-l-2 border-gray-200">
+                    @for (subPage of category.subPages; track subPage) {
+                      <button
+                        (click)="selectSubPage(subPage)"
+                        [class]="'w-full text-left px-4 py-2 rounded-lg text-sm transition flex items-center gap-2 ' +
+                          (currentSubPage() === subPage && currentCategory() === category.id
+                            ? 'bg-blue-50 text-blue-700 font-semibold'
+                            : 'text-gray-600 hover:bg-gray-50')"
+                      >
+                        <span class="material-icons text-base">{{ getSubPageIcon(subPage) }}</span>
+                        <span class="capitalize">{{ subPage }}</span>
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+            }
           </nav>
         </aside>
 
         <!-- Main Content -->
         <main class="flex-1 p-8">
-          @if (currentPage() === 'overview') {
+          @if (currentPage() === 'overview' && !currentCategory()) {
             <app-admin-overview></app-admin-overview>
-          } @else if (currentPage() === 'vendors') {
-            <app-vendor-directory></app-vendor-directory>
-          } @else if (currentPage() === 'organizations') {
-            <app-admin-organizations></app-admin-organizations>
-          } @else if (currentPage() === 'users') {
-            <app-admin-users></app-admin-users>
-          } @else if (currentPage() === 'payments') {
-            <app-admin-payments></app-admin-payments>
-          } @else if (currentPage() === 'settlements') {
-            <app-settlements></app-settlements>
-          } @else if (currentPage() === 'devices') {
-            <app-admin-devices></app-admin-devices>
-          } @else if (currentPage() === 'device-assignment') {
-            <app-device-assignment-manager></app-device-assignment-manager>
-          } @else if (currentPage() === 'delivery') {
-            <app-admin-delivery></app-admin-delivery>
           } @else if (currentPage() === 'profile') {
             <app-admin-profile></app-admin-profile>
           } @else if (currentPage() === 'settings') {
             <app-admin-settings></app-admin-settings>
           } @else if (currentPage() === 'roles') {
             <app-roles></app-roles>
+          } @else if (currentCategory()) {
+            <!-- Category-Based Content -->
+            <div class="bg-white rounded-lg shadow p-6">
+              <div class="flex items-center gap-3 mb-6">
+                <span class="material-icons text-3xl text-blue-600">{{ getCategory(currentCategory()!)?.icon }}</span>
+                <div>
+                  <h2 class="text-2xl font-bold text-gray-800">{{ getCategory(currentCategory()!)?.name }}</h2>
+                  <p class="text-gray-600 capitalize">Managing {{ currentSubPage() }}</p>
+                </div>
+              </div>
+
+              <!-- Sub Page Content based on category and sub-page -->
+              @switch(currentSubPage()) {
+                @case ('vendors') {
+                  <div class="p-4 bg-blue-50 rounded border border-blue-200">
+                    <p class="text-gray-700">{{ getCategory(currentCategory()!)?.name }} Vendors Management</p>
+                    <p class="text-sm text-gray-600">Showing vendors filtered by category: <strong>{{ currentCategory() }}</strong></p>
+                  </div>
+                }
+                @case ('users') {
+                  <div class="p-4 bg-green-50 rounded border border-green-200">
+                    <p class="text-gray-700">{{ getCategory(currentCategory()!)?.name }} Staff & Users</p>
+                    <p class="text-sm text-gray-600">Showing staff members for: <strong>{{ currentCategory() }}</strong></p>
+                  </div>
+                }
+                @case ('devices') {
+                  <div class="p-4 bg-purple-50 rounded border border-purple-200">
+                    <p class="text-gray-700">{{ getCategory(currentCategory()!)?.name }} Smart Devices</p>
+                    <p class="text-sm text-gray-600">Managing devices for: <strong>{{ currentCategory() }}</strong></p>
+                  </div>
+                }
+                @case ('bookings') {
+                  <div class="p-4 bg-orange-50 rounded border border-orange-200">
+                    <p class="text-gray-700">{{ getCategory(currentCategory()!)?.name }} Bookings</p>
+                    <p class="text-sm text-gray-600">Viewing bookings for: <strong>{{ currentCategory() }}</strong></p>
+                  </div>
+                }
+                @case ('orders') {
+                  <div class="p-4 bg-orange-50 rounded border border-orange-200">
+                    <p class="text-gray-700">{{ getCategory(currentCategory()!)?.name }} Orders</p>
+                    <p class="text-sm text-gray-600">Viewing orders for: <strong>{{ currentCategory() }}</strong></p>
+                  </div>
+                }
+                @case ('payments') {
+                  <div class="p-4 bg-yellow-50 rounded border border-yellow-200">
+                    <p class="text-gray-700">{{ getCategory(currentCategory()!)?.name }} Payments</p>
+                    <p class="text-sm text-gray-600">Tracking payments for: <strong>{{ currentCategory() }}</strong></p>
+                  </div>
+                }
+                @case ('reviews') {
+                  <div class="p-4 bg-pink-50 rounded border border-pink-200">
+                    <p class="text-gray-700">{{ getCategory(currentCategory()!)?.name }} Reviews & Ratings</p>
+                    <p class="text-sm text-gray-600">Managing reviews for: <strong>{{ currentCategory() }}</strong></p>
+                  </div>
+                }
+                @case ('inventory') {
+                  <div class="p-4 bg-indigo-50 rounded border border-indigo-200">
+                    <p class="text-gray-700">{{ getCategory(currentCategory()!)?.name }} Inventory</p>
+                    <p class="text-sm text-gray-600">Managing inventory for: <strong>{{ currentCategory() }}</strong></p>
+                  </div>
+                }
+                @case ('appointments') {
+                  <div class="p-4 bg-cyan-50 rounded border border-cyan-200">
+                    <p class="text-gray-700">{{ getCategory(currentCategory()!)?.name }} Appointments</p>
+                    <p class="text-sm text-gray-600">Managing appointments for: <strong>{{ currentCategory() }}</strong></p>
+                  </div>
+                }
+                @case ('tours') {
+                  <div class="p-4 bg-teal-50 rounded border border-teal-200">
+                    <p class="text-gray-700">{{ getCategory(currentCategory()!)?.name }} Tours</p>
+                    <p class="text-sm text-gray-600">Managing tours for: <strong>{{ currentCategory() }}</strong></p>
+                  </div>
+                }
+                @case ('partners') {
+                  <div class="p-4 bg-red-50 rounded border border-red-200">
+                    <p class="text-gray-700">Delivery Partners</p>
+                    <p class="text-sm text-gray-600">Managing delivery partner businesses</p>
+                  </div>
+                }
+                @case ('drivers') {
+                  <div class="p-4 bg-red-50 rounded border border-red-200">
+                    <p class="text-gray-700">Delivery Drivers</p>
+                    <p class="text-sm text-gray-600">Managing delivery drivers</p>
+                  </div>
+                }
+              }
+            </div>
           }
         </main>
       </div>
@@ -251,6 +277,49 @@ import { DeviceAssignmentManagerComponent } from '../admin-dashboard/device-assi
 })
 export class AdminDashboardComponent implements OnInit {
   currentPage = signal<string>('overview');
+  currentCategory = signal<string | null>(null);
+  currentSubPage = signal<string>('vendors');
+  expandedCategory = signal<string | null>(null);
+
+  // Business categories with their sub-pages
+  categories = [
+    {
+      id: 'hotels',
+      name: 'Hotels',
+      icon: 'hotel',
+      subPages: ['vendors', 'users', 'devices', 'bookings', 'payments', 'reviews']
+    },
+    {
+      id: 'restaurants',
+      name: 'Restaurants',
+      icon: 'restaurant',
+      subPages: ['vendors', 'users', 'devices', 'orders', 'payments', 'reviews']
+    },
+    {
+      id: 'retail',
+      name: 'Retail Stores',
+      icon: 'storefront',
+      subPages: ['vendors', 'users', 'inventory', 'payments', 'reviews']
+    },
+    {
+      id: 'services',
+      name: 'Services',
+      icon: 'handyman',
+      subPages: ['vendors', 'users', 'appointments', 'payments', 'reviews']
+    },
+    {
+      id: 'tours',
+      name: 'Tours & Travel',
+      icon: 'flight_takeoff',
+      subPages: ['vendors', 'users', 'tours', 'bookings', 'payments', 'reviews']
+    },
+    {
+      id: 'delivery',
+      name: 'Delivery',
+      icon: 'local_shipping',
+      subPages: ['partners', 'drivers', 'orders', 'payments']
+    }
+  ];
 
   constructor(
     private adminService: AdminService,
@@ -271,6 +340,41 @@ export class AdminDashboardComponent implements OnInit {
 
   setCurrentPage(page: string): void {
     this.currentPage.set(page);
+    this.currentCategory.set(null);
+  }
+
+  selectCategory(categoryId: string): void {
+    this.currentCategory.set(categoryId);
+    this.currentSubPage.set('vendors');
+    this.expandedCategory.set(categoryId === this.expandedCategory() ? null : categoryId);
+  }
+
+  selectSubPage(subPage: string): void {
+    this.currentSubPage.set(subPage);
+  }
+
+  getCategory(id: string) {
+    return this.categories.find(c => c.id === id);
+  }
+
+  getSubPageIcon(subPage: string): string {
+    const iconMap: Record<string, string> = {
+      'vendors': 'business',
+      'users': 'people',
+      'staff': 'people',
+      'drivers': 'person_pin_circle',
+      'devices': 'devices',
+      'bookings': 'event',
+      'orders': 'shopping_cart',
+      'payments': 'payment',
+      'reviews': 'star_rate',
+      'inventory': 'inventory_2',
+      'appointments': 'schedule',
+      'tours': 'tour',
+      'partners': 'business',
+      'settings': 'settings'
+    };
+    return iconMap[subPage] || 'folder';
   }
 
   getCurrentUserName(): string {
