@@ -79,12 +79,13 @@ import { DeliveryAdminComponent } from '../admin-categories/delivery-admin/deliv
         }
 
         <!-- Sidebar Navigation -->
+        <!-- Desktop: Always visible. Mobile: Toggles with sidebarOpen signal -->
         <aside
-          class="w-72 h-screen lg:h-auto bg-white shadow-lg overflow-y-auto transition-all duration-300 z-40"
-          [class.fixed]="true"
-          [class.lg:relative]="true"
-          [style.left.px]="sidebarOpen() ? 0 : -288"
-          [style.lg.left]="'auto'"
+          class="w-72 h-screen lg:h-auto bg-white shadow-lg overflow-y-auto z-40"
+          [ngClass]="{
+            'hidden lg:block': !sidebarOpen(),
+            'block lg:block': sidebarOpen()
+          }"
         >
           <nav class="p-6 space-y-2">
             <!-- Top Level Menu -->
