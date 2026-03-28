@@ -8,7 +8,7 @@ import { AuthService } from './auth.service';
 // ⚠️ REPLACED: Firebase Cloud Functions endpoint with local backend API
 // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api'
 // NEW: Local Node.js/Express backend
-const API_URL = 'http://localhost:5001';
+const API_URL = 'http://localhost:5002';
 //const API_URL = 'https://api-qpczzmaezq-uc.a.run.app';
 interface ApiResponse<T> {
   status: string;
@@ -25,7 +25,7 @@ interface ApiResponse<T> {
   providedIn: 'root'
 })
 export class HotelService {
-  private hotelId = '69a72226003a6f0406e3afb1'; // Default Hotel ID from seed
+  private hotelId = '69c7d347459039a6e5bc5d84'; // Default Hotel ID from seed
   private authService = inject(AuthService);
 
   constructor(private http: HttpClient) {
