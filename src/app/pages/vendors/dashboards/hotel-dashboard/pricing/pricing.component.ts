@@ -340,12 +340,19 @@ import { HotelService } from '../../../../../services/hotel.service';
             <div class="space-y-4">
               <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-2">Room Type (required)</label>
-                <input
-                  type="text"
+                <select
                   [(ngModel)]="baseRateForm.roomType"
-                  placeholder="e.g., Single, Double, Suite"
+                  name="roomType"
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600"
-                />
+                  required
+                >
+                  <option value="">Select a room type</option>
+                  <option value="single">Single</option>
+                  <option value="double">Double</option>
+                  <option value="suite">Suite</option>
+                  <option value="deluxe">Deluxe</option>
+                  <option value="villa">Villa</option>
+                </select>
               </div>
               <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-2">Base Price (₦) (required)</label>
