@@ -46,6 +46,7 @@ interface Hotel {
   description?: string;
   imageUrl?: string;
   thumbnail?: string;
+  contactlessCheckInEnabled?: boolean; // Smart lock & contactless check-in feature
 }
 
 interface Booking {
@@ -794,29 +795,30 @@ export class HotelsComponent implements OnInit {
   checkHotelAutoConfirmation(): void {
     this.isCheckingAutoConfirmation.set(true);
 
-    // Check hotel's auto-confirmation setting
-    this.hotelService.getHotelAutoConfirmationSetting().subscribe({
-      next: (response: any) => {
-        const autoConfirmationEnabled = response.data?.autoConfirmationEnabled || false;
-        this.hotelAutoConfirmationEnabled.set(autoConfirmationEnabled);
+    // Check if the selected hotel has contactless check-in enabled
+    const hotel = this.selectedHotel();
+    if (!hotel) {
+      this.completeBookingFlow(null);
+      this.isCheckingAutoConfirmation.set(false);
+      return;
+    }
 
-        if (autoConfirmationEnabled) {
-          // Show identity verification component
-          this.showIdentityVerification.set(true);
-        } else {
-          // Use traditional booking flow
-          this.completeBookingFlow(null);
-        }
+    // Check the contactlessCheckInEnabled property from the hotel data
+    // If hotel data includes the property, use it; otherwise fetch it
+    const contactlessEnabled = (hotel as any).contactlessCheckInEnabled || false;
+    this.hotelAutoConfirmationEnabled.set(contactlessEnabled);
 
-        this.isCheckingAutoConfirmation.set(false);
-      },
-      error: (error: any) => {
-        console.error('Error checking auto-confirmation:', error);
-        // Fall back to traditional booking flow
-        this.completeBookingFlow(null);
-        this.isCheckingAutoConfirmation.set(false);
-      }
-    });
+    console.log(`✅ Hotel: ${hotel.name} - Contactless Check-In: ${contactlessEnabled ? 'ENABLED' : 'DISABLED'}`);
+
+    if (contactlessEnabled) {
+      // Show identity verification component
+      this.showIdentityVerification.set(true);
+    } else {
+      // Use traditional booking flow
+      this.completeBookingFlow(null);
+    }
+
+    this.isCheckingAutoConfirmation.set(false);
   }
 
   onIdentityVerified(verification: any): void {

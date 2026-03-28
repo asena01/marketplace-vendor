@@ -74,6 +74,13 @@ const HotelSchema = new Schema({
     checkOut: String,
     cancellation: String
   },
+
+  // Smart Lock & Contactless Check-In
+  contactlessCheckInEnabled: {
+    type: Boolean,
+    default: false
+  },
+
   // Subscription and Billing
   subscriptionPlan: {
     type: String,

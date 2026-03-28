@@ -942,12 +942,16 @@
               [disabled]="isLoadingBooking() || isCheckingAutoConfirmation() || bookingSuccess() || (!selectedPaymentMethod() && !showIdentityVerification())"
               class="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded-lg transition"
             >
-              @if (isLoadingBooking() || isCheckingAutoConfirmation()) {
+              @if (isCheckingAutoConfirmation()) {
+                <span>⏳ Checking hotel settings...</span>
+              } @else if (showIdentityVerification()) {
+                <span>🆔 Verify Identity</span>
+              } @else if (isLoadingBooking()) {
                 <span>⏳ Processing...</span>
               } @else if (hotelAutoConfirmationEnabled()) {
-                <span>🆔 Verify & Book</span>
+                <span>🚪 Complete Contactless Booking</span>
               } @else {
-                <span>💳 Pay & Book</span>
+                <span>💳 Proceed to Payment</span>
               }
             </button>
             <button
