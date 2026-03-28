@@ -7,6 +7,12 @@ import {
   updateDeviceStatus,
   removeDevices
 } from '../controllers/devicesController.js';
+import {
+  getDeviceStatus,
+  getDeviceLogs,
+  getDeviceShadowProperties,
+  getAllDevices as getTuyaDevices
+} from '../controllers/deviceController.js';
 import Device from '../models/Device.js';
 
 const router = express.Router();

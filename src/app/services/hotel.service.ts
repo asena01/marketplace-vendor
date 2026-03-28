@@ -1004,4 +1004,66 @@ export class HotelService {
     );
   }
 
+  // ==================== TUYA DEVICES ====================
+  /**
+   * Get device status from Tuya
+   * Returns real-time status of motion sensors and other IoT devices
+   */
+  getDeviceStatus(deviceId: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/devices/${deviceId}/status`
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Device status retrieved:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to fetch device status:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  /**
+   * Get device logs from Tuya
+   * Returns logs and calculated durations for motion sensor events
+   */
+  getDeviceLogs(deviceId: string, startTime?: number, endTime?: number, codes?: string): Observable<ApiResponse<any>> {
+    let params = new HttpParams();
+
+    if (startTime) params = params.set('start_time', startTime.toString());
+    if (endTime) params = params.set('end_time', endTime.toString());
+    if (codes) params = params.set('codes', codes);
+
+    return this.http.get<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/devices/${deviceId}/logs`,
+      { params }
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Device logs retrieved:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to fetch device logs:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  /**
+   * Get device shadow properties from Tuya
+   * Returns detailed device properties and configuration
+   */
+  getDeviceShadowProperties(deviceId: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/devices/${deviceId}/shadow`
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Device shadow properties retrieved:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to fetch device shadow properties:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
 }
