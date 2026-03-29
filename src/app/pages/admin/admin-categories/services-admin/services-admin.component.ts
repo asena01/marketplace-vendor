@@ -10,11 +10,11 @@ import { AdminPaymentsComponent } from '../../admin-payments/admin-payments.comp
   imports: [CommonModule, VendorDirectoryComponent, AdminUsersComponent, AdminPaymentsComponent],
   template: `
     <div class="space-y-6">
-      <div class="flex items-center gap-4 mb-6">
-        <span class="material-icons text-4xl text-cyan-600">handyman</span>
+      <div class="flex items-center gap-3 mb-6">
+        <span class="material-icons text-3xl text-cyan-600">handyman</span>
         <div>
-          <h2 class="text-3xl font-bold text-gray-800">Services Management</h2>
-          <p class="text-gray-600">Manage service vendors, staff, appointments, and payments</p>
+          <h2 class="text-2xl font-bold text-gray-800">Services Management</h2>
+          <p class="text-sm text-gray-600">Manage service vendors, staff, appointments, and payments</p>
         </div>
       </div>
 
