@@ -142,9 +142,67 @@ import { AdminService } from '../../../services/admin.service';
                               >expand_more</span>
                             </button>
                             @if (openSection(vendor._id) === 'staff') {
-                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs text-gray-600">
-                                <p>Staff management section</p>
-                                <p class="text-xs mt-2">(To be implemented)</p>
+                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200">
+                                <div class="mb-3">
+                                  <button
+                                    (click)="loadStaff(vendor._id); showAddStaffModal.set(!showAddStaffModal())"
+                                    class="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-semibold transition flex items-center gap-1"
+                                  >
+                                    <span class="material-icons text-sm">add</span>
+                                    Add Staff
+                                  </button>
+                                </div>
+                                @if (showAddStaffModal()) {
+                                  <div class="mb-3 p-2 bg-white border border-gray-200 rounded text-xs">
+                                    <input
+                                      type="text"
+                                      [(ngModel)]="newStaffName"
+                                      placeholder="Name"
+                                      class="w-full px-2 py-1 border border-gray-300 rounded mb-1 text-xs"
+                                    />
+                                    <input
+                                      type="email"
+                                      [(ngModel)]="newStaffEmail"
+                                      placeholder="Email"
+                                      class="w-full px-2 py-1 border border-gray-300 rounded mb-1 text-xs"
+                                    />
+                                    <select
+                                      [(ngModel)]="newStaffRole"
+                                      class="w-full px-2 py-1 border border-gray-300 rounded mb-2 text-xs"
+                                    >
+                                      <option value="staff">Staff</option>
+                                      <option value="manager">Manager</option>
+                                      <option value="receptionist">Receptionist</option>
+                                      <option value="housekeeping">Housekeeping</option>
+                                    </select>
+                                    <button
+                                      (click)="addStaff(vendor._id)"
+                                      class="px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-semibold"
+                                    >
+                                      Save
+                                    </button>
+                                  </div>
+                                }
+                                @if (staffList().length > 0) {
+                                  <div class="text-xs">
+                                    @for (staff of staffList(); track staff.id) {
+                                      <div class="flex items-center justify-between p-2 border-t border-gray-200">
+                                        <div>
+                                          <p class="font-semibold text-gray-800">{{ staff.name }}</p>
+                                          <p class="text-gray-600">{{ staff.email }} • {{ staff.role }}</p>
+                                        </div>
+                                        <button
+                                          (click)="deleteStaff(staff.id)"
+                                          class="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs"
+                                        >
+                                          Delete
+                                        </button>
+                                      </div>
+                                    }
+                                  </div>
+                                } @else {
+                                  <p class="text-gray-600 text-xs py-2">No staff members added yet</p>
+                                }
                               </div>
                             }
                           </div>
@@ -163,9 +221,44 @@ import { AdminService } from '../../../services/admin.service';
                               >expand_more</span>
                             </button>
                             @if (openSection(vendor._id) === 'devices') {
-                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs text-gray-600">
-                                <p>Smart devices management section</p>
-                                <p class="text-xs mt-2">(To be implemented)</p>
+                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200">
+                                <div class="mb-3">
+                                  <button
+                                    (click)="loadDevices(vendor._id)"
+                                    [disabled]="devicesLoading()"
+                                    class="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-semibold transition disabled:opacity-50"
+                                  >
+                                    <span class="material-icons text-sm inline-block mr-1" [style.display]="'inline'">refresh</span>
+                                    {{ devicesLoading() ? 'Loading...' : 'Load Devices' }}
+                                  </button>
+                                </div>
+                                @if (devicesList().length > 0) {
+                                  <div class="text-xs space-y-2">
+                                    @for (device of devicesList(); track device._id || device.deviceId) {
+                                      <div class="flex items-center justify-between p-2 border border-gray-200 rounded bg-white">
+                                        <div>
+                                          <p class="font-semibold text-gray-800">{{ device.name || device.deviceId }}</p>
+                                          <p class="text-gray-600">{{ device.type || 'Device' }} •
+                                            <span [class]="device.status === 'active' ? 'text-green-600 font-semibold' : 'text-red-600'">
+                                              {{ device.status || 'unknown' }}
+                                            </span>
+                                          </p>
+                                          @if (device.lastActive) {
+                                            <p class="text-gray-500 text-xs">Last active: {{ (device.lastActivity || device.lastActive) | date:'short' }}</p>
+                                          }
+                                        </div>
+                                        <button
+                                          (click)="deleteDevice(device._id || device.deviceId)"
+                                          class="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs"
+                                        >
+                                          Delete
+                                        </button>
+                                      </div>
+                                    }
+                                  </div>
+                                } @else {
+                                  <p class="text-gray-600 text-xs py-2">No devices found. Click "Load Devices" to fetch from platform.</p>
+                                }
                               </div>
                             }
                           </div>
@@ -184,9 +277,68 @@ import { AdminService } from '../../../services/admin.service';
                               >expand_more</span>
                             </button>
                             @if (openSection(vendor._id) === 'rooms') {
-                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs text-gray-600">
-                                <p>Rooms management section</p>
-                                <p class="text-xs mt-2">(To be implemented)</p>
+                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200">
+                                <div class="mb-3">
+                                  <button
+                                    (click)="loadRooms(vendor._id); showAddRoomModal.set(!showAddRoomModal())"
+                                    class="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-semibold transition flex items-center gap-1"
+                                  >
+                                    <span class="material-icons text-sm">add</span>
+                                    Add Room
+                                  </button>
+                                </div>
+                                @if (showAddRoomModal()) {
+                                  <div class="mb-3 p-2 bg-white border border-gray-200 rounded text-xs">
+                                    <input
+                                      type="text"
+                                      [(ngModel)]="newRoomNumber"
+                                      placeholder="Room Number"
+                                      class="w-full px-2 py-1 border border-gray-300 rounded mb-1 text-xs"
+                                    />
+                                    <select
+                                      [(ngModel)]="newRoomType"
+                                      class="w-full px-2 py-1 border border-gray-300 rounded mb-1 text-xs"
+                                    >
+                                      <option value="standard">Standard</option>
+                                      <option value="deluxe">Deluxe</option>
+                                      <option value="suite">Suite</option>
+                                    </select>
+                                    <input
+                                      type="number"
+                                      [(ngModel)]="newRoomCapacity"
+                                      placeholder="Capacity"
+                                      min="1"
+                                      max="8"
+                                      class="w-full px-2 py-1 border border-gray-300 rounded mb-2 text-xs"
+                                    />
+                                    <button
+                                      (click)="addRoom(vendor._id)"
+                                      class="px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-semibold"
+                                    >
+                                      Save
+                                    </button>
+                                  </div>
+                                }
+                                @if (roomsList().length > 0) {
+                                  <div class="text-xs">
+                                    @for (room of roomsList(); track room.id) {
+                                      <div class="flex items-center justify-between p-2 border-t border-gray-200">
+                                        <div>
+                                          <p class="font-semibold text-gray-800">Room {{ room.number }}</p>
+                                          <p class="text-gray-600">{{ room.type }} • {{ room.capacity }} guests • <span [class]="room.status === 'available' ? 'text-green-600 font-semibold' : 'text-orange-600'">{{ room.status }}</span></p>
+                                        </div>
+                                        <button
+                                          (click)="deleteRoom(room.id)"
+                                          class="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs"
+                                        >
+                                          Delete
+                                        </button>
+                                      </div>
+                                    }
+                                  </div>
+                                } @else {
+                                  <p class="text-gray-600 text-xs py-2">No rooms added yet</p>
+                                }
                               </div>
                             }
                           </div>
@@ -205,9 +357,34 @@ import { AdminService } from '../../../services/admin.service';
                               >expand_more</span>
                             </button>
                             @if (openSection(vendor._id) === 'bookings') {
-                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs text-gray-600">
-                                <p>Bookings management section</p>
-                                <p class="text-xs mt-2">(To be implemented)</p>
+                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs">
+                                <button
+                                  (click)="loadBookings(vendor._id)"
+                                  class="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-semibold mb-3"
+                                >
+                                  Refresh Bookings
+                                </button>
+                                @if (bookingsList().length > 0) {
+                                  <div class="space-y-2">
+                                    @for (booking of bookingsList(); track booking.id) {
+                                      <div class="p-2 border border-gray-200 rounded bg-white">
+                                        <div class="flex justify-between items-start mb-1">
+                                          <p class="font-semibold text-gray-800">{{ booking.guestName }}</p>
+                                          <span class="text-xs px-1 rounded bg-green-100 text-green-800 font-semibold">
+                                            {{ booking.status }}
+                                          </span>
+                                        </div>
+                                        <p class="text-gray-600 text-xs">Room {{ booking.roomNumber }}</p>
+                                        <p class="text-gray-600 text-xs">{{ booking.checkIn }} to {{ booking.checkOut }}</p>
+                                        <button (click)="cancelBooking(booking.id)" class="mt-1 px-2 py-0.5 bg-red-600 text-white rounded text-xs">
+                                          Cancel
+                                        </button>
+                                      </div>
+                                    }
+                                  </div>
+                                } @else {
+                                  <p class="text-gray-600 py-2">No bookings</p>
+                                }
                               </div>
                             }
                           </div>
@@ -226,9 +403,35 @@ import { AdminService } from '../../../services/admin.service';
                               >expand_more</span>
                             </button>
                             @if (openSection(vendor._id) === 'reviews') {
-                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs text-gray-600">
-                                <p>Reviews and ratings management section</p>
-                                <p class="text-xs mt-2">(To be implemented)</p>
+                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs">
+                                <button
+                                  (click)="loadReviews(vendor._id)"
+                                  class="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-semibold mb-3"
+                                >
+                                  Load Reviews
+                                </button>
+                                @if (reviewsList().length > 0) {
+                                  <div class="space-y-2">
+                                    @for (review of reviewsList(); track review.id) {
+                                      <div class="p-2 border border-gray-200 rounded bg-white">
+                                        <div class="flex justify-between items-start mb-1">
+                                          <p class="font-semibold text-gray-800">{{ review.guestName }}</p>
+                                          <div class="flex items-center gap-1">
+                                            <span class="text-yellow-500 font-semibold">{{ review.rating }}</span>
+                                            <span class="material-icons text-yellow-500 text-sm">star</span>
+                                          </div>
+                                        </div>
+                                        <p class="text-gray-600 text-xs mb-1">{{ review.comment }}</p>
+                                        <p class="text-gray-500 text-xs mb-1">{{ review.date }}</p>
+                                        <button (click)="deleteReview(review.id)" class="px-2 py-0.5 bg-red-600 text-white rounded text-xs">
+                                          Delete
+                                        </button>
+                                      </div>
+                                    }
+                                  </div>
+                                } @else {
+                                  <p class="text-gray-600 py-2">No reviews</p>
+                                }
                               </div>
                             }
                           </div>
@@ -307,12 +510,36 @@ export class BusinessVendorListComponent implements OnInit {
   vendors = signal<any[]>([]);
   filteredVendors = signal<any[]>([]);
   expandedVendor = signal<string | null>(null);
-  
+
   searchQuery = '';
   selectedStatus = '';
 
   // Track open sections per vendor
   private openSections = signal<Record<string, string>>({});
+
+  // Staff management
+  staffList = signal<any[]>([]);
+  showAddStaffModal = signal(false);
+  newStaffName = '';
+  newStaffEmail = '';
+  newStaffRole = 'staff';
+
+  // Devices management
+  devicesList = signal<any[]>([]);
+  devicesLoading = signal(false);
+
+  // Rooms management
+  roomsList = signal<any[]>([]);
+  showAddRoomModal = signal(false);
+  newRoomNumber = '';
+  newRoomType = 'standard';
+  newRoomCapacity = 2;
+
+  // Bookings management
+  bookingsList = signal<any[]>([]);
+
+  // Reviews management
+  reviewsList = signal<any[]>([]);
 
   constructor(
     private adminService: AdminService,
@@ -480,5 +707,165 @@ export class BusinessVendorListComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/admin-dashboard']);
+  }
+
+  // ============================================
+  // STAFF MANAGEMENT
+  // ============================================
+
+  loadStaff(vendorId: string): void {
+    // For now, generate mock staff data
+    // In production, this would call: this.adminService.getVendorStaff(vendorId)
+    const mockStaff = [
+      { id: '1', name: 'John Manager', email: 'john@hotel.com', role: 'manager' },
+      { id: '2', name: 'Jane Receptionist', email: 'jane@hotel.com', role: 'receptionist' },
+      { id: '3', name: 'Bob Housekeeper', email: 'bob@hotel.com', role: 'housekeeping' }
+    ];
+    this.staffList.set(mockStaff);
+  }
+
+  addStaff(vendorId: string): void {
+    if (!this.newStaffName || !this.newStaffEmail) {
+      alert('Please fill all fields');
+      return;
+    }
+
+    const newStaff = {
+      id: Date.now().toString(),
+      name: this.newStaffName,
+      email: this.newStaffEmail,
+      role: this.newStaffRole,
+      vendorId
+    };
+
+    this.staffList.set([...this.staffList(), newStaff]);
+    this.newStaffName = '';
+    this.newStaffEmail = '';
+    this.newStaffRole = 'staff';
+    this.showAddStaffModal.set(false);
+  }
+
+  deleteStaff(staffId: string): void {
+    if (confirm('Remove this staff member?')) {
+      this.staffList.set(this.staffList().filter(s => s.id !== staffId));
+    }
+  }
+
+  // ============================================
+  // DEVICES MANAGEMENT
+  // ============================================
+
+  loadDevices(vendorId: string): void {
+    this.devicesLoading.set(true);
+    this.adminService.getDevices(1, 10).subscribe({
+      next: (response: any) => {
+        const devices = Array.isArray(response.data) ? response.data : [];
+        this.devicesList.set(devices);
+        console.log('✅ Devices loaded:', devices);
+        this.devicesLoading.set(false);
+      },
+      error: (error: any) => {
+        console.error('❌ Error loading devices:', error);
+        this.devicesLoading.set(false);
+      }
+    });
+  }
+
+  deleteDevice(deviceId: string): void {
+    if (confirm('Delete this device?')) {
+      this.adminService.deleteDevice(deviceId).subscribe({
+        next: () => {
+          this.devicesList.set(this.devicesList().filter(d => d._id !== deviceId && d.deviceId !== deviceId));
+          console.log('✅ Device deleted');
+        },
+        error: (error: any) => console.error('❌ Error deleting device:', error)
+      });
+    }
+  }
+
+  // ============================================
+  // ROOMS MANAGEMENT
+  // ============================================
+
+  loadRooms(vendorId: string): void {
+    // Mock rooms data
+    const mockRooms = [
+      { id: '101', number: '101', type: 'standard', capacity: 2, status: 'available' },
+      { id: '102', number: '102', type: 'deluxe', capacity: 4, status: 'occupied' },
+      { id: '103', number: '103', type: 'suite', capacity: 6, status: 'available' }
+    ];
+    this.roomsList.set(mockRooms);
+  }
+
+  addRoom(vendorId: string): void {
+    if (!this.newRoomNumber) {
+      alert('Please enter room number');
+      return;
+    }
+
+    const newRoom = {
+      id: Date.now().toString(),
+      number: this.newRoomNumber,
+      type: this.newRoomType,
+      capacity: this.newRoomCapacity,
+      status: 'available',
+      vendorId
+    };
+
+    this.roomsList.set([...this.roomsList(), newRoom]);
+    this.newRoomNumber = '';
+    this.newRoomType = 'standard';
+    this.newRoomCapacity = 2;
+    this.showAddRoomModal.set(false);
+  }
+
+  deleteRoom(roomId: string): void {
+    if (confirm('Delete this room?')) {
+      this.roomsList.set(this.roomsList().filter(r => r.id !== roomId));
+    }
+  }
+
+  // ============================================
+  // BOOKINGS MANAGEMENT
+  // ============================================
+
+  loadBookings(vendorId: string): void {
+    // Mock bookings data
+    const mockBookings = [
+      { id: '1', guestName: 'John Doe', roomNumber: '101', checkIn: '2024-03-15', checkOut: '2024-03-18', status: 'confirmed', amount: 450 },
+      { id: '2', guestName: 'Jane Smith', roomNumber: '102', checkIn: '2024-03-16', checkOut: '2024-03-20', status: 'confirmed', amount: 800 },
+      { id: '3', guestName: 'Bob Johnson', roomNumber: '103', checkIn: '2024-03-17', checkOut: '2024-03-19', status: 'pending', amount: 600 }
+    ];
+    this.bookingsList.set(mockBookings);
+  }
+
+  cancelBooking(bookingId: string): void {
+    if (confirm('Cancel this booking?')) {
+      this.bookingsList.set(
+        this.bookingsList().map(b =>
+          b.id === bookingId ? { ...b, status: 'cancelled' } : b
+        )
+      );
+    }
+  }
+
+  // ============================================
+  // REVIEWS MANAGEMENT
+  // ============================================
+
+  loadReviews(vendorId: string): void {
+    // Mock reviews data
+    const mockReviews = [
+      { id: '1', guestName: 'John Doe', rating: 5, comment: 'Excellent service!', date: '2024-03-10' },
+      { id: '2', guestName: 'Jane Smith', rating: 4, comment: 'Good facilities, friendly staff', date: '2024-03-08' },
+      { id: '3', guestName: 'Bob Johnson', rating: 3, comment: 'Average experience', date: '2024-03-05' }
+    ];
+    this.reviewsList.set(mockReviews);
+  }
+
+  deleteReview(reviewId: string): void {
+    if (confirm('Delete this review?')) {
+      this.reviewsList.set(this.reviewsList().filter(r => r.id !== reviewId));
+    }
   }
 }
