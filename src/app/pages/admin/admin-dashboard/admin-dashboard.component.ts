@@ -13,6 +13,10 @@ import { RolesComponent } from '../admin-roles/roles.component';
 // Business vendor list component for hierarchical drill-down
 import { BusinessVendorListComponent } from '../admin-vendors/business-vendor-list.component';
 
+// System management components
+import { AdminSystemUsersComponent } from '../admin-system-users/admin-system-users.component';
+import { AdminSystemDevicesComponent } from '../admin-system-devices/admin-system-devices.component';
+
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
@@ -22,7 +26,9 @@ import { BusinessVendorListComponent } from '../admin-vendors/business-vendor-li
     AdminSettingsComponent,
     AdminProfileComponent,
     RolesComponent,
-    BusinessVendorListComponent
+    BusinessVendorListComponent,
+    AdminSystemUsersComponent,
+    AdminSystemDevicesComponent
   ],
   template: `
     <div class="min-h-screen bg-gray-100 pt-16">
@@ -105,6 +111,28 @@ import { BusinessVendorListComponent } from '../admin-vendors/business-vendor-li
               Roles & Permissions
             </button>
 
+            <button
+              (click)="setCurrentPage('users')"
+              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
+                (currentPage() === 'users'
+                  ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
+                  : 'text-gray-700 hover:bg-gray-100')"
+            >
+              <span class="material-icons">people</span>
+              System Users
+            </button>
+
+            <button
+              (click)="setCurrentPage('devices')"
+              [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
+                (currentPage() === 'devices'
+                  ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
+                  : 'text-gray-700 hover:bg-gray-100')"
+            >
+              <span class="material-icons">devices</span>
+              Smart Devices
+            </button>
+
             <!-- Business Categories -->
             <p class="text-xs font-semibold text-gray-500 uppercase mb-4 mt-8">Businesses</p>
 
@@ -137,6 +165,10 @@ import { BusinessVendorListComponent } from '../admin-vendors/business-vendor-li
             <app-admin-settings></app-admin-settings>
           } @else if (currentPage() === 'roles') {
             <app-roles></app-roles>
+          } @else if (currentPage() === 'users') {
+            <app-admin-system-users></app-admin-system-users>
+          } @else if (currentPage() === 'devices') {
+            <app-admin-system-devices></app-admin-system-devices>
           } @else if (currentCategory()) {
             <!-- Business Vendor List - Hierarchical Drill-Down View -->
             @switch (currentCategory()) {
@@ -242,9 +274,9 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   setCurrentPage(page: string): void {
+    console.log('📄 Switching to page:', page);
     this.currentPage.set(page);
     this.currentCategory.set(null);
-    console.log('📄 Switched to page:', page);
   }
 
   selectCategory(categoryId: string): void {

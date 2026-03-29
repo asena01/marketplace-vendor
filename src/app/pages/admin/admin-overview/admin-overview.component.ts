@@ -36,20 +36,20 @@ import { AdminService } from '../../../services/admin.service';
           </div>
         </div>
 
-        <!-- Total Organizations -->
+        <!-- Total Vendors -->
         <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500 hover:shadow-lg transition">
           <div class="flex items-center justify-between">
             <div>
               <p class="text-gray-600 text-sm font-medium flex items-center gap-1">
-                <span class="material-icons text-sm">apartment</span>
-                Total Organizations
+                <span class="material-icons text-sm">business</span>
+                Total Vendors
               </p>
-              <p class="text-4xl font-bold text-gray-800 mt-2">{{ stats()?.organizations?.total || 0 }}</p>
+              <p class="text-4xl font-bold text-gray-800 mt-2">{{ stats()?.vendors?.total || 0 }}</p>
               <p class="text-xs text-gray-500 mt-1">
-                {{ stats()?.organizations?.active || 0 }} active
+                {{ stats()?.vendors?.active || 0 }} active
               </p>
             </div>
-            <span class="material-icons text-6xl text-green-200">apartment</span>
+            <span class="material-icons text-6xl text-green-200">business</span>
           </div>
         </div>
 
@@ -100,11 +100,11 @@ import { AdminService } from '../../../services/admin.service';
           <p class="text-sm text-gray-600 mt-2">Total platform earnings</p>
         </div>
 
-        <!-- Organization Status -->
+        <!-- Vendor Status -->
         <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
           <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
             <span class="material-icons text-blue-600">info</span>
-            Organization Status
+            Vendor Status
           </h3>
           <div class="space-y-3">
             <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
@@ -112,14 +112,14 @@ import { AdminService } from '../../../services/admin.service';
                 <span class="material-icons text-sm text-green-600">check_circle</span>
                 Active
               </span>
-              <span class="font-bold text-green-600">{{ stats()?.organizations?.active || 0 }}</span>
+              <span class="font-bold text-green-600">{{ stats()?.vendors?.active || 0 }}</span>
             </div>
             <div class="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
               <span class="text-gray-600 flex items-center gap-2">
                 <span class="material-icons text-sm text-yellow-600">schedule</span>
                 Pending Verification
               </span>
-              <span class="font-bold text-yellow-600">{{ stats()?.organizations?.pending || 0 }}</span>
+              <span class="font-bold text-yellow-600">{{ stats()?.vendors?.pending || 0 }}</span>
             </div>
           </div>
         </div>
