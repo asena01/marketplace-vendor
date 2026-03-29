@@ -857,12 +857,20 @@ export class HotelProfileComponent implements OnInit {
 
     // Clear previous and add new previews
     this.formData.photos = [];
+    const newPhotos: string[] = [];
+    let loadedCount = 0;
 
     files.forEach((file) => {
       const reader = new FileReader();
       reader.onload = (e: ProgressEvent<FileReader>) => {
         const dataUrl = e.target?.result as string;
-        this.formData.photos.push(dataUrl);
+        newPhotos.push(dataUrl);
+        loadedCount++;
+
+        // Update the photos array reference to trigger change detection
+        if (loadedCount === files.length) {
+          this.formData.photos = [...newPhotos];
+        }
       };
       reader.readAsDataURL(file);
     });
@@ -1003,7 +1011,9 @@ export class HotelProfileComponent implements OnInit {
     // Show preview immediately
     const reader = new FileReader();
     reader.onload = (e: ProgressEvent<FileReader>) => {
-      this.formData.logo = e.target?.result as string;
+      const preview = e.target?.result as string;
+      // Create new object reference to trigger change detection
+      this.formData = { ...this.formData, logo: preview };
     };
     reader.readAsDataURL(file);
 
@@ -1060,7 +1070,9 @@ export class HotelProfileComponent implements OnInit {
     // Show preview immediately
     const reader = new FileReader();
     reader.onload = (e: ProgressEvent<FileReader>) => {
-      this.formData.thumbnail = e.target?.result as string;
+      const preview = e.target?.result as string;
+      // Create new object reference to trigger change detection
+      this.formData = { ...this.formData, thumbnail: preview };
     };
     reader.readAsDataURL(file);
 
