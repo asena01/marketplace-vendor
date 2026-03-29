@@ -737,17 +737,31 @@ export class HotelProfileComponent implements OnInit {
 
   loadProfile(): void {
     this.isLoading.set(true);
+    const hotelId = localStorage.getItem('hotelId');
+    console.log('🏨 Loading hotel profile for hotelId:', hotelId);
+    console.log('📋 Hotel Service hotelId:', this.hotelService['hotelId']);
+
     this.hotelService.getHotelDetails().subscribe({
       next: (response: any) => {
+        console.log('✅ Hotel details response:', response);
         if (response.status === 'success' && response.data) {
           this.formData = { ...response.data };
           this.amenitiesText = (this.formData.amenities || []).join(', ');
+          console.log('✅ Profile loaded successfully:', this.formData);
+        } else {
+          console.warn('⚠️ Response not successful or no data:', response);
+          this.errorMessage.set(`No hotel profile found. Status: ${response.status}`);
         }
         this.isLoading.set(false);
       },
       error: (error: any) => {
-        console.error('Error loading profile:', error);
-        this.errorMessage.set('Failed to load profile');
+        console.error('❌ Error loading profile:', error);
+        console.error('Error details:', {
+          status: error.status,
+          message: error.message,
+          url: error.url
+        });
+        this.errorMessage.set(`Failed to load profile: ${error.status} - ${error.message}`);
         this.isLoading.set(false);
       }
     });
