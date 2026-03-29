@@ -6,19 +6,18 @@ import GymEquipment from '../models/GymEquipment.js';
 import Order from '../models/Order.js';
 import { deleteImage, getImageUrl } from '../middleware/imageUpload.js';
 
-// Get vendor profile by userId
+// Get vendor profile by userId (owner)
 export const getVendorProfile = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    console.log('📝 Fetching vendor profile for userId:', userId);
+    console.log('📝 Fetching vendor profile for user:', userId);
 
-    // Ensure userId is a string for consistent querying
-    const userIdString = String(userId);
-    const vendor = await Vendor.findOne({ userId: userIdString });
+    // Find vendor by owner (userId is the owner reference)
+    const vendor = await Vendor.findOne({ owner: userId }).populate('owner');
 
     if (!vendor) {
-      console.log('⚠️ Vendor profile not found for userId:', userIdString);
+      console.log('⚠️ Vendor profile not found for user:', userId);
       return res.status(404).json({
         status: 'error',
         message: 'Vendor profile not found'
@@ -45,11 +44,8 @@ export const createOrUpdateVendorProfile = async (req, res) => {
     const { userId } = req.params;
     const updates = req.body;
 
-    console.log('📝 Vendor profile update attempt for userId:', userId);
+    console.log('📝 Vendor profile update attempt for user:', userId);
     console.log('📌 Updates received:', updates);
-
-    // Ensure userId is a string for consistent querying
-    const userIdString = String(userId);
 
     // Handle image uploads
     if (req.files) {
@@ -64,7 +60,7 @@ export const createOrUpdateVendorProfile = async (req, res) => {
       }
     }
 
-    let vendor = await Vendor.findOne({ userId: userIdString });
+    let vendor = await Vendor.findOne({ owner: userId });
 
     if (!vendor) {
       // Validate required fields before creating
@@ -82,12 +78,12 @@ export const createOrUpdateVendorProfile = async (req, res) => {
 
       // Create new vendor profile
       vendor = new Vendor({
-        userId: userIdString,
+        owner: userId,
         ...updates
       });
-      console.log('✅ Creating new vendor profile for userId:', userIdString);
+      console.log('✅ Creating new vendor profile for user:', userId);
     } else {
-      console.log('✅ Updating existing vendor profile for userId:', userIdString);
+      console.log('✅ Updating existing vendor profile for user:', userId);
       // Update existing vendor profile
       Object.assign(vendor, updates);
     }
@@ -117,7 +113,7 @@ export const createOrUpdateVendorProfile = async (req, res) => {
       });
     }
 
-    // Handle duplicate key error for userId (unique constraint)
+    // Handle duplicate key error for owner (unique constraint)
     if (error.code === 11000) {
       return res.status(409).json({
         status: 'error',
@@ -137,11 +133,9 @@ export const getVendorStats = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    console.log('📝 Fetching vendor stats for userId:', userId);
+    console.log('📝 Fetching vendor stats for user:', userId);
 
-    // Ensure userId is a string for consistent querying
-    const userIdString = String(userId);
-    const vendor = await Vendor.findOne({ userId: userIdString });
+    const vendor = await Vendor.findOne({ owner: userId });
 
     if (!vendor) {
       return res.status(404).json({
@@ -257,11 +251,8 @@ export const createProduct = async (req, res) => {
     const { userId, vendorType } = req.params;
     const productData = req.body;
 
-    // Ensure userId is a string for consistent querying
-    const userIdString = String(userId);
-
     // Add vendor info to product
-    productData.vendorId = userIdString;
+    productData.vendorId = userId;
     productData.vendorName = req.body.vendorName || 'Unknown Vendor';
 
     // Handle image uploads
@@ -290,7 +281,7 @@ export const createProduct = async (req, res) => {
       await product.save();
 
       // Update vendor product count
-      const vendor = await Vendor.findOne({ userId: userIdString });
+      const vendor = await Vendor.findOne({ owner: userId });
       if (vendor) {
         vendor.stats.totalProducts = (vendor.stats.totalProducts || 0) + 1;
         await vendor.save();
@@ -373,9 +364,6 @@ export const deleteProduct = async (req, res) => {
   try {
     const { userId, vendorType, productId } = req.params;
 
-    // Ensure userId is a string for consistent querying
-    const userIdString = String(userId);
-
     let product;
     let Model;
 
@@ -394,7 +382,7 @@ export const deleteProduct = async (req, res) => {
 
       if (product) {
         // Update vendor product count
-        const vendor = await Vendor.findOne({ userId: userIdString });
+        const vendor = await Vendor.findOne({ owner: userId });
         if (vendor) {
           vendor.stats.totalProducts = Math.max(0, (vendor.stats.totalProducts || 1) - 1);
           await vendor.save();

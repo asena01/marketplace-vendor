@@ -107,7 +107,7 @@ const seedData = async () => {
         country: 'USA',
         status: 'active',
         isVerified: true,
-        userId: createdUsers[0]._id
+        owner: createdUsers[0]._id
       },
       {
         businessName: 'Hair Beauty Supply',
@@ -120,7 +120,7 @@ const seedData = async () => {
         country: 'USA',
         status: 'active',
         isVerified: true,
-        userId: createdUsers[1]._id
+        owner: createdUsers[1]._id
       },
       {
         businessName: 'Pet Supply Store',
@@ -133,7 +133,7 @@ const seedData = async () => {
         country: 'USA',
         status: 'active',
         isVerified: true,
-        userId: createdUsers[2]._id
+        owner: createdUsers[2]._id
       },
       {
         businessName: 'FitnessPro Equipment',
@@ -146,7 +146,7 @@ const seedData = async () => {
         country: 'USA',
         status: 'active',
         isVerified: true,
-        userId: createdUsers[3]._id
+        owner: createdUsers[3]._id
       }
     ];
 
