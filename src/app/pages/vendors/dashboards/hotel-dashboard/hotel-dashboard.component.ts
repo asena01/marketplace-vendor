@@ -274,6 +274,13 @@ export class HotelDashboardComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Refresh hotelId from localStorage to ensure HotelService has the correct ID
+    const hotelId = localStorage.getItem('hotelId');
+    if (hotelId) {
+      this.hotelService.setHotelId(hotelId);
+      console.log('✅ Hotel dashboard: hotelId refreshed in service:', hotelId);
+    }
+
     this.loadHotelData();
     // Detect child routes
     this.activatedRoute.firstChild?.params.subscribe(() => {

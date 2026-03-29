@@ -743,7 +743,7 @@ export class HotelProfileComponent implements OnInit {
     console.log('🏨 Loading hotel profile...');
     console.log('  hotelId from localStorage:', hotelId);
     console.log('  userId from localStorage:', userId);
-    console.log('  Hotel Service hotelId:', this.hotelService['hotelId']);
+    console.log('  Hotel Service hotelId before update:', this.hotelService['hotelId']);
 
     if (!hotelId) {
       this.errorMessage.set('❌ No hotel ID found. Please sign up again as a hotel vendor.');
@@ -751,6 +751,10 @@ export class HotelProfileComponent implements OnInit {
       console.error('❌ hotelId is null/undefined in localStorage');
       return;
     }
+
+    // Ensure HotelService has the correct hotelId from localStorage
+    this.hotelService.setHotelId(hotelId);
+    console.log('✅ Hotel Service hotelId updated to:', hotelId);
 
     // Add timeout to prevent infinite loading
     const timeout = setTimeout(() => {
