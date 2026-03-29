@@ -1,10 +1,67 @@
+#!/usr/bin/env node
+
+/**
+ * Simple Seed Data Script
+ * Run: node seed-data.js
+ */
+
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
-import User from '../models/User.js';
-import VendorPerformance from '../models/VendorPerformance.js';
-import * as dotenv from 'dotenv';
 
-dotenv.config();
+// MongoDB Connection String
+const MONGO_URI = 'mongodb+srv://fingecsmarthotels:WhqTOg0rGPib0FvE@cluster0.nfxzw.mongodb.net/test';
+
+// Define User Schema inline
+const userSchema = new mongoose.Schema(
+  {
+    name: String,
+    email: { type: String, unique: true, sparse: true },
+    password: String,
+    phone: String,
+    userType: { type: String, enum: ['customer', 'vendor', 'admin'], default: 'customer' },
+    vendorType: String,
+    businessName: String,
+    businessDescription: String,
+    isVerified: { type: Boolean, default: false },
+    status: { type: String, enum: ['pending', 'verified', 'active', 'suspended', 'blocked'], default: 'pending' },
+    kycStatus: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+    createdAt: { type: Date, default: Date.now },
+  },
+  { timestamps: true }
+);
+
+const User = mongoose.model('User', userSchema);
+
+// Vendor Performance Schema
+const vendorPerformanceSchema = new mongoose.Schema(
+  {
+    vendor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    revenue: {
+      thisMonth: { type: Number, default: 0 },
+      lastMonth: { type: Number, default: 0 },
+      total: { type: Number, default: 0 }
+    },
+    rating: {
+      average: { type: Number, default: 0 },
+      count: { type: Number, default: 0 }
+    },
+    bookings: {
+      total: { type: Number, default: 0 },
+      completed: { type: Number, default: 0 },
+      pending: { type: Number, default: 0 }
+    },
+    reviews: {
+      total: { type: Number, default: 0 },
+      positive: { type: Number, default: 0 },
+      negative: { type: Number, default: 0 }
+    },
+    performanceLevel: { type: String, default: 'standard' },
+    createdAt: { type: Date, default: Date.now }
+  },
+  { timestamps: true }
+);
+
+const VendorPerformance = mongoose.model('VendorPerformance', vendorPerformanceSchema);
 
 const vendorData = [
   // Hotels
@@ -197,26 +254,29 @@ const vendorData = [
   }
 ];
 
-async function seedVendors() {
+async function seedData() {
   try {
-    // Use the same MongoDB connection as the server
-    const mongoUrl = 'mongodb+srv://fingecsmarthotels:WhqTOg0rGPib0FvE@cluster0.nfxzw.mongodb.net/test';
+    console.log('\n════════════════════════════════════════');
+    console.log('  🌱 SEEDING TEST VENDOR DATA');
+    console.log('════════════════════════════════════════\n');
 
-    console.log('\n🔗 Connecting to MongoDB...');
-    console.log(`📍 Database: ${mongoUrl.split('/').pop() || 'test'}`);
-
-    await mongoose.connect(mongoUrl, {
+    // Connect to MongoDB
+    console.log('🔗 Connecting to MongoDB...');
+    await mongoose.connect(MONGO_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
     console.log('✅ Connected to MongoDB\n');
 
-    // Clear existing vendors
+    // Delete existing vendors
+    console.log('🗑️  Cleaning up existing vendors...');
     const deleteResult = await User.deleteMany({ userType: 'vendor' });
-    console.log(`🗑️  Deleted ${deleteResult.deletedCount} existing vendors`);
+    console.log(`   Deleted: ${deleteResult.deletedCount} vendors\n`);
 
-    // Hash passwords and insert vendors one by one
+    // Create vendors
+    console.log('👥 Creating vendors...');
     const createdVendors = [];
+    
     for (const vendorInfo of vendorData) {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(vendorInfo.password, salt);
@@ -228,10 +288,14 @@ async function seedVendors() {
 
       await vendor.save();
       createdVendors.push(vendor);
+      console.log(`   ✓ ${vendor.businessName} (${vendor.vendorType})`);
     }
-    console.log(`✅ Created ${createdVendors.length} test vendors`);
+    console.log(`\n✅ Created ${createdVendors.length} vendors\n`);
 
-    // Create performance records for each vendor
+    // Create performance records
+    console.log('📊 Creating performance records...');
+    let performanceCount = 0;
+    
     for (const vendor of createdVendors) {
       const performance = new VendorPerformance({
         vendor: vendor._id,
@@ -256,22 +320,37 @@ async function seedVendors() {
         }
       });
       await performance.save();
+      performanceCount++;
     }
+    console.log(`✅ Created ${performanceCount} performance records\n`);
 
-    console.log('✅ Created performance records for all vendors');
-    console.log('\n📋 Sample Vendors Created:');
-    console.log('==============================');
-    createdVendors.forEach(v => {
-      console.log(`  • ${v.businessName} (${v.vendorType}) - ${v.email}`);
-    });
+    // Summary
+    console.log('════════════════════════════════════════');
+    console.log('  ✅ SEEDING COMPLETED SUCCESSFULLY');
+    console.log('════════════════════════════════════════\n');
+
+    console.log('📋 SUMMARY:');
+    console.log(`   • Total Vendors: ${createdVendors.length}`);
+    console.log(`   • Hotels: 3`);
+    console.log(`   • Restaurants: 3`);
+    console.log(`   • Retail Stores: 2`);
+    console.log(`   • Services: 2`);
+    console.log(`   • Tours: 2`);
+    console.log(`   • Delivery: 2\n`);
+
+    console.log('🎯 NEXT STEPS:');
+    console.log('   1. Refresh the admin dashboard');
+    console.log('   2. Click on a business category (Hotels, Restaurants, etc.)');
+    console.log('   3. See the vendors list populated with data!\n');
 
     await mongoose.connection.close();
-    console.log('\n✅ Seeding completed successfully!');
+    console.log('✅ Database connection closed\n');
     process.exit(0);
   } catch (error) {
-    console.error('❌ Error seeding vendors:', error);
+    console.error('\n❌ ERROR:', error.message);
+    console.error('\nFull error:', error);
     process.exit(1);
   }
 }
 
-seedVendors();
+seedData();
