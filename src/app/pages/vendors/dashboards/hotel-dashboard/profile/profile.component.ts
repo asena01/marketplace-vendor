@@ -863,16 +863,21 @@ export class HotelProfileComponent implements OnInit {
       this.formData.photos = [];
     }
 
-    // Preview images locally first
+    // Clear previous preview images and reinitialize
     this.previewImageCount = files.length;
+    this.formData.photos = [];
     const previewImages: string[] = [];
 
+    // Display image previews to the user
+    this.addUploadStep('🖼️ Loading preview images...');
     files.forEach((file) => {
       const reader = new FileReader();
       reader.onload = (e: ProgressEvent<FileReader>) => {
         const dataUrl = e.target?.result as string;
         previewImages.push(dataUrl);
-        this.formData.photos.push(dataUrl);
+
+        // Update the formData images
+        this.formData.photos?.push(dataUrl);
 
         // Set as thumbnail if not set
         if (!this.formData.thumbnail) {
@@ -882,34 +887,83 @@ export class HotelProfileComponent implements OnInit {
       reader.readAsDataURL(file);
     });
 
+    this.addUploadStep('🚀 Starting upload...');
     this.isUploadingImages.set(true);
 
-    const uploadPath = `hotels/${this.formData._id || 'new'}`;
+    // Get hotelId for the upload path
+    const hotelId = this.formData._id || localStorage.getItem('hotelId') || 'new';
+    const uploadPath = `hotels/${hotelId}`;
+    this.addUploadStep('📤 Upload path: ' + uploadPath);
+    this.addUploadStep('📋 Files to upload: ' + files.length);
+
+    // Implement timeout for upload safety (45 seconds)
+    const timeoutHandle = setTimeout(() => {
+      if (this.isUploadingImages()) {
+        this.addUploadStep('⏱️ Upload timeout - auto-stopping spinner');
+        this.addUploadStep('💡 File may still be uploading in background');
+        this.isUploadingImages.set(false);
+        console.error('❌ Upload timeout after 45 seconds');
+      }
+    }, 45000);
 
     this.uploadAbortController = new AbortController();
 
     this.imageUploadService.uploadMultipleImages(files, uploadPath).subscribe({
       next: (imageUrls: string[]) => {
-        // Replace preview URLs with actual uploaded URLs
-        this.formData.photos = this.formData.photos.filter(
-          (url: string) => !url.startsWith('data:')
-        );
-        this.formData.photos = [...this.formData.photos, ...imageUrls];
+        clearTimeout(timeoutHandle);
 
-        // Update thumbnail if it was a preview
-        if (this.formData.thumbnail?.startsWith('data:')) {
-          this.formData.thumbnail = imageUrls[0];
+        this.addUploadStep(`🎉 Upload complete! Received ${imageUrls.length} URLs`);
+        if (!imageUrls.length) {
+          this.addUploadStep('❌ ERROR: Firebase did not return any URLs!');
+          console.error('❌ Firebase returned empty URL array!');
+          this.isUploadingImages.set(false);
+          this.errorMessage.set('Upload failed: Firebase returned no image URLs');
+          return;
         }
 
+        console.log('🎉 Upload successful. Image URLs:', imageUrls);
+
+        // Replace preview URLs with actual uploaded URLs
+        this.formData.photos = imageUrls;
+        this.addUploadStep(`✅ Images updated with uploaded URLs: ${imageUrls.length} total`);
+
+        // Set the first image as thumbnail if not already set or is a data URL
+        if (!this.formData.thumbnail || this.formData.thumbnail.startsWith('data:')) {
+          this.formData.thumbnail = imageUrls[0];
+          this.addUploadStep('📌 Thumbnail set to first image');
+        }
+
+        // Reset the upload state and show success message
         this.isUploadingImages.set(false);
         this.successMessage.set(`✅ ${imageUrls.length} image(s) uploaded successfully!`);
         this.uploadSteps.set([]);
         input.value = '';
         this.uploadAbortController = null;
+
+        // Clear success messages after 3 seconds
+        setTimeout(() => {
+          this.successMessage.set('');
+        }, 3000);
       },
       error: (error: any) => {
+        clearTimeout(timeoutHandle);
+        const errorMsg = error?.message || 'Unknown error occurred';
+        console.error('❌ Upload failed:', errorMsg);
+
+        // Display error and provide suggestions
+        this.addUploadStep('❌ Upload failed. Error: ' + errorMsg);
+        if (errorMsg.includes('Security Rules')) {
+          this.addUploadStep('💡 Fix: Check Firebase Storage Security Rules');
+        } else if (errorMsg.includes('bucket-not-found')) {
+          this.addUploadStep('💡 Fix: Verify that your storageBucket is correct');
+        } else if (errorMsg.includes('timeout')) {
+          this.addUploadStep('💡 Fix: Check your internet connection');
+        } else if (errorMsg.includes('Cannot connect')) {
+          this.addUploadStep('💡 Fix: Backend server may not be running');
+        }
+
         this.isUploadingImages.set(false);
-        this.errorMessage.set(error?.message || 'Failed to upload images');
+        this.errorMessage.set(`❌ Upload failed: ${errorMsg}`);
         input.value = '';
         this.uploadAbortController = null;
       }
@@ -964,22 +1018,48 @@ export class HotelProfileComponent implements OnInit {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
 
-    if (!file) return;
+    if (!file) {
+      this.errorMessage.set('⚠️ No file selected');
+      return;
+    }
 
+    console.log('📝 Logo upload started:', file.name);
     this.isUploadingLogo.set(true);
 
-    const uploadPath = `hotels/${this.formData._id || 'new'}/logo`;
+    // Get hotelId for the upload path
+    const hotelId = this.formData._id || localStorage.getItem('hotelId') || 'new';
+    const uploadPath = `hotels/${hotelId}/logo`;
+
+    console.log('📤 Logo upload path:', uploadPath);
+
+    // Implement timeout for upload safety
+    const timeoutHandle = setTimeout(() => {
+      if (this.isUploadingLogo()) {
+        this.isUploadingLogo.set(false);
+        console.error('❌ Logo upload timeout');
+      }
+    }, 45000);
 
     this.imageUploadService.uploadImage(file, uploadPath).subscribe({
       next: (logoUrl: string) => {
+        clearTimeout(timeoutHandle);
+        console.log('✅ Logo uploaded successfully:', logoUrl);
         this.formData.logo = logoUrl;
         this.isUploadingLogo.set(false);
         this.successMessage.set('✅ Logo uploaded successfully!');
         input.value = '';
+
+        // Clear success message after 3 seconds
+        setTimeout(() => {
+          this.successMessage.set('');
+        }, 3000);
       },
       error: (error: any) => {
+        clearTimeout(timeoutHandle);
+        const errorMsg = error?.message || 'Failed to upload logo';
+        console.error('❌ Logo upload failed:', errorMsg);
         this.isUploadingLogo.set(false);
-        this.errorMessage.set(error?.message || 'Failed to upload logo');
+        this.errorMessage.set(`❌ Logo upload failed: ${errorMsg}`);
         input.value = '';
       }
     });
@@ -1015,22 +1095,48 @@ export class HotelProfileComponent implements OnInit {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
 
-    if (!file) return;
+    if (!file) {
+      this.errorMessage.set('⚠️ No file selected');
+      return;
+    }
 
+    console.log('📝 Thumbnail upload started:', file.name);
     this.isUploadingThumbnail.set(true);
 
-    const uploadPath = `hotels/${this.formData._id || 'new'}/thumbnail`;
+    // Get hotelId for the upload path
+    const hotelId = this.formData._id || localStorage.getItem('hotelId') || 'new';
+    const uploadPath = `hotels/${hotelId}/thumbnail`;
+
+    console.log('📤 Thumbnail upload path:', uploadPath);
+
+    // Implement timeout for upload safety
+    const timeoutHandle = setTimeout(() => {
+      if (this.isUploadingThumbnail()) {
+        this.isUploadingThumbnail.set(false);
+        console.error('❌ Thumbnail upload timeout');
+      }
+    }, 45000);
 
     this.imageUploadService.uploadImage(file, uploadPath).subscribe({
       next: (thumbnailUrl: string) => {
+        clearTimeout(timeoutHandle);
+        console.log('✅ Thumbnail uploaded successfully:', thumbnailUrl);
         this.formData.thumbnail = thumbnailUrl;
         this.isUploadingThumbnail.set(false);
         this.successMessage.set('✅ Thumbnail uploaded successfully!');
         input.value = '';
+
+        // Clear success message after 3 seconds
+        setTimeout(() => {
+          this.successMessage.set('');
+        }, 3000);
       },
       error: (error: any) => {
+        clearTimeout(timeoutHandle);
+        const errorMsg = error?.message || 'Failed to upload thumbnail';
+        console.error('❌ Thumbnail upload failed:', errorMsg);
         this.isUploadingThumbnail.set(false);
-        this.errorMessage.set(error?.message || 'Failed to upload thumbnail');
+        this.errorMessage.set(`❌ Thumbnail upload failed: ${errorMsg}`);
         input.value = '';
       }
     });
