@@ -64,8 +64,16 @@ router.post('/register', async (req, res) => {
     // Track created business IDs for response
     let createdBusinessIds = {};
 
+    console.log('🔍 Vendor creation check - userType:', userType);
+
     // Create vendor-specific records
     if (userType === 'vendor') {
+      console.log('🏢 VENDOR DETECTED - Creating vendor records...');
+      console.log('   vendorType:', vendorType);
+      console.log('   name:', name);
+      console.log('   businessName:', businessName);
+      console.log('   user._id:', user._id);
+
       try {
         // Create VendorKyc record
         const vendorKyc = new VendorKyc({
@@ -86,6 +94,7 @@ router.post('/register', async (req, res) => {
 
         // Create Hotel record for hotel vendors
         if (vendorType === 'hotel') {
+          console.log('🏨 Creating Hotel record...');
           const hotel = new Hotel({
             name: businessName || `${name}'s Hotel`,
             description: businessDescription || '',
@@ -98,6 +107,9 @@ router.post('/register', async (req, res) => {
           await hotel.save();
           console.log('✅ Hotel profile created successfully:', hotel._id);
           createdBusinessIds.hotelId = hotel._id.toString();
+          console.log('✅ hotelId added to createdBusinessIds:', createdBusinessIds.hotelId);
+        } else {
+          console.log('⚠️ vendorType is not "hotel", it is:', vendorType);
         }
 
         // Create Restaurant record for restaurant vendors
@@ -159,6 +171,11 @@ router.post('/register', async (req, res) => {
       process.env.JWT_SECRET || 'your_jwt_secret_key',
       { expiresIn: '7d' }
     );
+
+    console.log('📤 SENDING SIGNUP RESPONSE:');
+    console.log('   createdBusinessIds:', createdBusinessIds);
+    console.log('   userType:', userType);
+    console.log('   vendorType:', vendorType);
 
     res.status(201).json({
       success: true,

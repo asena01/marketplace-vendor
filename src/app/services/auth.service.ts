@@ -55,12 +55,19 @@ export class AuthService {
    * Register a new user
    */
   signup(userData: any): Observable<any> {
-    console.log('Signing up with:', userData);
-    console.log('API URL:', this.apiUrl);
+    console.log('📝 Signing up with:', userData);
+    console.log('🔗 API URL:', this.apiUrl);
 
     return this.http.post(`${this.apiUrl}/auth/register`, userData).pipe(
       tap((response: any) => {
-        console.log('Signup response:', response);
+        console.log('=== 📨 SIGNUP RESPONSE ===');
+        console.log('Full response:', response);
+        console.log('response.success:', response.success);
+        console.log('response.token:', response.token ? '✅ exists' : '❌ missing');
+        console.log('response.user:', response.user);
+        console.log('response.businessIds:', response.businessIds);
+        console.log('=========================');
+
         if (response.success && response.token) {
           this.setToken(response.token);
           this.setUser(response.user);
@@ -68,6 +75,7 @@ export class AuthService {
 
           // Store userId for all users
           localStorage.setItem('userId', response.user._id);
+          console.log('✅ Stored userId:', response.user._id);
 
           // Store user email and basic info
           if (response.user.email) {
@@ -86,6 +94,10 @@ export class AuthService {
             const userId = response.user._id;
             const vendorType = response.user.vendorType;
             const businessIds = response.businessIds || {};
+            console.log('🏢 VENDOR SIGNUP DETECTED');
+            console.log('  vendorType:', vendorType);
+            console.log('  businessIds:', businessIds);
+            console.log('  businessIds.hotelId:', businessIds.hotelId);
             console.log('✅ Signup: Setting business IDs for vendor type:', vendorType, businessIds);
 
             // Store vendorType for all vendors
