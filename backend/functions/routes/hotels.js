@@ -46,14 +46,33 @@ router.get('/', async (req, res) => {
 // Get hotel by ID
 router.get('/:id', async (req, res) => {
   try {
-    const hotel = await Hotel.findById(req.params.id).populate('owner', 'name email phone');
+    const hotelId = req.params.id;
+    console.log('🏨 Fetching hotel with ID:', hotelId);
+    console.log('📌 Request URL:', req.originalUrl);
 
-    if (!hotel) return res.status(404).json({ status: 'failed', message: 'Hotel not found' });
+    const hotel = await Hotel.findById(hotelId).populate('owner', 'name email phone');
 
+    console.log('🔍 Hotel query result:', hotel);
+
+    if (!hotel) {
+      console.log('⚠️ Hotel not found for ID:', hotelId);
+      return res.status(404).json({
+        status: 'failed',
+        message: 'Hotel not found',
+        searchedId: hotelId
+      });
+    }
+
+    console.log('✅ Hotel found:', hotel._id, hotel.name);
     res.status(200).json({ status: 'success', data: hotel });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ status: 'error', message: 'Internal Server Error' });
+    console.error('❌ Error fetching hotel:', err.message);
+    console.error('Stack:', err.stack);
+    res.status(500).json({
+      status: 'error',
+      message: 'Internal Server Error',
+      error: err.message
+    });
   }
 });
 
