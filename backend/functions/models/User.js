@@ -139,6 +139,18 @@ const userSchema = new mongoose.Schema(
       ref: 'DeliveryPartner',
       default: null,
     },
+    // Vendor status
+    status: {
+      type: String,
+      enum: ['pending', 'verified', 'active', 'suspended', 'blocked'],
+      default: 'pending',
+    },
+    // KYC/Verification status
+    kycStatus: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
+    },
     createdAt: {
       type: Date,
       default: Date.now,

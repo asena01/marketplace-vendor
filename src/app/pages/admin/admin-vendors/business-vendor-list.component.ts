@@ -59,7 +59,13 @@ import { AdminService } from '../../../services/admin.service';
           <div class="bg-white rounded-lg shadow-md p-8 text-center">
             <span class="material-icons text-6xl text-gray-300 mx-auto mb-4 block">business</span>
             <p class="text-gray-600 font-medium">No vendors found</p>
-            <p class="text-gray-400 text-sm mt-1">Try adjusting your filters</p>
+            <p class="text-gray-400 text-sm mt-1">
+              @if (vendors().length === 0) {
+                No {{ getCategoryLabel() | lowercase }} vendors have registered yet. Vendors can sign up through the main platform.
+              } @else {
+                Try adjusting your filters or search terms.
+              }
+            </p>
           </div>
         } @else {
           @for (vendor of filteredVendors(); track vendor._id) {
@@ -314,21 +320,51 @@ export class BusinessVendorListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    console.log(`🔄 Loading ${this.businessType} vendors...`);
     this.loadVendors();
   }
 
   loadVendors(): void {
-    this.adminService.getVendors().subscribe({
+    // Map plural form to singular for backend
+    const vendorTypeMap: Record<string, string> = {
+      'hotels': 'hotel',
+      'restaurants': 'restaurant',
+      'retail': 'retail',
+      'services': 'service',
+      'tours': 'tour-operator',
+      'delivery': 'delivery'
+    };
+
+    const vendorType = vendorTypeMap[this.businessType] || this.businessType;
+    console.log(`🔍 Querying vendors with type: ${vendorType}`);
+
+    // Call backend with vendorType filter
+    const filters = { vendorType };
+
+    this.adminService.getVendors(1, 100, filters).subscribe({
       next: (response: any) => {
-        if (response.status === 'success' && response.data) {
-          const allVendors = Array.isArray(response.data) ? response.data : [response.data];
-          // Filter by business type
-          const filtered = allVendors.filter((v: any) => v.vendorType === this.businessType);
-          this.vendors.set(filtered);
-          this.filteredVendors.set(filtered);
+        console.log('✅ Vendors API Response:', response);
+
+        // Handle backend response format: { status: 'success', data: [...], pagination: {...} }
+        let vendorList = [];
+
+        if (response.data && Array.isArray(response.data)) {
+          vendorList = response.data;
+        } else if (Array.isArray(response)) {
+          vendorList = response;
         }
+
+        console.log(`📊 Found ${vendorList.length} ${this.businessType} vendors:`, vendorList);
+
+        this.vendors.set(vendorList);
+        this.filteredVendors.set(vendorList);
       },
-      error: (error: any) => console.error('Error loading vendors:', error)
+      error: (error: any) => {
+        console.error('❌ Error loading vendors:', error);
+        console.error('Error details:', error.error || error.message);
+        this.vendors.set([]);
+        this.filteredVendors.set([]);
+      }
     });
   }
 

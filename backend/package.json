@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "seed": "node scripts/seedDatabase.js"
+    "seed": "node functions/scripts/seed-vendors.js",
+    "seed:old": "node scripts/seedDatabase.js"
   },
   "keywords": [
     "express",
