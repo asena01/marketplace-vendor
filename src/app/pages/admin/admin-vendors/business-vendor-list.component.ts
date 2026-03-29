@@ -438,21 +438,426 @@ import { AdminService } from '../../../services/admin.service';
                         </div>
                       }
                       @case ('restaurants') {
-                        <!-- Restaurants Specific Sections -->
+                        <!-- Restaurants Menu Items -->
                         <div class="space-y-3">
-                          <div class="bg-white rounded border border-gray-200 px-4 py-3">
-                            <p class="text-sm font-semibold text-gray-800 flex items-center gap-2">
-                              <span class="material-icons text-sm">restaurant</span>
-                              Menu & Orders
-                            </p>
-                            <p class="text-xs text-gray-600 mt-2">(To be implemented)</p>
+                          <div class="bg-white rounded border border-gray-200 overflow-hidden">
+                            <button (click)="toggleSection(vendor._id, 'menu')" class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition">
+                              <div class="flex items-center gap-2">
+                                <span class="material-icons text-orange-600 text-sm">restaurant</span>
+                                <span class="text-sm font-semibold text-gray-800">Menu Items</span>
+                              </div>
+                              <span class="material-icons text-gray-400 text-sm" [style.transform]="openSection(vendor._id) === 'menu' ? 'rotate(180deg)' : 'rotate(0deg)'">expand_more</span>
+                            </button>
+                            @if (openSection(vendor._id) === 'menu') {
+                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs">
+                                <button (click)="loadMenuItems(vendor._id)" class="px-2 py-1 bg-blue-600 text-white rounded text-xs font-semibold mb-3">Add Item</button>
+                                @if (menuItems().length > 0) {
+                                  <div class="space-y-2">
+                                    @for (item of menuItems(); track item.id) {
+                                      <div class="p-2 border border-gray-200 rounded bg-white">
+                                        <div class="flex justify-between">
+                                          <div><p class="font-semibold text-gray-800">{{ item.name }}</p><p class="text-gray-600 text-xs">{{ item.description }}</p><p class="text-orange-600 font-semibold">{{ '$ ' + item.price }}</p></div>
+                                          <button (click)="deleteMenuItem(item.id)" class="px-1 py-0.5 bg-red-600 text-white rounded text-xs h-fit">Delete</button>
+                                        </div>
+                                      </div>
+                                    }
+                                  </div>
+                                } @else {
+                                  <p class="text-gray-600 py-2">No menu items</p>
+                                }
+                              </div>
+                            }
                           </div>
-                          <div class="bg-white rounded border border-gray-200 px-4 py-3">
-                            <p class="text-sm font-semibold text-gray-800 flex items-center gap-2">
-                              <span class="material-icons text-sm">local_shipping</span>
-                              Delivery Management
-                            </p>
-                            <p class="text-xs text-gray-600 mt-2">(To be implemented)</p>
+
+                          <!-- Orders -->
+                          <div class="bg-white rounded border border-gray-200 overflow-hidden">
+                            <button (click)="toggleSection(vendor._id, 'orders')" class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition">
+                              <div class="flex items-center gap-2">
+                                <span class="material-icons text-blue-600 text-sm">shopping_cart</span>
+                                <span class="text-sm font-semibold text-gray-800">Orders</span>
+                              </div>
+                              <span class="material-icons text-gray-400 text-sm" [style.transform]="openSection(vendor._id) === 'orders' ? 'rotate(180deg)' : 'rotate(0deg)'">expand_more</span>
+                            </button>
+                            @if (openSection(vendor._id) === 'orders') {
+                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs">
+                                <button (click)="loadOrders(vendor._id)" class="px-2 py-1 bg-blue-600 text-white rounded text-xs font-semibold mb-3">Refresh</button>
+                                @if (ordersList().length > 0) {
+                                  <div class="space-y-1">
+                                    @for (order of ordersList(); track order.id) {
+                                      <div class="p-2 border-t border-gray-200"><p class="font-semibold">Order #{{ order.id }}</p><p class="text-gray-600 text-xs">{{ order.customerName }}</p><p class="text-orange-600">{{ '$ ' + order.total }}</p></div>
+                                    }
+                                  </div>
+                                } @else {
+                                  <p class="text-gray-600 py-2">No orders</p>
+                                }
+                              </div>
+                            }
+                          </div>
+
+                          <!-- Staff -->
+                          <div class="bg-white rounded border border-gray-200 overflow-hidden">
+                            <button (click)="toggleSection(vendor._id, 'staff')" class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition">
+                              <div class="flex items-center gap-2">
+                                <span class="material-icons text-blue-600 text-sm">people</span>
+                                <span class="text-sm font-semibold text-gray-800">Staff</span>
+                              </div>
+                              <span class="material-icons text-gray-400 text-sm" [style.transform]="openSection(vendor._id) === 'staff' ? 'rotate(180deg)' : 'rotate(0deg)'">expand_more</span>
+                            </button>
+                            @if (openSection(vendor._id) === 'staff') {
+                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs">
+                                <button (click)="loadStaff(vendor._id)" class="px-2 py-1 bg-blue-600 text-white rounded text-xs font-semibold mb-3">Add Staff</button>
+                                @if (staffList().length > 0) {
+                                  <div class="space-y-1">
+                                    @for (staff of staffList(); track staff.id) {
+                                      <div class="flex justify-between p-1 border-t border-gray-200"><div><p class="font-semibold">{{ staff.name }}</p><p class="text-gray-600 text-xs">{{ staff.role }}</p></div><button (click)="deleteStaff(staff.id)" class="px-1 py-0.5 bg-red-600 text-white rounded text-xs">Delete</button></div>
+                                    }
+                                  </div>
+                                } @else {
+                                  <p class="text-gray-600 py-2">No staff</p>
+                                }
+                              </div>
+                            }
+                          </div>
+
+                          <!-- Reviews -->
+                          <div class="bg-white rounded border border-gray-200 overflow-hidden">
+                            <button (click)="toggleSection(vendor._id, 'reviews')" class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition">
+                              <div class="flex items-center gap-2">
+                                <span class="material-icons text-red-600 text-sm">star_rate</span>
+                                <span class="text-sm font-semibold text-gray-800">Reviews</span>
+                              </div>
+                              <span class="material-icons text-gray-400 text-sm" [style.transform]="openSection(vendor._id) === 'reviews' ? 'rotate(180deg)' : 'rotate(0deg)'">expand_more</span>
+                            </button>
+                            @if (openSection(vendor._id) === 'reviews') {
+                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs">
+                                <button (click)="loadReviews(vendor._id)" class="px-2 py-1 bg-blue-600 text-white rounded text-xs font-semibold mb-3">Load</button>
+                                @if (reviewsList().length > 0) {
+                                  <div class="space-y-2">
+                                    @for (review of reviewsList(); track review.id) {
+                                      <div class="p-2 border border-gray-200 rounded bg-white">
+                                        <div class="flex justify-between"><div><p class="font-semibold text-gray-800">{{ review.guestName }}</p><p class="text-gray-600 text-xs">{{ review.comment }}</p></div><button (click)="deleteReview(review.id)" class="px-1 py-0.5 bg-red-600 text-white rounded text-xs h-fit">Delete</button></div>
+                                      </div>
+                                    }
+                                  </div>
+                                } @else {
+                                  <p class="text-gray-600 py-2">No reviews</p>
+                                }
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      }
+                      @case ('retail') {
+                        <!-- Retail Specific Sections -->
+                        <div class="space-y-3">
+                          <div class="bg-white rounded border border-gray-200 overflow-hidden">
+                            <button (click)="toggleSection(vendor._id, 'inventory')" class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition">
+                              <div class="flex items-center gap-2">
+                                <span class="material-icons text-red-600 text-sm">inventory</span>
+                                <span class="text-sm font-semibold text-gray-800">Products</span>
+                              </div>
+                              <span class="material-icons text-gray-400 text-sm" [style.transform]="openSection(vendor._id) === 'inventory' ? 'rotate(180deg)' : 'rotate(0deg)'">expand_more</span>
+                            </button>
+                            @if (openSection(vendor._id) === 'inventory') {
+                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs">
+                                <button (click)="loadProducts(vendor._id)" class="px-2 py-1 bg-blue-600 text-white rounded text-xs font-semibold mb-3">Add</button>
+                                @if (productList().length > 0) {
+                                  <div class="space-y-2">
+                                    @for (product of productList(); track product.id) {
+                                      <div class="p-2 border border-gray-200 rounded bg-white">
+                                        <div class="flex justify-between"><div><p class="font-semibold">{{ product.name }}</p><p class="text-gray-600 text-xs">Stock: {{ product.stock }}</p><p class="text-red-600 font-semibold">{{ '$ ' + product.price }}</p></div><button (click)="deleteProduct(product.id)" class="px-1 py-0.5 bg-red-600 text-white rounded text-xs h-fit">Delete</button></div>
+                                      </div>
+                                    }
+                                  </div>
+                                } @else {
+                                  <p class="text-gray-600 py-2">No products</p>
+                                }
+                              </div>
+                            }
+                          </div>
+
+                          <div class="bg-white rounded border border-gray-200 overflow-hidden">
+                            <button (click)="toggleSection(vendor._id, 'sales')" class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition">
+                              <div class="flex items-center gap-2">
+                                <span class="material-icons text-green-600 text-sm">trending_up</span>
+                                <span class="text-sm font-semibold text-gray-800">Sales</span>
+                              </div>
+                              <span class="material-icons text-gray-400 text-sm" [style.transform]="openSection(vendor._id) === 'sales' ? 'rotate(180deg)' : 'rotate(0deg)'">expand_more</span>
+                            </button>
+                            @if (openSection(vendor._id) === 'sales') {
+                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs">
+                                <button (click)="loadSales(vendor._id)" class="px-2 py-1 bg-blue-600 text-white rounded text-xs font-semibold mb-3">Refresh</button>
+                                @if (salesList().length > 0) {
+                                  <div class="space-y-1">
+                                    @for (sale of salesList(); track sale.id) {
+                                      <div class="p-2 border-t border-gray-200"><p class="font-semibold">{{ sale.customer }}</p><p class="text-gray-600 text-xs">{{ '$ ' + sale.amount }} on {{ sale.date }}</p></div>
+                                    }
+                                  </div>
+                                } @else {
+                                  <p class="text-gray-600 py-2">No sales</p>
+                                }
+                              </div>
+                            }
+                          </div>
+
+                          <div class="bg-white rounded border border-gray-200 overflow-hidden">
+                            <button (click)="toggleSection(vendor._id, 'staff')" class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition">
+                              <div class="flex items-center gap-2">
+                                <span class="material-icons text-blue-600 text-sm">people</span>
+                                <span class="text-sm font-semibold text-gray-800">Staff</span>
+                              </div>
+                              <span class="material-icons text-gray-400 text-sm" [style.transform]="openSection(vendor._id) === 'staff' ? 'rotate(180deg)' : 'rotate(0deg)'">expand_more</span>
+                            </button>
+                            @if (openSection(vendor._id) === 'staff') {
+                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs">
+                                @if (staffList().length > 0) {
+                                  <div class="space-y-1">
+                                    @for (staff of staffList(); track staff.id) {
+                                      <div class="flex justify-between p-1 border-t"><div><p class="font-semibold">{{ staff.name }}</p></div><button (click)="deleteStaff(staff.id)" class="px-1 py-0.5 bg-red-600 text-white rounded text-xs">Delete</button></div>
+                                    }
+                                  </div>
+                                } @else {
+                                  <p class="text-gray-600 py-2">No staff</p>
+                                }
+                              </div>
+                            }
+                          </div>
+
+                          <div class="bg-white rounded border border-gray-200 overflow-hidden">
+                            <button (click)="toggleSection(vendor._id, 'reviews')" class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition">
+                              <div class="flex items-center gap-2">
+                                <span class="material-icons text-red-600 text-sm">star_rate</span>
+                                <span class="text-sm font-semibold text-gray-800">Reviews</span>
+                              </div>
+                              <span class="material-icons text-gray-400 text-sm" [style.transform]="openSection(vendor._id) === 'reviews' ? 'rotate(180deg)' : 'rotate(0deg)'">expand_more</span>
+                            </button>
+                            @if (openSection(vendor._id) === 'reviews') {
+                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs">
+                                @if (reviewsList().length > 0) {
+                                  <div class="space-y-2">
+                                    @for (review of reviewsList(); track review.id) {
+                                      <div class="p-2 border border-gray-200 rounded bg-white">
+                                        <div class="flex justify-between"><div><p class="font-semibold">{{ review.guestName }}</p><p class="text-gray-600 text-xs">{{ review.comment }}</p></div><button (click)="deleteReview(review.id)" class="px-1 py-0.5 bg-red-600 text-white rounded text-xs h-fit">Delete</button></div>
+                                      </div>
+                                    }
+                                  </div>
+                                } @else {
+                                  <p class="text-gray-600 py-2">No reviews</p>
+                                }
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      }
+                      @case ('services') {
+                        <!-- Services Specific Sections -->
+                        <div class="space-y-3">
+                          <div class="bg-white rounded border border-gray-200 overflow-hidden">
+                            <button (click)="toggleSection(vendor._id, 'services')" class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition">
+                              <div class="flex items-center gap-2">
+                                <span class="material-icons text-green-600 text-sm">build</span>
+                                <span class="text-sm font-semibold text-gray-800">Services</span>
+                              </div>
+                              <span class="material-icons text-gray-400 text-sm" [style.transform]="openSection(vendor._id) === 'services' ? 'rotate(180deg)' : 'rotate(0deg)'">expand_more</span>
+                            </button>
+                            @if (openSection(vendor._id) === 'services') {
+                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs">
+                                <button (click)="loadServices(vendor._id)" class="px-2 py-1 bg-blue-600 text-white rounded text-xs font-semibold mb-3">Add Service</button>
+                                @if (serviceList().length > 0) {
+                                  <div class="space-y-2">
+                                    @for (service of serviceList(); track service.id) {
+                                      <div class="p-2 border border-gray-200 rounded bg-white">
+                                        <div class="flex justify-between"><div><p class="font-semibold">{{ service.name }}</p><p class="text-gray-600 text-xs">{{ service.duration }} min</p><p class="text-green-600 font-semibold">{{ '$ ' + service.price }}</p></div><button (click)="deleteService(service.id)" class="px-1 py-0.5 bg-red-600 text-white rounded text-xs h-fit">Delete</button></div>
+                                      </div>
+                                    }
+                                  </div>
+                                } @else {
+                                  <p class="text-gray-600 py-2">No services</p>
+                                }
+                              </div>
+                            }
+                          </div>
+
+                          <div class="bg-white rounded border border-gray-200 overflow-hidden">
+                            <button (click)="toggleSection(vendor._id, 'appointments')" class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition">
+                              <div class="flex items-center gap-2">
+                                <span class="material-icons text-blue-600 text-sm">calendar_month</span>
+                                <span class="text-sm font-semibold text-gray-800">Appointments</span>
+                              </div>
+                              <span class="material-icons text-gray-400 text-sm" [style.transform]="openSection(vendor._id) === 'appointments' ? 'rotate(180deg)' : 'rotate(0deg)'">expand_more</span>
+                            </button>
+                            @if (openSection(vendor._id) === 'appointments') {
+                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs">
+                                <button (click)="loadAppointments(vendor._id)" class="px-2 py-1 bg-blue-600 text-white rounded text-xs font-semibold mb-3">Refresh</button>
+                                @if (appointmentList().length > 0) {
+                                  <div class="space-y-2">
+                                    @for (apt of appointmentList(); track apt.id) {
+                                      <div class="p-2 border border-gray-200 rounded bg-white">
+                                        <p class="font-semibold">{{ apt.clientName }}</p>
+                                        <p class="text-gray-600 text-xs">{{ apt.service }} at {{ apt.time }}</p>
+                                        <p class="text-gray-600 text-xs">{{ apt.date }}</p>
+                                      </div>
+                                    }
+                                  </div>
+                                } @else {
+                                  <p class="text-gray-600 py-2">No appointments</p>
+                                }
+                              </div>
+                            }
+                          </div>
+
+                          <div class="bg-white rounded border border-gray-200 overflow-hidden">
+                            <button (click)="toggleSection(vendor._id, 'staff')" class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition">
+                              <div class="flex items-center gap-2">
+                                <span class="material-icons text-blue-600 text-sm">people</span>
+                                <span class="text-sm font-semibold text-gray-800">Staff</span>
+                              </div>
+                              <span class="material-icons text-gray-400 text-sm" [style.transform]="openSection(vendor._id) === 'staff' ? 'rotate(180deg)' : 'rotate(0deg)'">expand_more</span>
+                            </button>
+                            @if (openSection(vendor._id) === 'staff') {
+                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs">
+                                @if (staffList().length > 0) {
+                                  <div class="space-y-1">
+                                    @for (staff of staffList(); track staff.id) {
+                                      <div class="flex justify-between p-1 border-t"><div><p class="font-semibold">{{ staff.name }}</p><p class="text-gray-600 text-xs">Specialist</p></div><button (click)="deleteStaff(staff.id)" class="px-1 py-0.5 bg-red-600 text-white rounded text-xs">Delete</button></div>
+                                    }
+                                  </div>
+                                } @else {
+                                  <p class="text-gray-600 py-2">No staff</p>
+                                }
+                              </div>
+                            }
+                          </div>
+
+                          <div class="bg-white rounded border border-gray-200 overflow-hidden">
+                            <button (click)="toggleSection(vendor._id, 'reviews')" class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition">
+                              <div class="flex items-center gap-2">
+                                <span class="material-icons text-red-600 text-sm">star_rate</span>
+                                <span class="text-sm font-semibold text-gray-800">Reviews</span>
+                              </div>
+                              <span class="material-icons text-gray-400 text-sm" [style.transform]="openSection(vendor._id) === 'reviews' ? 'rotate(180deg)' : 'rotate(0deg)'">expand_more</span>
+                            </button>
+                            @if (openSection(vendor._id) === 'reviews') {
+                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs">
+                                @if (reviewsList().length > 0) {
+                                  <div class="space-y-2">
+                                    @for (review of reviewsList(); track review.id) {
+                                      <div class="p-2 border border-gray-200 rounded bg-white">
+                                        <div class="flex justify-between"><div><p class="font-semibold">{{ review.guestName }}</p><p class="text-gray-600 text-xs">{{ review.comment }}</p></div><button (click)="deleteReview(review.id)" class="px-1 py-0.5 bg-red-600 text-white rounded text-xs h-fit">Delete</button></div>
+                                      </div>
+                                    }
+                                  </div>
+                                } @else {
+                                  <p class="text-gray-600 py-2">No reviews</p>
+                                }
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      }
+                      @case ('tours') {
+                        <!-- Tours Specific Sections -->
+                        <div class="space-y-3">
+                          <div class="bg-white rounded border border-gray-200 overflow-hidden">
+                            <button (click)="toggleSection(vendor._id, 'tours')" class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition">
+                              <div class="flex items-center gap-2">
+                                <span class="material-icons text-teal-600 text-sm">flight_takeoff</span>
+                                <span class="text-sm font-semibold text-gray-800">Tour Packages</span>
+                              </div>
+                              <span class="material-icons text-gray-400 text-sm" [style.transform]="openSection(vendor._id) === 'tours' ? 'rotate(180deg)' : 'rotate(0deg)'">expand_more</span>
+                            </button>
+                            @if (openSection(vendor._id) === 'tours') {
+                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs">
+                                <button (click)="loadTourPackages(vendor._id)" class="px-2 py-1 bg-blue-600 text-white rounded text-xs font-semibold mb-3">Add</button>
+                                @if (tourPackageList().length > 0) {
+                                  <div class="space-y-2">
+                                    @for (tour of tourPackageList(); track tour.id) {
+                                      <div class="p-2 border border-gray-200 rounded bg-white">
+                                        <div class="flex justify-between"><div><p class="font-semibold">{{ tour.name }}</p><p class="text-gray-600 text-xs">{{ tour.duration }} days</p><p class="text-teal-600 font-semibold">{{ '$ ' + tour.price }}</p></div><button (click)="deleteTourPackage(tour.id)" class="px-1 py-0.5 bg-red-600 text-white rounded text-xs h-fit">Delete</button></div>
+                                      </div>
+                                    }
+                                  </div>
+                                } @else {
+                                  <p class="text-gray-600 py-2">No tours</p>
+                                }
+                              </div>
+                            }
+                          </div>
+
+                          <div class="bg-white rounded border border-gray-200 overflow-hidden">
+                            <button (click)="toggleSection(vendor._id, 'bookings')" class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition">
+                              <div class="flex items-center gap-2">
+                                <span class="material-icons text-orange-600 text-sm">event</span>
+                                <span class="text-sm font-semibold text-gray-800">Bookings</span>
+                              </div>
+                              <span class="material-icons text-gray-400 text-sm" [style.transform]="openSection(vendor._id) === 'bookings' ? 'rotate(180deg)' : 'rotate(0deg)'">expand_more</span>
+                            </button>
+                            @if (openSection(vendor._id) === 'bookings') {
+                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs">
+                                <button (click)="loadBookings(vendor._id)" class="px-2 py-1 bg-blue-600 text-white rounded text-xs font-semibold mb-3">Refresh</button>
+                                @if (bookingsList().length > 0) {
+                                  <div class="space-y-2">
+                                    @for (booking of bookingsList(); track booking.id) {
+                                      <div class="p-2 border border-gray-200 rounded bg-white">
+                                        <p class="font-semibold">{{ booking.guestName }}</p>
+                                        <p class="text-gray-600 text-xs">{{ booking.tourName }}</p>
+                                        <p class="text-teal-600 font-semibold text-xs">{{ '$ ' + booking.amount }}</p>
+                                      </div>
+                                    }
+                                  </div>
+                                } @else {
+                                  <p class="text-gray-600 py-2">No bookings</p>
+                                }
+                              </div>
+                            }
+                          </div>
+
+                          <div class="bg-white rounded border border-gray-200 overflow-hidden">
+                            <button (click)="toggleSection(vendor._id, 'staff')" class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition">
+                              <div class="flex items-center gap-2">
+                                <span class="material-icons text-blue-600 text-sm">people</span>
+                                <span class="text-sm font-semibold text-gray-800">Tour Guides</span>
+                              </div>
+                              <span class="material-icons text-gray-400 text-sm" [style.transform]="openSection(vendor._id) === 'staff' ? 'rotate(180deg)' : 'rotate(0deg)'">expand_more</span>
+                            </button>
+                            @if (openSection(vendor._id) === 'staff') {
+                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs">
+                                @if (staffList().length > 0) {
+                                  <div class="space-y-1">
+                                    @for (staff of staffList(); track staff.id) {
+                                      <div class="flex justify-between p-1 border-t"><div><p class="font-semibold">{{ staff.name }}</p><p class="text-gray-600 text-xs">Guide</p></div><button (click)="deleteStaff(staff.id)" class="px-1 py-0.5 bg-red-600 text-white rounded text-xs">Delete</button></div>
+                                    }
+                                  </div>
+                                } @else {
+                                  <p class="text-gray-600 py-2">No guides</p>
+                                }
+                              </div>
+                            }
+                          </div>
+
+                          <div class="bg-white rounded border border-gray-200 overflow-hidden">
+                            <button (click)="toggleSection(vendor._id, 'reviews')" class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition">
+                              <div class="flex items-center gap-2">
+                                <span class="material-icons text-red-600 text-sm">star_rate</span>
+                                <span class="text-sm font-semibold text-gray-800">Reviews</span>
+                              </div>
+                              <span class="material-icons text-gray-400 text-sm" [style.transform]="openSection(vendor._id) === 'reviews' ? 'rotate(180deg)' : 'rotate(0deg)'">expand_more</span>
+                            </button>
+                            @if (openSection(vendor._id) === 'reviews') {
+                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs">
+                                @if (reviewsList().length > 0) {
+                                  <div class="space-y-2">
+                                    @for (review of reviewsList(); track review.id) {
+                                      <div class="p-2 border border-gray-200 rounded bg-white">
+                                        <div class="flex justify-between"><div><p class="font-semibold">{{ review.guestName }}</p><p class="text-gray-600 text-xs">{{ review.comment }}</p></div><button (click)="deleteReview(review.id)" class="px-1 py-0.5 bg-red-600 text-white rounded text-xs h-fit">Delete</button></div>
+                                      </div>
+                                    }
+                                  </div>
+                                } @else {
+                                  <p class="text-gray-600 py-2">No reviews</p>
+                                }
+                              </div>
+                            }
                           </div>
                         </div>
                       }
@@ -540,6 +945,21 @@ export class BusinessVendorListComponent implements OnInit {
 
   // Reviews management
   reviewsList = signal<any[]>([]);
+
+  // Restaurants specific
+  menuItems = signal<any[]>([]);
+  ordersList = signal<any[]>([]);
+
+  // Retail specific
+  productList = signal<any[]>([]);
+  salesList = signal<any[]>([]);
+
+  // Services specific
+  serviceList = signal<any[]>([]);
+  appointmentList = signal<any[]>([]);
+
+  // Tours specific
+  tourPackageList = signal<any[]>([]);
 
   constructor(
     private adminService: AdminService,
@@ -866,6 +1286,109 @@ export class BusinessVendorListComponent implements OnInit {
   deleteReview(reviewId: string): void {
     if (confirm('Delete this review?')) {
       this.reviewsList.set(this.reviewsList().filter(r => r.id !== reviewId));
+    }
+  }
+
+  // ============================================
+  // RESTAURANTS MANAGEMENT
+  // ============================================
+
+  loadMenuItems(vendorId: string): void {
+    const mockMenu = [
+      { id: '1', name: 'Pasta Carbonara', description: 'Classic Italian', price: '15.99' },
+      { id: '2', name: 'Grilled Salmon', description: 'Fresh Atlantic', price: '24.99' },
+      { id: '3', name: 'Margherita Pizza', description: 'Traditional', price: '12.99' }
+    ];
+    this.menuItems.set(mockMenu);
+  }
+
+  deleteMenuItem(itemId: string): void {
+    if (confirm('Delete this menu item?')) {
+      this.menuItems.set(this.menuItems().filter(m => m.id !== itemId));
+    }
+  }
+
+  loadOrders(vendorId: string): void {
+    const mockOrders = [
+      { id: '1001', customerName: 'John Doe', items: 3, total: '45.50', status: 'completed' },
+      { id: '1002', customerName: 'Jane Smith', items: 2, total: '38.20', status: 'pending' },
+      { id: '1003', customerName: 'Bob Wilson', items: 5, total: '89.99', status: 'completed' }
+    ];
+    this.ordersList.set(mockOrders);
+  }
+
+  // ============================================
+  // RETAIL MANAGEMENT
+  // ============================================
+
+  loadProducts(vendorId: string): void {
+    const mockProducts = [
+      { id: '1', name: 'T-Shirt Blue', stock: 45, price: '19.99' },
+      { id: '2', name: 'Jeans Classic', stock: 23, price: '59.99' },
+      { id: '3', name: 'Sneakers White', stock: 12, price: '89.99' }
+    ];
+    this.productList.set(mockProducts);
+  }
+
+  deleteProduct(productId: string): void {
+    if (confirm('Delete this product?')) {
+      this.productList.set(this.productList().filter(p => p.id !== productId));
+    }
+  }
+
+  loadSales(vendorId: string): void {
+    const mockSales = [
+      { id: '1', customer: 'Alice Johnson', amount: '125.50', date: '2024-03-15' },
+      { id: '2', customer: 'Charlie Brown', amount: '89.99', date: '2024-03-14' },
+      { id: '3', customer: 'Diana Prince', amount: '250.00', date: '2024-03-13' }
+    ];
+    this.salesList.set(mockSales);
+  }
+
+  // ============================================
+  // SERVICES MANAGEMENT
+  // ============================================
+
+  loadServices(vendorId: string): void {
+    const mockServices = [
+      { id: '1', name: 'Haircut', duration: 30, price: '25.00' },
+      { id: '2', name: 'Hair Coloring', duration: 120, price: '75.00' },
+      { id: '3', name: 'Massage', duration: 60, price: '60.00' }
+    ];
+    this.serviceList.set(mockServices);
+  }
+
+  deleteService(serviceId: string): void {
+    if (confirm('Delete this service?')) {
+      this.serviceList.set(this.serviceList().filter(s => s.id !== serviceId));
+    }
+  }
+
+  loadAppointments(vendorId: string): void {
+    const mockAppointments = [
+      { id: '1', clientName: 'Emma Stone', service: 'Haircut', date: '2024-03-20', time: '10:00' },
+      { id: '2', clientName: 'Michael Scott', service: 'Massage', date: '2024-03-20', time: '14:00' },
+      { id: '3', clientName: 'Sarah Connor', service: 'Hair Coloring', date: '2024-03-21', time: '09:00' }
+    ];
+    this.appointmentList.set(mockAppointments);
+  }
+
+  // ============================================
+  // TOURS MANAGEMENT
+  // ============================================
+
+  loadTourPackages(vendorId: string): void {
+    const mockTours = [
+      { id: '1', name: 'Safari Adventure', duration: 5, groupSize: 8, price: '1200.00' },
+      { id: '2', name: 'City Explorer', duration: 3, groupSize: 15, price: '450.00' },
+      { id: '3', name: 'Mountain Trek', duration: 7, groupSize: 6, price: '1800.00' }
+    ];
+    this.tourPackageList.set(mockTours);
+  }
+
+  deleteTourPackage(tourId: string): void {
+    if (confirm('Delete this tour?')) {
+      this.tourPackageList.set(this.tourPackageList().filter(t => t.id !== tourId));
     }
   }
 }
