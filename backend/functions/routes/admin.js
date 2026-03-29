@@ -1,5 +1,6 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
+import { TuyaContext } from '@tuya/tuya-connector-nodejs';
 import Organization from '../models/Organization.js';
 import User from '../models/User.js';
 import PaymentTransaction from '../models/PaymentTransaction.js';
@@ -16,6 +17,20 @@ import * as roleController from '../controllers/roleController.js';
 import { verifyAdmin as rbacVerifyAdmin, requirePermission } from '../middleware/rbacMiddleware.js';
 
 const router = express.Router();
+
+// ============================================
+// TUYA CONTEXT SETUP
+// ============================================
+
+const TUYA_ACCESS_KEY = process.env.TUYA_ACCESS_KEY || "uacrm8an77hjqghy7qug";
+const TUYA_SECRET_KEY = process.env.TUYA_SECRET_KEY || "59c473f01d2f4ca3ba7cb77ccd258661";
+const TUYA_REGION = process.env.TUYA_REGION || "https://openapi.tuyaeu.com";
+
+const tuyaContext = new TuyaContext({
+  baseUrl: TUYA_REGION,
+  accessKey: TUYA_ACCESS_KEY,
+  secretKey: TUYA_SECRET_KEY,
+});
 
 // ============================================
 // ADMIN AUTH & VERIFICATION MIDDLEWARE
@@ -585,21 +600,67 @@ router.get('/devices', verifyAdmin, async (req, res) => {
   try {
     const page = req.query.page || 1;
     const limit = req.query.limit || 10;
-    const deviceType = req.query.deviceType;
     const skip = (page - 1) * limit;
 
-    const filter = deviceType ? { deviceType } : {};
+    console.log('🔄 Fetching devices from Tuya platform...');
 
-    const devices = await Device.find(filter)
-      .skip(skip)
-      .limit(limit)
-      .sort({ createdAt: -1 });
+    // Fetch devices from Tuya platform
+    const tuyaResponse = await tuyaContext.request({
+      path: '/v1.0/iot-03/devices',
+      method: 'GET',
+      query: {
+        page_no: page,
+        page_size: limit
+      }
+    });
 
-    const total = await Device.countDocuments(filter);
+    if (!tuyaResponse.success) {
+      console.error('❌ Tuya API Error:', tuyaResponse.msg);
+
+      // Fallback to MongoDB if Tuya fails
+      console.log('📌 Falling back to MongoDB devices...');
+      const devices = await Device.find()
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 });
+
+      const total = await Device.countDocuments();
+
+      return res.status(200).json({
+        success: true,
+        source: 'mongodb',
+        data: devices,
+        pagination: {
+          total,
+          pages: Math.ceil(total / limit),
+          currentPage: page,
+          limit
+        }
+      });
+    }
+
+    // Process Tuya response
+    const tuyaDevices = tuyaResponse.result?.devices || [];
+    const total = tuyaResponse.result?.total || tuyaDevices.length;
+
+    console.log(`✅ Fetched ${tuyaDevices.length} devices from Tuya platform`);
+
+    // Enrich Tuya devices with additional info
+    const enrichedDevices = tuyaDevices.map(device => ({
+      _id: device.device_id,
+      deviceId: device.device_id,
+      name: device.name,
+      type: device.product_name || 'Smart Device',
+      status: device.online ? 'active' : 'inactive',
+      ownerName: device.owner_id || 'Unassigned',
+      lastActive: device.update_time ? new Date(device.update_time * 1000) : null,
+      tuyaData: device
+    }));
 
     res.status(200).json({
       success: true,
-      data: devices,
+      source: 'tuya',
+      data: enrichedDevices,
       pagination: {
         total,
         pages: Math.ceil(total / limit),
@@ -608,11 +669,41 @@ router.get('/devices', verifyAdmin, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Error fetching devices:', error);
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
+    console.error('❌ Error fetching devices:', error.message);
+
+    // Final fallback to MongoDB
+    try {
+      console.log('📌 Final fallback to MongoDB devices...');
+      const page = req.query.page || 1;
+      const limit = req.query.limit || 10;
+      const skip = (page - 1) * limit;
+
+      const devices = await Device.find()
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 });
+
+      const total = await Device.countDocuments();
+
+      return res.status(200).json({
+        success: true,
+        source: 'mongodb',
+        data: devices,
+        pagination: {
+          total,
+          pages: Math.ceil(total / limit),
+          currentPage: page,
+          limit
+        }
+      });
+    } catch (fallbackError) {
+      console.error('❌ Fallback error:', fallbackError);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch devices from both Tuya and MongoDB',
+        error: error.message
+      });
+    }
   }
 });
 
