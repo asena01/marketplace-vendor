@@ -269,13 +269,19 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   selectCategory(categoryId: string): void {
+    console.log('📂 Selecting category:', categoryId);
+    this.currentPage.set('');  // Clear system page
     this.currentCategory.set(categoryId);
     this.currentSubPage.set('vendors');
     this.expandedCategory.set(categoryId === this.expandedCategory() ? null : categoryId);
+    console.log('✅ Category set to:', categoryId, 'Expanded:', this.expandedCategory());
   }
 
   selectSubPage(subPage: string): void {
+    console.log('📄 Selecting sub-page:', subPage, 'Current category:', this.currentCategory());
+    this.currentPage.set('');  // Clear system page
     this.currentSubPage.set(subPage);
+    console.log('✅ Sub-page set to:', subPage);
   }
 
   getCategory(id: string) {
