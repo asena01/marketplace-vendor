@@ -214,6 +214,13 @@ import { DeliveryAdminComponent } from '../admin-categories/delivery-admin/deliv
         justify-content: center;
         user-select: none;
       }
+
+      /* Force sidebar to always be visible on large screens */
+      @media (min-width: 1024px) {
+        aside {
+          display: block !important;
+        }
+      }
     `
   ]
 })
@@ -292,29 +299,38 @@ export class AdminDashboardComponent implements OnInit {
   setCurrentPage(page: string): void {
     this.currentPage.set(page);
     this.currentCategory.set(null);
-    this.closeSidebarOnMobile();
+    // Only close sidebar on mobile (do NOT close on desktop)
+    this.closeSidebarOnMobileOnly();
   }
 
   selectCategory(categoryId: string): void {
     this.currentCategory.set(categoryId);
     this.currentSubPage.set('vendors');
     this.expandedCategory.set(categoryId === this.expandedCategory() ? null : categoryId);
+    // Don't close sidebar on category selection - let user explore
   }
 
   selectSubPage(subPage: string): void {
     this.currentSubPage.set(subPage);
-    this.closeSidebarOnMobile();
+    // Only close sidebar on mobile (do NOT close on desktop)
+    this.closeSidebarOnMobileOnly();
   }
 
   toggleSidebar(): void {
     this.sidebarOpen.update(open => !open);
   }
 
-  closeSidebarOnMobile(): void {
-    // Close sidebar on mobile (screen width < 1024px)
+  closeSidebarOnMobileOnly(): void {
+    // ONLY close sidebar on mobile (screen width < 1024px)
+    // NEVER close on desktop - sidebar should always be visible there
     if (typeof window !== 'undefined' && window.innerWidth < 1024) {
       this.sidebarOpen.set(false);
     }
+  }
+
+  closeSidebarOnMobile(): void {
+    // Deprecated - use closeSidebarOnMobileOnly() instead
+    this.closeSidebarOnMobileOnly();
   }
 
   getCategory(id: string) {
