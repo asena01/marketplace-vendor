@@ -416,13 +416,13 @@ import { AngularFireUploadService } from '../../../../../services/angular-fire-u
             </div>
 
             <!-- Uploaded Images Grid -->
-            @if (previewPhotos().length > 0) {
+            @if (formData.photos && formData.photos.length > 0) {
               <div class="mt-4">
                 <label class="block text-sm font-medium text-slate-700 mb-3">
-                  Uploaded Images ({{ previewPhotos().length }})
+                  Uploaded Images ({{ formData.photos.length }})
                 </label>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  @for (image of previewPhotos(); track image) {
+                  @for (image of formData.photos; track image) {
                     <div class="relative group">
                       <img
                         [src]="image"
@@ -484,16 +484,16 @@ import { AngularFireUploadService } from '../../../../../services/angular-fire-u
               </div>
 
               <!-- Logo Preview -->
-              @if (previewLogo()) {
+              @if (formData.logo) {
                 <div class="mt-3">
                   <img
-                    [src]="previewLogo()"
+                    [src]="formData.logo"
                     alt="Hotel logo"
                     class="w-24 h-24 object-cover rounded-lg border-2 border-slate-300"
                   />
                   <button
                     type="button"
-                    (click)="previewLogo.set(''); formData.logo = ''"
+                    (click)="formData.logo = ''"
                     class="mt-2 text-xs px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
                   >
                     Remove
@@ -541,16 +541,16 @@ import { AngularFireUploadService } from '../../../../../services/angular-fire-u
               </div>
 
               <!-- Thumbnail Preview -->
-              @if (previewThumbnail()) {
+              @if (formData.thumbnail) {
                 <div class="mt-3">
                   <img
-                    [src]="previewThumbnail()"
+                    [src]="formData.thumbnail"
                     alt="Hotel thumbnail"
                     class="w-24 h-24 object-cover rounded-lg border-2 border-slate-300"
                   />
                   <button
                     type="button"
-                    (click)="previewThumbnail.set(''); formData.thumbnail = ''"
+                    (click)="formData.thumbnail = ''"
                     class="mt-2 text-xs px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
                   >
                     Remove
@@ -684,11 +684,6 @@ export class HotelProfileComponent implements OnInit {
   // Thumbnail upload signals
   isUploadingThumbnail = signal(false);
   isDraggingThumbnail = signal(false);
-
-  // Preview image signals for reactive updates
-  previewPhotos = signal<string[]>([]);
-  previewLogo = signal<string>('');
-  previewThumbnail = signal<string>('');
 
   amenitiesText = '';
   previewImageCount = 0;
@@ -853,60 +848,21 @@ export class HotelProfileComponent implements OnInit {
   }
 
   onImageSelected(event: Event): void {
-    console.log('🔥 onImageSelected called with event:', event);
     const input = event.target as HTMLInputElement;
     const files: File[] = Array.from(input.files || []);
 
-    console.log('📁 Files to upload:', files.length);
-
-    this.addUploadStep(`📸 Image selected - ${files.length} file(s)`);
-
     if (!files.length) {
-      this.addUploadStep('⚠️ No files selected');
       return;
     }
 
-    // Initialize photos array if not present
-    if (!this.formData.photos) {
-      this.formData.photos = [];
-    }
-
-    // Clear previous preview images and reinitialize
-    this.previewImageCount = files.length;
+    // Clear previous and add new previews
     this.formData.photos = [];
-    this.previewPhotos.set([]);
-    const previewImages: string[] = [];
 
-    // Display image previews to the user
-    this.addUploadStep('🖼️ Loading preview images...');
-
-    let loadedCount = 0;
     files.forEach((file) => {
       const reader = new FileReader();
       reader.onload = (e: ProgressEvent<FileReader>) => {
         const dataUrl = e.target?.result as string;
-        previewImages.push(dataUrl);
-
-        // Update the preview signal and formData - use setTimeout to ensure change detection
-        setTimeout(() => {
-          const currentPhotos = this.previewPhotos();
-          this.previewPhotos.set([...currentPhotos, dataUrl]);
-
-          if (this.formData.photos) {
-            this.formData.photos.push(dataUrl);
-          }
-
-          // Set as thumbnail if not set
-          if (!this.formData.thumbnail && !this.previewThumbnail()) {
-            this.previewThumbnail.set(dataUrl);
-            this.formData.thumbnail = dataUrl;
-          }
-
-          loadedCount++;
-          if (loadedCount === files.length) {
-            console.log('👁️ All previews loaded:', this.previewPhotos().length);
-          }
-        }, 0);
+        this.formData.photos.push(dataUrl);
       };
       reader.readAsDataURL(file);
     });
@@ -1016,15 +972,10 @@ export class HotelProfileComponent implements OnInit {
   }
 
   removeImage(image: string): void {
-    const updatedPhotos = this.previewPhotos().filter((url: string) => url !== image);
-    this.previewPhotos.set(updatedPhotos);
-
     this.formData.photos = this.formData.photos.filter((url: string) => url !== image);
 
     if (this.formData.thumbnail === image) {
-      const newThumbnail = this.formData.photos[0] || '';
-      this.previewThumbnail.set(newThumbnail);
-      this.formData.thumbnail = newThumbnail;
+      this.formData.thumbnail = this.formData.photos[0] || '';
     }
   }
 
@@ -1047,63 +998,29 @@ export class HotelProfileComponent implements OnInit {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
 
-    if (!file) {
-      this.errorMessage.set('⚠️ No file selected');
-      return;
-    }
+    if (!file) return;
 
-    console.log('📝 Logo upload started:', file.name);
-
-    // Show preview immediately while uploading
+    // Show preview immediately
     const reader = new FileReader();
     reader.onload = (e: ProgressEvent<FileReader>) => {
-      const dataUrl = e.target?.result as string;
-      // Use setTimeout to ensure change detection runs
-      setTimeout(() => {
-        this.previewLogo.set(dataUrl);
-        this.formData.logo = dataUrl;
-        console.log('👁️ Logo preview shown:', dataUrl.substring(0, 50) + '...');
-      }, 0);
+      this.formData.logo = e.target?.result as string;
     };
     reader.readAsDataURL(file);
 
     this.isUploadingLogo.set(true);
-
-    // Get hotelId for the upload path
     const hotelId = this.formData._id || localStorage.getItem('hotelId') || 'new';
     const uploadPath = `hotels/${hotelId}/logo`;
 
-    console.log('📤 Logo upload path:', uploadPath);
-
-    // Implement timeout for upload safety
-    const timeoutHandle = setTimeout(() => {
-      if (this.isUploadingLogo()) {
-        this.isUploadingLogo.set(false);
-        console.error('❌ Logo upload timeout');
-      }
-    }, 45000);
-
     this.imageUploadService.uploadImage(file, uploadPath).subscribe({
       next: (logoUrl: string) => {
-        clearTimeout(timeoutHandle);
-        console.log('✅ Logo uploaded successfully:', logoUrl);
         this.formData.logo = logoUrl;
         this.isUploadingLogo.set(false);
         this.successMessage.set('✅ Logo uploaded successfully!');
         input.value = '';
-
-        // Clear success message after 3 seconds
-        setTimeout(() => {
-          this.successMessage.set('');
-        }, 3000);
       },
       error: (error: any) => {
-        clearTimeout(timeoutHandle);
-        const errorMsg = error?.message || 'Failed to upload logo';
-        console.error('❌ Logo upload failed:', errorMsg);
         this.isUploadingLogo.set(false);
-        this.errorMessage.set(`❌ Logo upload failed: ${errorMsg}`);
-        input.value = '';
+        this.errorMessage.set('Failed to upload logo');
       }
     });
   }
@@ -1138,63 +1055,29 @@ export class HotelProfileComponent implements OnInit {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
 
-    if (!file) {
-      this.errorMessage.set('⚠️ No file selected');
-      return;
-    }
+    if (!file) return;
 
-    console.log('📝 Thumbnail upload started:', file.name);
-
-    // Show preview immediately while uploading
+    // Show preview immediately
     const reader = new FileReader();
     reader.onload = (e: ProgressEvent<FileReader>) => {
-      const dataUrl = e.target?.result as string;
-      // Use setTimeout to ensure change detection runs
-      setTimeout(() => {
-        this.previewThumbnail.set(dataUrl);
-        this.formData.thumbnail = dataUrl;
-        console.log('👁️ Thumbnail preview shown:', dataUrl.substring(0, 50) + '...');
-      }, 0);
+      this.formData.thumbnail = e.target?.result as string;
     };
     reader.readAsDataURL(file);
 
     this.isUploadingThumbnail.set(true);
-
-    // Get hotelId for the upload path
     const hotelId = this.formData._id || localStorage.getItem('hotelId') || 'new';
     const uploadPath = `hotels/${hotelId}/thumbnail`;
 
-    console.log('📤 Thumbnail upload path:', uploadPath);
-
-    // Implement timeout for upload safety
-    const timeoutHandle = setTimeout(() => {
-      if (this.isUploadingThumbnail()) {
-        this.isUploadingThumbnail.set(false);
-        console.error('❌ Thumbnail upload timeout');
-      }
-    }, 45000);
-
     this.imageUploadService.uploadImage(file, uploadPath).subscribe({
       next: (thumbnailUrl: string) => {
-        clearTimeout(timeoutHandle);
-        console.log('✅ Thumbnail uploaded successfully:', thumbnailUrl);
         this.formData.thumbnail = thumbnailUrl;
         this.isUploadingThumbnail.set(false);
         this.successMessage.set('✅ Thumbnail uploaded successfully!');
         input.value = '';
-
-        // Clear success message after 3 seconds
-        setTimeout(() => {
-          this.successMessage.set('');
-        }, 3000);
       },
       error: (error: any) => {
-        clearTimeout(timeoutHandle);
-        const errorMsg = error?.message || 'Failed to upload thumbnail';
-        console.error('❌ Thumbnail upload failed:', errorMsg);
         this.isUploadingThumbnail.set(false);
-        this.errorMessage.set(`❌ Thumbnail upload failed: ${errorMsg}`);
-        input.value = '';
+        this.errorMessage.set('Failed to upload thumbnail');
       }
     });
   }
