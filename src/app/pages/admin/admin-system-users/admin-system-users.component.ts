@@ -234,28 +234,45 @@ export class AdminSystemUsersComponent implements OnInit {
   }
 
   loadUsers(): void {
+    console.log(`🔄 Loading users - Page: ${this.currentPage()}, Type: ${this.filterUserType || 'all'}`);
+
     this.adminService.getUsers(this.currentPage(), this.pageSize(), this.filterUserType || undefined).subscribe({
       next: (response: any) => {
-        if (response.success) {
-          this.users.set(response.data || []);
+        console.log('✅ Users API Response:', response);
 
+        // Handle response with data
+        if (response.data) {
+          const userList = Array.isArray(response.data) ? response.data : [response.data];
+          this.users.set(userList);
+
+          // Handle pagination
           if (response.pagination) {
             this.totalItems.set(response.pagination.total);
             this.totalPages.set(response.pagination.pages);
+          } else {
+            // Default pagination if not provided
+            this.totalItems.set(userList.length);
+            this.totalPages.set(1);
           }
 
-          console.log('✅ Users loaded:', response.data?.length);
+          console.log(`📊 Loaded ${userList.length} users`);
+        } else {
+          this.users.set([]);
+          this.totalItems.set(0);
+          this.totalPages.set(0);
         }
-        this.users.set([]);
       },
       error: (error: any) => {
         console.error('❌ Error loading users:', error);
         this.users.set([]);
+        this.totalItems.set(0);
+        this.totalPages.set(0);
       }
     });
   }
 
   searchUsers(): void {
+    console.log(`🔍 Searching users: "${this.searchTerm}"`);
     this.currentPage.set(1);
     this.loadUsers();
   }

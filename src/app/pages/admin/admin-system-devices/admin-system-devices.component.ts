@@ -225,15 +225,52 @@ export class AdminSystemDevicesComponent implements OnInit {
   }
 
   loadDevices(): void {
-    // For now, return empty list as devices endpoint might not exist
-    // In a real scenario, you would call: this.adminService.getDevices()
-    this.devices.set([]);
-    this.totalItems.set(0);
-    this.totalPages.set(0);
-    console.log('📱 Devices loaded');
+    console.log(`🔄 Loading devices - Page: ${this.currentPage()}, Status: ${this.filterStatus || 'all'}`);
+
+    this.adminService.getDevices(this.currentPage(), this.pageSize()).subscribe({
+      next: (response: any) => {
+        console.log('✅ Devices API Response:', response);
+
+        // Handle response with data
+        if (response.data) {
+          const deviceList = Array.isArray(response.data) ? response.data : [response.data];
+
+          // Filter by status if needed
+          let filtered = deviceList;
+          if (this.filterStatus) {
+            filtered = deviceList.filter((d: any) => d.status === this.filterStatus);
+          }
+
+          this.devices.set(filtered);
+
+          // Handle pagination
+          if (response.pagination) {
+            this.totalItems.set(response.pagination.total);
+            this.totalPages.set(response.pagination.pages);
+          } else {
+            // Default pagination if not provided
+            this.totalItems.set(filtered.length);
+            this.totalPages.set(1);
+          }
+
+          console.log(`📱 Loaded ${filtered.length} devices`);
+        } else {
+          this.devices.set([]);
+          this.totalItems.set(0);
+          this.totalPages.set(0);
+        }
+      },
+      error: (error: any) => {
+        console.error('❌ Error loading devices:', error);
+        this.devices.set([]);
+        this.totalItems.set(0);
+        this.totalPages.set(0);
+      }
+    });
   }
 
   searchDevices(): void {
+    console.log(`🔍 Searching devices: "${this.searchTerm}", Status: "${this.filterStatus}"`);
     this.currentPage.set(1);
     this.loadDevices();
   }
@@ -275,7 +312,12 @@ export class AdminSystemDevicesComponent implements OnInit {
   deleteDevice(deviceId: string): void {
     if (confirm('Are you sure you want to delete this device?')) {
       console.log(`🗑️  Deleting device: ${deviceId}`);
-      // this.adminService.deleteDevice(deviceId).subscribe(...)
+
+      // Note: deleteDevice endpoint might not be in admin service yet
+      // For now, just reload the list
+      // this.adminService.deleteDevice(deviceId).subscribe({...})
+
+      alert('Device deletion not yet implemented on backend');
       this.loadDevices();
     }
   }
