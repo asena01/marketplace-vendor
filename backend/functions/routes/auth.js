@@ -61,6 +61,9 @@ router.post('/register', async (req, res) => {
     await user.save();
     console.log('✅ User created successfully:', user._id);
 
+    // Track created business IDs for response
+    let createdBusinessIds = {};
+
     // Create vendor-specific records
     if (userType === 'vendor') {
       try {
@@ -94,6 +97,7 @@ router.post('/register', async (req, res) => {
           });
           await hotel.save();
           console.log('✅ Hotel profile created successfully:', hotel._id);
+          createdBusinessIds.hotelId = hotel._id.toString();
         }
 
         // Create Restaurant record for restaurant vendors
@@ -108,6 +112,7 @@ router.post('/register', async (req, res) => {
           });
           await restaurant.save();
           console.log('✅ Restaurant profile created successfully:', restaurant._id);
+          createdBusinessIds.restaurantId = restaurant._id.toString();
         }
 
         // Create Tour record for tour operators
@@ -121,6 +126,7 @@ router.post('/register', async (req, res) => {
           });
           await tour.save();
           console.log('✅ Tour profile created successfully:', tour._id);
+          createdBusinessIds.agencyId = tour._id.toString();
         }
 
         // Create Vendor profile for specific vendor types
@@ -159,6 +165,7 @@ router.post('/register', async (req, res) => {
       message: 'User registered successfully',
       token,
       user: user.toJSON(),
+      businessIds: createdBusinessIds || {}
     });
   } catch (error) {
     console.error('❌ Registration error:', error.message);

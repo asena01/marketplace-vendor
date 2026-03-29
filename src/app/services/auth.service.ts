@@ -85,27 +85,28 @@ export class AuthService {
           if (response.user.userType === 'vendor') {
             const userId = response.user._id;
             const vendorType = response.user.vendorType;
-            console.log('✅ Signup: Setting business ID for vendor type:', vendorType);
+            const businessIds = response.businessIds || {};
+            console.log('✅ Signup: Setting business IDs for vendor type:', vendorType, businessIds);
 
             // Store vendorType for all vendors
             localStorage.setItem('vendorType', vendorType);
 
-            // Map vendor types to their business IDs
+            // Map vendor types to their business IDs from response
             const retailVendorTypes = [
               'retail', 'clothing-store', 'jewelry', 'supermarket',
               'furniture', 'pet-store', 'gym', 'salon-spa',
               'car-rental', 'event-center', 'general'
             ];
 
-            if (vendorType === 'hotel') {
-              localStorage.setItem('hotelId', userId);
-              console.log('✅ Hotel ID stored:', userId);
-            } else if (vendorType === 'tour-operator') {
-              localStorage.setItem('agencyId', userId);
-              console.log('✅ Agency ID stored:', userId);
-            } else if (vendorType === 'restaurant') {
-              localStorage.setItem('restaurantId', userId);
-              console.log('✅ Restaurant ID stored:', userId);
+            if (vendorType === 'hotel' && businessIds.hotelId) {
+              localStorage.setItem('hotelId', businessIds.hotelId);
+              console.log('✅ Hotel ID stored:', businessIds.hotelId);
+            } else if (vendorType === 'tour-operator' && businessIds.agencyId) {
+              localStorage.setItem('agencyId', businessIds.agencyId);
+              console.log('✅ Agency ID stored:', businessIds.agencyId);
+            } else if (vendorType === 'restaurant' && businessIds.restaurantId) {
+              localStorage.setItem('restaurantId', businessIds.restaurantId);
+              console.log('✅ Restaurant ID stored:', businessIds.restaurantId);
             } else if (vendorType === 'hair-salon' || vendorType === 'service') {
               localStorage.setItem('serviceProviderId', userId);
               console.log('✅ Service Provider ID stored:', userId);
