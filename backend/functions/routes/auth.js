@@ -227,11 +227,49 @@ router.post('/login', async (req, res) => {
     }
 
     const userResponse = user.toJSON();
+    let businessIds = {};
 
-    // Include deliveryPartnerId if user is a delivery vendor
-    if (user.userType === 'vendor' && user.vendorType === 'delivery' && user.deliveryPartnerId) {
-      userResponse.deliveryPartnerId = user.deliveryPartnerId;
-      console.log('🚚 Delivery Partner ID:', user.deliveryPartnerId);
+    // For vendors, find and include their business records
+    if (user.userType === 'vendor') {
+      try {
+        // Find Hotel record for hotel vendors
+        if (user.vendorType === 'hotel') {
+          const hotel = await Hotel.findOne({ owner: user._id });
+          if (hotel) {
+            businessIds.hotelId = hotel._id.toString();
+            console.log('✅ Hotel ID found:', businessIds.hotelId);
+          } else {
+            console.log('⚠️ No hotel record found for owner:', user._id);
+          }
+        }
+
+        // Find Restaurant record for restaurant vendors
+        if (user.vendorType === 'restaurant') {
+          const restaurant = await Restaurant.findOne({ owner: user._id });
+          if (restaurant) {
+            businessIds.restaurantId = restaurant._id.toString();
+            console.log('✅ Restaurant ID found:', businessIds.restaurantId);
+          }
+        }
+
+        // Find Tour record for tour operators
+        if (user.vendorType === 'tour-operator') {
+          const tour = await Tour.findOne({ tourOperator: user._id });
+          if (tour) {
+            businessIds.agencyId = tour._id.toString();
+            console.log('✅ Agency ID found:', businessIds.agencyId);
+          }
+        }
+      } catch (error) {
+        console.error('⚠️ Error finding business records:', error.message);
+      }
+
+      // Include deliveryPartnerId if user is a delivery vendor
+      if (user.vendorType === 'delivery' && user.deliveryPartnerId) {
+        userResponse.deliveryPartnerId = user.deliveryPartnerId;
+        businessIds.deliveryId = user.deliveryPartnerId;
+        console.log('🚚 Delivery Partner ID:', user.deliveryPartnerId);
+      }
     }
 
     res.status(200).json({
@@ -239,6 +277,7 @@ router.post('/login', async (req, res) => {
       message: 'Login successful',
       token,
       user: userResponse,
+      businessIds
     });
   } catch (error) {
     console.error('❌ Login error:', error.message);

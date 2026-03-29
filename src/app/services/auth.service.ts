@@ -156,30 +156,30 @@ export class AuthService {
             console.log('✅ Admin logged in with role:', response.user.adminRole || 'admin');
           }
 
-          // Set business ID from seed data for vendor logins
+          // Set business ID from login response for vendors
           if (response.user.userType === 'vendor') {
-            localStorage.setItem('vendorType', response.user.vendorType || 'vendor-type-default');
-            console.log('🔑 Login: Vendor Type set to:', response.user.vendorType);
+            const vendorType = response.user.vendorType;
+            const businessIds = response.businessIds || {};
+            localStorage.setItem('vendorType', vendorType || 'vendor-type-default');
+            console.log('🔑 Login: Vendor Type set to:', vendorType);
+            console.log('🔑 Login: Business IDs from response:', businessIds);
 
-            if (response.user.vendorType === 'hotel') {
-              localStorage.setItem('hotelId', '69a72226003a6f0406e3afb1');
-              console.log('✅ Hotel ID stored');
-            } else if (response.user.vendorType === 'tour-operator') {
-              const agencyId = response.user._id || 'tour-agency-default';
-              localStorage.setItem('agencyId', agencyId);
-              console.log('✅ Login: Agency ID stored:', agencyId);
-              console.log('✅ Login: response.user._id:', response.user._id);
-            } else if (response.user.vendorType === 'restaurant') {
-              localStorage.setItem('restaurantId', response.user._id || 'restaurant-default');
-              console.log('✅ Restaurant ID stored');
-            } else if (response.user.vendorType === 'retail') {
-              localStorage.setItem('storeId', response.user._id || 'retail-default');
-              console.log('✅ Store ID stored');
-            } else if (response.user.vendorType === 'delivery') {
-              // Use deliveryPartnerId if available, otherwise use userId
-              const deliveryId = response.user.deliveryPartnerId || response.user._id || 'delivery-default';
+            if (vendorType === 'hotel' && businessIds.hotelId) {
+              localStorage.setItem('hotelId', businessIds.hotelId);
+              console.log('✅ Hotel ID stored from login:', businessIds.hotelId);
+            } else if (vendorType === 'tour-operator' && businessIds.agencyId) {
+              localStorage.setItem('agencyId', businessIds.agencyId);
+              console.log('✅ Agency ID stored from login:', businessIds.agencyId);
+            } else if (vendorType === 'restaurant' && businessIds.restaurantId) {
+              localStorage.setItem('restaurantId', businessIds.restaurantId);
+              console.log('✅ Restaurant ID stored from login:', businessIds.restaurantId);
+            } else if (vendorType === 'retail' && businessIds.storeId) {
+              localStorage.setItem('storeId', businessIds.storeId);
+              console.log('✅ Store ID stored from login:', businessIds.storeId);
+            } else if (vendorType === 'delivery') {
+              const deliveryId = businessIds.deliveryId || response.user.deliveryPartnerId || response.user._id;
               localStorage.setItem('deliveryId', deliveryId);
-              console.log('✅ Delivery ID stored:', deliveryId);
+              console.log('✅ Delivery ID stored from login:', deliveryId);
             }
           }
         }
