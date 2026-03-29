@@ -1,6 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { AdminService } from '../../../services/admin.service';
 import { AuthService } from '../../../services/auth.service';
 
@@ -259,7 +259,8 @@ export class AdminDashboardComponent implements OnInit {
   constructor(
     private adminService: AdminService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private activatedRoute: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
@@ -271,6 +272,22 @@ export class AdminDashboardComponent implements OnInit {
     }
 
     console.log('✅ Admin dashboard loaded for:', this.getCurrentUserName());
+
+    // Check URL fragments and set current page accordingly
+    this.activatedRoute.fragment.subscribe((fragment) => {
+      if (fragment) {
+        console.log('📍 URL fragment detected:', fragment);
+        this.setCurrentPage(fragment);
+      }
+    });
+
+    // Check query params for page
+    this.activatedRoute.queryParams.subscribe((params) => {
+      if (params['page']) {
+        console.log('📍 Page param detected:', params['page']);
+        this.setCurrentPage(params['page']);
+      }
+    });
   }
 
   setCurrentPage(page: string): void {

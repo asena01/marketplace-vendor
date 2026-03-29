@@ -223,6 +223,24 @@ import { AdminService } from '../../../services/admin.service';
           </div>
         </div>
 
+        <!-- Development Tools Section -->
+        <div class="bg-yellow-50 border border-yellow-300 rounded-lg p-6">
+          <h3 class="text-lg font-bold text-yellow-900 mb-4 flex items-center gap-2">
+            <span class="material-icons">build</span>
+            Development Tools
+          </h3>
+          <p class="text-sm text-yellow-800 mb-4">
+            These tools are for development and testing purposes only. They will populate the database with sample data.
+          </p>
+          <button
+            (click)="seedTestData()"
+            [disabled]="isSeeding()"
+            class="px-6 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-semibold transition disabled:opacity-50"
+          >
+            {{ isSeeding() ? '⏳ Seeding...' : '🌱 Seed Test Data (14 Vendors)' }}
+          </button>
+        </div>
+
         <!-- Save Button -->
         <div class="flex justify-end gap-4">
           <button
@@ -257,12 +275,25 @@ import { AdminService } from '../../../services/admin.service';
       }
     </div>
   `,
-  styles: []
+  styles: [
+    `
+      .material-icons {
+        font-size: 24px;
+        height: 24px;
+        width: 24px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        user-select: none;
+      }
+    `
+  ]
 })
 export class AdminSettingsComponent implements OnInit {
   settings = signal<any>(null);
   isLoading = signal(true);
   isSaving = signal(false);
+  isSeeding = signal(false);
   error = signal('');
   successMessage = signal('');
 
@@ -312,6 +343,29 @@ export class AdminSettingsComponent implements OnInit {
         console.error('❌ Error saving settings:', error);
         this.error.set(error.error?.message || 'Failed to save settings');
         this.isSaving.set(false);
+      }
+    });
+  }
+
+  seedTestData(): void {
+    this.isSeeding.set(true);
+    this.error.set('');
+
+    this.adminService.seedTestData().subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.successMessage.set(
+            `✅ Seeded ${response.data?.vendorsCreated || 0} test vendors! Refresh the dashboard to see updated counts.`
+          );
+          console.log('✅ Test data seeded:', response.data);
+          setTimeout(() => this.successMessage.set(''), 5000);
+        }
+        this.isSeeding.set(false);
+      },
+      error: (error: any) => {
+        console.error('❌ Error seeding test data:', error);
+        this.error.set(error.error?.message || 'Failed to seed test data');
+        this.isSeeding.set(false);
       }
     });
   }
