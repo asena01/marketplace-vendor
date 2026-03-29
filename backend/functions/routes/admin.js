@@ -836,6 +836,10 @@ router.get('/analytics/stats', verifyAdmin, async (req, res) => {
     const activeOrganizations = await Organization.countDocuments({ status: 'active' });
     const pendingOrganizations = await Organization.countDocuments({ status: 'pending-verification' });
     
+    // Get vendor statuses
+    const activeVendors = await User.countDocuments({ userType: 'vendor', status: 'active' });
+    const pendingVendors = await User.countDocuments({ userType: 'vendor', status: 'pending' });
+
     res.status(200).json({
       success: true,
       data: {
@@ -843,6 +847,11 @@ router.get('/analytics/stats', verifyAdmin, async (req, res) => {
           total: totalUsers,
           vendors: totalVendors,
           customers: totalCustomers
+        },
+        vendors: {
+          total: totalVendors,
+          active: activeVendors,
+          pending: pendingVendors
         },
         organizations: {
           total: totalOrganizations,
