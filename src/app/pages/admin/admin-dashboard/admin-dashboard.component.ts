@@ -35,27 +35,27 @@ import { DeliveryAdminComponent } from '../admin-categories/delivery-admin/deliv
     DeliveryAdminComponent
   ],
   template: `
-    <div class="min-h-screen bg-gray-100">
+    <div class="min-h-screen bg-gray-100 pt-16">
       <!-- Header -->
-      <header class="bg-gradient-to-r from-slate-800 to-slate-900 text-white shadow-lg">
-        <div class="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
-          <div class="flex items-center gap-4">
-            <span class="material-icons text-4xl">admin_panel_settings</span>
+      <header class="bg-gradient-to-r from-slate-800 to-slate-900 text-white shadow-lg fixed top-0 left-0 right-0 z-50 h-16">
+        <div class="h-16 px-4 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span class="material-icons text-3xl">admin_panel_settings</span>
             <div>
-              <h1 class="text-3xl font-bold">Admin Dashboard</h1>
-              <p class="text-slate-300 text-sm">MarketHub Administration Control Center</p>
+              <h1 class="text-xl font-bold">Admin Dashboard</h1>
+              <p class="text-slate-300 text-xs">MarketHub Administration</p>
             </div>
           </div>
-          <div class="flex items-center gap-4">
-            <div class="text-right text-sm">
+          <div class="flex items-center gap-3">
+            <div class="text-right text-xs hidden sm:block">
               <p class="font-semibold">{{ getCurrentUserName() }}</p>
-              <p class="text-slate-300">{{ getAdminRole() }}</p>
+              <p class="text-slate-300 text-xs">{{ getAdminRole() }}</p>
             </div>
             <button
               (click)="logout()"
-              class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2"
+              class="bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg font-semibold text-sm transition flex items-center gap-2"
             >
-              <span class="material-icons">logout</span>
+              <span class="material-icons text-lg">logout</span>
               Logout
             </button>
           </div>
@@ -65,7 +65,7 @@ import { DeliveryAdminComponent } from '../admin-categories/delivery-admin/deliv
       <div class="flex relative">
         <!-- Sidebar Navigation - Always Visible -->
         <aside
-          class="w-72 h-screen bg-white shadow-lg overflow-y-auto z-40"
+          class="w-72 flex-shrink-0 bg-white shadow-lg overflow-y-auto z-30 fixed top-16 left-0 bottom-0"
         >
           <nav class="p-6 space-y-2">
             <!-- Top Level Menu -->
@@ -160,7 +160,7 @@ import { DeliveryAdminComponent } from '../admin-categories/delivery-admin/deliv
         </aside>
 
         <!-- Main Content -->
-        <main class="flex-1 p-8">
+        <main class="flex-1 p-8 ml-72">
           @if (currentPage() === 'overview' && !currentCategory()) {
             <app-admin-overview></app-admin-overview>
           } @else if (currentPage() === 'profile') {
