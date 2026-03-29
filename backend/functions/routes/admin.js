@@ -604,12 +604,11 @@ router.get('/devices', verifyAdmin, async (req, res) => {
 
     console.log('🔄 Fetching devices from Tuya platform...');
 
-    // Fetch devices from Tuya platform
+    // Fetch devices from Tuya platform (using correct endpoint)
     const tuyaResponse = await tuyaContext.request({
-      path: '/v1.0/iot-03/devices',
+      path: '/v2.0/cloud/thing/device',
       method: 'GET',
       query: {
-        page_no: page,
         page_size: limit
       }
     });
@@ -639,9 +638,9 @@ router.get('/devices', verifyAdmin, async (req, res) => {
       });
     }
 
-    // Process Tuya response
-    const tuyaDevices = tuyaResponse.result?.devices || [];
-    const total = tuyaResponse.result?.total || tuyaDevices.length;
+    // Process Tuya response (v2.0 endpoint returns devices directly in result)
+    const tuyaDevices = tuyaResponse.result || [];
+    const total = tuyaDevices.length;
 
     console.log(`✅ Fetched ${tuyaDevices.length} devices from Tuya platform`);
 
