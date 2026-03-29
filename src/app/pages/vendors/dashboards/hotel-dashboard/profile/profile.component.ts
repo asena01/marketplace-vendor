@@ -737,17 +737,57 @@ export class HotelProfileComponent implements OnInit {
 
   loadProfile(): void {
     this.isLoading.set(true);
+    const hotelId = localStorage.getItem('hotelId');
+    const userId = localStorage.getItem('userId');
+
+    console.log('🏨 Loading hotel profile...');
+    console.log('  hotelId from localStorage:', hotelId);
+    console.log('  userId from localStorage:', userId);
+    console.log('  Hotel Service hotelId:', this.hotelService['hotelId']);
+
+    if (!hotelId) {
+      this.errorMessage.set('❌ No hotel ID found. Please sign up again as a hotel vendor.');
+      this.isLoading.set(false);
+      console.error('❌ hotelId is null/undefined in localStorage');
+      return;
+    }
+
+    // Add timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+      if (this.isLoading()) {
+        this.errorMessage.set('⏱️ Request timed out. The backend might not be responding.');
+        this.isLoading.set(false);
+        console.error('❌ Hotel fetch request timed out after 10 seconds');
+      }
+    }, 10000);
+
     this.hotelService.getHotelDetails().subscribe({
       next: (response: any) => {
+        clearTimeout(timeout);
+        console.log('✅ Hotel details response:', response);
         if (response.status === 'success' && response.data) {
           this.formData = { ...response.data };
           this.amenitiesText = (this.formData.amenities || []).join(', ');
+          console.log('✅ Profile loaded successfully');
+          this.errorMessage.set('');
+        } else {
+          console.warn('⚠️ Response not successful or no data:', response);
+          this.errorMessage.set(`No hotel profile found. Response: ${JSON.stringify(response)}`);
         }
         this.isLoading.set(false);
       },
       error: (error: any) => {
-        console.error('Error loading profile:', error);
-        this.errorMessage.set('Failed to load profile');
+        clearTimeout(timeout);
+        console.error('❌ Error loading profile:', error);
+        console.error('Error details:', {
+          status: error.status,
+          statusText: error.statusText,
+          message: error.message,
+          url: error.url,
+          error: error.error
+        });
+        const errorMsg = error.error?.message || error.message || `HTTP ${error.status}`;
+        this.errorMessage.set(`❌ Failed to load profile: ${errorMsg}`);
         this.isLoading.set(false);
       }
     });

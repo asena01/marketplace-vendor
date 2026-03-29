@@ -1,6 +1,12 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import VendorKyc from '../models/VendorKyc.js';
+import VendorPerformance from '../models/VendorPerformance.js';
+import Vendor from '../models/Vendor.js';
+import Hotel from '../models/Hotel.js';
+import Restaurant from '../models/Restaurant.js';
+import Tour from '../models/Tour.js';
 
 const router = express.Router();
 
@@ -55,6 +61,111 @@ router.post('/register', async (req, res) => {
     await user.save();
     console.log('✅ User created successfully:', user._id);
 
+    // Track created business IDs for response
+    let createdBusinessIds = {};
+
+    console.log('🔍 Vendor creation check - userType:', userType);
+
+    // Create vendor-specific records
+    if (userType === 'vendor') {
+      console.log('🏢 VENDOR DETECTED - Creating vendor records...');
+      console.log('   vendorType:', vendorType);
+      console.log('   name:', name);
+      console.log('   businessName:', businessName);
+      console.log('   user._id:', user._id);
+
+      try {
+        // Create VendorKyc record
+        const vendorKyc = new VendorKyc({
+          vendor: user._id,
+          vendorType: vendorType || 'service',
+          status: 'pending'
+        });
+        await vendorKyc.save();
+        console.log('✅ VendorKyc created successfully:', vendorKyc._id);
+
+        // Create VendorPerformance record
+        const vendorPerformance = new VendorPerformance({
+          vendor: user._id,
+          vendorType: vendorType || 'service'
+        });
+        await vendorPerformance.save();
+        console.log('✅ VendorPerformance created successfully:', vendorPerformance._id);
+
+        // Create Hotel record for hotel vendors
+        if (vendorType === 'hotel') {
+          console.log('🏨 Creating Hotel record...');
+          const hotel = new Hotel({
+            name: businessName || `${name}'s Hotel`,
+            description: businessDescription || '',
+            owner: user._id,
+            email: email,
+            phone: phone || '',
+            checkInTime: '14:00',
+            checkOutTime: '11:00'
+          });
+          await hotel.save();
+          console.log('✅ Hotel profile created successfully:', hotel._id);
+          // Use userId as hotelId - the endpoint will query by owner
+          createdBusinessIds.hotelId = user._id.toString();
+          console.log('✅ hotelId set to userId:', createdBusinessIds.hotelId);
+        } else {
+          console.log('⚠️ vendorType is not "hotel", it is:', vendorType);
+        }
+
+        // Create Restaurant record for restaurant vendors
+        if (vendorType === 'restaurant') {
+          const restaurant = new Restaurant({
+            name: businessName || `${name}'s Restaurant`,
+            description: businessDescription || '',
+            owner: user._id,
+            email: email,
+            phone: phone || '',
+            cuisine: 'Mixed'
+          });
+          await restaurant.save();
+          console.log('✅ Restaurant profile created successfully:', restaurant._id);
+          createdBusinessIds.restaurantId = restaurant._id.toString();
+        }
+
+        // Create Tour record for tour operators
+        if (vendorType === 'tour-operator') {
+          const tour = new Tour({
+            name: businessName || `${name}'s Tours`,
+            description: businessDescription || '',
+            tourOperator: user._id,
+            email: email,
+            phone: phone || ''
+          });
+          await tour.save();
+          console.log('✅ Tour profile created successfully:', tour._id);
+          createdBusinessIds.agencyId = tour._id.toString();
+        }
+
+        // Create Vendor profile for specific vendor types
+        const vendorTypesWithProfile = ['furniture', 'hair', 'pets', 'gym-equipment'];
+        if (vendorTypesWithProfile.includes(vendorType)) {
+          const vendorProfile = new Vendor({
+            userId: user._id.toString(),
+            vendorType: vendorType,
+            businessName: businessName || '',
+            businessDescription: businessDescription || '',
+            email: email,
+            phone: phone || '',
+            address: '',
+            city: '',
+            country: '',
+            status: 'pending'
+          });
+          await vendorProfile.save();
+          console.log('✅ Vendor profile created successfully:', vendorProfile._id);
+        }
+      } catch (error) {
+        console.error('⚠️ Error creating vendor records:', error.message);
+        // Don't fail the registration if these records fail to create
+      }
+    }
+
     // Generate token
     const token = jwt.sign(
       { id: user._id, email: user.email },
@@ -62,11 +173,17 @@ router.post('/register', async (req, res) => {
       { expiresIn: '7d' }
     );
 
+    console.log('📤 SENDING SIGNUP RESPONSE:');
+    console.log('   createdBusinessIds:', createdBusinessIds);
+    console.log('   userType:', userType);
+    console.log('   vendorType:', vendorType);
+
     res.status(201).json({
       success: true,
       message: 'User registered successfully',
       token,
       user: user.toJSON(),
+      businessIds: createdBusinessIds || {}
     });
   } catch (error) {
     console.error('❌ Registration error:', error.message);
@@ -128,11 +245,52 @@ router.post('/login', async (req, res) => {
     }
 
     const userResponse = user.toJSON();
+    let businessIds = {};
 
-    // Include deliveryPartnerId if user is a delivery vendor
-    if (user.userType === 'vendor' && user.vendorType === 'delivery' && user.deliveryPartnerId) {
-      userResponse.deliveryPartnerId = user.deliveryPartnerId;
-      console.log('🚚 Delivery Partner ID:', user.deliveryPartnerId);
+    // For vendors, find and include their business records
+    if (user.userType === 'vendor') {
+      try {
+        // Find Hotel record for hotel vendors
+        if (user.vendorType === 'hotel') {
+          const hotel = await Hotel.findOne({ owner: user._id });
+          if (hotel) {
+            // Use userId as hotelId (the endpoint queries by owner)
+            businessIds.hotelId = user._id.toString();
+            console.log('✅ Hotel found, hotelId set to userId:', businessIds.hotelId);
+          } else {
+            console.log('⚠️ No hotel record found for owner:', user._id);
+            // Still return userId as hotelId even if hotel record doesn't exist yet
+            businessIds.hotelId = user._id.toString();
+          }
+        }
+
+        // Find Restaurant record for restaurant vendors
+        if (user.vendorType === 'restaurant') {
+          const restaurant = await Restaurant.findOne({ owner: user._id });
+          if (restaurant) {
+            businessIds.restaurantId = restaurant._id.toString();
+            console.log('✅ Restaurant ID found:', businessIds.restaurantId);
+          }
+        }
+
+        // Find Tour record for tour operators
+        if (user.vendorType === 'tour-operator') {
+          const tour = await Tour.findOne({ tourOperator: user._id });
+          if (tour) {
+            businessIds.agencyId = tour._id.toString();
+            console.log('✅ Agency ID found:', businessIds.agencyId);
+          }
+        }
+      } catch (error) {
+        console.error('⚠️ Error finding business records:', error.message);
+      }
+
+      // Include deliveryPartnerId if user is a delivery vendor
+      if (user.vendorType === 'delivery' && user.deliveryPartnerId) {
+        userResponse.deliveryPartnerId = user.deliveryPartnerId;
+        businessIds.deliveryId = user.deliveryPartnerId;
+        console.log('🚚 Delivery Partner ID:', user.deliveryPartnerId);
+      }
     }
 
     res.status(200).json({
@@ -140,6 +298,7 @@ router.post('/login', async (req, res) => {
       message: 'Login successful',
       token,
       user: userResponse,
+      businessIds
     });
   } catch (error) {
     console.error('❌ Login error:', error.message);
@@ -243,6 +402,87 @@ router.post('/create-demo-accounts', async (req, res) => {
         await user.save();
         createdUsers.push(account.email);
         console.log('✅ Created demo account:', account.email);
+
+        // Create vendor records if vendor account
+        if (account.userType === 'vendor') {
+          try {
+            // Create VendorKyc record
+            const vendorKyc = new VendorKyc({
+              vendor: user._id,
+              vendorType: account.vendorType || 'service',
+              status: 'pending'
+            });
+            await vendorKyc.save();
+
+            // Create VendorPerformance record
+            const vendorPerformance = new VendorPerformance({
+              vendor: user._id,
+              vendorType: account.vendorType || 'service'
+            });
+            await vendorPerformance.save();
+
+            // Create Hotel record for hotel vendors
+            if (account.vendorType === 'hotel') {
+              const hotel = new Hotel({
+                name: account.businessName || `${account.name}'s Hotel`,
+                description: account.businessDescription || '',
+                owner: user._id,
+                email: account.email,
+                phone: account.phone || '',
+                checkInTime: '14:00',
+                checkOutTime: '11:00'
+              });
+              await hotel.save();
+            }
+
+            // Create Restaurant record for restaurant vendors
+            if (account.vendorType === 'restaurant') {
+              const restaurant = new Restaurant({
+                name: account.businessName || `${account.name}'s Restaurant`,
+                description: account.businessDescription || '',
+                owner: user._id,
+                email: account.email,
+                phone: account.phone || '',
+                cuisine: 'Mixed'
+              });
+              await restaurant.save();
+            }
+
+            // Create Tour record for tour operators
+            if (account.vendorType === 'tour-operator') {
+              const tour = new Tour({
+                name: account.businessName || `${account.name}'s Tours`,
+                description: account.businessDescription || '',
+                tourOperator: user._id,
+                email: account.email,
+                phone: account.phone || ''
+              });
+              await tour.save();
+            }
+
+            // Create Vendor profile for specific vendor types
+            const vendorTypesWithProfile = ['furniture', 'hair', 'pets', 'gym-equipment'];
+            if (vendorTypesWithProfile.includes(account.vendorType)) {
+              const vendorProfile = new Vendor({
+                userId: user._id.toString(),
+                vendorType: account.vendorType,
+                businessName: account.businessName || '',
+                businessDescription: account.businessDescription || '',
+                email: account.email,
+                phone: account.phone || '',
+                address: '',
+                city: '',
+                country: '',
+                status: 'pending'
+              });
+              await vendorProfile.save();
+            }
+
+            console.log('✅ Created vendor records for:', account.email);
+          } catch (error) {
+            console.error('⚠️ Error creating vendor records for demo account:', error.message);
+          }
+        }
       } else {
         console.log('⏭️ Demo account already exists:', account.email);
       }

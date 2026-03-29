@@ -11,21 +11,27 @@ export const getVendorProfile = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    const vendor = await Vendor.findOne({ userId });
+    console.log('📝 Fetching vendor profile for userId:', userId);
+
+    // Ensure userId is a string for consistent querying
+    const userIdString = String(userId);
+    const vendor = await Vendor.findOne({ userId: userIdString });
 
     if (!vendor) {
+      console.log('⚠️ Vendor profile not found for userId:', userIdString);
       return res.status(404).json({
         status: 'error',
         message: 'Vendor profile not found'
       });
     }
 
+    console.log('✅ Vendor profile found:', vendor._id);
     return res.status(200).json({
       status: 'success',
       data: vendor
     });
   } catch (error) {
-    console.error('Error fetching vendor profile:', error);
+    console.error('❌ Error fetching vendor profile:', error.message);
     return res.status(500).json({
       status: 'error',
       message: error.message || 'Failed to fetch vendor profile'
@@ -38,6 +44,12 @@ export const createOrUpdateVendorProfile = async (req, res) => {
   try {
     const { userId } = req.params;
     const updates = req.body;
+
+    console.log('📝 Vendor profile update attempt for userId:', userId);
+    console.log('📌 Updates received:', updates);
+
+    // Ensure userId is a string for consistent querying
+    const userIdString = String(userId);
 
     // Handle image uploads
     if (req.files) {
@@ -52,20 +64,36 @@ export const createOrUpdateVendorProfile = async (req, res) => {
       }
     }
 
-    let vendor = await Vendor.findOne({ userId });
+    let vendor = await Vendor.findOne({ userId: userIdString });
 
     if (!vendor) {
+      // Validate required fields before creating
+      const requiredFields = ['businessName', 'email', 'phone', 'address', 'city', 'country', 'vendorType'];
+      const missingFields = requiredFields.filter(field => !updates[field]);
+
+      if (missingFields.length > 0) {
+        console.warn('⚠️ Missing required fields:', missingFields);
+        return res.status(400).json({
+          status: 'error',
+          message: `Missing required fields: ${missingFields.join(', ')}`,
+          missingFields
+        });
+      }
+
       // Create new vendor profile
       vendor = new Vendor({
-        userId,
+        userId: userIdString,
         ...updates
       });
+      console.log('✅ Creating new vendor profile for userId:', userIdString);
     } else {
+      console.log('✅ Updating existing vendor profile for userId:', userIdString);
       // Update existing vendor profile
       Object.assign(vendor, updates);
     }
 
     await vendor.save();
+    console.log('✅ Vendor profile saved successfully:', vendor._id);
 
     return res.status(200).json({
       status: 'success',
@@ -73,7 +101,30 @@ export const createOrUpdateVendorProfile = async (req, res) => {
       message: 'Vendor profile saved successfully'
     });
   } catch (error) {
-    console.error('Error saving vendor profile:', error);
+    console.error('❌ Error saving vendor profile:', error.message);
+    console.error('Stack:', error.stack);
+
+    // Handle specific MongoDB validation errors
+    if (error.name === 'ValidationError') {
+      const validationErrors = Object.keys(error.errors).map(key => ({
+        field: key,
+        message: error.errors[key].message
+      }));
+      return res.status(400).json({
+        status: 'error',
+        message: 'Validation error',
+        validationErrors
+      });
+    }
+
+    // Handle duplicate key error for userId (unique constraint)
+    if (error.code === 11000) {
+      return res.status(409).json({
+        status: 'error',
+        message: 'Vendor profile already exists for this user'
+      });
+    }
+
     return res.status(500).json({
       status: 'error',
       message: error.message || 'Failed to save vendor profile'
@@ -86,7 +137,11 @@ export const getVendorStats = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    const vendor = await Vendor.findOne({ userId });
+    console.log('📝 Fetching vendor stats for userId:', userId);
+
+    // Ensure userId is a string for consistent querying
+    const userIdString = String(userId);
+    const vendor = await Vendor.findOne({ userId: userIdString });
 
     if (!vendor) {
       return res.status(404).json({
@@ -154,22 +209,24 @@ export const getVendorProducts = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
 
+    // Ensure userId is a string for consistent querying
+    const userIdString = String(userId);
     let products = [];
 
     if (vendorType === 'furniture') {
-      products = await Furniture.find({ vendorId: userId })
+      products = await Furniture.find({ vendorId: userIdString })
         .skip((page - 1) * limit)
         .limit(limit);
     } else if (vendorType === 'hair') {
-      products = await Hair.find({ vendorId: userId })
+      products = await Hair.find({ vendorId: userIdString })
         .skip((page - 1) * limit)
         .limit(limit);
     } else if (vendorType === 'pets') {
-      products = await Pets.find({ vendorId: userId })
+      products = await Pets.find({ vendorId: userIdString })
         .skip((page - 1) * limit)
         .limit(limit);
     } else if (vendorType === 'gym-equipment') {
-      products = await GymEquipment.find({ vendorId: userId })
+      products = await GymEquipment.find({ vendorId: userIdString })
         .skip((page - 1) * limit)
         .limit(limit);
     }
@@ -200,8 +257,11 @@ export const createProduct = async (req, res) => {
     const { userId, vendorType } = req.params;
     const productData = req.body;
 
+    // Ensure userId is a string for consistent querying
+    const userIdString = String(userId);
+
     // Add vendor info to product
-    productData.vendorId = userId;
+    productData.vendorId = userIdString;
     productData.vendorName = req.body.vendorName || 'Unknown Vendor';
 
     // Handle image uploads
@@ -230,7 +290,7 @@ export const createProduct = async (req, res) => {
       await product.save();
 
       // Update vendor product count
-      const vendor = await Vendor.findOne({ userId });
+      const vendor = await Vendor.findOne({ userId: userIdString });
       if (vendor) {
         vendor.stats.totalProducts = (vendor.stats.totalProducts || 0) + 1;
         await vendor.save();
@@ -313,6 +373,9 @@ export const deleteProduct = async (req, res) => {
   try {
     const { userId, vendorType, productId } = req.params;
 
+    // Ensure userId is a string for consistent querying
+    const userIdString = String(userId);
+
     let product;
     let Model;
 
@@ -331,7 +394,7 @@ export const deleteProduct = async (req, res) => {
 
       if (product) {
         // Update vendor product count
-        const vendor = await Vendor.findOne({ userId });
+        const vendor = await Vendor.findOne({ userId: userIdString });
         if (vendor) {
           vendor.stats.totalProducts = Math.max(0, (vendor.stats.totalProducts || 1) - 1);
           await vendor.save();
@@ -373,6 +436,11 @@ export const getVendorOrders = async (req, res) => {
     const { userId } = req.params;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
+
+    console.log('📝 Fetching orders for userId:', userId);
+
+    // Ensure userId is a string for consistent querying
+    const userIdString = String(userId);
 
     // This would need to be refined based on your order structure
     const orders = await Order.find()

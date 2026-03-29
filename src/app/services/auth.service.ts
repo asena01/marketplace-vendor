@@ -55,12 +55,19 @@ export class AuthService {
    * Register a new user
    */
   signup(userData: any): Observable<any> {
-    console.log('Signing up with:', userData);
-    console.log('API URL:', this.apiUrl);
+    console.log('📝 Signing up with:', userData);
+    console.log('🔗 API URL:', this.apiUrl);
 
     return this.http.post(`${this.apiUrl}/auth/register`, userData).pipe(
       tap((response: any) => {
-        console.log('Signup response:', response);
+        console.log('=== 📨 SIGNUP RESPONSE ===');
+        console.log('Full response:', response);
+        console.log('response.success:', response.success);
+        console.log('response.token:', response.token ? '✅ exists' : '❌ missing');
+        console.log('response.user:', response.user);
+        console.log('response.businessIds:', response.businessIds);
+        console.log('=========================');
+
         if (response.success && response.token) {
           this.setToken(response.token);
           this.setUser(response.user);
@@ -68,6 +75,7 @@ export class AuthService {
 
           // Store userId for all users
           localStorage.setItem('userId', response.user._id);
+          console.log('✅ Stored userId:', response.user._id);
 
           // Store user email and basic info
           if (response.user.email) {
@@ -85,27 +93,32 @@ export class AuthService {
           if (response.user.userType === 'vendor') {
             const userId = response.user._id;
             const vendorType = response.user.vendorType;
-            console.log('✅ Signup: Setting business ID for vendor type:', vendorType);
+            const businessIds = response.businessIds || {};
+            console.log('🏢 VENDOR SIGNUP DETECTED');
+            console.log('  vendorType:', vendorType);
+            console.log('  businessIds:', businessIds);
+            console.log('  businessIds.hotelId:', businessIds.hotelId);
+            console.log('✅ Signup: Setting business IDs for vendor type:', vendorType, businessIds);
 
             // Store vendorType for all vendors
             localStorage.setItem('vendorType', vendorType);
 
-            // Map vendor types to their business IDs
+            // Map vendor types to their business IDs from response
             const retailVendorTypes = [
               'retail', 'clothing-store', 'jewelry', 'supermarket',
               'furniture', 'pet-store', 'gym', 'salon-spa',
               'car-rental', 'event-center', 'general'
             ];
 
-            if (vendorType === 'hotel') {
-              localStorage.setItem('hotelId', userId);
-              console.log('✅ Hotel ID stored:', userId);
-            } else if (vendorType === 'tour-operator') {
-              localStorage.setItem('agencyId', userId);
-              console.log('✅ Agency ID stored:', userId);
-            } else if (vendorType === 'restaurant') {
-              localStorage.setItem('restaurantId', userId);
-              console.log('✅ Restaurant ID stored:', userId);
+            if (vendorType === 'hotel' && businessIds.hotelId) {
+              localStorage.setItem('hotelId', businessIds.hotelId);
+              console.log('✅ Hotel ID stored:', businessIds.hotelId);
+            } else if (vendorType === 'tour-operator' && businessIds.agencyId) {
+              localStorage.setItem('agencyId', businessIds.agencyId);
+              console.log('✅ Agency ID stored:', businessIds.agencyId);
+            } else if (vendorType === 'restaurant' && businessIds.restaurantId) {
+              localStorage.setItem('restaurantId', businessIds.restaurantId);
+              console.log('✅ Restaurant ID stored:', businessIds.restaurantId);
             } else if (vendorType === 'hair-salon' || vendorType === 'service') {
               localStorage.setItem('serviceProviderId', userId);
               console.log('✅ Service Provider ID stored:', userId);
@@ -155,30 +168,30 @@ export class AuthService {
             console.log('✅ Admin logged in with role:', response.user.adminRole || 'admin');
           }
 
-          // Set business ID from seed data for vendor logins
+          // Set business ID from login response for vendors
           if (response.user.userType === 'vendor') {
-            localStorage.setItem('vendorType', response.user.vendorType || 'vendor-type-default');
-            console.log('🔑 Login: Vendor Type set to:', response.user.vendorType);
+            const vendorType = response.user.vendorType;
+            const businessIds = response.businessIds || {};
+            localStorage.setItem('vendorType', vendorType || 'vendor-type-default');
+            console.log('🔑 Login: Vendor Type set to:', vendorType);
+            console.log('🔑 Login: Business IDs from response:', businessIds);
 
-            if (response.user.vendorType === 'hotel') {
-              localStorage.setItem('hotelId', '69a72226003a6f0406e3afb1');
-              console.log('✅ Hotel ID stored');
-            } else if (response.user.vendorType === 'tour-operator') {
-              const agencyId = response.user._id || 'tour-agency-default';
-              localStorage.setItem('agencyId', agencyId);
-              console.log('✅ Login: Agency ID stored:', agencyId);
-              console.log('✅ Login: response.user._id:', response.user._id);
-            } else if (response.user.vendorType === 'restaurant') {
-              localStorage.setItem('restaurantId', response.user._id || 'restaurant-default');
-              console.log('✅ Restaurant ID stored');
-            } else if (response.user.vendorType === 'retail') {
-              localStorage.setItem('storeId', response.user._id || 'retail-default');
-              console.log('✅ Store ID stored');
-            } else if (response.user.vendorType === 'delivery') {
-              // Use deliveryPartnerId if available, otherwise use userId
-              const deliveryId = response.user.deliveryPartnerId || response.user._id || 'delivery-default';
+            if (vendorType === 'hotel' && businessIds.hotelId) {
+              localStorage.setItem('hotelId', businessIds.hotelId);
+              console.log('✅ Hotel ID stored from login:', businessIds.hotelId);
+            } else if (vendorType === 'tour-operator' && businessIds.agencyId) {
+              localStorage.setItem('agencyId', businessIds.agencyId);
+              console.log('✅ Agency ID stored from login:', businessIds.agencyId);
+            } else if (vendorType === 'restaurant' && businessIds.restaurantId) {
+              localStorage.setItem('restaurantId', businessIds.restaurantId);
+              console.log('✅ Restaurant ID stored from login:', businessIds.restaurantId);
+            } else if (vendorType === 'retail' && businessIds.storeId) {
+              localStorage.setItem('storeId', businessIds.storeId);
+              console.log('✅ Store ID stored from login:', businessIds.storeId);
+            } else if (vendorType === 'delivery') {
+              const deliveryId = businessIds.deliveryId || response.user.deliveryPartnerId || response.user._id;
               localStorage.setItem('deliveryId', deliveryId);
-              console.log('✅ Delivery ID stored:', deliveryId);
+              console.log('✅ Delivery ID stored from login:', deliveryId);
             }
           }
         }

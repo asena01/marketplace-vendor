@@ -43,17 +43,47 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get hotel by ID
+// Get hotel by ID or owner (userId)
 router.get('/:id', async (req, res) => {
   try {
-    const hotel = await Hotel.findById(req.params.id).populate('owner', 'name email phone');
+    const searchId = req.params.id;
+    console.log('🏨 Fetching hotel with ID/userId:', searchId);
 
-    if (!hotel) return res.status(404).json({ status: 'failed', message: 'Hotel not found' });
+    let hotel;
 
+    // First try to find by Hotel _id
+    try {
+      hotel = await Hotel.findById(searchId).populate('owner', 'name email phone');
+      if (hotel) {
+        console.log('✅ Hotel found by ID:', hotel._id);
+        return res.status(200).json({ status: 'success', data: hotel });
+      }
+    } catch (err) {
+      // If findById fails, it means it's not a valid MongoDB ID
+    }
+
+    // If not found by ID, try to find by owner (userId)
+    console.log('🔍 Hotel not found by ID, searching by owner (userId)...');
+    hotel = await Hotel.findOne({ owner: searchId }).populate('owner', 'name email phone');
+
+    if (!hotel) {
+      console.log('⚠️ Hotel not found for ID or owner:', searchId);
+      return res.status(404).json({
+        status: 'failed',
+        message: 'Hotel not found',
+        searchedId: searchId
+      });
+    }
+
+    console.log('✅ Hotel found by owner:', hotel._id, hotel.name);
     res.status(200).json({ status: 'success', data: hotel });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ status: 'error', message: 'Internal Server Error' });
+    console.error('❌ Error fetching hotel:', err.message);
+    res.status(500).json({
+      status: 'error',
+      message: 'Internal Server Error',
+      error: err.message
+    });
   }
 });
 
