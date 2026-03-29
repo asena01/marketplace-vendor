@@ -861,6 +861,157 @@ import { AdminService } from '../../../services/admin.service';
                           </div>
                         </div>
                       }
+                      @case ('delivery') {
+                        <!-- Delivery Specific Sections -->
+                        <div class="space-y-3">
+                          <!-- Drivers -->
+                          <div class="bg-white rounded border border-gray-200 overflow-hidden">
+                            <button (click)="toggleSection(vendor._id, 'drivers')" class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition">
+                              <div class="flex items-center gap-2">
+                                <span class="material-icons text-blue-600 text-sm">person</span>
+                                <span class="text-sm font-semibold text-gray-800">Drivers</span>
+                              </div>
+                              <span class="material-icons text-gray-400 text-sm" [style.transform]="openSection(vendor._id) === 'drivers' ? 'rotate(180deg)' : 'rotate(0deg)'">expand_more</span>
+                            </button>
+                            @if (openSection(vendor._id) === 'drivers') {
+                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs">
+                                <button (click)="loadDrivers(vendor._id)" class="px-2 py-1 bg-blue-600 text-white rounded text-xs font-semibold mb-3">Load Drivers</button>
+                                @if (driversList().length > 0) {
+                                  <div class="space-y-2">
+                                    @for (driver of driversList(); track driver.id) {
+                                      <div class="p-2 border border-gray-200 rounded bg-white">
+                                        <div class="flex justify-between">
+                                          <div><p class="font-semibold text-gray-800">{{ driver.name }}</p><p class="text-gray-600 text-xs">{{ driver.phone }}</p><p class="text-yellow-600 font-semibold text-xs">Rating: {{ driver.rating }}/5</p></div>
+                                          <button (click)="deleteDriver(driver.id)" class="px-1 py-0.5 bg-red-600 text-white rounded text-xs h-fit">Delete</button>
+                                        </div>
+                                      </div>
+                                    }
+                                  </div>
+                                } @else {
+                                  <p class="text-gray-600 py-2">No drivers</p>
+                                }
+                              </div>
+                            }
+                          </div>
+
+                          <!-- Active Deliveries -->
+                          <div class="bg-white rounded border border-gray-200 overflow-hidden">
+                            <button (click)="toggleSection(vendor._id, 'deliveries')" class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition">
+                              <div class="flex items-center gap-2">
+                                <span class="material-icons text-green-600 text-sm">local_shipping</span>
+                                <span class="text-sm font-semibold text-gray-800">Active Deliveries</span>
+                              </div>
+                              <span class="material-icons text-gray-400 text-sm" [style.transform]="openSection(vendor._id) === 'deliveries' ? 'rotate(180deg)' : 'rotate(0deg)'">expand_more</span>
+                            </button>
+                            @if (openSection(vendor._id) === 'deliveries') {
+                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs">
+                                <button (click)="loadDeliveries(vendor._id)" class="px-2 py-1 bg-blue-600 text-white rounded text-xs font-semibold mb-3">Refresh</button>
+                                @if (deliveriesList().length > 0) {
+                                  <div class="space-y-2">
+                                    @for (delivery of deliveriesList(); track delivery.id) {
+                                      <div class="p-2 border border-gray-200 rounded bg-white">
+                                        <div class="flex justify-between">
+                                          <div><p class="font-semibold text-gray-800">{{ delivery.customer }}</p><p class="text-gray-600 text-xs">{{ delivery.destination }}</p><p class="text-gray-600 text-xs">{{ delivery.time }}</p></div>
+                                          <div class="text-right"><span class="text-xs px-1 rounded" [class]="delivery.status === 'delivered' ? 'bg-green-100 text-green-800' : delivery.status === 'in-transit' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'">{{ delivery.status }}</span></div>
+                                        </div>
+                                        @if (delivery.status !== 'delivered' && delivery.status !== 'cancelled') {
+                                          <button (click)="cancelDelivery(delivery.id)" class="mt-1 px-1 py-0.5 bg-red-600 text-white rounded text-xs">Cancel</button>
+                                        }
+                                      </div>
+                                    }
+                                  </div>
+                                } @else {
+                                  <p class="text-gray-600 py-2">No deliveries</p>
+                                }
+                              </div>
+                            }
+                          </div>
+
+                          <!-- Fleet/Vehicles -->
+                          <div class="bg-white rounded border border-gray-200 overflow-hidden">
+                            <button (click)="toggleSection(vendor._id, 'vehicles')" class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition">
+                              <div class="flex items-center gap-2">
+                                <span class="material-icons text-orange-600 text-sm">directions_car</span>
+                                <span class="text-sm font-semibold text-gray-800">Fleet</span>
+                              </div>
+                              <span class="material-icons text-gray-400 text-sm" [style.transform]="openSection(vendor._id) === 'vehicles' ? 'rotate(180deg)' : 'rotate(0deg)'">expand_more</span>
+                            </button>
+                            @if (openSection(vendor._id) === 'vehicles') {
+                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs">
+                                <button (click)="loadVehicles(vendor._id)" class="px-2 py-1 bg-blue-600 text-white rounded text-xs font-semibold mb-3">Load Vehicles</button>
+                                @if (vehiclesList().length > 0) {
+                                  <div class="space-y-2">
+                                    @for (vehicle of vehiclesList(); track vehicle.id) {
+                                      <div class="p-2 border border-gray-200 rounded bg-white">
+                                        <div class="flex justify-between"><div><p class="font-semibold">{{ vehicle.plateNumber }}</p><p class="text-gray-600 text-xs">{{ vehicle.type }} • {{ vehicle.status }}</p><p class="text-gray-600 text-xs">Last service: {{ vehicle.lastService }}</p></div><button (click)="deleteVehicle(vehicle.id)" class="px-1 py-0.5 bg-red-600 text-white rounded text-xs h-fit">Delete</button></div>
+                                      </div>
+                                    }
+                                  </div>
+                                } @else {
+                                  <p class="text-gray-600 py-2">No vehicles</p>
+                                }
+                              </div>
+                            }
+                          </div>
+
+                          <!-- Delivery Zones -->
+                          <div class="bg-white rounded border border-gray-200 overflow-hidden">
+                            <button (click)="toggleSection(vendor._id, 'zones')" class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition">
+                              <div class="flex items-center gap-2">
+                                <span class="material-icons text-purple-600 text-sm">map</span>
+                                <span class="text-sm font-semibold text-gray-800">Delivery Zones</span>
+                              </div>
+                              <span class="material-icons text-gray-400 text-sm" [style.transform]="openSection(vendor._id) === 'zones' ? 'rotate(180deg)' : 'rotate(0deg)'">expand_more</span>
+                            </button>
+                            @if (openSection(vendor._id) === 'zones') {
+                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs">
+                                <button (click)="loadDeliveryZones(vendor._id)" class="px-2 py-1 bg-blue-600 text-white rounded text-xs font-semibold mb-3">Load Zones</button>
+                                @if (deliveryZonesList().length > 0) {
+                                  <div class="space-y-2">
+                                    @for (zone of deliveryZonesList(); track zone.id) {
+                                      <div class="p-2 border border-gray-200 rounded bg-white">
+                                        <p class="font-semibold text-gray-800">{{ zone.name }}</p>
+                                        <p class="text-gray-600 text-xs">Area: {{ zone.area }}</p>
+                                        <p class="text-gray-600 text-xs">Coverage: {{ zone.coverage }}</p>
+                                        <p class="text-blue-600 font-semibold text-xs">{{ zone.deliveries }} deliveries today</p>
+                                      </div>
+                                    }
+                                  </div>
+                                } @else {
+                                  <p class="text-gray-600 py-2">No zones</p>
+                                }
+                              </div>
+                            }
+                          </div>
+
+                          <!-- Reviews -->
+                          <div class="bg-white rounded border border-gray-200 overflow-hidden">
+                            <button (click)="toggleSection(vendor._id, 'reviews')" class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition">
+                              <div class="flex items-center gap-2">
+                                <span class="material-icons text-red-600 text-sm">star_rate</span>
+                                <span class="text-sm font-semibold text-gray-800">Reviews</span>
+                              </div>
+                              <span class="material-icons text-gray-400 text-sm" [style.transform]="openSection(vendor._id) === 'reviews' ? 'rotate(180deg)' : 'rotate(0deg)'">expand_more</span>
+                            </button>
+                            @if (openSection(vendor._id) === 'reviews') {
+                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs">
+                                <button (click)="loadReviews(vendor._id)" class="px-2 py-1 bg-blue-600 text-white rounded text-xs font-semibold mb-3">Load</button>
+                                @if (reviewsList().length > 0) {
+                                  <div class="space-y-2">
+                                    @for (review of reviewsList(); track review.id) {
+                                      <div class="p-2 border border-gray-200 rounded bg-white">
+                                        <div class="flex justify-between"><div><p class="font-semibold text-gray-800">{{ review.guestName }}</p><p class="text-gray-600 text-xs">{{ review.comment }}</p></div><button (click)="deleteReview(review.id)" class="px-1 py-0.5 bg-red-600 text-white rounded text-xs h-fit">Delete</button></div>
+                                      </div>
+                                    }
+                                  </div>
+                                } @else {
+                                  <p class="text-gray-600 py-2">No reviews</p>
+                                }
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      }
                       @default {
                         <!-- Generic Sections for other categories -->
                         <div class="bg-white rounded border border-gray-200 px-4 py-3">
@@ -960,6 +1111,12 @@ export class BusinessVendorListComponent implements OnInit {
 
   // Tours specific
   tourPackageList = signal<any[]>([]);
+
+  // Delivery specific
+  driversList = signal<any[]>([]);
+  deliveriesList = signal<any[]>([]);
+  vehiclesList = signal<any[]>([]);
+  deliveryZonesList = signal<any[]>([]);
 
   constructor(
     private adminService: AdminService,
@@ -1390,5 +1547,67 @@ export class BusinessVendorListComponent implements OnInit {
     if (confirm('Delete this tour?')) {
       this.tourPackageList.set(this.tourPackageList().filter(t => t.id !== tourId));
     }
+  }
+
+  // ============================================
+  // DELIVERY MANAGEMENT
+  // ============================================
+
+  loadDrivers(vendorId: string): void {
+    const mockDrivers = [
+      { id: '1', name: 'Ahmed Hassan', phone: '+234-801-234-5001', status: 'active', rating: '4.8' },
+      { id: '2', name: 'Fatima Abubakar', phone: '+234-802-234-5002', status: 'active', rating: '4.6' },
+      { id: '3', name: 'Ibrahim Okafor', phone: '+234-803-234-5003', status: 'active', rating: '4.9' }
+    ];
+    this.driversList.set(mockDrivers);
+  }
+
+  deleteDriver(driverId: string): void {
+    if (confirm('Remove this driver?')) {
+      this.driversList.set(this.driversList().filter(d => d.id !== driverId));
+    }
+  }
+
+  loadDeliveries(vendorId: string): void {
+    const mockDeliveries = [
+      { id: '1', customer: 'John Doe', destination: '123 Main St', status: 'delivered', time: '14:30' },
+      { id: '2', customer: 'Jane Smith', destination: '456 Oak Ave', status: 'in-transit', time: '15:00' },
+      { id: '3', customer: 'Bob Wilson', destination: '789 Pine Rd', status: 'pending', time: '16:00' }
+    ];
+    this.deliveriesList.set(mockDeliveries);
+  }
+
+  cancelDelivery(deliveryId: string): void {
+    if (confirm('Cancel this delivery?')) {
+      this.deliveriesList.set(
+        this.deliveriesList().map(d =>
+          d.id === deliveryId ? { ...d, status: 'cancelled' } : d
+        )
+      );
+    }
+  }
+
+  loadVehicles(vendorId: string): void {
+    const mockVehicles = [
+      { id: '1', plateNumber: 'AAB-123-XYZ', type: 'Motorcycle', status: 'active', lastService: '2024-03-01' },
+      { id: '2', plateNumber: 'BAC-456-ABC', type: 'Car', status: 'active', lastService: '2024-02-15' },
+      { id: '3', plateNumber: 'CAD-789-DEF', type: 'Van', status: 'maintenance', lastService: '2024-01-20' }
+    ];
+    this.vehiclesList.set(mockVehicles);
+  }
+
+  deleteVehicle(vehicleId: string): void {
+    if (confirm('Delete this vehicle?')) {
+      this.vehiclesList.set(this.vehiclesList().filter(v => v.id !== vehicleId));
+    }
+  }
+
+  loadDeliveryZones(vendorId: string): void {
+    const mockZones = [
+      { id: '1', name: 'Downtown', area: '5 sq km', coverage: '100%', deliveries: 45 },
+      { id: '2', name: 'Suburbs', area: '12 sq km', coverage: '95%', deliveries: 62 },
+      { id: '3', name: 'Industrial', area: '8 sq km', coverage: '88%', deliveries: 28 }
+    ];
+    this.deliveryZonesList.set(mockZones);
   }
 }
