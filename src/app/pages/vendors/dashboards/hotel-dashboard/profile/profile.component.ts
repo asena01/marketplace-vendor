@@ -484,7 +484,7 @@ import { AngularFireUploadService } from '../../../../../services/angular-fire-u
               </div>
 
               <!-- Logo Preview -->
-              @if (formData.logo && !formData.logo.startsWith('data:')) {
+              @if (formData.logo) {
                 <div class="mt-3">
                   <img
                     [src]="formData.logo"
@@ -541,7 +541,7 @@ import { AngularFireUploadService } from '../../../../../services/angular-fire-u
               </div>
 
               <!-- Thumbnail Preview -->
-              @if (formData.thumbnail && !formData.thumbnail.startsWith('data:')) {
+              @if (formData.thumbnail) {
                 <div class="mt-3">
                   <img
                     [src]="formData.thumbnail"
@@ -1024,6 +1024,16 @@ export class HotelProfileComponent implements OnInit {
     }
 
     console.log('📝 Logo upload started:', file.name);
+
+    // Show preview immediately while uploading
+    const reader = new FileReader();
+    reader.onload = (e: ProgressEvent<FileReader>) => {
+      const dataUrl = e.target?.result as string;
+      this.formData.logo = dataUrl;
+      console.log('👁️ Logo preview shown');
+    };
+    reader.readAsDataURL(file);
+
     this.isUploadingLogo.set(true);
 
     // Get hotelId for the upload path
@@ -1101,6 +1111,16 @@ export class HotelProfileComponent implements OnInit {
     }
 
     console.log('📝 Thumbnail upload started:', file.name);
+
+    // Show preview immediately while uploading
+    const reader = new FileReader();
+    reader.onload = (e: ProgressEvent<FileReader>) => {
+      const dataUrl = e.target?.result as string;
+      this.formData.thumbnail = dataUrl;
+      console.log('👁️ Thumbnail preview shown');
+    };
+    reader.readAsDataURL(file);
+
     this.isUploadingThumbnail.set(true);
 
     // Get hotelId for the upload path
