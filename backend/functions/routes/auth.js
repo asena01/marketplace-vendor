@@ -4,6 +4,9 @@ import User from '../models/User.js';
 import VendorKyc from '../models/VendorKyc.js';
 import VendorPerformance from '../models/VendorPerformance.js';
 import Vendor from '../models/Vendor.js';
+import Hotel from '../models/Hotel.js';
+import Restaurant from '../models/Restaurant.js';
+import Tour from '../models/Tour.js';
 
 const router = express.Router();
 
@@ -58,7 +61,7 @@ router.post('/register', async (req, res) => {
     await user.save();
     console.log('✅ User created successfully:', user._id);
 
-    // Create VendorKyc and VendorPerformance records if vendor
+    // Create vendor-specific records
     if (userType === 'vendor') {
       try {
         // Create VendorKyc record
@@ -77,6 +80,48 @@ router.post('/register', async (req, res) => {
         });
         await vendorPerformance.save();
         console.log('✅ VendorPerformance created successfully:', vendorPerformance._id);
+
+        // Create Hotel record for hotel vendors
+        if (vendorType === 'hotel') {
+          const hotel = new Hotel({
+            name: businessName || `${name}'s Hotel`,
+            description: businessDescription || '',
+            owner: user._id,
+            email: email,
+            phone: phone || '',
+            checkInTime: '14:00',
+            checkOutTime: '11:00'
+          });
+          await hotel.save();
+          console.log('✅ Hotel profile created successfully:', hotel._id);
+        }
+
+        // Create Restaurant record for restaurant vendors
+        if (vendorType === 'restaurant') {
+          const restaurant = new Restaurant({
+            name: businessName || `${name}'s Restaurant`,
+            description: businessDescription || '',
+            owner: user._id,
+            email: email,
+            phone: phone || '',
+            cuisine: 'Mixed'
+          });
+          await restaurant.save();
+          console.log('✅ Restaurant profile created successfully:', restaurant._id);
+        }
+
+        // Create Tour record for tour operators
+        if (vendorType === 'tour-operator') {
+          const tour = new Tour({
+            name: businessName || `${name}'s Tours`,
+            description: businessDescription || '',
+            tourOperator: user._id,
+            email: email,
+            phone: phone || ''
+          });
+          await tour.save();
+          console.log('✅ Tour profile created successfully:', tour._id);
+        }
 
         // Create Vendor profile for specific vendor types
         const vendorTypesWithProfile = ['furniture', 'hair', 'pets', 'gym-equipment'];
@@ -308,6 +353,45 @@ router.post('/create-demo-accounts', async (req, res) => {
               vendorType: account.vendorType || 'service'
             });
             await vendorPerformance.save();
+
+            // Create Hotel record for hotel vendors
+            if (account.vendorType === 'hotel') {
+              const hotel = new Hotel({
+                name: account.businessName || `${account.name}'s Hotel`,
+                description: account.businessDescription || '',
+                owner: user._id,
+                email: account.email,
+                phone: account.phone || '',
+                checkInTime: '14:00',
+                checkOutTime: '11:00'
+              });
+              await hotel.save();
+            }
+
+            // Create Restaurant record for restaurant vendors
+            if (account.vendorType === 'restaurant') {
+              const restaurant = new Restaurant({
+                name: account.businessName || `${account.name}'s Restaurant`,
+                description: account.businessDescription || '',
+                owner: user._id,
+                email: account.email,
+                phone: account.phone || '',
+                cuisine: 'Mixed'
+              });
+              await restaurant.save();
+            }
+
+            // Create Tour record for tour operators
+            if (account.vendorType === 'tour-operator') {
+              const tour = new Tour({
+                name: account.businessName || `${account.name}'s Tours`,
+                description: account.businessDescription || '',
+                tourOperator: user._id,
+                email: account.email,
+                phone: account.phone || ''
+              });
+              await tour.save();
+            }
 
             // Create Vendor profile for specific vendor types
             const vendorTypesWithProfile = ['furniture', 'hair', 'pets', 'gym-equipment'];
