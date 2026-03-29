@@ -1,6 +1,9 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import VendorKyc from '../models/VendorKyc.js';
+import VendorPerformance from '../models/VendorPerformance.js';
+import Vendor from '../models/Vendor.js';
 
 const router = express.Router();
 
@@ -54,6 +57,50 @@ router.post('/register', async (req, res) => {
 
     await user.save();
     console.log('✅ User created successfully:', user._id);
+
+    // Create VendorKyc and VendorPerformance records if vendor
+    if (userType === 'vendor') {
+      try {
+        // Create VendorKyc record
+        const vendorKyc = new VendorKyc({
+          vendor: user._id,
+          vendorType: vendorType || 'service',
+          status: 'pending'
+        });
+        await vendorKyc.save();
+        console.log('✅ VendorKyc created successfully:', vendorKyc._id);
+
+        // Create VendorPerformance record
+        const vendorPerformance = new VendorPerformance({
+          vendor: user._id,
+          vendorType: vendorType || 'service'
+        });
+        await vendorPerformance.save();
+        console.log('✅ VendorPerformance created successfully:', vendorPerformance._id);
+
+        // Create Vendor profile for specific vendor types
+        const vendorTypesWithProfile = ['furniture', 'hair', 'pets', 'gym-equipment'];
+        if (vendorTypesWithProfile.includes(vendorType)) {
+          const vendorProfile = new Vendor({
+            userId: user._id.toString(),
+            vendorType: vendorType,
+            businessName: businessName || '',
+            businessDescription: businessDescription || '',
+            email: email,
+            phone: phone || '',
+            address: '',
+            city: '',
+            country: '',
+            status: 'pending'
+          });
+          await vendorProfile.save();
+          console.log('✅ Vendor profile created successfully:', vendorProfile._id);
+        }
+      } catch (error) {
+        console.error('⚠️ Error creating vendor records:', error.message);
+        // Don't fail the registration if these records fail to create
+      }
+    }
 
     // Generate token
     const token = jwt.sign(
@@ -243,6 +290,48 @@ router.post('/create-demo-accounts', async (req, res) => {
         await user.save();
         createdUsers.push(account.email);
         console.log('✅ Created demo account:', account.email);
+
+        // Create vendor records if vendor account
+        if (account.userType === 'vendor') {
+          try {
+            // Create VendorKyc record
+            const vendorKyc = new VendorKyc({
+              vendor: user._id,
+              vendorType: account.vendorType || 'service',
+              status: 'pending'
+            });
+            await vendorKyc.save();
+
+            // Create VendorPerformance record
+            const vendorPerformance = new VendorPerformance({
+              vendor: user._id,
+              vendorType: account.vendorType || 'service'
+            });
+            await vendorPerformance.save();
+
+            // Create Vendor profile for specific vendor types
+            const vendorTypesWithProfile = ['furniture', 'hair', 'pets', 'gym-equipment'];
+            if (vendorTypesWithProfile.includes(account.vendorType)) {
+              const vendorProfile = new Vendor({
+                userId: user._id.toString(),
+                vendorType: account.vendorType,
+                businessName: account.businessName || '',
+                businessDescription: account.businessDescription || '',
+                email: account.email,
+                phone: account.phone || '',
+                address: '',
+                city: '',
+                country: '',
+                status: 'pending'
+              });
+              await vendorProfile.save();
+            }
+
+            console.log('✅ Created vendor records for:', account.email);
+          } catch (error) {
+            console.error('⚠️ Error creating vendor records for demo account:', error.message);
+          }
+        }
       } else {
         console.log('⏭️ Demo account already exists:', account.email);
       }
