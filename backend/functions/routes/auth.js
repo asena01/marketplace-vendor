@@ -106,8 +106,9 @@ router.post('/register', async (req, res) => {
           });
           await hotel.save();
           console.log('✅ Hotel profile created successfully:', hotel._id);
-          createdBusinessIds.hotelId = hotel._id.toString();
-          console.log('✅ hotelId added to createdBusinessIds:', createdBusinessIds.hotelId);
+          // Use userId as hotelId - the endpoint will query by owner
+          createdBusinessIds.hotelId = user._id.toString();
+          console.log('✅ hotelId set to userId:', createdBusinessIds.hotelId);
         } else {
           console.log('⚠️ vendorType is not "hotel", it is:', vendorType);
         }
@@ -253,10 +254,13 @@ router.post('/login', async (req, res) => {
         if (user.vendorType === 'hotel') {
           const hotel = await Hotel.findOne({ owner: user._id });
           if (hotel) {
-            businessIds.hotelId = hotel._id.toString();
-            console.log('✅ Hotel ID found:', businessIds.hotelId);
+            // Use userId as hotelId (the endpoint queries by owner)
+            businessIds.hotelId = user._id.toString();
+            console.log('✅ Hotel found, hotelId set to userId:', businessIds.hotelId);
           } else {
             console.log('⚠️ No hotel record found for owner:', user._id);
+            // Still return userId as hotelId even if hotel record doesn't exist yet
+            businessIds.hotelId = user._id.toString();
           }
         }
 
