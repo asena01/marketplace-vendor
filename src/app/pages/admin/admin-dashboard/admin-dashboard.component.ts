@@ -10,13 +10,8 @@ import { AdminSettingsComponent } from '../admin-settings/admin-settings.compone
 import { AdminProfileComponent } from '../admin-profile/admin-profile.component';
 import { RolesComponent } from '../admin-roles/roles.component';
 
-// Category-specific admin components
-import { HotelsAdminComponent } from '../admin-categories/hotels-admin/hotels-admin.component';
-import { RestaurantsAdminComponent } from '../admin-categories/restaurants-admin/restaurants-admin.component';
-import { RetailAdminComponent } from '../admin-categories/retail-admin/retail-admin.component';
-import { ServicesAdminComponent } from '../admin-categories/services-admin/services-admin.component';
-import { ToursAdminComponent } from '../admin-categories/tours-admin/tours-admin.component';
-import { DeliveryAdminComponent } from '../admin-categories/delivery-admin/delivery-admin.component';
+// Business vendor list component for hierarchical drill-down
+import { BusinessVendorListComponent } from '../admin-vendors/business-vendor-list.component';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -27,12 +22,7 @@ import { DeliveryAdminComponent } from '../admin-categories/delivery-admin/deliv
     AdminSettingsComponent,
     AdminProfileComponent,
     RolesComponent,
-    HotelsAdminComponent,
-    RestaurantsAdminComponent,
-    RetailAdminComponent,
-    ServicesAdminComponent,
-    ToursAdminComponent,
-    DeliveryAdminComponent
+    BusinessVendorListComponent
   ],
   template: `
     <div class="min-h-screen bg-gray-100 pt-16">
@@ -119,42 +109,20 @@ import { DeliveryAdminComponent } from '../admin-categories/delivery-admin/deliv
             <p class="text-xs font-semibold text-gray-500 uppercase mb-4 mt-8">Businesses</p>
 
             @for (category of categories; track category.id) {
-              <div>
-                <!-- Category Header (Collapsible) -->
-                <button
-                  (click)="selectCategory(category.id)"
-                  [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center justify-between ' +
-                    (currentCategory() === category.id
-                      ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
-                      : 'text-gray-700 hover:bg-gray-100')"
-                >
-                  <div class="flex items-center gap-3">
-                    <span class="material-icons">{{ category.icon }}</span>
-                    <span>{{ category.name }}</span>
-                  </div>
-                  <span class="material-icons text-lg transition-transform" [style.transform]="expandedCategory() === category.id ? 'rotate(180deg)' : 'rotate(0deg)'">
-                    expand_more
-                  </span>
-                </button>
-
-                <!-- Sub Pages (Expandable) -->
-                @if (expandedCategory() === category.id) {
-                  <div class="ml-4 mt-2 space-y-1 border-l-2 border-gray-200">
-                    @for (subPage of category.subPages; track subPage) {
-                      <button
-                        (click)="selectSubPage(subPage)"
-                        [class]="'w-full text-left px-4 py-2 rounded-lg text-sm transition flex items-center gap-2 ' +
-                          (currentSubPage() === subPage && currentCategory() === category.id
-                            ? 'bg-blue-50 text-blue-700 font-semibold'
-                            : 'text-gray-600 hover:bg-gray-50')"
-                      >
-                        <span class="material-icons text-base">{{ getSubPageIcon(subPage) }}</span>
-                        <span class="capitalize">{{ subPage }}</span>
-                      </button>
-                    }
-                  </div>
-                }
-              </div>
+              <!-- Category Button - Click to view vendors list -->
+              <button
+                (click)="selectCategory(category.id)"
+                [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center justify-between ' +
+                  (currentCategory() === category.id
+                    ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600'
+                    : 'text-gray-700 hover:bg-gray-100')"
+              >
+                <div class="flex items-center gap-3">
+                  <span class="material-icons">{{ category.icon }}</span>
+                  <span>{{ category.name }}</span>
+                </div>
+                <span class="material-icons text-lg">chevron_right</span>
+              </button>
             }
           </nav>
         </aside>
@@ -169,18 +137,28 @@ import { DeliveryAdminComponent } from '../admin-categories/delivery-admin/deliv
             <app-admin-settings></app-admin-settings>
           } @else if (currentPage() === 'roles') {
             <app-roles></app-roles>
-          } @else if (currentCategory() === 'hotels') {
-            <app-hotels-admin [currentTabInput]="currentSubPage()"></app-hotels-admin>
-          } @else if (currentCategory() === 'restaurants') {
-            <app-restaurants-admin [currentTabInput]="currentSubPage()"></app-restaurants-admin>
-          } @else if (currentCategory() === 'retail') {
-            <app-retail-admin [currentTabInput]="currentSubPage()"></app-retail-admin>
-          } @else if (currentCategory() === 'services') {
-            <app-services-admin [currentTabInput]="currentSubPage()"></app-services-admin>
-          } @else if (currentCategory() === 'tours') {
-            <app-tours-admin [currentTabInput]="currentSubPage()"></app-tours-admin>
-          } @else if (currentCategory() === 'delivery') {
-            <app-delivery-admin [currentTabInput]="currentSubPage()"></app-delivery-admin>
+          } @else if (currentCategory()) {
+            <!-- Business Vendor List - Hierarchical Drill-Down View -->
+            @switch (currentCategory()) {
+              @case ('hotels') {
+                <app-business-vendor-list [businessType]="'hotels'"></app-business-vendor-list>
+              }
+              @case ('restaurants') {
+                <app-business-vendor-list [businessType]="'restaurants'"></app-business-vendor-list>
+              }
+              @case ('retail') {
+                <app-business-vendor-list [businessType]="'retail'"></app-business-vendor-list>
+              }
+              @case ('services') {
+                <app-business-vendor-list [businessType]="'services'"></app-business-vendor-list>
+              }
+              @case ('tours') {
+                <app-business-vendor-list [businessType]="'tours'"></app-business-vendor-list>
+              }
+              @case ('delivery') {
+                <app-business-vendor-list [businessType]="'delivery'"></app-business-vendor-list>
+              }
+            }
           }
         </main>
       </div>
@@ -266,15 +244,14 @@ export class AdminDashboardComponent implements OnInit {
   setCurrentPage(page: string): void {
     this.currentPage.set(page);
     this.currentCategory.set(null);
+    console.log('📄 Switched to page:', page);
   }
 
   selectCategory(categoryId: string): void {
     console.log('📂 Selecting category:', categoryId);
     this.currentPage.set('');  // Clear system page
     this.currentCategory.set(categoryId);
-    this.currentSubPage.set('vendors');
-    this.expandedCategory.set(categoryId === this.expandedCategory() ? null : categoryId);
-    console.log('✅ Category set to:', categoryId, 'Expanded:', this.expandedCategory());
+    console.log('✅ Category set to:', categoryId, 'Showing vendors list');
   }
 
   selectSubPage(subPage: string): void {
