@@ -146,7 +146,7 @@ router.post('/register', async (req, res) => {
         const vendorTypesWithProfile = ['furniture', 'hair', 'pets', 'gym-equipment'];
         if (vendorTypesWithProfile.includes(vendorType)) {
           const vendorProfile = new Vendor({
-            userId: user._id.toString(),
+            owner: user._id,
             vendorType: vendorType,
             businessName: businessName || '',
             businessDescription: businessDescription || '',
@@ -464,7 +464,7 @@ router.post('/create-demo-accounts', async (req, res) => {
             const vendorTypesWithProfile = ['furniture', 'hair', 'pets', 'gym-equipment'];
             if (vendorTypesWithProfile.includes(account.vendorType)) {
               const vendorProfile = new Vendor({
-                userId: user._id.toString(),
+                owner: user._id,
                 vendorType: account.vendorType,
                 businessName: account.businessName || '',
                 businessDescription: account.businessDescription || '',

@@ -570,4 +570,16 @@ export class AdminService {
       { headers: this.getAdminHeaders() }
     );
   }
+
+  // ============================================
+  // DEVELOPMENT/TESTING
+  // ============================================
+
+  seedTestData(): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${this.apiUrl}/seed-test-data`,
+      {},
+      { headers: this.getAdminHeaders() }
+    );
+  }
 }

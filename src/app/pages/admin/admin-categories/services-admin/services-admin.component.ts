@@ -10,24 +10,24 @@ import { AdminPaymentsComponent } from '../../admin-payments/admin-payments.comp
   imports: [CommonModule, VendorDirectoryComponent, AdminUsersComponent, AdminPaymentsComponent],
   template: `
     <div class="space-y-6">
-      <div class="flex items-center gap-4 mb-6">
-        <span class="material-icons text-4xl text-cyan-600">handyman</span>
+      <div class="flex items-center gap-3 mb-6">
+        <span class="material-icons text-3xl text-cyan-600">handyman</span>
         <div>
-          <h2 class="text-3xl font-bold text-gray-800">Services Management</h2>
-          <p class="text-gray-600">Manage service vendors, staff, appointments, and payments</p>
+          <h2 class="text-2xl font-bold text-gray-800">Services Management</h2>
+          <p class="text-sm text-gray-600">Manage service vendors, staff, appointments, and payments</p>
         </div>
       </div>
 
-      <div class="flex gap-2 border-b border-gray-200 overflow-x-auto">
+      <div class="flex gap-1 border-b border-gray-200 overflow-x-auto pb-0">
         @for (tab of tabs; track tab.id) {
           <button
             (click)="setCurrentTab(tab.id)"
-            [class]="'px-6 py-3 font-medium transition whitespace-nowrap ' +
+            [class]="'px-3 py-2 text-sm font-medium transition whitespace-nowrap ' +
               (currentTab() === tab.id
                 ? 'border-b-2 border-cyan-600 text-cyan-600'
                 : 'text-gray-600 hover:text-gray-800')"
           >
-            <span class="material-icons inline mr-2 text-lg align-text-bottom">{{ tab.icon }}</span>
+            <span class="material-icons inline text-base align-text-bottom" style="margin-right: 4px;">{{ tab.icon }}</span>
             {{ tab.label }}
           </button>
         }

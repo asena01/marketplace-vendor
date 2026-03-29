@@ -1,4 +1,6 @@
 import express from 'express';
+import bcrypt from 'bcryptjs';
+import { TuyaContext } from '@tuya/tuya-connector-nodejs';
 import Organization from '../models/Organization.js';
 import User from '../models/User.js';
 import PaymentTransaction from '../models/PaymentTransaction.js';
@@ -15,6 +17,20 @@ import * as roleController from '../controllers/roleController.js';
 import { verifyAdmin as rbacVerifyAdmin, requirePermission } from '../middleware/rbacMiddleware.js';
 
 const router = express.Router();
+
+// ============================================
+// TUYA CONTEXT SETUP
+// ============================================
+
+const TUYA_ACCESS_KEY = process.env.TUYA_ACCESS_KEY || "uacrm8an77hjqghy7qug";
+const TUYA_SECRET_KEY = process.env.TUYA_SECRET_KEY || "59c473f01d2f4ca3ba7cb77ccd258661";
+const TUYA_REGION = process.env.TUYA_REGION || "https://openapi.tuyaeu.com";
+
+const tuyaContext = new TuyaContext({
+  baseUrl: TUYA_REGION,
+  accessKey: TUYA_ACCESS_KEY,
+  secretKey: TUYA_SECRET_KEY,
+});
 
 // ============================================
 // ADMIN AUTH & VERIFICATION MIDDLEWARE
@@ -584,21 +600,66 @@ router.get('/devices', verifyAdmin, async (req, res) => {
   try {
     const page = req.query.page || 1;
     const limit = req.query.limit || 10;
-    const deviceType = req.query.deviceType;
     const skip = (page - 1) * limit;
 
-    const filter = deviceType ? { deviceType } : {};
+    console.log('🔄 Fetching devices from Tuya platform...');
 
-    const devices = await Device.find(filter)
-      .skip(skip)
-      .limit(limit)
-      .sort({ createdAt: -1 });
+    // Fetch devices from Tuya platform (using correct endpoint)
+    const tuyaResponse = await tuyaContext.request({
+      path: '/v2.0/cloud/thing/device',
+      method: 'GET',
+      query: {
+        page_size: limit
+      }
+    });
 
-    const total = await Device.countDocuments(filter);
+    if (!tuyaResponse.success) {
+      console.error('❌ Tuya API Error:', tuyaResponse.msg);
+
+      // Fallback to MongoDB if Tuya fails
+      console.log('📌 Falling back to MongoDB devices...');
+      const devices = await Device.find()
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 });
+
+      const total = await Device.countDocuments();
+
+      return res.status(200).json({
+        success: true,
+        source: 'mongodb',
+        data: devices,
+        pagination: {
+          total,
+          pages: Math.ceil(total / limit),
+          currentPage: page,
+          limit
+        }
+      });
+    }
+
+    // Process Tuya response (v2.0 endpoint returns devices directly in result)
+    const tuyaDevices = tuyaResponse.result || [];
+    const total = tuyaDevices.length;
+
+    console.log(`✅ Fetched ${tuyaDevices.length} devices from Tuya platform`);
+
+    // Enrich Tuya devices with additional info
+    const enrichedDevices = tuyaDevices.map(device => ({
+      _id: device.device_id,
+      deviceId: device.device_id,
+      name: device.name,
+      type: device.product_name || 'Smart Device',
+      status: device.online ? 'active' : 'inactive',
+      ownerName: device.owner_id || 'Unassigned',
+      lastActive: device.update_time ? new Date(device.update_time * 1000) : null,
+      tuyaData: device
+    }));
 
     res.status(200).json({
       success: true,
-      data: devices,
+      source: 'tuya',
+      data: enrichedDevices,
       pagination: {
         total,
         pages: Math.ceil(total / limit),
@@ -607,11 +668,41 @@ router.get('/devices', verifyAdmin, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Error fetching devices:', error);
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
+    console.error('❌ Error fetching devices:', error.message);
+
+    // Final fallback to MongoDB
+    try {
+      console.log('📌 Final fallback to MongoDB devices...');
+      const page = req.query.page || 1;
+      const limit = req.query.limit || 10;
+      const skip = (page - 1) * limit;
+
+      const devices = await Device.find()
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 });
+
+      const total = await Device.countDocuments();
+
+      return res.status(200).json({
+        success: true,
+        source: 'mongodb',
+        data: devices,
+        pagination: {
+          total,
+          pages: Math.ceil(total / limit),
+          currentPage: page,
+          limit
+        }
+      });
+    } catch (fallbackError) {
+      console.error('❌ Fallback error:', fallbackError);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch devices from both Tuya and MongoDB',
+        error: error.message
+      });
+    }
   }
 });
 
@@ -744,6 +835,10 @@ router.get('/analytics/stats', verifyAdmin, async (req, res) => {
     const activeOrganizations = await Organization.countDocuments({ status: 'active' });
     const pendingOrganizations = await Organization.countDocuments({ status: 'pending-verification' });
     
+    // Get vendor statuses
+    const activeVendors = await User.countDocuments({ userType: 'vendor', status: 'active' });
+    const pendingVendors = await User.countDocuments({ userType: 'vendor', status: 'pending' });
+
     res.status(200).json({
       success: true,
       data: {
@@ -751,6 +846,11 @@ router.get('/analytics/stats', verifyAdmin, async (req, res) => {
           total: totalUsers,
           vendors: totalVendors,
           customers: totalCustomers
+        },
+        vendors: {
+          total: totalVendors,
+          active: activeVendors,
+          pending: pendingVendors
         },
         organizations: {
           total: totalOrganizations,
@@ -1003,5 +1103,292 @@ router.delete('/roles/:roleId/permissions/:permissionId', verifyAdmin, roleContr
 // User Permissions
 router.get('/users/:userId/permissions', verifyAdmin, roleController.getUserPermissions);
 router.post('/check-permission', verifyAdmin, roleController.checkPermission);
+
+// ============================================
+// SEED DATA ENDPOINT (Development Only)
+// ============================================
+
+router.post('/seed-test-data', verifyAdmin, async (req, res) => {
+  try {
+    // Only allow in development mode
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(403).json({
+        success: false,
+        message: 'Seeding is not allowed in production'
+      });
+    }
+
+    // Vendor data to seed
+    const vendorData = [
+      // Hotels
+      {
+        name: 'Luxury Grand Hotel',
+        email: 'luxury@grandhospitality.com',
+        password: 'password123',
+        phone: '+234-801-234-5001',
+        userType: 'vendor',
+        vendorType: 'hotel',
+        businessName: 'Luxury Grand Hotel',
+        businessDescription: 'A premium 5-star hotel with world-class amenities',
+        isVerified: true,
+        status: 'active',
+        kycStatus: 'approved'
+      },
+      {
+        name: 'Comfort Inn Resort',
+        email: 'info@comfortinn.com',
+        password: 'password123',
+        phone: '+234-802-234-5002',
+        userType: 'vendor',
+        vendorType: 'hotel',
+        businessName: 'Comfort Inn Resort',
+        businessDescription: 'Affordable 3-star hotel with family-friendly services',
+        isVerified: true,
+        status: 'active',
+        kycStatus: 'approved'
+      },
+      {
+        name: 'Beach Paradise Hotel',
+        email: 'beach@paradisehotel.com',
+        password: 'password123',
+        phone: '+234-803-234-5003',
+        userType: 'vendor',
+        vendorType: 'hotel',
+        businessName: 'Beach Paradise Hotel',
+        businessDescription: 'Beachfront resort with water sports facilities',
+        isVerified: true,
+        status: 'active',
+        kycStatus: 'approved'
+      },
+      // Restaurants
+      {
+        name: 'Fine Dining Restaurant',
+        email: 'fine@diningrestaurant.com',
+        password: 'password123',
+        phone: '+234-804-234-5004',
+        userType: 'vendor',
+        vendorType: 'restaurant',
+        businessName: 'Fine Dining Restaurant',
+        businessDescription: 'Upscale restaurant serving international cuisine',
+        isVerified: true,
+        status: 'active',
+        kycStatus: 'approved'
+      },
+      {
+        name: 'Taste of Africa',
+        email: 'taste@africarestaurant.com',
+        password: 'password123',
+        phone: '+234-805-234-5005',
+        userType: 'vendor',
+        vendorType: 'restaurant',
+        businessName: 'Taste of Africa',
+        businessDescription: 'Traditional African dishes with modern twist',
+        isVerified: true,
+        status: 'active',
+        kycStatus: 'approved'
+      },
+      {
+        name: 'Quick Bites Cafe',
+        email: 'bites@quickcafe.com',
+        password: 'password123',
+        phone: '+234-806-234-5006',
+        userType: 'vendor',
+        vendorType: 'restaurant',
+        businessName: 'Quick Bites Cafe',
+        businessDescription: 'Fast casual restaurant with healthy options',
+        isVerified: false,
+        status: 'pending',
+        kycStatus: 'pending'
+      },
+      // Retail Stores
+      {
+        name: 'Fashion Forward Boutique',
+        email: 'fashion@forwardboutique.com',
+        password: 'password123',
+        phone: '+234-807-234-5007',
+        userType: 'vendor',
+        vendorType: 'retail',
+        businessName: 'Fashion Forward Boutique',
+        businessDescription: 'Trendy clothing and accessories store',
+        isVerified: true,
+        status: 'active',
+        kycStatus: 'approved'
+      },
+      {
+        name: 'Electronics Hub',
+        email: 'tech@electronicshub.com',
+        password: 'password123',
+        phone: '+234-808-234-5008',
+        userType: 'vendor',
+        vendorType: 'retail',
+        businessName: 'Electronics Hub',
+        businessDescription: 'Latest gadgets and electronic devices',
+        isVerified: true,
+        status: 'active',
+        kycStatus: 'approved'
+      },
+      // Services
+      {
+        name: 'ProTech Solutions',
+        email: 'tech@protech-solutions.com',
+        password: 'password123',
+        phone: '+234-809-234-5009',
+        userType: 'vendor',
+        vendorType: 'service',
+        businessName: 'ProTech Solutions',
+        businessDescription: 'IT and software development services',
+        isVerified: true,
+        status: 'active',
+        kycStatus: 'approved'
+      },
+      {
+        name: 'Beauty & Wellness Spa',
+        email: 'beauty@wellnessspa.com',
+        password: 'password123',
+        phone: '+234-810-234-5010',
+        userType: 'vendor',
+        vendorType: 'service',
+        businessName: 'Beauty & Wellness Spa',
+        businessDescription: 'Full-service spa with beauty treatments',
+        isVerified: true,
+        status: 'active',
+        kycStatus: 'approved'
+      },
+      // Tours
+      {
+        name: 'Safari Adventures',
+        email: 'safari@adventures.com',
+        password: 'password123',
+        phone: '+234-811-234-5011',
+        userType: 'vendor',
+        vendorType: 'tour-operator',
+        businessName: 'Safari Adventures',
+        businessDescription: 'Exciting wildlife safari tours',
+        isVerified: true,
+        status: 'active',
+        kycStatus: 'approved'
+      },
+      {
+        name: 'City Tours Guide',
+        email: 'city@toursguide.com',
+        password: 'password123',
+        phone: '+234-812-234-5012',
+        userType: 'vendor',
+        vendorType: 'tour-operator',
+        businessName: 'City Tours Guide',
+        businessDescription: 'Guided city sightseeing tours',
+        isVerified: true,
+        status: 'active',
+        kycStatus: 'approved'
+      },
+      // Delivery
+      {
+        name: 'Swift Delivery Co',
+        email: 'swift@deliveryco.com',
+        password: 'password123',
+        phone: '+234-813-234-5013',
+        userType: 'vendor',
+        vendorType: 'delivery',
+        businessName: 'Swift Delivery Co',
+        businessDescription: 'Fast and reliable delivery service',
+        isVerified: true,
+        status: 'active',
+        kycStatus: 'approved'
+      },
+      {
+        name: 'Express Logistics',
+        email: 'express@logistics.com',
+        password: 'password123',
+        phone: '+234-814-234-5014',
+        userType: 'vendor',
+        vendorType: 'delivery',
+        businessName: 'Express Logistics',
+        businessDescription: 'Professional logistics and courier services',
+        isVerified: true,
+        status: 'active',
+        kycStatus: 'approved'
+      }
+    ];
+
+    // Delete existing vendors first
+    const deleteResult = await User.deleteMany({ userType: 'vendor' });
+    console.log(`🗑️  Deleted ${deleteResult.deletedCount} existing vendors`);
+
+    // Create vendors
+    const createdVendors = [];
+    for (const vendorInfo of vendorData) {
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(vendorInfo.password, salt);
+
+      const vendor = new User({
+        ...vendorInfo,
+        password: hashedPassword
+      });
+
+      await vendor.save();
+      createdVendors.push(vendor);
+    }
+
+    console.log(`✅ Created ${createdVendors.length} test vendors`);
+
+    // Create performance records
+    let performanceCount = 0;
+    for (const vendor of createdVendors) {
+      // Check if performance record already exists
+      let performance = await VendorPerformance.findOne({ vendor: vendor._id });
+
+      if (!performance) {
+        performance = new VendorPerformance({
+          vendor: vendor._id,
+          revenue: {
+            thisMonth: Math.floor(Math.random() * 100000) + 10000,
+            lastMonth: Math.floor(Math.random() * 100000) + 5000,
+            total: Math.floor(Math.random() * 500000) + 50000
+          },
+          rating: {
+            average: parseFloat((Math.random() * 5 * 0.7 + 2.5).toFixed(2)),
+            count: Math.floor(Math.random() * 500)
+          },
+          bookings: {
+            total: Math.floor(Math.random() * 1000),
+            completed: Math.floor(Math.random() * 800),
+            pending: Math.floor(Math.random() * 50)
+          },
+          reviews: {
+            total: Math.floor(Math.random() * 200),
+            positive: Math.floor(Math.random() * 150),
+            negative: Math.floor(Math.random() * 20)
+          }
+        });
+        await performance.save();
+        performanceCount++;
+      }
+    }
+
+    console.log(`✅ Created ${performanceCount} performance records`);
+
+    res.status(200).json({
+      success: true,
+      message: 'Test data seeded successfully',
+      data: {
+        vendorsCreated: createdVendors.length,
+        performanceRecords: performanceCount,
+        vendors: createdVendors.map(v => ({
+          id: v._id,
+          name: v.businessName,
+          type: v.vendorType,
+          email: v.email
+        }))
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error seeding test data:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error seeding test data',
+      error: error.message
+    });
+  }
+});
 
 export default router;

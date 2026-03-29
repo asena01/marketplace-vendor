@@ -2,8 +2,9 @@ import mongoose from 'mongoose';
 
 const vendorSchema = new mongoose.Schema(
   {
-    userId: {
-      type: String,
+    owner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
       required: true,
       unique: true
     },
@@ -111,7 +112,7 @@ const vendorSchema = new mongoose.Schema(
 );
 
 // Index for efficient queries
-vendorSchema.index({ userId: 1 });
+vendorSchema.index({ owner: 1 });
 vendorSchema.index({ vendorType: 1 });
 vendorSchema.index({ status: 1 });
 vendorSchema.index({ businessName: 1 });

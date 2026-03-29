@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -9,380 +9,251 @@ import { AdminService } from '../../../services/admin.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="space-y-6">
+    <div class="space-y-4">
       <!-- Header -->
-      <div class="flex items-center justify-between">
-        <div>
-          <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
-            <span class="material-icons text-4xl text-blue-600">business</span>
-            Vendor Management
-          </h2>
-          <p class="text-gray-600 mt-2">Manage and monitor all vendors across the platform</p>
-        </div>
+      <div>
+        <h2 class="text-2xl font-bold text-gray-800 mb-1">Vendors Management</h2>
+        <p class="text-xs text-gray-600">Manage and monitor vendors</p>
+      </div>
+
+      <!-- Search and Filter -->
+      <div class="bg-white rounded-lg shadow-md p-3 flex flex-col sm:flex-row gap-2">
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          placeholder="Search..."
+          class="flex-1 px-3 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+
+        <select
+          [(ngModel)]="selectedType"
+          class="px-3 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">All Types</option>
+          <option value="hotel">Hotel</option>
+          <option value="restaurant">Restaurant</option>
+          <option value="retail">Retail</option>
+          <option value="service">Service</option>
+          <option value="tours">Tours</option>
+        </select>
+
+        <select
+          [(ngModel)]="selectedStatus"
+          class="px-3 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="verified">Verified</option>
+          <option value="active">Active</option>
+          <option value="suspended">Suspended</option>
+          <option value="blocked">Blocked</option>
+        </select>
+
+        <select
+          [(ngModel)]="selectedKyc"
+          class="px-3 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">All KYC</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
+
+        <button
+          (click)="applyFilters()"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-xs font-semibold transition flex items-center justify-center gap-1 whitespace-nowrap"
+        >
+          <span class="material-icons text-sm">filter_list</span>
+          <span class="hidden sm:inline">Filter</span>
+        </button>
+
+        <button
+          (click)="resetFilters()"
+          class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1.5 rounded text-xs font-semibold transition flex items-center justify-center gap-1 whitespace-nowrap"
+        >
+          <span class="material-icons text-sm">refresh</span>
+          <span class="hidden sm:inline">Reset</span>
+        </button>
+
         <button
           (click)="openAddVendorModal()"
-          class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition flex items-center gap-2"
+          class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-xs font-semibold transition flex items-center justify-center gap-1 whitespace-nowrap"
         >
-          <span class="material-icons">add_circle</span>
-          Add Vendor
+          <span class="material-icons text-sm">add_circle</span>
+          <span class="hidden sm:inline">Add</span>
         </button>
       </div>
 
-      <!-- Filters and Search -->
-      <div class="bg-white rounded-lg shadow-md p-6 space-y-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <!-- Search -->
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">
-              <span class="material-icons inline mr-2 text-lg">search</span>
-              Search
-            </label>
-            <input
-              type="text"
-              [(ngModel)]="searchQuery"
-              placeholder="Search by name, email, ID..."
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <!-- Vendor Type Filter -->
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">
-              <span class="material-icons inline mr-2 text-lg">category</span>
-              Vendor Type
-            </label>
-            <select
-              [(ngModel)]="selectedType"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Types</option>
-              <option value="hotel">Hotel</option>
-              <option value="restaurant">Restaurant</option>
-              <option value="retail">Retail</option>
-              <option value="service">Service</option>
-              <option value="tours">Tours</option>
-            </select>
-          </div>
-
-          <!-- Status Filter -->
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">
-              <span class="material-icons inline mr-2 text-lg">info</span>
-              Status
-            </label>
-            <select
-              [(ngModel)]="selectedStatus"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="verified">Verified</option>
-              <option value="active">Active</option>
-              <option value="suspended">Suspended</option>
-              <option value="blocked">Blocked</option>
-            </select>
-          </div>
-
-          <!-- Verification Filter -->
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">
-              <span class="material-icons inline mr-2 text-lg">verified</span>
-              KYC Status
-            </label>
-            <select
-              [(ngModel)]="selectedKyc"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All KYC</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Additional Filters -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <!-- Revenue Range -->
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">
-              <span class="material-icons inline mr-2 text-lg">attach_money</span>
-              Revenue (Min)
-            </label>
-            <input
-              type="number"
-              [(ngModel)]="minRevenue"
-              placeholder="Min revenue"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">
-              <span class="material-icons inline mr-2 text-lg">attach_money</span>
-              Revenue (Max)
-            </label>
-            <input
-              type="number"
-              [(ngModel)]="maxRevenue"
-              placeholder="Max revenue"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <!-- Rating Filter -->
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">
-              <span class="material-icons inline mr-2 text-lg">star</span>
-              Min Rating
-            </label>
-            <input
-              type="number"
-              [(ngModel)]="minRating"
-              min="0"
-              max="5"
-              step="0.5"
-              placeholder="Min rating"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
-
-        <!-- Filter Actions -->
-        <div class="flex gap-2">
-          <button
-            (click)="applyFilters()"
-            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition flex items-center gap-2"
-          >
-            <span class="material-icons">filter_list</span>
-            Apply Filters
-          </button>
-          <button
-            (click)="resetFilters()"
-            class="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg font-semibold transition flex items-center gap-2"
-          >
-            <span class="material-icons">refresh</span>
-            Reset
-          </button>
-        </div>
-      </div>
-
-      <!-- Stats Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-gray-600 text-sm font-semibold">Total Vendors</p>
-              <p class="text-3xl font-bold text-gray-800 mt-2">{{ allVendors().length }}</p>
-            </div>
-            <span class="material-icons text-4xl text-blue-500 opacity-20">business</span>
-          </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-gray-600 text-sm font-semibold">Active Vendors</p>
-              <p class="text-3xl font-bold text-gray-800 mt-2">{{ activeVendorsCount() }}</p>
-            </div>
-            <span class="material-icons text-4xl text-green-500 opacity-20">check_circle</span>
-          </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-yellow-500">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-gray-600 text-sm font-semibold">Pending KYC</p>
-              <p class="text-3xl font-bold text-gray-800 mt-2">{{ pendingKycCount() }}</p>
-            </div>
-            <span class="material-icons text-4xl text-yellow-500 opacity-20">schedule</span>
-          </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-500">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-gray-600 text-sm font-semibold">Suspended</p>
-              <p class="text-3xl font-bold text-gray-800 mt-2">{{ suspendedCount() }}</p>
-            </div>
-            <span class="material-icons text-4xl text-red-500 opacity-20">block</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Vendors Table -->
-      <div class="bg-white rounded-lg shadow-md overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-gray-50 border-b">
+      <!-- Vendors Table - Desktop View -->
+      <div class="bg-white rounded-lg shadow-md overflow-x-auto hidden md:block">
+        @if (filteredVendors().length > 0) {
+          <table class="w-full text-sm">
+            <thead class="bg-gray-200 border-b border-gray-300 sticky top-0">
               <tr>
-                <th class="px-6 py-4 text-left">
-                  <input
-                    type="checkbox"
-                    [(ngModel)]="selectAll"
-                    (change)="toggleSelectAll()"
-                    class="w-4 h-4 rounded border-gray-300"
-                  />
-                </th>
-                <th class="px-6 py-4 text-left text-gray-700 font-semibold">
-                  <span class="material-icons inline mr-2">person</span>
-                  Vendor Name
-                </th>
-                <th class="px-6 py-4 text-left text-gray-700 font-semibold">
-                  <span class="material-icons inline mr-2">email</span>
-                  Email
-                </th>
-                <th class="px-6 py-4 text-left text-gray-700 font-semibold">
-                  <span class="material-icons inline mr-2">category</span>
-                  Type
-                </th>
-                <th class="px-6 py-4 text-left text-gray-700 font-semibold">
-                  <span class="material-icons inline mr-2">info</span>
-                  Status
-                </th>
-                <th class="px-6 py-4 text-left text-gray-700 font-semibold">
-                  <span class="material-icons inline mr-2">verified</span>
-                  KYC
-                </th>
-                <th class="px-6 py-4 text-left text-gray-700 font-semibold">
-                  <span class="material-icons inline mr-2">star</span>
-                  Rating
-                </th>
-                <th class="px-6 py-4 text-left text-gray-700 font-semibold">
-                  <span class="material-icons inline mr-2">attach_money</span>
-                  Revenue
-                </th>
-                <th class="px-6 py-4 text-left text-gray-700 font-semibold">
-                  <span class="material-icons inline mr-2">more_vert</span>
-                  Actions
-                </th>
+                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700">Name</th>
+                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700">Email</th>
+                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700">Type</th>
+                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700">Status</th>
+                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700">KYC</th>
+                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700">Rating</th>
+                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700">Revenue</th>
+                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700">Actions</th>
               </tr>
             </thead>
             <tbody>
-              @if (filteredVendors().length === 0) {
-                <tr>
-                  <td colspan="9" class="px-6 py-12 text-center">
-                    <div class="flex flex-col items-center justify-center">
-                      <span class="material-icons text-6xl text-gray-300 mb-4">inventory_2</span>
-                      <p class="text-gray-500 font-semibold">No vendors found</p>
-                      <p class="text-gray-400 text-sm">Try adjusting your filters</p>
-                    </div>
+              @for (vendor of filteredVendors() | slice: (currentPage() - 1) * pageSize : currentPage() * pageSize; track vendor._id) {
+                <tr class="border-b border-gray-200 hover:bg-gray-50">
+                  <td class="px-3 py-2 text-xs font-semibold text-gray-800 truncate">{{ vendor.name }}</td>
+                  <td class="px-3 py-2 text-xs text-gray-600 truncate">{{ vendor.email }}</td>
+                  <td class="px-3 py-2 text-xs whitespace-nowrap">
+                    <span [class]="'px-2 py-0.5 rounded text-xs font-semibold inline-block ' + getTypeClass(vendor.vendorType)">
+                      {{ vendor.vendorType | slice:0:10 }}
+                    </span>
+                  </td>
+                  <td class="px-3 py-2 text-xs whitespace-nowrap">
+                    <span [class]="'px-2 py-0.5 rounded text-xs font-semibold inline-flex items-center gap-0.5 ' + getStatusClass(vendor.status)">
+                      <span class="material-icons text-xs">{{ getStatusIcon(vendor.status) }}</span>
+                      {{ vendor.status | slice:0:8 }}
+                    </span>
+                  </td>
+                  <td class="px-3 py-2 text-xs whitespace-nowrap">
+                    <span [class]="'px-2 py-0.5 rounded text-xs font-semibold ' + getKycClass(vendor.kycStatus)">
+                      {{ vendor.kycStatus | slice:0:8 }}
+                    </span>
+                  </td>
+                  <td class="px-3 py-2 text-xs text-gray-800">
+                    <span class="inline-flex items-center gap-0.5">
+                      <span class="material-icons text-xs text-yellow-500">star</span>
+                      {{ vendor.rating || 0 }}
+                    </span>
+                  </td>
+                  <td class="px-3 py-2 text-xs text-gray-800 truncate">\${{ vendor.monthlyRevenue || 0 | number:'1.2-2' }}</td>
+                  <td class="px-3 py-2 text-xs space-x-0.5">
+                    <button
+                      (click)="viewVendorDetail(vendor._id)"
+                      title="View"
+                      class="text-blue-600 hover:text-blue-800 transition p-1 rounded hover:bg-blue-50"
+                    >
+                      <span class="material-icons text-base">visibility</span>
+                    </button>
+                    <button
+                      (click)="editVendor(vendor._id)"
+                      title="Edit"
+                      class="text-green-600 hover:text-green-800 transition p-1 rounded hover:bg-green-50"
+                    >
+                      <span class="material-icons text-base">edit</span>
+                    </button>
+                    <button
+                      (click)="deleteVendor(vendor._id)"
+                      title="Delete"
+                      class="text-red-600 hover:text-red-800 transition p-1 rounded hover:bg-red-50"
+                    >
+                      <span class="material-icons text-base">delete</span>
+                    </button>
                   </td>
                 </tr>
-              } @else {
-                @for (vendor of filteredVendors() | slice: (currentPage() - 1) * pageSize : currentPage() * pageSize; track vendor._id) {
-                  <tr class="border-b hover:bg-gray-50 transition">
-                    <td class="px-6 py-4">
-                      <input
-                        type="checkbox"
-                        [(ngModel)]="vendor.selected"
-                        class="w-4 h-4 rounded border-gray-300"
-                      />
-                    </td>
-                    <td class="px-6 py-4 text-gray-900 font-semibold">{{ vendor.name }}</td>
-                    <td class="px-6 py-4 text-gray-700">{{ vendor.email }}</td>
-                    <td class="px-6 py-4">
-                      <span class="px-3 py-1 rounded-full text-sm font-semibold"
-                        [class]="getTypeClass(vendor.vendorType)"
-                      >
-                        {{ vendor.vendorType }}
-                      </span>
-                    </td>
-                    <td class="px-6 py-4">
-                      <span class="px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1 w-fit"
-                        [class]="getStatusClass(vendor.status)"
-                      >
-                        <span class="material-icons text-sm">{{ getStatusIcon(vendor.status) }}</span>
-                        {{ vendor.status }}
-                      </span>
-                    </td>
-                    <td class="px-6 py-4">
-                      <span class="px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1 w-fit"
-                        [class]="getKycClass(vendor.kycStatus)"
-                      >
-                        <span class="material-icons text-sm">{{ getKycIcon(vendor.kycStatus) }}</span>
-                        {{ vendor.kycStatus }}
-                      </span>
-                    </td>
-                    <td class="px-6 py-4">
-                      <div class="flex items-center gap-1">
-                        <span class="material-icons text-yellow-500 text-sm">star</span>
-                        <span class="font-semibold text-gray-900">{{ vendor.rating || 0 }}</span>
-                      </div>
-                    </td>
-                    <td class="px-6 py-4 text-gray-900 font-semibold">
-                      \${{ vendor.monthlyRevenue || 0 | number:'1.2-2' }}
-                    </td>
-                    <td class="px-6 py-4">
-                      <div class="flex items-center gap-2">
-                        <button
-                          (click)="viewVendorDetail(vendor._id)"
-                          title="View Details"
-                          class="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-2 rounded transition"
-                        >
-                          <span class="material-icons">visibility</span>
-                        </button>
-                        <button
-                          (click)="editVendor(vendor._id)"
-                          title="Edit"
-                          class="text-green-600 hover:text-green-800 hover:bg-green-50 p-2 rounded transition"
-                        >
-                          <span class="material-icons">edit</span>
-                        </button>
-                        <button
-                          (click)="deleteVendor(vendor._id)"
-                          title="Delete"
-                          class="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded transition"
-                        >
-                          <span class="material-icons">delete</span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                }
               }
             </tbody>
           </table>
-        </div>
+        }
+      </div>
 
-        <!-- Pagination -->
-        @if (filteredVendors().length > pageSize) {
-          <div class="border-t bg-gray-50 px-6 py-4 flex items-center justify-between">
-            <div class="text-sm text-gray-600">
-              Showing {{ (currentPage() - 1) * pageSize + 1 }} to {{ Math.min(currentPage() * pageSize, filteredVendors().length) }} of {{ filteredVendors().length }}
+      <!-- Vendors Cards - Mobile View -->
+      <div class="space-y-2 md:hidden">
+        @if (filteredVendors().length > 0) {
+          @for (vendor of filteredVendors() | slice: (currentPage() - 1) * pageSize : currentPage() * pageSize; track vendor._id) {
+            <div class="bg-white rounded shadow-sm p-3 border border-gray-200">
+              <div class="flex justify-between items-start mb-2">
+                <div class="flex-1 min-w-0">
+                  <h3 class="text-xs font-semibold text-gray-800 truncate">{{ vendor.name }}</h3>
+                  <p class="text-xs text-gray-600 truncate">{{ vendor.email }}</p>
+                </div>
+                <span [class]="'px-2 py-0.5 rounded text-xs font-semibold ml-2 ' + getTypeClass(vendor.vendorType)">
+                  {{ vendor.vendorType | slice:0:10 }}
+                </span>
+              </div>
+              <div class="text-xs text-gray-600 space-y-0.5 mb-2">
+                <p><strong>Status:</strong> {{ vendor.status }}</p>
+                <p><strong>KYC:</strong> {{ vendor.kycStatus }}</p>
+                <p><strong>Rating:</strong> {{ vendor.rating || 0 }} / 5</p>
+                <p><strong>Revenue:</strong> \${{ vendor.monthlyRevenue || 0 | number:'1.2-2' }}</p>
+              </div>
+              <div class="flex gap-1">
+                <button
+                  (click)="viewVendorDetail(vendor._id)"
+                  class="flex-1 text-blue-600 hover:text-blue-800 transition text-xs py-1.5 px-2 border border-blue-300 rounded hover:bg-blue-50 flex items-center justify-center gap-1"
+                >
+                  <span class="material-icons text-sm">visibility</span>
+                  <span class="hidden sm:inline">View</span>
+                </button>
+                <button
+                  (click)="editVendor(vendor._id)"
+                  class="flex-1 text-green-600 hover:text-green-800 transition text-xs py-1.5 px-2 border border-green-300 rounded hover:bg-green-50 flex items-center justify-center gap-1"
+                >
+                  <span class="material-icons text-sm">edit</span>
+                  <span class="hidden sm:inline">Edit</span>
+                </button>
+                <button
+                  (click)="deleteVendor(vendor._id)"
+                  class="flex-1 text-red-600 hover:text-red-800 transition text-xs py-1.5 px-2 border border-red-300 rounded hover:bg-red-50 flex items-center justify-center gap-1"
+                >
+                  <span class="material-icons text-sm">delete</span>
+                  <span class="hidden sm:inline">Delete</span>
+                </button>
+              </div>
             </div>
-            <div class="flex gap-2">
-              <button
-                (click)="previousPage()"
-                [disabled]="currentPage() === 1"
-                class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-1"
-              >
-                <span class="material-icons text-sm">chevron_left</span>
-                Previous
-              </button>
+          }
+        }
+      </div>
+
+      <!-- Empty State -->
+      @if (filteredVendors().length === 0) {
+        <div class="p-6 text-center bg-white rounded-lg shadow-md">
+          <span class="material-icons text-4xl text-gray-400 block mb-2">business</span>
+          <p class="text-gray-600 text-xs">No vendors found</p>
+        </div>
+      }
+
+      <!-- Pagination -->
+      @if (filteredVendors().length > pageSize) {
+        <div class="bg-white rounded-lg shadow-md p-3 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <div class="text-xs text-gray-600">
+            Showing {{ (currentPage() - 1) * pageSize + 1 }} to {{ Math.min(currentPage() * pageSize, filteredVendors().length) }} of {{ filteredVendors().length }}
+          </div>
+          <div class="flex items-center gap-1">
+            <button
+              (click)="previousPage()"
+              [disabled]="currentPage() === 1"
+              class="px-2 py-1 bg-gray-300 text-gray-900 rounded hover:bg-gray-400 transition text-xs disabled:opacity-50 flex items-center gap-0.5 whitespace-nowrap"
+            >
+              <span class="material-icons text-sm">chevron_left</span>
+            </button>
+
+            <div class="flex gap-0.5">
               @for (page of getPageNumbers(); track page) {
                 <button
                   (click)="goToPage(page)"
-                  [class]="'px-4 py-2 rounded-lg font-semibold transition ' +
-                    (currentPage() === page
-                      ? 'bg-blue-600 text-white'
-                      : 'border border-gray-300 hover:bg-gray-100')"
+                  [class.bg-blue-600]="page === currentPage()"
+                  [class.text-white]="page === currentPage()"
+                  [class.bg-gray-300]="page !== currentPage()"
+                  [class.text-gray-900]="page !== currentPage()"
+                  class="px-2 py-1 rounded hover:opacity-80 transition text-xs font-semibold"
                 >
                   {{ page }}
                 </button>
               }
-              <button
-                (click)="nextPage()"
-                [disabled]="currentPage() * pageSize >= filteredVendors().length"
-                class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-1"
-              >
-                Next
-                <span class="material-icons text-sm">chevron_right</span>
-              </button>
             </div>
+
+            <button
+              (click)="nextPage()"
+              [disabled]="currentPage() * pageSize >= filteredVendors().length"
+              class="px-2 py-1 bg-gray-300 text-gray-900 rounded hover:bg-gray-400 transition text-xs disabled:opacity-50 flex items-center gap-0.5 whitespace-nowrap"
+            >
+              <span class="material-icons text-sm">chevron_right</span>
+            </button>
           </div>
-        }
-      </div>
+        </div>
+      }
     </div>
   `,
   styles: [
@@ -418,18 +289,6 @@ export class VendorDirectoryComponent implements OnInit {
   pageSize = 10;
   Math = Math;
 
-  // Computed values
-  activeVendorsCount = computed(() =>
-    this.allVendors().filter(v => v.status === 'active').length
-  );
-
-  pendingKycCount = computed(() =>
-    this.allVendors().filter(v => v.kycStatus === 'pending').length
-  );
-
-  suspendedCount = computed(() =>
-    this.allVendors().filter(v => v.status === 'suspended' || v.status === 'blocked').length
-  );
 
   constructor(
     private adminService: AdminService,
