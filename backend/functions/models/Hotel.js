@@ -7,6 +7,11 @@ const HotelSchema = new Schema({
     required: true
   },
   description: String,
+  basePrice: {
+    type: Number,
+    default: 0,
+    description: 'Minimum price of available rooms (used for search/sorting)'
+  },
   address: String,
   city: String,
   state: String,
