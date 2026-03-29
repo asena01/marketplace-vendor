@@ -40,13 +40,6 @@ import { DeliveryAdminComponent } from '../admin-categories/delivery-admin/deliv
       <header class="bg-gradient-to-r from-slate-800 to-slate-900 text-white shadow-lg">
         <div class="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
           <div class="flex items-center gap-4">
-            <!-- Mobile Menu Toggle -->
-            <button
-              (click)="toggleSidebar()"
-              class="lg:hidden material-icons text-3xl hover:bg-slate-700 p-2 rounded transition"
-            >
-              {{ sidebarOpen() ? 'menu_open' : 'menu' }}
-            </button>
             <span class="material-icons text-4xl">admin_panel_settings</span>
             <div>
               <h1 class="text-3xl font-bold">Admin Dashboard</h1>
@@ -70,19 +63,9 @@ import { DeliveryAdminComponent } from '../admin-categories/delivery-admin/deliv
       </header>
 
       <div class="flex relative">
-        <!-- Mobile Overlay -->
-        @if (sidebarOpen()) {
-          <div
-            (click)="sidebarOpen.set(false)"
-            class="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
-          ></div>
-        }
-
-        <!-- Sidebar Navigation -->
-        <!-- Desktop: Always visible. Mobile: Toggles with sidebarOpen signal -->
+        <!-- Sidebar Navigation - Always Visible -->
         <aside
-          class="w-72 h-screen lg:h-auto bg-white shadow-lg overflow-y-auto z-40"
-          [style.display]="(sidebarOpen() || isLargeScreen()) ? 'block' : 'none'"
+          class="w-72 h-screen bg-white shadow-lg overflow-y-auto z-40"
         >
           <nav class="p-6 space-y-2">
             <!-- Top Level Menu -->
@@ -214,13 +197,6 @@ import { DeliveryAdminComponent } from '../admin-categories/delivery-admin/deliv
         justify-content: center;
         user-select: none;
       }
-
-      /* Force sidebar to always be visible on large screens */
-      @media (min-width: 1024px) {
-        aside {
-          display: block !important;
-        }
-      }
     `
   ]
 })
@@ -229,8 +205,6 @@ export class AdminDashboardComponent implements OnInit {
   currentCategory = signal<string | null>(null);
   currentSubPage = signal<string>('vendors');
   expandedCategory = signal<string | null>(null);
-  sidebarOpen = signal<boolean>(true);
-  isLargeScreen = signal<boolean>(typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
 
   // Business categories with their sub-pages
   categories = [
@@ -287,50 +261,21 @@ export class AdminDashboardComponent implements OnInit {
     }
 
     console.log('✅ Admin dashboard loaded for:', this.getCurrentUserName());
-
-    // Listen for window resize to update screen size
-    if (typeof window !== 'undefined') {
-      window.addEventListener('resize', () => {
-        this.isLargeScreen.set(window.innerWidth >= 1024);
-      });
-    }
   }
 
   setCurrentPage(page: string): void {
     this.currentPage.set(page);
     this.currentCategory.set(null);
-    // Only close sidebar on mobile (do NOT close on desktop)
-    this.closeSidebarOnMobileOnly();
   }
 
   selectCategory(categoryId: string): void {
     this.currentCategory.set(categoryId);
     this.currentSubPage.set('vendors');
     this.expandedCategory.set(categoryId === this.expandedCategory() ? null : categoryId);
-    // Don't close sidebar on category selection - let user explore
   }
 
   selectSubPage(subPage: string): void {
     this.currentSubPage.set(subPage);
-    // Only close sidebar on mobile (do NOT close on desktop)
-    this.closeSidebarOnMobileOnly();
-  }
-
-  toggleSidebar(): void {
-    this.sidebarOpen.update(open => !open);
-  }
-
-  closeSidebarOnMobileOnly(): void {
-    // ONLY close sidebar on mobile (screen width < 1024px)
-    // NEVER close on desktop - sidebar should always be visible there
-    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
-      this.sidebarOpen.set(false);
-    }
-  }
-
-  closeSidebarOnMobile(): void {
-    // Deprecated - use closeSidebarOnMobileOnly() instead
-    this.closeSidebarOnMobileOnly();
   }
 
   getCategory(id: string) {
