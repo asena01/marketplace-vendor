@@ -1,6 +1,4 @@
-"use strict";
-
-const { TuyaContext } = require("@tuya/tuya-connector-nodejs");
+import { TuyaContext } from "@tuya/tuya-connector-nodejs";
 
 const TUYA_ACCESS_KEY = process.env.TUYA_ACCESS_KEY || "uacrm8an77hjqghy7qug";
 const TUYA_SECRET_KEY = process.env.TUYA_SECRET_KEY || "59c473f01d2f4ca3ba7cb77ccd258661";
@@ -238,7 +236,7 @@ const getAllDevices = async (req, res) => {
     }
 };
 
-module.exports = {
+export {
     getDeviceStatus,
     getDeviceLogs,
     getDeviceShadowProperties,
