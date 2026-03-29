@@ -199,8 +199,14 @@ const vendorData = [
 
 async function seedVendors() {
   try {
-    const mongoUrl = process.env.MONGODB_URI || 'mongodb://localhost:27017/marketbub-local';
-    await mongoose.connect(mongoUrl);
+    // Use the same MongoDB connection as the server
+    const mongoUrl = process.env.MONGODB_URI || 'mongodb+srv://fingecsmarthotels:WhqTOg0rGPib0FvE@cluster0.nfxzw.mongodb.net/test';
+
+    console.log('🔗 Connecting to MongoDB...');
+    await mongoose.connect(mongoUrl, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
     console.log('✅ Connected to MongoDB');
 
     // Clear existing vendors

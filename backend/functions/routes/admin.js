@@ -1,4 +1,5 @@
 import express from 'express';
+import bcrypt from 'bcryptjs';
 import Organization from '../models/Organization.js';
 import User from '../models/User.js';
 import PaymentTransaction from '../models/PaymentTransaction.js';
@@ -1003,5 +1004,292 @@ router.delete('/roles/:roleId/permissions/:permissionId', verifyAdmin, roleContr
 // User Permissions
 router.get('/users/:userId/permissions', verifyAdmin, roleController.getUserPermissions);
 router.post('/check-permission', verifyAdmin, roleController.checkPermission);
+
+// ============================================
+// SEED DATA ENDPOINT (Development Only)
+// ============================================
+
+router.post('/seed-test-data', verifyAdmin, async (req, res) => {
+  try {
+    // Only allow in development mode
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(403).json({
+        success: false,
+        message: 'Seeding is not allowed in production'
+      });
+    }
+
+    // Vendor data to seed
+    const vendorData = [
+      // Hotels
+      {
+        name: 'Luxury Grand Hotel',
+        email: 'luxury@grandhospitality.com',
+        password: 'password123',
+        phone: '+234-801-234-5001',
+        userType: 'vendor',
+        vendorType: 'hotel',
+        businessName: 'Luxury Grand Hotel',
+        businessDescription: 'A premium 5-star hotel with world-class amenities',
+        isVerified: true,
+        status: 'active',
+        kycStatus: 'approved'
+      },
+      {
+        name: 'Comfort Inn Resort',
+        email: 'info@comfortinn.com',
+        password: 'password123',
+        phone: '+234-802-234-5002',
+        userType: 'vendor',
+        vendorType: 'hotel',
+        businessName: 'Comfort Inn Resort',
+        businessDescription: 'Affordable 3-star hotel with family-friendly services',
+        isVerified: true,
+        status: 'active',
+        kycStatus: 'approved'
+      },
+      {
+        name: 'Beach Paradise Hotel',
+        email: 'beach@paradisehotel.com',
+        password: 'password123',
+        phone: '+234-803-234-5003',
+        userType: 'vendor',
+        vendorType: 'hotel',
+        businessName: 'Beach Paradise Hotel',
+        businessDescription: 'Beachfront resort with water sports facilities',
+        isVerified: true,
+        status: 'active',
+        kycStatus: 'approved'
+      },
+      // Restaurants
+      {
+        name: 'Fine Dining Restaurant',
+        email: 'fine@diningrestaurant.com',
+        password: 'password123',
+        phone: '+234-804-234-5004',
+        userType: 'vendor',
+        vendorType: 'restaurant',
+        businessName: 'Fine Dining Restaurant',
+        businessDescription: 'Upscale restaurant serving international cuisine',
+        isVerified: true,
+        status: 'active',
+        kycStatus: 'approved'
+      },
+      {
+        name: 'Taste of Africa',
+        email: 'taste@africarestaurant.com',
+        password: 'password123',
+        phone: '+234-805-234-5005',
+        userType: 'vendor',
+        vendorType: 'restaurant',
+        businessName: 'Taste of Africa',
+        businessDescription: 'Traditional African dishes with modern twist',
+        isVerified: true,
+        status: 'active',
+        kycStatus: 'approved'
+      },
+      {
+        name: 'Quick Bites Cafe',
+        email: 'bites@quickcafe.com',
+        password: 'password123',
+        phone: '+234-806-234-5006',
+        userType: 'vendor',
+        vendorType: 'restaurant',
+        businessName: 'Quick Bites Cafe',
+        businessDescription: 'Fast casual restaurant with healthy options',
+        isVerified: false,
+        status: 'pending',
+        kycStatus: 'pending'
+      },
+      // Retail Stores
+      {
+        name: 'Fashion Forward Boutique',
+        email: 'fashion@forwardboutique.com',
+        password: 'password123',
+        phone: '+234-807-234-5007',
+        userType: 'vendor',
+        vendorType: 'retail',
+        businessName: 'Fashion Forward Boutique',
+        businessDescription: 'Trendy clothing and accessories store',
+        isVerified: true,
+        status: 'active',
+        kycStatus: 'approved'
+      },
+      {
+        name: 'Electronics Hub',
+        email: 'tech@electronicshub.com',
+        password: 'password123',
+        phone: '+234-808-234-5008',
+        userType: 'vendor',
+        vendorType: 'retail',
+        businessName: 'Electronics Hub',
+        businessDescription: 'Latest gadgets and electronic devices',
+        isVerified: true,
+        status: 'active',
+        kycStatus: 'approved'
+      },
+      // Services
+      {
+        name: 'ProTech Solutions',
+        email: 'tech@protech-solutions.com',
+        password: 'password123',
+        phone: '+234-809-234-5009',
+        userType: 'vendor',
+        vendorType: 'service',
+        businessName: 'ProTech Solutions',
+        businessDescription: 'IT and software development services',
+        isVerified: true,
+        status: 'active',
+        kycStatus: 'approved'
+      },
+      {
+        name: 'Beauty & Wellness Spa',
+        email: 'beauty@wellnessspa.com',
+        password: 'password123',
+        phone: '+234-810-234-5010',
+        userType: 'vendor',
+        vendorType: 'service',
+        businessName: 'Beauty & Wellness Spa',
+        businessDescription: 'Full-service spa with beauty treatments',
+        isVerified: true,
+        status: 'active',
+        kycStatus: 'approved'
+      },
+      // Tours
+      {
+        name: 'Safari Adventures',
+        email: 'safari@adventures.com',
+        password: 'password123',
+        phone: '+234-811-234-5011',
+        userType: 'vendor',
+        vendorType: 'tour-operator',
+        businessName: 'Safari Adventures',
+        businessDescription: 'Exciting wildlife safari tours',
+        isVerified: true,
+        status: 'active',
+        kycStatus: 'approved'
+      },
+      {
+        name: 'City Tours Guide',
+        email: 'city@toursguide.com',
+        password: 'password123',
+        phone: '+234-812-234-5012',
+        userType: 'vendor',
+        vendorType: 'tour-operator',
+        businessName: 'City Tours Guide',
+        businessDescription: 'Guided city sightseeing tours',
+        isVerified: true,
+        status: 'active',
+        kycStatus: 'approved'
+      },
+      // Delivery
+      {
+        name: 'Swift Delivery Co',
+        email: 'swift@deliveryco.com',
+        password: 'password123',
+        phone: '+234-813-234-5013',
+        userType: 'vendor',
+        vendorType: 'delivery',
+        businessName: 'Swift Delivery Co',
+        businessDescription: 'Fast and reliable delivery service',
+        isVerified: true,
+        status: 'active',
+        kycStatus: 'approved'
+      },
+      {
+        name: 'Express Logistics',
+        email: 'express@logistics.com',
+        password: 'password123',
+        phone: '+234-814-234-5014',
+        userType: 'vendor',
+        vendorType: 'delivery',
+        businessName: 'Express Logistics',
+        businessDescription: 'Professional logistics and courier services',
+        isVerified: true,
+        status: 'active',
+        kycStatus: 'approved'
+      }
+    ];
+
+    // Delete existing vendors first
+    const deleteResult = await User.deleteMany({ userType: 'vendor' });
+    console.log(`🗑️  Deleted ${deleteResult.deletedCount} existing vendors`);
+
+    // Create vendors
+    const createdVendors = [];
+    for (const vendorInfo of vendorData) {
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(vendorInfo.password, salt);
+
+      const vendor = new User({
+        ...vendorInfo,
+        password: hashedPassword
+      });
+
+      await vendor.save();
+      createdVendors.push(vendor);
+    }
+
+    console.log(`✅ Created ${createdVendors.length} test vendors`);
+
+    // Create performance records
+    let performanceCount = 0;
+    for (const vendor of createdVendors) {
+      // Check if performance record already exists
+      let performance = await VendorPerformance.findOne({ vendor: vendor._id });
+
+      if (!performance) {
+        performance = new VendorPerformance({
+          vendor: vendor._id,
+          revenue: {
+            thisMonth: Math.floor(Math.random() * 100000) + 10000,
+            lastMonth: Math.floor(Math.random() * 100000) + 5000,
+            total: Math.floor(Math.random() * 500000) + 50000
+          },
+          rating: {
+            average: parseFloat((Math.random() * 5 * 0.7 + 2.5).toFixed(2)),
+            count: Math.floor(Math.random() * 500)
+          },
+          bookings: {
+            total: Math.floor(Math.random() * 1000),
+            completed: Math.floor(Math.random() * 800),
+            pending: Math.floor(Math.random() * 50)
+          },
+          reviews: {
+            total: Math.floor(Math.random() * 200),
+            positive: Math.floor(Math.random() * 150),
+            negative: Math.floor(Math.random() * 20)
+          }
+        });
+        await performance.save();
+        performanceCount++;
+      }
+    }
+
+    console.log(`✅ Created ${performanceCount} performance records`);
+
+    res.status(200).json({
+      success: true,
+      message: 'Test data seeded successfully',
+      data: {
+        vendorsCreated: createdVendors.length,
+        performanceRecords: performanceCount,
+        vendors: createdVendors.map(v => ({
+          id: v._id,
+          name: v.businessName,
+          type: v.vendorType,
+          email: v.email
+        }))
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error seeding test data:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error seeding test data',
+      error: error.message
+    });
+  }
+});
 
 export default router;
