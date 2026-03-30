@@ -788,49 +788,39 @@ export class HotelsComponent implements OnInit {
       return;
     }
 
-    // Check if hotel has auto-confirmation enabled
-    this.checkHotelAutoConfirmation();
-  }
-
-  checkHotelAutoConfirmation(): void {
-    this.isCheckingAutoConfirmation.set(true);
-
-    // Check if the selected hotel has contactless check-in enabled
+    // IMPORTANT: Check hotel's contactless check-in FIRST (before payment requirement)
     const hotel = this.selectedHotel();
-    if (!hotel) {
-      this.completeBookingFlow(null);
-      this.isCheckingAutoConfirmation.set(false);
-      return;
-    }
+    const contactlessEnabled = (hotel as any)?.contactlessCheckInEnabled === true;
 
-    // Check the contactlessCheckInEnabled property from the hotel data
-    // If hotel data includes the property, use it; otherwise fetch it
-    const contactlessEnabled = (hotel as any).contactlessCheckInEnabled || false;
-    this.hotelAutoConfirmationEnabled.set(contactlessEnabled);
+    console.log(`🔍 Checking hotel: ${hotel?.name} - Contactless: ${contactlessEnabled}`);
 
-    console.log(`✅ Hotel: ${hotel.name} - Contactless Check-In: ${contactlessEnabled ? 'ENABLED' : 'DISABLED'}`);
-
+    // If hotel has contactless check-in enabled, show identity verification
     if (contactlessEnabled) {
-      // Show identity verification component
+      console.log('✅ Hotel has contactless check-in enabled - showing identity verification');
+      this.hotelAutoConfirmationEnabled.set(true);
       this.showIdentityVerification.set(true);
     } else {
-      // Use traditional booking flow
+      // Traditional flow requires payment method
+      if (!this.selectedPaymentMethod()) {
+        this.bookingError.set('Please select a payment method');
+        return;
+      }
+      console.log('📋 Traditional booking flow - payment method selected');
+      this.hotelAutoConfirmationEnabled.set(false);
       this.completeBookingFlow(null);
     }
-
-    this.isCheckingAutoConfirmation.set(false);
   }
 
   onIdentityVerified(verification: any): void {
-    console.log('✅ Identity verified:', verification);
+    console.log('✅ Identity verified, completing booking with auto-confirmation:', verification);
     this.showIdentityVerification.set(false);
 
-    // Complete booking with auto-confirmation
+    // Complete booking with smart lock access
     this.completeBookingFlow(verification);
   }
 
   onIdentityVerificationCancelled(): void {
-    console.log('❌ Identity verification cancelled');
+    console.log('❌ Identity verification cancelled - returning to booking form');
     this.showIdentityVerification.set(false);
     this.bookingError.set('Identity verification cancelled. Please try again.');
   }

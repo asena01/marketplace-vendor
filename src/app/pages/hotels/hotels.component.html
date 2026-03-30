@@ -939,17 +939,15 @@
           <div class="flex gap-3">
             <button
               (click)="submitBooking()"
-              [disabled]="isLoadingBooking() || isCheckingAutoConfirmation() || bookingSuccess() || (!selectedPaymentMethod() && !showIdentityVerification())"
+              [disabled]="isLoadingBooking() || bookingSuccess() || (!selectedPaymentMethod() && !hotelAutoConfirmationEnabled())"
               class="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded-lg transition"
             >
-              @if (isCheckingAutoConfirmation()) {
-                <span>⏳ Checking hotel settings...</span>
+              @if (isLoadingBooking()) {
+                <span>⏳ Processing...</span>
               } @else if (showIdentityVerification()) {
                 <span>🆔 Verify Identity</span>
-              } @else if (isLoadingBooking()) {
-                <span>⏳ Processing...</span>
               } @else if (hotelAutoConfirmationEnabled()) {
-                <span>🚪 Complete Contactless Booking</span>
+                <span>🚪 Contactless Check-In Available</span>
               } @else {
                 <span>💳 Proceed to Payment</span>
               }

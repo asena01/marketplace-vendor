@@ -89,6 +89,8 @@ router.get('/public/search', async (req, res) => {
           reviews: hotel.reviewsCount || 0,
           icon: '🏨',
           price,
+          // Explicitly include smart lock & contactless check-in feature
+          contactlessCheckInEnabled: hotel.contactlessCheckInEnabled || false,
           rooms: rooms.map(room => ({
             id: room._id,
             type: room.roomType,
