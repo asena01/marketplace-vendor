@@ -1,6 +1,18 @@
 <div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
   <app-header></app-header>
 
+  <!-- Backend Status Warning -->
+  <div class="bg-red-50 border-b-4 border-red-600 p-4">
+    <div class="max-w-6xl mx-auto">
+      <p class="text-red-800 font-semibold">⚠️ IMPORTANT: Backend Server Required</p>
+      <p class="text-red-700 text-sm mt-1">
+        To create bookings, the backend server must be running on port 5001.
+        Run this in a terminal: <code class="bg-red-100 px-2 py-1 rounded font-mono">cd backend/functions && npm run dev</code>
+      </p>
+      <p class="text-red-600 text-xs mt-2">Once started, you'll see "🚀 MarketHub Backend running on http://localhost:5001" in the terminal.</p>
+    </div>
+  </div>
+
   <!-- Hero Section -->
   <section class="pt-12 pb-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-emerald-600 to-emerald-500">
     <div class="max-w-6xl mx-auto">

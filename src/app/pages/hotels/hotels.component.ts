@@ -263,7 +263,31 @@ export class HotelsComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    console.log('🚀 Hotels component initialized');
+    console.log('🔌 Backend URL configured: http://localhost:5001');
+    this.checkBackendConnection();
     this.loadHotelsFromAPI();
+  }
+
+  /**
+   * Check if backend is running and accessible
+   */
+  private checkBackendConnection(): void {
+    this.hotelService.getPublicHotels(1, 1).subscribe({
+      next: () => {
+        console.log('✅ Backend is running and connected!');
+      },
+      error: (error) => {
+        console.error('❌ BACKEND CONNECTION FAILED:', error.message);
+        console.error('⚠️ The backend server is not running or not accessible on http://localhost:5001');
+        console.error('📝 To start the backend, run:');
+        console.error('   cd backend/functions && npm run dev');
+
+        if (error.status === 0) {
+          console.error('💡 This appears to be a connection refused error - backend is likely not running');
+        }
+      }
+    });
   }
 
   loadHotelsFromAPI(): void {
@@ -890,6 +914,11 @@ export class HotelsComponent implements OnInit {
   completeBookingFlow(identityVerification: any): void {
     console.log('📋 completeBookingFlow called');
     console.log('🔐 Identity Verification provided?', !!identityVerification);
+
+    // DEBUG: Check if backend is reachable
+    console.log('🔌 Backend URL:', 'http://localhost:5001');
+    console.log('⚠️ IMPORTANT: Make sure backend is running on port 5001!');
+    console.log('   Run: cd backend/functions && npm run dev');
 
     this.isLoadingBooking.set(true);
     this.bookingError.set('');
