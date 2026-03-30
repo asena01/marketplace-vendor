@@ -675,6 +675,11 @@ export class HotelsComponent implements OnInit {
     return this.expandedHotelIds().has(hotelId);
   }
 
+  isSelectedHotelContactless(): boolean {
+    const hotel = this.selectedHotel();
+    return (hotel as any)?.contactlessCheckInEnabled === true;
+  }
+
   toggleFavorite(hotelId: string): void {
     const favs = new Set(this.favorites());
     if (favs.has(hotelId)) {

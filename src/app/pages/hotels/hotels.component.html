@@ -626,7 +626,7 @@
             <h3 class="font-bold text-gray-900 mb-3">Trip Dates</h3>
             <div class="grid md:grid-cols-2 gap-4">
               <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Check In1 *</label>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Check In *</label>
                 <input
                   type="date"
                   [(ngModel)]="checkInDate"
@@ -939,14 +939,14 @@
           <div class="flex gap-3">
             <button
               (click)="submitBooking()"
-              [disabled]="isLoadingBooking() || bookingSuccess() || (!selectedPaymentMethod() && !hotelAutoConfirmationEnabled())"
+              [disabled]="isLoadingBooking() || bookingSuccess() || (!selectedPaymentMethod() && !isSelectedHotelContactless())"
               class="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded-lg transition"
             >
               @if (isLoadingBooking()) {
                 <span>⏳ Processing...</span>
               } @else if (showIdentityVerification()) {
                 <span>🆔 Verify Identity</span>
-              } @else if (hotelAutoConfirmationEnabled()) {
+              } @else if (isSelectedHotelContactless()) {
                 <span>🚪 Contactless Check-In Available</span>
               } @else {
                 <span>💳 Proceed to Payment</span>
