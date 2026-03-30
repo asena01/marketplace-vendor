@@ -44,6 +44,8 @@ import customerRoutes from './routes/customers.js';
 import financeRoutes from './routes/finance.js';
 import smartLockRoutes from './routes/smartLock.js';
 import deviceAssignmentRoutes from './routes/deviceAssignments.js';
+// Models
+import Booking from './models/Booking.js';
 // Service Provider Dashboard Routes
 import serviceProviderRoutes from './routes/serviceProviders.js';
 import appointmentRoutes from './routes/appointments.js';
@@ -443,9 +445,9 @@ app.use('/hotels/:hotelId/bookings', bookingRoutes);
 app.get('/hotel-bookings/customer/:customerId', async (req, res) => {
   try {
     const { customerId } = req.params;
-    const Booking = require('./models/Booking.js').default;
 
-    console.log('📝 Fetching bookings for customer:', customerId);
+    console.log('🏨 ========== FETCH CUSTOMER BOOKINGS ==========');
+    console.log('👤 Customer ID:', customerId);
 
     const bookings = await Booking.find({ guest: customerId })
       .populate('hotel', 'name location address')
@@ -453,6 +455,7 @@ app.get('/hotel-bookings/customer/:customerId', async (req, res) => {
       .sort({ createdAt: -1 });
 
     console.log('✅ Found', bookings.length, 'bookings for customer:', customerId);
+    console.log('🏨 ============================================');
 
     return res.status(200).json({
       success: true,
@@ -460,7 +463,7 @@ app.get('/hotel-bookings/customer/:customerId', async (req, res) => {
       message: 'Hotel bookings retrieved successfully'
     });
   } catch (err) {
-    console.error('Error fetching hotel bookings:', err);
+    console.error('❌ Error fetching hotel bookings:', err.message);
     return res.status(500).json({
       success: false,
       message: 'Error fetching hotel bookings',
