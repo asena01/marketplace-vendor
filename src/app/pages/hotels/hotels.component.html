@@ -598,7 +598,7 @@
   @if (showBookingForm() && selectedHotel() && selectedRoom()) {
     @let hotel = selectedHotel();
     @let room = selectedRoom();
-    <div class="fixed inset-0 bg-black/60 z-50 flex items-start justify-center p-4 overflow-y-auto pt-4 md:pt-20">
+    <div class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-hidden">
       <!-- Identity Verification Overlay -->
       @if (showIdentityVerification()) {
         <app-identity-verification
@@ -607,7 +607,7 @@
         ></app-identity-verification>
       }
 
-      <div class="bg-white rounded-lg max-w-3xl w-full shadow-2xl" [class.opacity-50]="showIdentityVerification()">
+      <div class="bg-white rounded-lg max-w-3xl w-full shadow-2xl max-h-[90vh] overflow-y-auto" [class.opacity-50]="showIdentityVerification()">
         <!-- Header -->
         <div class="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white p-6 border-b border-emerald-800">
           <div class="flex items-center justify-between">
