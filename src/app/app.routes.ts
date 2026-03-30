@@ -46,6 +46,8 @@ import { HotelProfileComponent } from './pages/vendors/dashboards/hotel-dashboar
 import { HotelFoodOrdersComponent } from './pages/vendors/dashboards/hotel-dashboard/food-orders/food-orders.component';
 import { HotelFoodMenuComponent } from './pages/vendors/dashboards/hotel-dashboard/food-menu/food-menu.component';
 import { HotelFoodDeliveryComponent } from './pages/vendors/dashboards/hotel-dashboard/food-delivery/food-delivery.component';
+import { HotelDrinkOrdersComponent } from './pages/vendors/dashboards/hotel-dashboard/drink-orders/drink-orders.component';
+import { HotelDrinkMenuComponent } from './pages/vendors/dashboards/hotel-dashboard/drink-menu/drink-menu.component';
 import { RestaurantMenuComponent } from './pages/vendors/dashboards/restaurant-dashboard/menu/menu.component';
 import { RestaurantOrdersComponent } from './pages/vendors/dashboards/restaurant-dashboard/orders/orders.component';
 import { DeliveryOrdersComponent } from './pages/vendors/dashboards/restaurant-dashboard/delivery-orders/delivery-orders.component';
@@ -112,6 +114,8 @@ export const routes: Routes = [
       { path: 'food-orders', component: HotelFoodOrdersComponent },
       { path: 'food-menu', component: HotelFoodMenuComponent },
       { path: 'food-delivery', component: HotelFoodDeliveryComponent },
+      { path: 'drink-orders', component: HotelDrinkOrdersComponent },
+      { path: 'drink-menu', component: HotelDrinkMenuComponent },
       { path: 'notifications', component: HotelNotificationsComponent },
       { path: 'reviews', component: HotelReviewsComponent },
       { path: 'incidents', component: IncidentManagementComponent },
