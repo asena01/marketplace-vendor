@@ -751,7 +751,8 @@
             </div>
           </div>
 
-          <!-- Payment Method Selection -->
+          <!-- Payment Method Selection - ONLY FOR TRADITIONAL BOOKINGS -->
+          @if (!isSelectedHotelContactless()) {
           <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h3 class="font-bold text-gray-900 mb-4">Payment Method</h3>
             <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
@@ -910,15 +911,26 @@
           </div>
 
           <!-- Payment Error & Success Messages -->
-          @if (paymentError()) {
-            <div class="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg text-sm">
-              ❌ {{ paymentError() }}
-            </div>
           }
 
-          @if (paymentSuccess()) {
-            <div class="bg-green-50 border border-green-300 text-green-700 px-4 py-3 rounded-lg text-sm">
-              ✅ Payment approved! Processing your booking...
+          @if (!isSelectedHotelContactless()) {
+            @if (paymentError()) {
+              <div class="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg text-sm">
+                ❌ {{ paymentError() }}
+              </div>
+            }
+
+            @if (paymentSuccess()) {
+              <div class="bg-green-50 border border-green-300 text-green-700 px-4 py-3 rounded-lg text-sm">
+                ✅ Payment approved! Processing your booking...
+              </div>
+            }
+          }
+
+          <!-- Contactless Check-In Info -->
+          @if (isSelectedHotelContactless()) {
+            <div class="bg-blue-50 border border-blue-300 text-blue-700 px-4 py-3 rounded-lg text-sm">
+              🔐 <strong>Contactless Check-In Available!</strong> No payment method needed - verify your identity to receive your smart lock access code instantly.
             </div>
           }
 
