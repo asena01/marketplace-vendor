@@ -807,37 +807,50 @@ export class HotelsComponent implements OnInit {
 
     // If hotel has contactless check-in enabled, show identity verification
     if (contactlessEnabled) {
-      console.log('✅ Hotel HAS contactless check-in enabled - showing identity verification');
+      console.log('✅ CONTACTLESS: Hotel HAS contactless check-in enabled');
+      console.log('🔐 Showing identity verification component');
       this.hotelAutoConfirmationEnabled.set(true);
       this.showIdentityVerification.set(true);
+      console.log('🔐 Identity verification signal set to:', this.showIdentityVerification());
     } else {
-      console.log('❌ Hotel DOES NOT have contactless check-in - using traditional flow');
+      console.log('❌ TRADITIONAL: Hotel DOES NOT have contactless check-in');
       // Traditional flow requires payment method
-      if (!this.selectedPaymentMethod()) {
+      const paymentMethod = this.selectedPaymentMethod();
+      console.log('💳 Selected payment method:', paymentMethod);
+
+      if (!paymentMethod) {
+        console.log('⚠️ No payment method selected - cannot proceed');
         this.bookingError.set('Please select a payment method');
         return;
       }
-      console.log('📋 Traditional booking flow - payment method selected');
+
+      console.log('✅ Payment method confirmed - proceeding with traditional booking');
       this.hotelAutoConfirmationEnabled.set(false);
       this.completeBookingFlow(null);
     }
   }
 
   onIdentityVerified(verification: any): void {
-    console.log('✅ Identity verified, completing booking with auto-confirmation:', verification);
+    console.log('🔐 ✅ IDENTITY VERIFIED - Callback triggered');
+    console.log('🆔 Verification data received:', verification);
     this.showIdentityVerification.set(false);
+    console.log('✅ Identity verification modal hidden');
 
     // Complete booking with smart lock access
+    console.log('🔐 Calling completeBookingFlow with verification data');
     this.completeBookingFlow(verification);
   }
 
   onIdentityVerificationCancelled(): void {
-    console.log('❌ Identity verification cancelled - returning to booking form');
+    console.log('🔐 ❌ IDENTITY VERIFICATION CANCELLED - Callback triggered');
     this.showIdentityVerification.set(false);
     this.bookingError.set('Identity verification cancelled. Please try again.');
   }
 
   completeBookingFlow(identityVerification: any): void {
+    console.log('📋 completeBookingFlow called');
+    console.log('🔐 Identity Verification provided?', !!identityVerification);
+
     this.isLoadingBooking.set(true);
     this.bookingError.set('');
 
@@ -854,8 +867,13 @@ export class HotelsComponent implements OnInit {
       customerPhone: this.customerPhone()
     };
 
+    console.log('📊 Booking data:', booking);
+
     // If identity verification is provided, use auto-confirmation flow
     if (identityVerification) {
+      console.log('🔐 Using CONTACTLESS auto-confirmation flow');
+      console.log('🆔 Verification data:', identityVerification);
+
       this.hotelService.createBookingWithAutoConfirmation(booking, identityVerification).subscribe({
         next: (response: any) => {
           console.log('✅ Booking created with auto-confirmation:', response.data);
@@ -877,6 +895,7 @@ export class HotelsComponent implements OnInit {
       });
     } else {
       // Traditional booking flow
+      console.log('📋 Using TRADITIONAL booking flow (no identity verification)');
       setTimeout(() => {
         console.log('Booking submitted:', booking);
         this.bookingSuccess.set(true);
