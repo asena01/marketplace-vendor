@@ -43,9 +43,15 @@ const getAllBookings = async (req, res) => {
     const { hotelId } = req.params;
     const { status, paymentStatus, page = 1, limit = 10 } = req.query;
 
+    console.log('📋 ========== GET HOTEL BOOKINGS ==========');
+    console.log('🏨 Hotel ID:', hotelId);
+    console.log('🔍 Query params:', { status, paymentStatus, page, limit });
+
     let filter = { hotel: hotelId };
     if (status) filter.status = status;
     if (paymentStatus) filter.paymentStatus = paymentStatus;
+
+    console.log('🔎 Filter object:', filter);
 
     const skip = (page - 1) * limit;
     const bookings = await Booking.find(filter)
@@ -55,6 +61,8 @@ const getAllBookings = async (req, res) => {
       .limit(limit * 1)
       .skip(skip)
       .sort({ checkInDate: -1 });
+
+    console.log('✅ Found', bookings.length, 'bookings matching filter');
 
     const total = await Booking.countDocuments(filter);
 
@@ -124,8 +132,13 @@ const createBooking = async (req, res) => {
     });
 
     console.log('💾 Saving booking to database...');
+    console.log('📝 Full booking object before save:', booking.toObject());
     await booking.save();
-    console.log('✅ Booking saved successfully:', booking._id);
+    console.log('✅ BOOKING SAVED SUCCESSFULLY!');
+    console.log('📌 Booking ID:', booking._id);
+    console.log('👤 Guest ID:', booking.guest);
+    console.log('🏨 Hotel ID:', booking.hotel);
+    console.log('🛏️  Room ID:', booking.room);
 
     await booking.populate("hotel", "name");
     await booking.populate("guest", "name email phone");

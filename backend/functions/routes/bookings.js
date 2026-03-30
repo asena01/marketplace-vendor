@@ -23,9 +23,11 @@ router.post('/auto-confirm', async (req, res) => {
     const { hotelId } = req.params;
     const { booking, identity } = req.body;
 
-    console.log('🔐 Creating booking with auto-confirmation...');
+    console.log('🔐 ========== CONTACTLESS BOOKING ==========');
+    console.log('🏨 Hotel ID from params:', hotelId);
     console.log('📊 Booking data:', booking);
     console.log('🆔 Identity verification:', identity);
+    console.log('🔐 =========================================');
 
     // Create the booking with confirmed status and smart lock access
     const Booking = (await import('../models/Booking.js')).default;
@@ -53,9 +55,16 @@ router.post('/auto-confirm', async (req, res) => {
     };
 
     console.log('💾 Creating booking with smart lock access...');
+    console.log('📝 Final booking data to be saved:', JSON.stringify(bookingData, null, 2));
+
     const newBooking = new Booking(bookingData);
     await newBooking.save();
-    console.log('✅ Contactless booking created:', newBooking._id);
+
+    console.log('✅ CONTACTLESS BOOKING CREATED SUCCESSFULLY!');
+    console.log('📌 Booking ID:', newBooking._id);
+    console.log('👤 Guest ID:', newBooking.guest);
+    console.log('🏨 Hotel ID:', newBooking.hotel);
+    console.log('🛏️  Room ID:', newBooking.room);
 
     await newBooking.populate('hotel', 'name');
     await newBooking.populate('guest', 'name email phone');
