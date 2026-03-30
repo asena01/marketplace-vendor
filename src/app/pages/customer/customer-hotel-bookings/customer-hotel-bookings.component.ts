@@ -2,6 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { CustomerService } from '../../../services/customer.service';
+import { HotelService } from '../../../services/hotel.service';
 
 interface HotelBooking {
   _id: string;
@@ -213,7 +214,10 @@ export class CustomerHotelBookingsComponent implements OnInit {
   selectedItems = signal<string[]>([]);
   showRoomServiceModal = signal(false);
 
-  constructor(private customerService: CustomerService) {}
+  constructor(
+    private customerService: CustomerService,
+    private hotelService: HotelService
+  ) {}
 
   ngOnInit(): void {
     this.loadBookings();
@@ -224,15 +228,39 @@ export class CustomerHotelBookingsComponent implements OnInit {
     this.customerService.getMyHotelBookings().subscribe(
       (response: any) => {
         console.log('📡 Hotel bookings response:', response);
+        let bookingsData = [];
+
         if (response.success && response.data) {
-          console.log('✅ Found', response.data.length, 'bookings');
-          this.bookings.set(response.data);
+          bookingsData = response.data;
         } else if (response.data && Array.isArray(response.data)) {
-          console.log('✅ Found', response.data.length, 'bookings (no success flag)');
-          this.bookings.set(response.data);
+          bookingsData = response.data;
         } else {
           console.warn('⚠️ Unexpected response format:', response);
+          return;
         }
+
+        // Transform backend data to match HotelBooking interface
+        const transformedBookings = bookingsData.map((booking: any) => {
+          console.log('📝 Transforming booking:', booking);
+          return {
+            _id: booking._id,
+            hotelName: booking.hotel?.name || booking.hotelName || 'Unknown Hotel',
+            roomType: booking.room?.roomType || booking.roomType || 'Unknown Room',
+            checkIn: booking.checkInDate || booking.checkIn,
+            checkOut: booking.checkOutDate || booking.checkOut,
+            nights: booking.numberOfNights || Math.ceil(
+              (new Date(booking.checkOutDate || booking.checkOut).getTime() -
+               new Date(booking.checkInDate || booking.checkIn).getTime()) / (1000 * 60 * 60 * 24)
+            ),
+            totalPrice: booking.totalPrice,
+            status: booking.status,
+            roomServiceOrders: booking.roomServiceOrders
+          };
+        });
+
+        console.log('✅ Found', transformedBookings.length, 'bookings');
+        console.log('📊 Transformed bookings:', transformedBookings);
+        this.bookings.set(transformedBookings);
       },
       (error) => {
         console.error('❌ Error loading hotel bookings:', error);
@@ -303,42 +331,73 @@ export class CustomerHotelBookingsComponent implements OnInit {
   }
 
   loadRoomServiceItems(bookingId: string): void {
-    // TODO: Load room service items from hotel associated with booking
-    // For now, using mock data
-    this.roomServiceItems.set([
-      {
-        _id: '1',
-        name: 'Burger & Fries',
-        category: 'Food',
-        price: 2500,
-        description: 'Delicious cheese burger with crispy fries',
-        available: true
+    console.log('🍽️ Loading room service items for booking:', bookingId);
+
+    this.hotelService.getRoomServiceItems(1, 50).subscribe({
+      next: (response: any) => {
+        console.log('📡 Room service items response:', response);
+
+        let items = [];
+        if (response.data && Array.isArray(response.data)) {
+          items = response.data;
+        } else if (response.status === 'success' && response.data) {
+          items = Array.isArray(response.data) ? response.data : [response.data];
+        }
+
+        console.log('✅ Loaded', items.length, 'room service items');
+
+        // Transform items to match RoomServiceItem interface
+        const transformedItems = items.map((item: any) => ({
+          _id: item._id || item.id,
+          name: item.name,
+          category: item.category,
+          price: item.price,
+          description: item.description,
+          available: item.available !== false // Default to true if not specified
+        }));
+
+        this.roomServiceItems.set(transformedItems);
       },
-      {
-        _id: '2',
-        name: 'Pizza Margherita',
-        category: 'Food',
-        price: 3500,
-        description: 'Classic Italian pizza',
-        available: true
-      },
-      {
-        _id: '3',
-        name: 'Soft Drink',
-        category: 'Drinks',
-        price: 800,
-        description: 'Coca-Cola, Sprite, or Fanta',
-        available: true
-      },
-      {
-        _id: '4',
-        name: 'Fruit Juice',
-        category: 'Drinks',
-        price: 1200,
-        description: 'Fresh orange or pineapple juice',
-        available: true
+      error: (error: any) => {
+        console.error('❌ Error loading room service items:', error);
+        // Fall back to mock data on error
+        console.log('📦 Using fallback mock data');
+        this.roomServiceItems.set([
+          {
+            _id: '1',
+            name: 'Burger & Fries',
+            category: 'Food',
+            price: 2500,
+            description: 'Delicious cheese burger with crispy fries',
+            available: true
+          },
+          {
+            _id: '2',
+            name: 'Pizza Margherita',
+            category: 'Food',
+            price: 3500,
+            description: 'Classic Italian pizza',
+            available: true
+          },
+          {
+            _id: '3',
+            name: 'Soft Drink',
+            category: 'Drinks',
+            price: 800,
+            description: 'Coca-Cola, Sprite, or Fanta',
+            available: true
+          },
+          {
+            _id: '4',
+            name: 'Fruit Juice',
+            category: 'Drinks',
+            price: 1200,
+            description: 'Fresh orange or pineapple juice',
+            available: true
+          }
+        ]);
       }
-    ]);
+    });
   }
 
   selectItem(item: RoomServiceItem): void {
