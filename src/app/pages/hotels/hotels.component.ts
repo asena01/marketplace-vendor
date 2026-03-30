@@ -790,16 +790,25 @@ export class HotelsComponent implements OnInit {
 
     // IMPORTANT: Check hotel's contactless check-in FIRST (before payment requirement)
     const hotel = this.selectedHotel();
+
+    // Debug: Log entire hotel object to see what fields are being returned
+    console.log('🏨 Full hotel object:', hotel);
+    console.log('📊 Hotel properties:', Object.keys(hotel || {}));
+
     const contactlessEnabled = (hotel as any)?.contactlessCheckInEnabled === true;
 
-    console.log(`🔍 Checking hotel: ${hotel?.name} - Contactless: ${contactlessEnabled}`);
+    console.log(`🔍 Hotel: ${hotel?.name}`);
+    console.log(`🔍 contactlessCheckInEnabled field value:`, (hotel as any)?.contactlessCheckInEnabled);
+    console.log(`🔍 Type: ${typeof (hotel as any)?.contactlessCheckInEnabled}`);
+    console.log(`🔍 Is TRUE? ${contactlessEnabled}`);
 
     // If hotel has contactless check-in enabled, show identity verification
     if (contactlessEnabled) {
-      console.log('✅ Hotel has contactless check-in enabled - showing identity verification');
+      console.log('✅ Hotel HAS contactless check-in enabled - showing identity verification');
       this.hotelAutoConfirmationEnabled.set(true);
       this.showIdentityVerification.set(true);
     } else {
+      console.log('❌ Hotel DOES NOT have contactless check-in - using traditional flow');
       // Traditional flow requires payment method
       if (!this.selectedPaymentMethod()) {
         this.bookingError.set('Please select a payment method');
