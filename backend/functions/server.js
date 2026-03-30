@@ -438,6 +438,36 @@ app.use('/api/delivery', deliveryRoutesOld);
 app.use('/hotels', hotelRoutes);
 app.use('/hotels/:hotelId/rooms', roomRoutes);
 app.use('/hotels/:hotelId/bookings', bookingRoutes);
+
+// Customer Hotel Bookings Routes (for customers to view their bookings)
+app.get('/hotel-bookings/customer/:customerId', async (req, res) => {
+  try {
+    const { customerId } = req.params;
+    const Booking = require('./models/Booking.js').default;
+
+    console.log('📝 Fetching bookings for customer:', customerId);
+
+    const bookings = await Booking.find({ guest: customerId })
+      .populate('hotel', 'name location address')
+      .populate('room', 'roomType bedType amenities')
+      .sort({ createdAt: -1 });
+
+    console.log('✅ Found', bookings.length, 'bookings for customer:', customerId);
+
+    return res.status(200).json({
+      success: true,
+      data: bookings,
+      message: 'Hotel bookings retrieved successfully'
+    });
+  } catch (err) {
+    console.error('Error fetching hotel bookings:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Error fetching hotel bookings',
+      error: err.message
+    });
+  }
+});
 app.use('/hotels/:hotelId/staff', staffRoutes);
 app.use('/hotels/:hotelId/maintenance', maintenanceRoutes);
 app.use('/hotels/:hotelId/invoices', invoiceRoutes);

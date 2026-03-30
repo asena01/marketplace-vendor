@@ -177,9 +177,19 @@ export class HotelService {
   }
 
   createBooking(bookingData: any): Observable<ApiResponse<any>> {
+    // Add customer ID to booking data
+    const user = this.authService.getCurrentUser();
+    const enrichedBookingData = {
+      ...bookingData,
+      customerId: user?._id,
+      customerEmail: user?.email
+    };
+
+    console.log('📝 Creating booking with enriched data:', enrichedBookingData);
+
     return this.http.post<ApiResponse<any>>(
       `${API_URL}/hotels/${this.hotelId}/bookings`,
-      bookingData
+      enrichedBookingData
     );
   }
 
@@ -1257,10 +1267,20 @@ export class HotelService {
    * This handles the complete flow: create booking -> verify identity -> generate smart lock access
    */
   createBookingWithAutoConfirmation(bookingData: any, identityVerification: any): Observable<ApiResponse<any>> {
+    // Add customer ID to booking data
+    const user = this.authService.getCurrentUser();
+    const enrichedBookingData = {
+      ...bookingData,
+      customerId: user?._id,
+      customerEmail: user?.email
+    };
+
+    console.log('📝 Creating contactless booking with enriched data:', enrichedBookingData);
+
     return this.http.post<ApiResponse<any>>(
       `${API_URL}/hotels/${this.hotelId}/bookings/auto-confirm`,
       {
-        booking: bookingData,
+        booking: enrichedBookingData,
         identity: identityVerification
       }
     ).pipe(

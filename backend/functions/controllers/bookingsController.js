@@ -95,20 +95,27 @@ const getBookingById = async (req, res) => {
 const createBooking = async (req, res) => {
   try {
     const { hotelId } = req.params;
-    const { guest, room, checkInDate, checkOutDate, numberOfGuests, roomRate, ...rest } = req.body;
+    // Accept both 'guest' (vendor input) and 'customerId' (customer input) for backward compatibility
+    const { guest, customerId, room, roomId, checkInDate, checkOutDate, numberOfGuests, roomRate, hotelId: bodyHotelId, ...rest } = req.body;
 
-    if (!guest || !room || !checkInDate || !checkOutDate) {
-      return res.status(400).json({ status: "failed", message: "Missing required fields" });
+    const guestId = guest || customerId;
+    const roomId_ = room || roomId;
+    const hId = hotelId || bodyHotelId;
+
+    console.log('📝 Creating booking with:', { guestId, roomId: roomId_, hotelId: hId });
+
+    if (!guestId || !roomId_ || !checkInDate || !checkOutDate) {
+      return res.status(400).json({ status: "failed", message: "Missing required fields: guest/customerId, room/roomId, checkInDate, checkOutDate" });
     }
 
     // Generate booking number
     const bookingNumber = "BK-" + Date.now().toString().slice(-10);
 
     const booking = new Booking({
-      hotel: hotelId,
+      hotel: hId,
       bookingNumber,
-      guest,
-      room,
+      guest: guestId,
+      room: roomId_,
       checkInDate,
       checkOutDate,
       numberOfGuests,
@@ -116,7 +123,10 @@ const createBooking = async (req, res) => {
       ...rest
     });
 
+    console.log('💾 Saving booking to database...');
     await booking.save();
+    console.log('✅ Booking saved successfully:', booking._id);
+
     await booking.populate("hotel", "name");
     await booking.populate("guest", "name email phone");
     await booking.populate("room", "roomNumber roomType");
