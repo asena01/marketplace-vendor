@@ -220,14 +220,24 @@ export class CustomerHotelBookingsComponent implements OnInit {
   }
 
   loadBookings(): void {
+    console.log('🏨 Loading hotel bookings...');
     this.customerService.getMyHotelBookings().subscribe(
       (response: any) => {
+        console.log('📡 Hotel bookings response:', response);
         if (response.success && response.data) {
+          console.log('✅ Found', response.data.length, 'bookings');
           this.bookings.set(response.data);
+        } else if (response.data && Array.isArray(response.data)) {
+          console.log('✅ Found', response.data.length, 'bookings (no success flag)');
+          this.bookings.set(response.data);
+        } else {
+          console.warn('⚠️ Unexpected response format:', response);
         }
       },
       (error) => {
-        console.error('Error loading hotel bookings:', error);
+        console.error('❌ Error loading hotel bookings:', error);
+        console.error('Status:', error.status);
+        console.error('Message:', error.message);
       }
     );
   }

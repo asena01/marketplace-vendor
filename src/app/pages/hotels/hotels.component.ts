@@ -939,6 +939,7 @@ export class HotelsComponent implements OnInit {
 
       this.hotelService.createBooking(booking).subscribe({
         next: (response: any) => {
+          console.log('✅ Booking API response:', response);
           console.log('✅ Booking created successfully:', response.data);
           this.bookingSuccess.set(true);
 
@@ -951,8 +952,11 @@ export class HotelsComponent implements OnInit {
           this.isLoadingBooking.set(false);
         },
         error: (error: any) => {
-          console.error('Error creating booking:', error);
-          this.bookingError.set('Failed to complete booking. Please try again.');
+          console.error('❌ Booking API Error:', error);
+          console.error('Status:', error.status);
+          console.error('Message:', error.message);
+          console.error('Response:', error.error);
+          this.bookingError.set(`Failed to complete booking: ${error.error?.message || error.message}`);
           this.isLoadingBooking.set(false);
         }
       });
