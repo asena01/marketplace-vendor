@@ -286,6 +286,8 @@ export class HotelsComponent implements OnInit {
             description: hotel.description || '',
             imageUrl: hotel.imageUrl || hotel.image || '',
             thumbnail: hotel.thumbnail || '',
+            // CRITICAL: Include contactlessCheckInEnabled from API response
+            contactlessCheckInEnabled: hotel.contactlessCheckInEnabled === true,
             // Convert image URLs to array
             images: hotel.images && hotel.images.length > 0
               ? hotel.images.map((img: any) => typeof img === 'string'
@@ -677,7 +679,18 @@ export class HotelsComponent implements OnInit {
 
   isSelectedHotelContactless(): boolean {
     const hotel = this.selectedHotel();
-    return (hotel as any)?.contactlessCheckInEnabled === true;
+    const contactlessEnabled = (hotel as any)?.contactlessCheckInEnabled === true;
+
+    // Debug logging
+    if (hotel) {
+      console.log('🔍 isSelectedHotelContactless check:');
+      console.log('  Hotel:', hotel.name);
+      console.log('  contactlessCheckInEnabled value:', (hotel as any)?.contactlessCheckInEnabled);
+      console.log('  Type:', typeof (hotel as any)?.contactlessCheckInEnabled);
+      console.log('  === true?', contactlessEnabled);
+    }
+
+    return contactlessEnabled;
   }
 
   toggleFavorite(hotelId: string): void {
