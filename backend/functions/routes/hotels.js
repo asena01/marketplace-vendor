@@ -87,7 +87,6 @@ router.get('/public/search', async (req, res) => {
           ...hotel.toObject(),
           id: hotel._id,
           reviews: hotel.reviewsCount || 0,
-          images: hotel.photos && hotel.photos.length > 0 ? hotel.photos : [hotel.thumbnail].filter(Boolean),
           icon: '🏨',
           price,
           rooms: rooms.map(room => ({

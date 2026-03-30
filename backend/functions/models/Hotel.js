@@ -132,7 +132,6 @@ const HotelSchema = new Schema({
     default: true
   },
   logo: String,
-  images: [String],
   createdAt: {
     type: Date,
     default: Date.now

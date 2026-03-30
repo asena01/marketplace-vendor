@@ -93,12 +93,12 @@ import { AngularFireUploadService } from '../../../../../services/angular-fire-u
                 [(ngModel)]="formData.starRating"
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600"
               >
-                <option value="">Select rating</option>
-                <option value="1">1 Star</option>
-                <option value="2">2 Stars</option>
-                <option value="3">3 Stars</option>
-                <option value="4">4 Stars</option>
-                <option value="5">5 Stars</option>
+                <option [value]="0">Select rating</option>
+                <option [value]="1">1 Star</option>
+                <option [value]="2">2 Stars</option>
+                <option [value]="3">3 Stars</option>
+                <option [value]="4">4 Stars</option>
+                <option [value]="5">5 Stars</option>
               </select>
             </div>
 
@@ -107,6 +107,8 @@ import { AngularFireUploadService } from '../../../../../services/angular-fire-u
               <input
                 type="number"
                 [(ngModel)]="formData.totalRooms"
+                [value]="formData.totalRooms || 0"
+                (change)="formData.totalRooms = +formData.totalRooms"
                 placeholder="Number of rooms"
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600"
               />
@@ -690,6 +692,7 @@ export class HotelProfileComponent implements OnInit {
   private uploadAbortController: AbortController | null = null;
 
   formData: any = {
+    _id: '',
     name: '',
     description: '',
     address: '',
@@ -702,11 +705,13 @@ export class HotelProfileComponent implements OnInit {
     website: '',
     totalRooms: 0,
     type: 'Hotel',
-    starRating: '',
+    starRating: 0, // Changed from '' to 0 (Number, 1-5)
     distanceToCenterKm: 0,
     amenities: [],
     thumbnail: '',
     photos: [],
+    images: [], // Added to match backend model
+    basePrice: 0, // Added (calculated from rooms, but needed in form)
     freeCancellation: false,
     breakfastIncluded: false,
     checkInTime: '14:00',
@@ -718,10 +723,11 @@ export class HotelProfileComponent implements OnInit {
     },
     // Smart Lock & Contactless Check-In
     contactlessCheckInEnabled: false,
-    subscriptionPlan: 'basic',
-    billingDuration: 'monthly',
-    paymentStatus: 'pending',
-    paymentMethod: 'credit_card',
+    // Subscription & Billing
+    subscriptionPlan: 'basic', // enum: 'basic', 'professional', 'enterprise'
+    billingDuration: 'monthly', // enum: 'monthly', 'quarterly', 'annual'
+    paymentStatus: 'pending', // enum: 'pending', 'completed', 'failed'
+    paymentMethod: 'credit_card', // enum: 'credit_card', 'paypal', 'bank_transfer'
     isActive: true,
     logo: ''
   };
@@ -770,9 +776,21 @@ export class HotelProfileComponent implements OnInit {
         clearTimeout(timeout);
         console.log('✅ Hotel details response:', response);
         if (response.status === 'success' && response.data) {
-          this.formData = { ...response.data };
+          this.formData = {
+            ...this.formData,
+            ...response.data
+          };
+          // Ensure _id is set from the response
+          this.formData._id = response.data._id || this.formData._id;
+
+          // Ensure numeric fields are proper types
+          this.formData.totalRooms = Number(this.formData.totalRooms) || 0;
+          this.formData.starRating = Number(this.formData.starRating) || 0;
+          this.formData.distanceToCenterKm = Number(this.formData.distanceToCenterKm) || 0;
+          this.formData.basePrice = Number(this.formData.basePrice) || 0;
+
           this.amenitiesText = (this.formData.amenities || []).join(', ');
-          console.log('✅ Profile loaded successfully');
+          console.log('✅ Profile loaded successfully', { id: this.formData._id });
           this.errorMessage.set('');
         } else {
           console.warn('⚠️ Response not successful or no data:', response);
@@ -819,6 +837,40 @@ export class HotelProfileComponent implements OnInit {
       .split(',')
       .map((a: string) => a.trim())
       .filter((a: string) => a.length > 0);
+
+    // Ensure numeric fields are numbers
+    this.formData.totalRooms = Number(this.formData.totalRooms) || 0;
+    this.formData.starRating = Number(this.formData.starRating) || 0;
+    this.formData.distanceToCenterKm = Number(this.formData.distanceToCenterKm) || 0;
+    this.formData.basePrice = Number(this.formData.basePrice) || 0;
+
+    // Sync images field from photos (for backend compatibility)
+    // Backend model expects both photos and images - use photos as the primary source
+    if (this.formData.photos && this.formData.photos.length > 0) {
+      this.formData.images = this.formData.photos;
+    }
+
+    // Validate enum fields
+    const validSubscriptionPlans = ['basic', 'professional', 'enterprise'];
+    const validBillingDurations = ['monthly', 'quarterly', 'annual'];
+    const validPaymentMethods = ['credit_card', 'paypal', 'bank_transfer'];
+    const validPaymentStatuses = ['pending', 'completed', 'failed'];
+
+    if (!validSubscriptionPlans.includes(this.formData.subscriptionPlan)) {
+      this.formData.subscriptionPlan = 'basic';
+    }
+
+    if (!validBillingDurations.includes(this.formData.billingDuration)) {
+      this.formData.billingDuration = 'monthly';
+    }
+
+    if (!validPaymentMethods.includes(this.formData.paymentMethod)) {
+      this.formData.paymentMethod = 'credit_card';
+    }
+
+    if (!validPaymentStatuses.includes(this.formData.paymentStatus)) {
+      this.formData.paymentStatus = 'pending';
+    }
 
     this.isSaving.set(true);
     this.errorMessage.set('');
