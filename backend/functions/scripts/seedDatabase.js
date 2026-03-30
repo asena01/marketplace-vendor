@@ -21,7 +21,7 @@ import ServiceBooking from '../models/ServiceBooking.js';
 import Delivery from '../models/Delivery.js';
 import Order from '../models/Order.js';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/markethub';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://fingecsmarthotels:WhqTOg0rGPib0FvE@cluster0.nfxzw.mongodb.net/test';
 
 const seedDatabase = async () => {
   try {
@@ -396,47 +396,12 @@ const seedDatabase = async () => {
     const menuItems = await RoomServiceMenuItem.insertMany(menuItemsData);
     console.log('✅ Created', menuItems.length, 'room service menu items');
 
-    // Create sample menus
-    console.log('📋 Creating sample menus...');
-    const menusData = [
-      {
-        hotel: hotel._id,
-        name: 'Breakfast Deluxe',
-        type: 'breakfast',
-        description: 'Our special breakfast menu with fresh pastries and beverages',
-        dishes: [
-          { id: '1', name: 'French Toast', price: 15.99 },
-          { id: '2', name: 'Pancakes', price: 12.99 },
-          { id: '3', name: 'Orange Juice', price: 5.99 }
-        ],
-        isActive: true
-      },
-      {
-        hotel: hotel._id,
-        name: 'Lunch Specials',
-        type: 'lunch',
-        description: 'Delicious lunch options',
-        dishes: [
-          { id: '1', name: 'Grilled Salmon', price: 28.99 },
-          { id: '2', name: 'Caesar Salad', price: 12.99 }
-        ],
-        isActive: true
-      },
-      {
-        hotel: hotel._id,
-        name: 'Fine Dining Dinner',
-        type: 'dinner',
-        description: 'Elegant dinner selections',
-        dishes: [
-          { id: '1', name: 'Ribeye Steak', price: 45.99 },
-          { id: '2', name: 'Lobster Tail', price: 52.99 }
-        ],
-        isActive: true
-      }
-    ];
-
-    const menus = await Menu.insertMany(menusData);
-    console.log('✅ Created', menus.length, 'menus');
+    // Create sample menus (skipped - requires restaurant reference)
+    console.log('📋 Skipping sample menus (requires restaurant reference)...');
+    const menus = [];
+    // const menusData = [...];
+    // const menus = await Menu.insertMany(menusData);
+    // console.log('✅ Created', menus.length, 'menus');
 
     // Create sample food orders
     console.log('🍴 Creating sample food orders...');
@@ -1046,9 +1011,10 @@ const seedDatabase = async () => {
     // Create sample shopping orders for the first customer
     console.log('🛍️  Creating sample shopping orders...');
     const customer = guests[0]; // John Doe
+    const timestamp = Date.now();
     const shoppingOrders = await Order.insertMany([
       {
-        orderId: `ORD-${Date.now()}-001`,
+        orderId: `ORD-${timestamp}-001`,
         userId: customer._id,
         userEmail: customer.email,
         customerName: customer.name,
@@ -1070,10 +1036,11 @@ const seedDatabase = async () => {
         paymentStatus: 'completed',
         paymentMethod: 'card',
         status: 'delivered',
+        trackingNumber: `TRK-${timestamp}-001`,
         createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // 7 days ago
       },
       {
-        orderId: `ORD-${Date.now()}-002`,
+        orderId: `ORD-${timestamp}-002`,
         userId: customer._id,
         userEmail: customer.email,
         customerName: customer.name,
@@ -1103,10 +1070,11 @@ const seedDatabase = async () => {
         paymentStatus: 'completed',
         paymentMethod: 'card',
         status: 'shipped',
+        trackingNumber: `TRK-${timestamp}-002`,
         createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) // 3 days ago
       },
       {
-        orderId: `ORD-${Date.now()}-003`,
+        orderId: `ORD-${timestamp}-003`,
         userId: customer._id,
         userEmail: customer.email,
         customerName: customer.name,
@@ -1128,6 +1096,7 @@ const seedDatabase = async () => {
         paymentStatus: 'completed',
         paymentMethod: 'card',
         status: 'processing',
+        trackingNumber: `TRK-${timestamp}-003`,
         createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) // 1 day ago
       }
     ]);
