@@ -347,12 +347,24 @@ export class HotelDrinkOrdersComponent implements OnInit {
   updateStatus(order: DrinkOrder, newStatus: string): void {
     if (!order._id) return;
 
-    const updatedOrders = this.drinkOrders().map(o =>
-      o._id === order._id ? { ...o, status: newStatus as any } : o
-    );
-    this.drinkOrders.set(updatedOrders);
-    this.filterOrders();
-    console.log('✅ Order status updated to:', newStatus);
+    // Call backend API to update the status
+    this.hotelService.updateFoodOrderStatus(order._id, newStatus).subscribe({
+      next: (response: any) => {
+        if (response.status === 'success') {
+          // Update local drink order after successful backend update
+          const updatedOrders = this.drinkOrders().map(o =>
+            o._id === order._id ? { ...o, status: newStatus as any } : o
+          );
+          this.drinkOrders.set(updatedOrders);
+          this.filterOrders();
+          console.log('✅ Drink order status updated to:', newStatus);
+        }
+      },
+      error: (error: any) => {
+        console.error('Error updating drink order status:', error);
+        this.errorMessage.set('Failed to update drink order status');
+      }
+    });
   }
 
   refreshOrders(): void {
