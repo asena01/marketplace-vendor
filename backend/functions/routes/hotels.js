@@ -83,19 +83,17 @@ router.get('/public/search', async (req, res) => {
           price = minPrice;
         }
 
-        // Debug: Check if contactlessCheckInEnabled is present in the hotel document
         const hotelObj = hotel.toObject();
-        console.log(`🏨 Hotel: ${hotel.name} - contactlessCheckInEnabled in DB:`, hotel.contactlessCheckInEnabled);
-        console.log(`🏨 After toObject():`, hotelObj.contactlessCheckInEnabled);
 
-        return {
+        const transformedHotel = {
           ...hotelObj,
           id: hotel._id,
           reviews: hotel.reviewsCount || 0,
           icon: '🏨',
           price,
-          // Explicitly include smart lock & contactless check-in feature
-          contactlessCheckInEnabled: hotel.contactlessCheckInEnabled === true ? true : false,
+          // CRITICAL: Ensure contactlessCheckInEnabled is always included
+          // It must come AFTER spread to override any existing value
+          contactlessCheckInEnabled: (hotel.contactlessCheckInEnabled === true),
           rooms: rooms.map(room => ({
             id: room._id,
             type: room.roomType,
@@ -110,10 +108,13 @@ router.get('/public/search', async (req, res) => {
             icon: '🛏️'
           }))
         };
+
+        console.log(`✅ ${hotel.name} - contactlessCheckInEnabled: ${transformedHotel.contactlessCheckInEnabled}`);
+        return transformedHotel;
       })
     );
 
-    console.log('✅ Transformed hotels for search:', transformedHotels.map(h => ({ name: h.name, contactlessCheckInEnabled: h.contactlessCheckInEnabled })));
+    console.log('📊 Transformed hotels:', transformedHotels.map(h => ({ name: h.name, contactlessCheckInEnabled: h.contactlessCheckInEnabled })));
 
     res.status(200).json({
       status: 'success',

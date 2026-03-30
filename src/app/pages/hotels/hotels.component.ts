@@ -792,15 +792,18 @@ export class HotelsComponent implements OnInit {
     const hotel = this.selectedHotel();
 
     // Debug: Log entire hotel object to see what fields are being returned
-    console.log('🏨 Full hotel object:', hotel);
-    console.log('📊 Hotel properties:', Object.keys(hotel || {}));
+    console.log('🏨 ============ BOOKING SUBMISSION ============');
+    console.log('🏨 Full hotel object from search:', hotel);
+    console.log('📊 Hotel properties available:', Object.keys(hotel || {}));
+    console.log('');
 
     const contactlessEnabled = (hotel as any)?.contactlessCheckInEnabled === true;
 
-    console.log(`🔍 Hotel: ${hotel?.name}`);
-    console.log(`🔍 contactlessCheckInEnabled field value:`, (hotel as any)?.contactlessCheckInEnabled);
+    console.log(`🏨 Hotel Name: ${hotel?.name}`);
+    console.log(`🔍 contactlessCheckInEnabled value: ${(hotel as any)?.contactlessCheckInEnabled}`);
     console.log(`🔍 Type: ${typeof (hotel as any)?.contactlessCheckInEnabled}`);
-    console.log(`🔍 Is TRUE? ${contactlessEnabled}`);
+    console.log(`🔍 Strict equality (=== true): ${contactlessEnabled}`);
+    console.log('🏨 ============ END DEBUG ============');
 
     // If hotel has contactless check-in enabled, show identity verification
     if (contactlessEnabled) {
