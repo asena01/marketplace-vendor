@@ -59,7 +59,7 @@ const BookingSchema = new Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['credit_card', 'debit_card', 'cash', 'bank_transfer', 'online']
+    enum: ['credit_card', 'debit_card', 'cash', 'bank_transfer', 'online', 'contactless', 'mobile_money', 'digital_wallet']
   },
   notes: String,
   smartLockAccess: {
