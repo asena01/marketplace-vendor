@@ -1,5 +1,5 @@
-import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
@@ -44,10 +44,10 @@ export class HotelService {
         this.hotelId = storedHotelId;
         console.log('📍 Using hotel ID from localStorage:', storedHotelId);
       } else {
-        // Use default from seed
-        this.hotelId = '69a72226003a6f0406e3afb1';
+        // Use default from latest seed (Grand Plaza Hotel)
+        this.hotelId = '69ca91212d20b1679740c630';
         localStorage.setItem('hotelId', this.hotelId);
-        console.log('📍 Using default hotel ID:', this.hotelId);
+        console.log('📍 Using default hotel ID from latest seed:', this.hotelId);
       }
     }
   }
@@ -177,9 +177,40 @@ export class HotelService {
   }
 
   createBooking(bookingData: any): Observable<ApiResponse<any>> {
+    // Add customer ID to booking data and map field names
+    const user = this.authService.getCurrentUser();
+
+    const enrichedBookingData = {
+      // Map frontend field names to backend expected names
+      customerId: user?._id,
+      room: bookingData.roomId,
+      checkInDate: new Date(bookingData.checkIn),
+      checkOutDate: new Date(bookingData.checkOut),
+      numberOfGuests: bookingData.guests,
+      numberOfRooms: bookingData.roomCount,
+      totalPrice: bookingData.totalPrice,
+      customerName: bookingData.customerName,
+      customerEmail: user?.email || bookingData.customerEmail,
+      customerPhone: bookingData.customerPhone,
+      status: 'confirmed',
+      paymentStatus: 'paid'
+    };
+
+    console.log('📝 Creating booking with enriched data:', enrichedBookingData);
+    console.log('🏨 Hotel ID:', this.hotelId);
+    console.log('👤 Customer ID:', user?._id);
+
     return this.http.post<ApiResponse<any>>(
       `${API_URL}/hotels/${this.hotelId}/bookings`,
-      bookingData
+      enrichedBookingData
+    ).pipe(
+      tap((response) => {
+        console.log('✅ Booking API Response:', response);
+      }),
+      catchError((error) => {
+        console.error('❌ Booking API Error:', error);
+        throw error;
+      })
     );
   }
 
@@ -1257,10 +1288,32 @@ export class HotelService {
    * This handles the complete flow: create booking -> verify identity -> generate smart lock access
    */
   createBookingWithAutoConfirmation(bookingData: any, identityVerification: any): Observable<ApiResponse<any>> {
+    // Add customer ID to booking data and map field names
+    const user = this.authService.getCurrentUser();
+
+    const enrichedBookingData = {
+      // Map frontend field names to backend expected names
+      customerId: user?._id,
+      roomId: bookingData.roomId,
+      hotelId: bookingData.hotelId,
+      checkIn: bookingData.checkIn,
+      checkOut: bookingData.checkOut,
+      guests: bookingData.guests,
+      roomCount: bookingData.roomCount,
+      totalPrice: bookingData.totalPrice,
+      customerName: bookingData.customerName,
+      customerEmail: user?.email || bookingData.customerEmail,
+      customerPhone: bookingData.customerPhone
+    };
+
+    console.log('📝 Creating contactless booking with enriched data:', enrichedBookingData);
+    console.log('🏨 Hotel ID:', this.hotelId);
+    console.log('👤 Customer ID:', user?._id);
+
     return this.http.post<ApiResponse<any>>(
       `${API_URL}/hotels/${this.hotelId}/bookings/auto-confirm`,
       {
-        booking: bookingData,
+        booking: enrichedBookingData,
         identity: identityVerification
       }
     ).pipe(

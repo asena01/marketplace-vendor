@@ -2,12 +2,14 @@ import { Component, OnInit, signal, effect, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { HeaderComponent } from '../../components/header/header.component';
 import { IdentityVerificationComponent } from '../customer/identity-verification/identity-verification.component';
 import { MARKETPLACE_SERVICES } from '../../shared/data/marketplace-data';
 import { CurrencyService } from '../../services/currency.service';
 import { PaymentService } from '../../services/payment.service';
 import { HotelService } from '../../services/hotel.service';
+import { AuthService } from '../../services/auth.service';
 import { apiConfig } from '../../config/api-config';
 
 interface Room {
@@ -157,6 +159,9 @@ export class HotelsComponent implements OnInit {
   isCheckingAutoConfirmation = signal<boolean>(false);
   reviewRating = signal<number>(0);
   reviewText = signal<string>('');
+
+  // Booking method selection
+  useContactlessCheckIn = signal<boolean>(false); // User choice for contactless
   
   // Pagination
   currentPage = signal<number>(1);
@@ -226,7 +231,9 @@ export class HotelsComponent implements OnInit {
   constructor(
     public currencyService: CurrencyService,
     public paymentService: PaymentService,
-    private hotelService: HotelService
+    private hotelService: HotelService,
+    private authService: AuthService,
+    private router: Router
   ) {
     // Prevent body scroll when modal is open
     effect(() => {
@@ -256,7 +263,31 @@ export class HotelsComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    console.log('🚀 Hotels component initialized');
+    console.log('🔌 Backend URL configured: http://localhost:5001');
+    this.checkBackendConnection();
     this.loadHotelsFromAPI();
+  }
+
+  /**
+   * Check if backend is running and accessible
+   */
+  private checkBackendConnection(): void {
+    this.hotelService.getPublicHotels(1, 1).subscribe({
+      next: () => {
+        console.log('✅ Backend is running and connected!');
+      },
+      error: (error) => {
+        console.error('❌ BACKEND CONNECTION FAILED:', error.message);
+        console.error('⚠️ The backend server is not running or not accessible on http://localhost:5001');
+        console.error('📝 To start the backend, run:');
+        console.error('   cd backend/functions && npm run dev');
+
+        if (error.status === 0) {
+          console.error('💡 This appears to be a connection refused error - backend is likely not running');
+        }
+      }
+    });
   }
 
   loadHotelsFromAPI(): void {
@@ -286,6 +317,8 @@ export class HotelsComponent implements OnInit {
             description: hotel.description || '',
             imageUrl: hotel.imageUrl || hotel.image || '',
             thumbnail: hotel.thumbnail || '',
+            // CRITICAL: Include contactlessCheckInEnabled from API response
+            contactlessCheckInEnabled: hotel.contactlessCheckInEnabled === true,
             // Convert image URLs to array
             images: hotel.images && hotel.images.length > 0
               ? hotel.images.map((img: any) => typeof img === 'string'
@@ -675,6 +708,22 @@ export class HotelsComponent implements OnInit {
     return this.expandedHotelIds().has(hotelId);
   }
 
+  isSelectedHotelContactless(): boolean {
+    const hotel = this.selectedHotel();
+    const contactlessEnabled = (hotel as any)?.contactlessCheckInEnabled === true;
+
+    // Debug logging
+    if (hotel) {
+      console.log('🔍 isSelectedHotelContactless check:');
+      console.log('  Hotel:', hotel.name);
+      console.log('  contactlessCheckInEnabled value:', (hotel as any)?.contactlessCheckInEnabled);
+      console.log('  Type:', typeof (hotel as any)?.contactlessCheckInEnabled);
+      console.log('  === true?', contactlessEnabled);
+    }
+
+    return contactlessEnabled;
+  }
+
   toggleFavorite(hotelId: string): void {
     const favs = new Set(this.favorites());
     if (favs.has(hotelId)) {
@@ -750,6 +799,27 @@ export class HotelsComponent implements OnInit {
   }
 
   selectRoom(room: Room, hotel: Hotel): void {
+    // Check if user is logged in
+    if (!this.authService.isLoggedIn()) {
+      console.log('👤 Not logged in - redirecting to login');
+      alert('Please log in first to book a room');
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    // Pre-fill customer info from logged-in user
+    const user = this.authService.getCurrentUser();
+    if (user) {
+      this.customerName.set(user.name || '');
+      this.customerEmail.set(user.email || '');
+      this.customerPhone.set(user.phone || '');
+      console.log('✅ Pre-filled customer info from logged-in user:', {
+        name: user.name,
+        email: user.email,
+        phone: user.phone
+      });
+    }
+
     this.selectedHotel.set(hotel);
     this.selectedRoom.set(room);
     this.showBookingForm.set(true);
@@ -759,6 +829,7 @@ export class HotelsComponent implements OnInit {
     this.showBookingForm.set(false);
     this.selectedHotel.set(null);
     this.selectedRoom.set(null);
+    this.useContactlessCheckIn.set(false); // Reset to traditional booking by default
     this.resetBookingForm();
   }
 
@@ -788,54 +859,67 @@ export class HotelsComponent implements OnInit {
       return;
     }
 
-    // Check if hotel has auto-confirmation enabled
-    this.checkHotelAutoConfirmation();
-  }
-
-  checkHotelAutoConfirmation(): void {
-    this.isCheckingAutoConfirmation.set(true);
-
-    // Check if the selected hotel has contactless check-in enabled
     const hotel = this.selectedHotel();
-    if (!hotel) {
-      this.completeBookingFlow(null);
-      this.isCheckingAutoConfirmation.set(false);
-      return;
-    }
+    const hotelSupportsContactless = (hotel as any)?.contactlessCheckInEnabled === true;
+    const userWantsContactless = this.useContactlessCheckIn();
 
-    // Check the contactlessCheckInEnabled property from the hotel data
-    // If hotel data includes the property, use it; otherwise fetch it
-    const contactlessEnabled = (hotel as any).contactlessCheckInEnabled || false;
-    this.hotelAutoConfirmationEnabled.set(contactlessEnabled);
+    console.log('🏨 ============ BOOKING SUBMISSION ============');
+    console.log(`🏨 Hotel: ${hotel?.name}`);
+    console.log(`🔐 Hotel supports contactless: ${hotelSupportsContactless}`);
+    console.log(`🔐 User wants contactless: ${userWantsContactless}`);
+    console.log('🏨 ============ END DEBUG ============');
 
-    console.log(`✅ Hotel: ${hotel.name} - Contactless Check-In: ${contactlessEnabled ? 'ENABLED' : 'DISABLED'}`);
-
-    if (contactlessEnabled) {
-      // Show identity verification component
+    // If hotel supports contactless AND user chose it, use contactless flow
+    if (hotelSupportsContactless && userWantsContactless) {
+      console.log('✅ CONTACTLESS: Hotel supports + User chose contactless');
+      console.log('🔐 Showing identity verification');
+      this.hotelAutoConfirmationEnabled.set(true);
       this.showIdentityVerification.set(true);
     } else {
-      // Use traditional booking flow
+      // Traditional payment flow
+      console.log('💳 TRADITIONAL: Using payment flow');
+
+      const paymentMethod = this.selectedPaymentMethod();
+      console.log('💳 Selected payment method:', paymentMethod);
+
+      if (!paymentMethod) {
+        console.log('⚠️ No payment method selected - cannot proceed');
+        this.bookingError.set('Please select a payment method');
+        return;
+      }
+
+      console.log('✅ Payment method confirmed - proceeding with booking');
+      this.hotelAutoConfirmationEnabled.set(false);
       this.completeBookingFlow(null);
     }
-
-    this.isCheckingAutoConfirmation.set(false);
   }
 
   onIdentityVerified(verification: any): void {
-    console.log('✅ Identity verified:', verification);
+    console.log('🔐 ✅ IDENTITY VERIFIED - Callback triggered');
+    console.log('🆔 Verification data received:', verification);
     this.showIdentityVerification.set(false);
+    console.log('✅ Identity verification modal hidden');
 
-    // Complete booking with auto-confirmation
+    // Complete booking with smart lock access
+    console.log('🔐 Calling completeBookingFlow with verification data');
     this.completeBookingFlow(verification);
   }
 
   onIdentityVerificationCancelled(): void {
-    console.log('❌ Identity verification cancelled');
+    console.log('🔐 ❌ IDENTITY VERIFICATION CANCELLED - Callback triggered');
     this.showIdentityVerification.set(false);
     this.bookingError.set('Identity verification cancelled. Please try again.');
   }
 
   completeBookingFlow(identityVerification: any): void {
+    console.log('📋 completeBookingFlow called');
+    console.log('🔐 Identity Verification provided?', !!identityVerification);
+
+    // DEBUG: Check if backend is reachable
+    console.log('🔌 Backend URL:', 'http://localhost:5001');
+    console.log('⚠️ IMPORTANT: Make sure backend is running on port 5001!');
+    console.log('   Run: cd backend/functions && npm run dev');
+
     this.isLoadingBooking.set(true);
     this.bookingError.set('');
 
@@ -852,8 +936,13 @@ export class HotelsComponent implements OnInit {
       customerPhone: this.customerPhone()
     };
 
+    console.log('📊 Booking data:', booking);
+
     // If identity verification is provided, use auto-confirmation flow
     if (identityVerification) {
+      console.log('🔐 Using CONTACTLESS auto-confirmation flow');
+      console.log('🆔 Verification data:', identityVerification);
+
       this.hotelService.createBookingWithAutoConfirmation(booking, identityVerification).subscribe({
         next: (response: any) => {
           console.log('✅ Booking created with auto-confirmation:', response.data);
@@ -874,19 +963,32 @@ export class HotelsComponent implements OnInit {
         }
       });
     } else {
-      // Traditional booking flow
-      setTimeout(() => {
-        console.log('Booking submitted:', booking);
-        this.bookingSuccess.set(true);
+      // Traditional booking flow - save to backend
+      console.log('📋 Using TRADITIONAL booking flow (no identity verification)');
 
-        setTimeout(() => {
-          alert(`✅ Booking Confirmed!\n\nHotel: ${this.selectedHotel()!.name}\nRoom: ${this.selectedRoom()!.type}\nTotal: ${this.formatPrice(booking.totalPrice)}\n\nConfirmation email sent to ${this.customerEmail()}`);
-          this.closeBooking();
-          this.bookingSuccess.set(false);
-        }, 1500);
+      this.hotelService.createBooking(booking).subscribe({
+        next: (response: any) => {
+          console.log('✅ Booking API response:', response);
+          console.log('✅ Booking created successfully:', response.data);
+          this.bookingSuccess.set(true);
 
-        this.isLoadingBooking.set(false);
-      }, 2000);
+          setTimeout(() => {
+            alert(`✅ Booking Confirmed!\n\nHotel: ${this.selectedHotel()!.name}\nRoom: ${this.selectedRoom()!.type}\nTotal: ${this.formatPrice(booking.totalPrice)}\n\nConfirmation email sent to ${this.customerEmail()}`);
+            this.closeBooking();
+            this.bookingSuccess.set(false);
+          }, 1500);
+
+          this.isLoadingBooking.set(false);
+        },
+        error: (error: any) => {
+          console.error('❌ Booking API Error:', error);
+          console.error('Status:', error.status);
+          console.error('Message:', error.message);
+          console.error('Response:', error.error);
+          this.bookingError.set(`Failed to complete booking: ${error.error?.message || error.message}`);
+          this.isLoadingBooking.set(false);
+        }
+      });
     }
   }
 

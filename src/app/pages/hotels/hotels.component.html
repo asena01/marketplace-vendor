@@ -1,6 +1,18 @@
 <div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
   <app-header></app-header>
 
+  <!-- Backend Status Warning -->
+  <div class="bg-red-50 border-b-4 border-red-600 p-4">
+    <div class="max-w-6xl mx-auto">
+      <p class="text-red-800 font-semibold">⚠️ IMPORTANT: Backend Server Required</p>
+      <p class="text-red-700 text-sm mt-1">
+        To create bookings, the backend server must be running on port 5001.
+        Run this in a terminal: <code class="bg-red-100 px-2 py-1 rounded font-mono">cd backend/functions && npm run dev</code>
+      </p>
+      <p class="text-red-600 text-xs mt-2">Once started, you'll see "🚀 MarketHub Backend running on http://localhost:5001" in the terminal.</p>
+    </div>
+  </div>
+
   <!-- Hero Section -->
   <section class="pt-12 pb-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-emerald-600 to-emerald-500">
     <div class="max-w-6xl mx-auto">
@@ -455,43 +467,50 @@
                       <div class="space-y-4">
                         @for (groupedRoom of getGroupedRooms(hotel); track groupedRoom.type) {
                           <div class="bg-white rounded-lg p-4 border border-gray-200">
-                            <div class="flex items-center justify-between mb-3">
-                              <h5 class="font-bold text-gray-900">{{ groupedRoom.type }}</h5>
+                            <div class="flex items-center justify-between mb-4">
+                              <h5 class="font-bold text-gray-900 text-lg">{{ groupedRoom.type }}</h5>
                               <span class="text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-semibold">
                                 {{ groupedRoom.availableCount }} available
                               </span>
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="space-y-3">
                               @for (room of groupedRoom.rooms; track room.id) {
-                                <button
-                                  (click)="selectRoom(room, hotel)"
-                                  class="p-3 text-left rounded-lg border-2 border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 transition group"
-                                >
-                                  <div class="flex items-start justify-between mb-2">
-                                    <div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 transition">
+                                  <div class="flex items-start justify-between mb-3">
+                                    <div class="flex-1">
                                       <p class="text-sm font-bold text-gray-900">{{ room.bedType }}</p>
-                                      <p class="text-xs text-gray-600">Up to {{ room.maxGuests }} guest(s)</p>
+                                      <p class="text-xs text-gray-600">Capacity: Up to {{ room.maxGuests }} guest(s)</p>
                                     </div>
                                     <div class="text-right">
-                                      <p class="text-sm font-bold text-emerald-600">{{ formatPrice(room.price) }}</p>
+                                      <p class="text-lg font-bold text-emerald-600">{{ formatPrice(room.price) }}</p>
                                       <p class="text-xs text-gray-600">per night</p>
                                     </div>
                                   </div>
-                                  <div class="flex flex-wrap gap-1 mb-2">
-                                    @for (amenity of room.amenities.slice(0, 2); track amenity) {
-                                      <span class="text-xs bg-gray-100 text-gray-700 px-1 py-0.5 rounded">{{ amenity }}</span>
-                                    }
+
+                                  <div class="mb-3">
+                                    <div class="flex flex-wrap gap-1 mb-2">
+                                      @for (amenity of room.amenities.slice(0, 3); track amenity) {
+                                        <span class="text-xs bg-white text-gray-700 px-2 py-1 rounded border border-gray-200">{{ amenity }}</span>
+                                      }
+                                      @if (room.amenities.length > 3) {
+                                        <span class="text-xs text-gray-600 px-2 py-1">+{{ room.amenities.length - 3 }} more</span>
+                                      }
+                                    </div>
+                                    <div class="flex items-center gap-1 text-xs">
+                                      <span class="text-yellow-500">⭐</span>
+                                      <span class="font-semibold text-gray-900">{{ room.rating }}</span>
+                                      <span class="text-gray-600">({{ room.reviews }} reviews)</span>
+                                    </div>
                                   </div>
-                                  <div class="flex items-center gap-1 text-xs text-yellow-500">
-                                    <span>⭐</span>
-                                    <span class="font-semibold text-gray-900">{{ room.rating }}</span>
-                                    <span class="text-gray-600">({{ room.reviews }})</span>
-                                  </div>
-                                  <button class="mt-2 w-full text-sm font-semibold text-emerald-600 group-hover:text-emerald-700 transition">
-                                    View & Book →
+
+                                  <button
+                                    (click)="selectRoom(room, hotel)"
+                                    class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg transition"
+                                  >
+                                    📖 View & Book
                                   </button>
-                                </button>
+                                </div>
                               }
                             </div>
                           </div>
@@ -598,7 +617,7 @@
   @if (showBookingForm() && selectedHotel() && selectedRoom()) {
     @let hotel = selectedHotel();
     @let room = selectedRoom();
-    <div class="fixed inset-0 bg-black/60 z-50 flex items-start justify-center p-4 overflow-y-auto pt-4 md:pt-20">
+    <div class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-hidden">
       <!-- Identity Verification Overlay -->
       @if (showIdentityVerification()) {
         <app-identity-verification
@@ -607,7 +626,7 @@
         ></app-identity-verification>
       }
 
-      <div class="bg-white rounded-lg max-w-3xl w-full shadow-2xl" [class.opacity-50]="showIdentityVerification()">
+      <div class="bg-white rounded-lg max-w-3xl w-full shadow-2xl max-h-[90vh] overflow-y-auto" [class.opacity-50]="showIdentityVerification()">
         <!-- Header -->
         <div class="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white p-6 border-b border-emerald-800">
           <div class="flex items-center justify-between">
@@ -751,7 +770,39 @@
             </div>
           </div>
 
-          <!-- Payment Method Selection -->
+          <!-- Checkout Method Selection - ONLY IF HOTEL SUPPORTS CONTACTLESS -->
+          @if (isSelectedHotelContactless()) {
+          <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+            <h3 class="font-bold text-gray-900 mb-4">Choose Your Check-In Method</h3>
+            <div class="grid grid-cols-2 gap-3">
+              <button
+                (click)="useContactlessCheckIn.set(false)"
+                [class]="'p-4 rounded-lg border-2 transition text-center ' +
+                  (!useContactlessCheckIn()
+                    ? 'border-emerald-600 bg-emerald-100'
+                    : 'border-gray-300 bg-white hover:border-gray-400')"
+              >
+                <div class="text-3xl mb-2">💳</div>
+                <p class="font-semibold text-gray-900 text-sm">Traditional</p>
+                <p class="text-xs text-gray-600">Pay with card</p>
+              </button>
+              <button
+                (click)="useContactlessCheckIn.set(true)"
+                [class]="'p-4 rounded-lg border-2 transition text-center ' +
+                  (useContactlessCheckIn()
+                    ? 'border-blue-600 bg-blue-100'
+                    : 'border-gray-300 bg-white hover:border-gray-400')"
+              >
+                <div class="text-3xl mb-2">🔐</div>
+                <p class="font-semibold text-gray-900 text-sm">Contactless</p>
+                <p class="text-xs text-gray-600">Smart lock access</p>
+              </button>
+            </div>
+          </div>
+          }
+
+          <!-- Payment Method Selection - ONLY FOR TRADITIONAL BOOKINGS -->
+          @if (!useContactlessCheckIn()) {
           <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h3 class="font-bold text-gray-900 mb-4">Payment Method</h3>
             <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
@@ -910,15 +961,26 @@
           </div>
 
           <!-- Payment Error & Success Messages -->
-          @if (paymentError()) {
-            <div class="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg text-sm">
-              ❌ {{ paymentError() }}
-            </div>
           }
 
-          @if (paymentSuccess()) {
-            <div class="bg-green-50 border border-green-300 text-green-700 px-4 py-3 rounded-lg text-sm">
-              ✅ Payment approved! Processing your booking...
+          @if (!useContactlessCheckIn()) {
+            @if (paymentError()) {
+              <div class="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg text-sm">
+                ❌ {{ paymentError() }}
+              </div>
+            }
+
+            @if (paymentSuccess()) {
+              <div class="bg-green-50 border border-green-300 text-green-700 px-4 py-3 rounded-lg text-sm">
+                ✅ Payment approved! Processing your booking...
+              </div>
+            }
+          }
+
+          <!-- Contactless Check-In Info -->
+          @if (useContactlessCheckIn()) {
+            <div class="bg-blue-50 border border-blue-300 text-blue-700 px-4 py-3 rounded-lg text-sm">
+              🔐 <strong>Contactless Check-In Selected!</strong> Verify your identity to receive your smart lock access code instantly. No payment required!
             </div>
           }
 
@@ -939,17 +1001,15 @@
           <div class="flex gap-3">
             <button
               (click)="submitBooking()"
-              [disabled]="isLoadingBooking() || isCheckingAutoConfirmation() || bookingSuccess() || (!selectedPaymentMethod() && !showIdentityVerification())"
+              [disabled]="isLoadingBooking() || bookingSuccess() || (!selectedPaymentMethod() && !useContactlessCheckIn())"
               class="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded-lg transition"
             >
-              @if (isCheckingAutoConfirmation()) {
-                <span>⏳ Checking hotel settings...</span>
+              @if (isLoadingBooking()) {
+                <span>⏳ Processing...</span>
               } @else if (showIdentityVerification()) {
                 <span>🆔 Verify Identity</span>
-              } @else if (isLoadingBooking()) {
-                <span>⏳ Processing...</span>
-              } @else if (hotelAutoConfirmationEnabled()) {
-                <span>🚪 Complete Contactless Booking</span>
+              } @else if (useContactlessCheckIn()) {
+                <span>🔐 Continue with Contactless</span>
               } @else {
                 <span>💳 Proceed to Payment</span>
               }

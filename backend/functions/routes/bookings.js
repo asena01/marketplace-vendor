@@ -17,6 +17,74 @@ router.get('/', getAllBookings);
 // GET booking by ID
 router.get('/:id', getBookingById);
 
+// POST create booking with auto-confirmation (contactless check-in)
+router.post('/auto-confirm', async (req, res) => {
+  try {
+    const { hotelId } = req.params;
+    const { booking, identity } = req.body;
+
+    console.log('🔐 ========== CONTACTLESS BOOKING ==========');
+    console.log('🏨 Hotel ID from params:', hotelId);
+    console.log('📊 Booking data:', booking);
+    console.log('🆔 Identity verification:', identity);
+    console.log('🔐 =========================================');
+
+    // Create the booking with confirmed status and smart lock access
+    const Booking = (await import('../models/Booking.js')).default;
+
+    const bookingData = {
+      hotel: hotelId || booking.hotelId,
+      guest: booking.customerId,
+      room: booking.roomId,
+      checkInDate: booking.checkIn,
+      checkOutDate: booking.checkOut,
+      numberOfGuests: booking.guests,
+      numberOfRooms: booking.roomCount,
+      totalPrice: booking.totalPrice,
+      specialRequests: booking.specialRequests,
+      paymentMethod: 'contactless',
+      paymentStatus: 'paid', // Auto-confirm means immediate payment
+      status: 'confirmed', // Auto-confirmed
+      smartLockAccess: {
+        accessToken: 'CONTACTLESS_' + Date.now(),
+        backupPin: Math.random().toString().slice(2, 8),
+        qrCode: 'QR_' + Date.now(),
+        enabled: true,
+        expiresAt: new Date(booking.checkOut)
+      }
+    };
+
+    console.log('💾 Creating booking with smart lock access...');
+    console.log('📝 Final booking data to be saved:', JSON.stringify(bookingData, null, 2));
+
+    const newBooking = new Booking(bookingData);
+    await newBooking.save();
+
+    console.log('✅ CONTACTLESS BOOKING CREATED SUCCESSFULLY!');
+    console.log('📌 Booking ID:', newBooking._id);
+    console.log('👤 Guest ID:', newBooking.guest);
+    console.log('🏨 Hotel ID:', newBooking.hotel);
+    console.log('🛏️  Room ID:', newBooking.room);
+
+    await newBooking.populate('hotel', 'name');
+    await newBooking.populate('guest', 'name email phone');
+    await newBooking.populate('room', 'roomType bedType amenities');
+
+    return res.status(201).json({
+      status: 'success',
+      message: 'Booking created with auto-confirmation',
+      data: newBooking
+    });
+  } catch (err) {
+    console.error('Error creating booking with auto-confirmation:', err);
+    return res.status(500).json({
+      status: 'error',
+      message: 'Failed to create booking with auto-confirmation',
+      error: err.message
+    });
+  }
+});
+
 // POST create booking
 router.post('/', createBooking);
 

@@ -12,8 +12,10 @@ import { ServiceProviderService } from '../../services/service-provider.service'
 interface SidenavItem {
   label: string;
   icon: string;
-  route: string;
+  route?: string;
   badge?: number;
+  children?: SidenavItem[];
+  collapsed?: boolean;
 }
 
 @Component({
@@ -38,22 +40,61 @@ interface SidenavItem {
       <!-- Navigation Items -->
       <nav class="flex-1 p-4">
         <div class="space-y-2">
-          @for (item of sidenavItems; track item.route) {
-            <a
-              [routerLink]="item.route"
-              routerLinkActive="active-link"
-              [routerLinkActiveOptions]="{ exact: true }"
-              class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-all duration-200 relative group text-slate-300 hover:text-white"
-            >
-              <!-- Material Icon -->
-              <mat-icon class="text-lg">{{ getIconNameForLabel(item.label) }}</mat-icon>
-              <span class="flex-1 font-medium">{{ item.label }}</span>
-              @if (item.badge && item.badge > 0) {
-                <span class="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
-                  {{ item.badge }}
-                </span>
-              }
-            </a>
+          @for (item of sidenavItems; track item.label) {
+            @if (item.children && item.children.length > 0) {
+              <!-- Collapsible Menu Item -->
+              <div>
+                <button
+                  (click)="toggleCollapse(item)"
+                  class="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-all duration-200 text-slate-300 hover:text-white font-medium"
+                >
+                  <mat-icon class="text-lg">{{ getIconNameForLabel(item.label) }}</mat-icon>
+                  <span class="flex-1 text-left">{{ item.label }}</span>
+                  <mat-icon class="text-lg transition-transform" [style.transform]="!item.collapsed ? 'rotate(180deg)' : ''">
+                    expand_more
+                  </mat-icon>
+                </button>
+
+                <!-- Submenu Items -->
+                @if (!item.collapsed) {
+                  <div class="ml-4 mt-1 space-y-1">
+                    @for (subitem of item.children; track subitem.route) {
+                      <a
+                        [routerLink]="subitem.route"
+                        routerLinkActive="active-sublink"
+                        [routerLinkActiveOptions]="{ exact: true }"
+                        class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-slate-800 transition-all duration-200 text-slate-300 hover:text-white text-sm"
+                      >
+                        <mat-icon class="text-base">{{ getIconNameForLabel(subitem.label) }}</mat-icon>
+                        <span class="flex-1">{{ subitem.label }}</span>
+                        @if (subitem.badge && subitem.badge > 0) {
+                          <span class="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
+                            {{ subitem.badge }}
+                          </span>
+                        }
+                      </a>
+                    }
+                  </div>
+                }
+              </div>
+            } @else {
+              <!-- Regular Menu Item -->
+              <a
+                [routerLink]="item.route"
+                routerLinkActive="active-link"
+                [routerLinkActiveOptions]="{ exact: true }"
+                class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-all duration-200 relative group text-slate-300 hover:text-white"
+              >
+                <!-- Material Icon -->
+                <mat-icon class="text-lg">{{ getIconNameForLabel(item.label) }}</mat-icon>
+                <span class="flex-1 font-medium">{{ item.label }}</span>
+                @if (item.badge && item.badge > 0) {
+                  <span class="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
+                    {{ item.badge }}
+                  </span>
+                }
+              </a>
+            }
           }
         </div>
       </nav>
@@ -94,6 +135,14 @@ interface SidenavItem {
       @apply absolute left-0 top-0 bottom-0 w-1 bg-blue-400 rounded-r-lg;
     }
 
+    a.active-sublink {
+      @apply bg-slate-800 text-blue-400;
+    }
+
+    a.active-sublink mat-icon {
+      @apply text-blue-400;
+    }
+
     mat-icon {
       @apply text-slate-300;
     }
@@ -103,6 +152,18 @@ interface SidenavItem {
     }
 
     a:hover mat-icon {
+      @apply text-white;
+    }
+
+    button:hover {
+      @apply text-white;
+    }
+
+    button mat-icon {
+      @apply text-slate-300;
+    }
+
+    button:hover mat-icon {
       @apply text-white;
     }
   `]
@@ -163,6 +224,34 @@ export class VendorSidenavComponent implements OnInit {
           }
         },
         error: (error) => console.log('Error loading rooms:', error)
+      });
+
+      // Load pending food orders count
+      this.hotelService.getFoodOrders(1, 100).subscribe({
+        next: (response: any) => {
+          if (response.status === 'success' && Array.isArray(response.data)) {
+            // Count food orders (by drink type)
+            const foodOrders = response.data.filter((order: any) =>
+              order.status === 'pending' || order.status === 'preparing' &&
+              order.drinkType === undefined
+            ).length;
+            // Count drink orders
+            const drinkOrders = response.data.filter((order: any) =>
+              (order.status === 'pending' || order.status === 'preparing') &&
+              order.drinkType !== undefined
+            ).length;
+
+            // Update Food & Beverage parent item
+            const foodBevItem = this.sidenavItems.find(item => item.label === 'Food & Beverage');
+            if (foodBevItem && foodBevItem.children) {
+              const foodOrdersItem = foodBevItem.children.find(item => item.label === 'Food Orders');
+              const drinkOrdersItem = foodBevItem.children.find(item => item.label === 'Drink Orders');
+              if (foodOrdersItem) foodOrdersItem.badge = foodOrders;
+              if (drinkOrdersItem) drinkOrdersItem.badge = drinkOrders;
+            }
+          }
+        },
+        error: (error) => console.log('Error loading food orders:', error)
       });
     } else if (this.vendorType === 'retail' || this.vendorType === 'clothing-store' || this.vendorType === 'jewelry' || this.vendorType === 'supermarket' || this.vendorType === 'pet-store' || this.vendorType === 'furniture' || this.vendorType === 'gym-equipment') {
       // Load low stock products count for retail-based vendors
@@ -290,9 +379,17 @@ export class VendorSidenavComponent implements OnInit {
       'Dashboard': 'dashboard',
       'Orders': 'assignment',
       'Menu': 'menu_book',
+      'Food & Beverage': 'restaurant',
+      'Food Orders': 'restaurant_menu',
+      'Food Menu': 'menu_book',
+      'Food Delivery': 'local_shipping',
+      'Drink Orders': 'local_bar',
+      'Drink Menu': 'wine_bar',
+      'Delivery': 'local_shipping',
       'Calendar': 'calendar_month',
       'Pricing': 'sell',
       'Rooms': 'hotel',
+      'Food Service': 'restaurant',
       'Staff': 'people',
       'Products': 'inventory_2',
       'Bookings': 'event_note',
@@ -367,11 +464,24 @@ export class VendorSidenavComponent implements OnInit {
     } else if (this.vendorType === 'hotel') {
       items.push(
         { label: 'Calendar', icon: '📅', route: `${dashboardPath}/calendar` },
-        { label: 'Pricing', icon: '💰', route: `${dashboardPath}/pricing` },
+        // NOTE: Pricing management disabled - backend not implemented yet
+        // { label: 'Pricing', icon: '💰', route: `${dashboardPath}/pricing` },
         { label: 'Rooms', icon: '🏨', route: `${dashboardPath}/rooms`, badge: 0 },
+        { label: 'Bookings', icon: '📅', route: `${dashboardPath}/bookings` },
+        {
+          label: 'Food & Beverage',
+          icon: '🍽️',
+          collapsed: true,
+          children: [
+            { label: 'Food Orders', icon: '📋', route: `${dashboardPath}/food-orders`, badge: 0 },
+            { label: 'Food Menu', icon: '📖', route: `${dashboardPath}/food-menu` },
+            { label: 'Drink Orders', icon: '🍹', route: `${dashboardPath}/drink-orders`, badge: 0 },
+            { label: 'Drink Menu', icon: '🍷', route: `${dashboardPath}/drink-menu` },
+            { label: 'Delivery', icon: '🚚', route: `${dashboardPath}/food-delivery` }
+          ]
+        },
         { label: 'Devices', icon: '📱', route: `${dashboardPath}/devices` },
         { label: 'Staff', icon: '👥', route: `${dashboardPath}/staff` },
-        { label: 'Bookings', icon: '📅', route: `${dashboardPath}/bookings` },
         { label: 'Notifications', icon: '🔔', route: `${dashboardPath}/notifications`, badge: 0 },
         { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` },
         { label: 'Finance', icon: '💼', route: `${dashboardPath}/finance` }
@@ -537,6 +647,10 @@ export class VendorSidenavComponent implements OnInit {
   getCurrentUserInitial(): string {
     const name = this.authService.getCurrentUser()?.name || 'G';
     return name.charAt(0).toUpperCase();
+  }
+
+  toggleCollapse(item: SidenavItem): void {
+    item.collapsed = !item.collapsed;
   }
 
   onLogout(): void {

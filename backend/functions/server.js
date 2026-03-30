@@ -44,6 +44,8 @@ import customerRoutes from './routes/customers.js';
 import financeRoutes from './routes/finance.js';
 import smartLockRoutes from './routes/smartLock.js';
 import deviceAssignmentRoutes from './routes/deviceAssignments.js';
+// Models
+import Booking from './models/Booking.js';
 // Service Provider Dashboard Routes
 import serviceProviderRoutes from './routes/serviceProviders.js';
 import appointmentRoutes from './routes/appointments.js';
@@ -438,6 +440,37 @@ app.use('/api/delivery', deliveryRoutesOld);
 app.use('/hotels', hotelRoutes);
 app.use('/hotels/:hotelId/rooms', roomRoutes);
 app.use('/hotels/:hotelId/bookings', bookingRoutes);
+
+// Customer Hotel Bookings Routes (for customers to view their bookings)
+app.get('/hotel-bookings/customer/:customerId', async (req, res) => {
+  try {
+    const { customerId } = req.params;
+
+    console.log('🏨 ========== FETCH CUSTOMER BOOKINGS ==========');
+    console.log('👤 Customer ID:', customerId);
+
+    const bookings = await Booking.find({ guest: customerId })
+      .populate('hotel', 'name location address')
+      .populate('room', 'roomType bedType amenities')
+      .sort({ createdAt: -1 });
+
+    console.log('✅ Found', bookings.length, 'bookings for customer:', customerId);
+    console.log('🏨 ============================================');
+
+    return res.status(200).json({
+      success: true,
+      data: bookings,
+      message: 'Hotel bookings retrieved successfully'
+    });
+  } catch (err) {
+    console.error('❌ Error fetching hotel bookings:', err.message);
+    return res.status(500).json({
+      success: false,
+      message: 'Error fetching hotel bookings',
+      error: err.message
+    });
+  }
+});
 app.use('/hotels/:hotelId/staff', staffRoutes);
 app.use('/hotels/:hotelId/maintenance', maintenanceRoutes);
 app.use('/hotels/:hotelId/invoices', invoiceRoutes);

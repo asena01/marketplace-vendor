@@ -254,12 +254,12 @@ router.post('/login', async (req, res) => {
         if (user.vendorType === 'hotel') {
           const hotel = await Hotel.findOne({ owner: user._id });
           if (hotel) {
-            // Use userId as hotelId (the endpoint queries by owner)
-            businessIds.hotelId = user._id.toString();
-            console.log('✅ Hotel found, hotelId set to userId:', businessIds.hotelId);
+            // Return the actual hotel ID (not userId)
+            businessIds.hotelId = hotel._id.toString();
+            console.log('✅ Hotel found, hotelId set to hotel._id:', businessIds.hotelId);
           } else {
             console.log('⚠️ No hotel record found for owner:', user._id);
-            // Still return userId as hotelId even if hotel record doesn't exist yet
+            // Fallback to userId if hotel doesn't exist yet
             businessIds.hotelId = user._id.toString();
           }
         }

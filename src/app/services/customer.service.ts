@@ -50,10 +50,10 @@ export interface CustomerResponse<T> {
   providedIn: 'root'
 })
 export class CustomerService {
-  //private apiUrl = 'http://localhost:5001/customers';
-  //private apiUrl2 = 'http://localhost:5001';
-  private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/customers';
-  private apiUrl2 = 'https://api-qpczzmaezq-uc.a.run.app';
+  private apiUrl = 'http://localhost:5001/customers';
+  private apiUrl2 = 'http://localhost:5001';
+  //private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/customers';
+  //private apiUrl2 = 'https://api-qpczzmaezq-uc.a.run.app';
   constructor(private http: HttpClient) {}
 
   // Get business customers
@@ -196,9 +196,11 @@ export class CustomerService {
 
   // Hotel bookings
   getMyHotelBookings(): Observable<CustomerResponse<any>> {
-     const userId = localStorage.getItem('userId');
+    const userId = localStorage.getItem('userId');
+    console.log('🏨 getMyHotelBookings called with userId:', userId);
+
     if (!userId) {
-      console.warn('⚠️ No user ID found in localStorage for food orders');
+      console.warn('⚠️ No user ID found in localStorage for hotel bookings');
       // Return empty response
       return of({
         success: false,
@@ -206,7 +208,11 @@ export class CustomerService {
         message: 'No user ID found'
       } as any);
     }
-    return this.http.get<CustomerResponse<any>>(`${this.apiUrl2}/hotel-bookings/customer/${userId}`);
+
+    const url = `${this.apiUrl2}/hotel-bookings/customer/${userId}`;
+    console.log('📡 Fetching from:', url);
+
+    return this.http.get<CustomerResponse<any>>(url);
   }
 
   orderRoomService(roomServiceData: any): Observable<CustomerResponse<any>> {

@@ -83,13 +83,17 @@ router.get('/public/search', async (req, res) => {
           price = minPrice;
         }
 
-        return {
-          ...hotel.toObject(),
+        const hotelObj = hotel.toObject();
+
+        const transformedHotel = {
+          ...hotelObj,
           id: hotel._id,
           reviews: hotel.reviewsCount || 0,
-          images: hotel.photos && hotel.photos.length > 0 ? hotel.photos : [hotel.thumbnail].filter(Boolean),
           icon: '🏨',
           price,
+          // CRITICAL: Ensure contactlessCheckInEnabled is always included
+          // It must come AFTER spread to override any existing value
+          contactlessCheckInEnabled: (hotel.contactlessCheckInEnabled === true),
           rooms: rooms.map(room => ({
             id: room._id,
             type: room.roomType,
@@ -104,8 +108,13 @@ router.get('/public/search', async (req, res) => {
             icon: '🛏️'
           }))
         };
+
+        console.log(`✅ ${hotel.name} - contactlessCheckInEnabled: ${transformedHotel.contactlessCheckInEnabled}`);
+        return transformedHotel;
       })
     );
+
+    console.log('📊 Transformed hotels:', transformedHotels.map(h => ({ name: h.name, contactlessCheckInEnabled: h.contactlessCheckInEnabled })));
 
     res.status(200).json({
       status: 'success',
