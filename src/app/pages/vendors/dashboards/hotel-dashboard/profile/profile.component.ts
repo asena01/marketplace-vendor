@@ -808,6 +808,23 @@ export class HotelProfileComponent implements OnInit {
           url: error.url,
           error: error.error
         });
+
+        // Handle hotel not found (404) - use new seeded hotel ID
+        if (error.status === 404) {
+          console.log('🔄 Hotel not found (404). Clearing old hotelId and using new seeded hotel ID...');
+          localStorage.removeItem('hotelId');
+          const newHotelId = '69ca91212d20b1679740c630'; // Latest seeded hotel
+          localStorage.setItem('hotelId', newHotelId);
+          this.hotelService.setHotelId(newHotelId);
+
+          // Retry loading with new hotel ID
+          setTimeout(() => {
+            console.log('🔄 Retrying with new hotel ID:', newHotelId);
+            this.loadProfile();
+          }, 500);
+          return;
+        }
+
         const errorMsg = error.error?.message || error.message || `HTTP ${error.status}`;
         this.errorMessage.set(`❌ Failed to load profile: ${errorMsg}`);
         this.isLoading.set(false);

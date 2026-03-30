@@ -44,10 +44,10 @@ export class HotelService {
         this.hotelId = storedHotelId;
         console.log('📍 Using hotel ID from localStorage:', storedHotelId);
       } else {
-        // Use default from seed
-        this.hotelId = '69a72226003a6f0406e3afb1';
+        // Use default from latest seed (Grand Plaza Hotel)
+        this.hotelId = '69ca91212d20b1679740c630';
         localStorage.setItem('hotelId', this.hotelId);
-        console.log('📍 Using default hotel ID:', this.hotelId);
+        console.log('📍 Using default hotel ID from latest seed:', this.hotelId);
       }
     }
   }
