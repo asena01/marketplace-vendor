@@ -164,6 +164,20 @@ export class VendorSidenavComponent implements OnInit {
         },
         error: (error) => console.log('Error loading rooms:', error)
       });
+
+      // Load pending food orders count
+      this.hotelService.getFoodOrders(1, 100).subscribe({
+        next: (response: any) => {
+          if (response.status === 'success' && Array.isArray(response.data)) {
+            const pendingOrders = response.data.filter((order: any) =>
+              order.status === 'pending' || order.status === 'preparing'
+            ).length;
+            const foodServiceItem = this.sidenavItems.find(item => item.label === 'Food Service');
+            if (foodServiceItem) foodServiceItem.badge = pendingOrders;
+          }
+        },
+        error: (error) => console.log('Error loading food orders:', error)
+      });
     } else if (this.vendorType === 'retail' || this.vendorType === 'clothing-store' || this.vendorType === 'jewelry' || this.vendorType === 'supermarket' || this.vendorType === 'pet-store' || this.vendorType === 'furniture' || this.vendorType === 'gym-equipment') {
       // Load low stock products count for retail-based vendors
       const storeId = localStorage.getItem('storeId') || '';
@@ -293,6 +307,7 @@ export class VendorSidenavComponent implements OnInit {
       'Calendar': 'calendar_month',
       'Pricing': 'sell',
       'Rooms': 'hotel',
+      'Food Service': 'restaurant',
       'Staff': 'people',
       'Products': 'inventory_2',
       'Bookings': 'event_note',
@@ -369,9 +384,10 @@ export class VendorSidenavComponent implements OnInit {
         { label: 'Calendar', icon: '📅', route: `${dashboardPath}/calendar` },
         { label: 'Pricing', icon: '💰', route: `${dashboardPath}/pricing` },
         { label: 'Rooms', icon: '🏨', route: `${dashboardPath}/rooms`, badge: 0 },
+        { label: 'Bookings', icon: '📅', route: `${dashboardPath}/bookings` },
+        { label: 'Food Service', icon: '🍽️', route: `${dashboardPath}/food-orders`, badge: 0 },
         { label: 'Devices', icon: '📱', route: `${dashboardPath}/devices` },
         { label: 'Staff', icon: '👥', route: `${dashboardPath}/staff` },
-        { label: 'Bookings', icon: '📅', route: `${dashboardPath}/bookings` },
         { label: 'Notifications', icon: '🔔', route: `${dashboardPath}/notifications`, badge: 0 },
         { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` },
         { label: 'Finance', icon: '💼', route: `${dashboardPath}/finance` }
