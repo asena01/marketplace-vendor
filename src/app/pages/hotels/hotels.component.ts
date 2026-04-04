@@ -875,6 +875,15 @@ export class HotelsComponent implements OnInit {
     // Validate date range
     const checkIn = new Date(this.checkInDate());
     const checkOut = new Date(this.checkOutDate());
+
+    console.log('📅 Frontend date check:');
+    console.log('   checkInDate() input:', this.checkInDate());
+    console.log('   checkOutDate() input:', this.checkOutDate());
+    console.log('   checkIn Date object:', checkIn);
+    console.log('   checkOut Date object:', checkOut);
+    console.log('   checkIn ISO:', checkIn.toISOString());
+    console.log('   checkOut ISO:', checkOut.toISOString());
+
     if (checkIn >= checkOut) {
       this.toastService.warning('Check-out date must be after check-in date');
       return;

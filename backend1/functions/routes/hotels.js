@@ -17,6 +17,11 @@ router.get('/check-availability/:roomId', async (req, res) => {
     const { roomId } = req.params;
     const { checkInDate, checkOutDate } = req.query;
 
+    console.log('\n🔍 ========== AVAILABILITY CHECK ==========');
+    console.log(`📍 Room ID: ${roomId}`);
+    console.log(`📅 Check-in param: ${checkInDate}`);
+    console.log(`📅 Check-out param: ${checkOutDate}`);
+
     if (!checkInDate || !checkOutDate) {
       return res.status(400).json({
         status: 'error',
@@ -31,6 +36,9 @@ router.get('/check-availability/:roomId', async (req, res) => {
     const checkIn = new Date(checkInDate);
     const checkOut = new Date(checkOutDate);
 
+    console.log(`📅 Parsed check-in: ${checkIn.toISOString()}`);
+    console.log(`📅 Parsed check-out: ${checkOut.toISOString()}`);
+
     // Validate dates
     if (checkIn >= checkOut) {
       return res.status(400).json({
@@ -42,7 +50,7 @@ router.get('/check-availability/:roomId', async (req, res) => {
 
     // Calculate number of nights
     const numberOfNights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
-    console.log(`📅 Availability check: ${numberOfNights} night(s) from ${checkIn} to ${checkOut}`);
+    console.log(`📅 Number of nights: ${numberOfNights}`);
 
     // Find the room to ensure it exists
     const room = await Room.findById(roomId).populate('hotel', 'name');
@@ -55,6 +63,7 @@ router.get('/check-availability/:roomId', async (req, res) => {
     }
 
     // Check for conflicting bookings (confirmed or checked-in status)
+    console.log(`\n🛏️  Searching for conflicting bookings for room: ${roomId}`);
     const conflictingBookings = await Booking.find({
       room: roomId,
       status: { $in: ['confirmed', 'checked-in'] },
@@ -67,7 +76,14 @@ router.get('/check-availability/:roomId', async (req, res) => {
       ]
     }).populate('guest', 'name email phone');
 
+    console.log(`📋 Found ${conflictingBookings.length} conflicting bookings`);
+    conflictingBookings.forEach(b => {
+      console.log(`   - Booking ${b.bookingNumber}: ${b.checkInDate?.toISOString()} to ${b.checkOutDate?.toISOString()} (status: ${b.status})`);
+    });
+
     const isAvailable = conflictingBookings.length === 0;
+    console.log(`✅ Room available: ${isAvailable}`);
+    console.log('🔍 =====================================\n');
 
     res.status(200).json({
       status: 'success',

@@ -157,7 +157,7 @@ const seedDatabase = async () => {
     const rooms = await Room.insertMany(roomsData);
     console.log('✅ Created', rooms.length, 'rooms');
 
-    // Create sample bookings
+    // Create sample bookings (only block future dates to leave present/near dates available for testing)
     console.log('📅 Creating sample bookings...');
     const today = new Date();
     const bookingsData = [
@@ -166,13 +166,13 @@ const seedDatabase = async () => {
         bookingNumber: 'BK-001',
         guest: guests[0]._id,
         room: rooms[1]._id,
-        checkInDate: new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000),
-        checkOutDate: new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000),
-        numberOfNights: 4,
+        checkInDate: new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+        checkOutDate: new Date(today.getTime() + 35 * 24 * 60 * 60 * 1000), // 35 days from now
+        numberOfNights: 5,
         numberOfGuests: 2,
         roomRate: 149,
-        totalPrice: 596,
-        status: 'checked-in',
+        totalPrice: 745,
+        status: 'confirmed',
         paymentStatus: 'paid',
         paymentMethod: 'credit_card'
       },
@@ -181,12 +181,12 @@ const seedDatabase = async () => {
         bookingNumber: 'BK-002',
         guest: guests[1]._id,
         room: rooms[3]._id,
-        checkInDate: new Date(today.getTime() + 5 * 24 * 60 * 60 * 1000),
-        checkOutDate: new Date(today.getTime() + 8 * 24 * 60 * 60 * 1000),
-        numberOfNights: 3,
+        checkInDate: new Date(today.getTime() + 50 * 24 * 60 * 60 * 1000), // 50 days from now
+        checkOutDate: new Date(today.getTime() + 55 * 24 * 60 * 60 * 1000), // 55 days from now
+        numberOfNights: 5,
         numberOfGuests: 2,
         roomRate: 179,
-        totalPrice: 537,
+        totalPrice: 895,
         status: 'confirmed',
         paymentStatus: 'paid',
         paymentMethod: 'credit_card'
@@ -196,14 +196,14 @@ const seedDatabase = async () => {
         bookingNumber: 'BK-003',
         guest: guests[2]._id,
         room: rooms[7]._id,
-        checkInDate: new Date(today.getTime() + 10 * 24 * 60 * 60 * 1000),
-        checkOutDate: new Date(today.getTime() + 12 * 24 * 60 * 60 * 1000),
-        numberOfNights: 2,
+        checkInDate: new Date(today.getTime() + 70 * 24 * 60 * 60 * 1000), // 70 days from now
+        checkOutDate: new Date(today.getTime() + 75 * 24 * 60 * 60 * 1000), // 75 days from now
+        numberOfNights: 5,
         numberOfGuests: 1,
         roomRate: 159,
-        totalPrice: 318,
-        status: 'pending',
-        paymentStatus: 'unpaid',
+        totalPrice: 795,
+        status: 'confirmed',
+        paymentStatus: 'paid',
         paymentMethod: 'credit_card'
       }
     ];
