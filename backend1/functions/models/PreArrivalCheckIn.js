@@ -9,8 +9,7 @@ const PreArrivalCheckInSchema = new Schema({
   },
   booking: {
     type: Schema.Types.ObjectId,
-    ref: 'Booking',
-    required: true
+    ref: 'Booking'
   },
   bookingId: {
     type: String,
