@@ -15,7 +15,7 @@ const seedData = async () => {
     console.log('✅ Connected to MongoDB');
 
     // Get or use default hotel ID
-    const hotelId = '69ca91212d20b1679740c630'; // Grand Plaza Hotel from seed
+    const hotelId = '69d0eca53b2942a9fc4c58e2'; // User specified hotel ID
 
     // Clear existing data
     await Transaction.deleteMany({ hotel: hotelId });

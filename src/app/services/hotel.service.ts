@@ -25,7 +25,7 @@ interface ApiResponse<T> {
   providedIn: 'root'
 })
 export class HotelService {
-  private hotelId = '69c7d347459039a6e5bc5d84'; // Default Hotel ID from seed
+  private hotelId = '69d0eca53b2942a9fc4c58e2'; // Default Hotel ID from user specified seed
   private authService = inject(AuthService);
 
   constructor(private http: HttpClient) {
@@ -44,8 +44,8 @@ export class HotelService {
         this.hotelId = storedHotelId;
         console.log('📍 Using hotel ID from localStorage:', storedHotelId);
       } else {
-        // Use default from latest seed (Grand Plaza Hotel)
-        this.hotelId = '69ca91212d20b1679740c630';
+        // Use default from latest seed
+        this.hotelId = '69d0eca53b2942a9fc4c58e2';
         localStorage.setItem('hotelId', this.hotelId);
         console.log('📍 Using default hotel ID from latest seed:', this.hotelId);
       }
