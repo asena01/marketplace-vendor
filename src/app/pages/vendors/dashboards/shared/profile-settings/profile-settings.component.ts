@@ -16,6 +16,60 @@ import { Router } from '@angular/router';
         <p class="text-slate-600 mt-1">Manage your account information and security</p>
       </div>
 
+      <!-- Profile Picture Section -->
+      <div class="bg-white rounded-lg p-6 shadow-md">
+        <h2 class="text-xl font-bold text-slate-900 mb-6">Profile Picture</h2>
+
+        <div class="flex items-center gap-6">
+          <!-- Current Profile Picture -->
+          <div class="flex-shrink-0">
+            @if (profileImage()) {
+              <img
+                [src]="profileImage()"
+                alt="Profile Picture"
+                class="w-24 h-24 rounded-lg object-cover border-2 border-slate-300"
+              />
+            } @else {
+              <div class="w-24 h-24 rounded-lg bg-slate-300 flex items-center justify-center text-4xl">
+                👤
+              </div>
+            }
+          </div>
+
+          <!-- Upload Area -->
+          <div class="flex-1">
+            <div
+              class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition"
+              (dragover)="$event.preventDefault(); isDraggingImage.set(true)"
+              (dragleave)="isDraggingImage.set(false)"
+              (drop)="onDropImage($event)"
+              [class.border-blue-500]="isDraggingImage()"
+              [class.bg-blue-50]="isDraggingImage()"
+            >
+              <input
+                #imageInput
+                type="file"
+                accept="image/*"
+                (change)="onImageSelected($event)"
+                style="display: none"
+                class="hidden"
+              />
+              <div (click)="imageInput.click()" class="cursor-pointer">
+                <p class="text-sm font-medium text-slate-700">Click to upload or drag and drop</p>
+                <p class="text-xs text-slate-500 mt-1">PNG, JPG, GIF up to 5MB</p>
+              </div>
+
+              @if (isUploadingImage()) {
+                <div class="mt-3 flex items-center justify-center gap-2">
+                  <div class="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  <span class="text-sm text-blue-600 font-medium">Uploading...</span>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Profile Information Section -->
       <div class="bg-white rounded-lg p-6 shadow-md">
         <h2 class="text-xl font-bold text-slate-900 mb-6">Profile Information</h2>
@@ -303,7 +357,10 @@ import { Router } from '@angular/router';
 })
 export class ProfileSettingsComponent implements OnInit {
   currentUser = signal<User | null>(null);
-  
+  profileImage = signal<string>('');
+  isDraggingImage = signal(false);
+  isUploadingImage = signal(false);
+
   profileForm = {
     name: '',
     email: '',
@@ -323,7 +380,7 @@ export class ProfileSettingsComponent implements OnInit {
 
   isSavingProfile = signal(false);
   isChangingPassword = signal(false);
-  
+
   successMessage = signal('');
   errorMessage = signal('');
   passwordSuccessMessage = signal('');
@@ -353,7 +410,95 @@ export class ProfileSettingsComponent implements OnInit {
         country: user.country || '',
         businessDescription: user.businessDescription || ''
       };
+
+      // Load profile image
+      if (user.profileImage) {
+        this.profileImage.set(user.profileImage);
+      }
     }
+  }
+
+  // Image Upload Methods
+  onImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const files = input.files;
+
+    if (files && files.length > 0) {
+      const file = files[0];
+      this.uploadImage(file);
+    }
+  }
+
+  onDropImage(event: DragEvent): void {
+    event.preventDefault();
+    this.isDraggingImage.set(false);
+
+    const files = event.dataTransfer?.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      this.uploadImage(file);
+    }
+  }
+
+  uploadImage(file: File): void {
+    // Validate file size (5MB)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      this.errorMessage.set('Image size must be less than 5MB');
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      this.errorMessage.set('Please upload a valid image file');
+      return;
+    }
+
+    this.isUploadingImage.set(true);
+
+    // Create FormData for file upload
+    const formData = new FormData();
+    formData.append('file', file);
+
+    // For now, read as data URL (client-side preview)
+    const reader = new FileReader();
+    reader.onload = (e: ProgressEvent<FileReader>) => {
+      if (e.target?.result) {
+        const imageData = e.target.result as string;
+        this.profileImage.set(imageData);
+
+        // Update profile with new image
+        const user = this.currentUser();
+        if (user) {
+          this.authService.updateProfile(user._id, {
+            profileImage: imageData,
+            name: this.profileForm.name,
+            email: this.profileForm.email,
+            phone: this.profileForm.phone
+          }).subscribe({
+            next: (response: any) => {
+              this.isUploadingImage.set(false);
+              if (response.success) {
+                this.successMessage.set('Profile picture updated successfully');
+                this.currentUser.set(response.data);
+                setTimeout(() => {
+                  this.successMessage.set('');
+                }, 3000);
+              } else {
+                this.errorMessage.set('Failed to update profile picture');
+              }
+            },
+            error: (error: any) => {
+              this.isUploadingImage.set(false);
+              this.errorMessage.set('Error uploading profile picture');
+              console.error('Error uploading image:', error);
+            }
+          });
+        }
+      }
+    };
+
+    reader.readAsDataURL(file);
   }
 
   saveProfile(): void {
