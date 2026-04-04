@@ -1,5 +1,7 @@
 import Transaction from '../models/Transaction.js';
 import Booking from '../models/Booking.js';
+import FoodOrder from '../models/FoodOrder.js';
+import RoomServiceMenuItem from '../models/RoomServiceMenuItem.js';
 
 // Get all transactions for a hotel
 const getAllTransactions = async (req, res) => {
@@ -37,45 +39,162 @@ const getAllTransactions = async (req, res) => {
   }
 };
 
-// Get revenue statistics
+// Get revenue statistics - AUTO-CALCULATED FROM REAL DATA SOURCES
 const getRevenueStats = async (req, res) => {
   try {
     const { hotelId } = req.params;
 
-    const transactions = await Transaction.find({ hotel: hotelId });
+    // First, sync transactions from real sources
+    await syncTransactionsFromSources(hotelId);
+
+    // Calculate room revenue from confirmed/checked-in bookings
+    const roomBookings = await Booking.find({
+      hotel: hotelId,
+      status: { $in: ['confirmed', 'checked-in', 'checked-out'] }
+    });
+
+    const roomRevenue = roomBookings.reduce((sum, booking) => sum + (booking.totalPrice || 0), 0);
+    const roomTransactionCount = roomBookings.length;
+
+    // Calculate food and drink revenue from food orders
+    const foodOrders = await FoodOrder.find({
+      hotel: hotelId,
+      status: { $in: ['ready', 'delivered'] }
+    });
+
+    let foodRevenue = 0;
+    let drinkRevenue = 0;
+    let foodTransactionCount = 0;
+
+    foodOrders.forEach(order => {
+      if (order.category === 'drink') {
+        drinkRevenue += order.totalPrice || 0;
+      } else if (order.category === 'food' || order.category === 'mixed') {
+        foodRevenue += order.totalPrice || 0;
+      }
+      foodTransactionCount += 1;
+    });
+
+    // Try to get service revenue (if service bookings exist)
+    let serviceRevenue = 0;
+    let serviceTransactionCount = 0;
+    try {
+      const ServiceBooking = require('../models/ServiceBooking.js').default;
+      const serviceBookings = await ServiceBooking.find({
+        hotel: hotelId,
+        status: { $in: ['completed', 'paid'] }
+      });
+
+      serviceBookings.forEach(booking => {
+        serviceRevenue += booking.totalPrice || booking.price || 0;
+      });
+      serviceTransactionCount = serviceBookings.length;
+    } catch (e) {
+      // Service booking model may not exist, that's okay
+      console.log('ℹ️  Service booking model not available');
+    }
+
+    // Calculate totals
+    const totalRevenue = roomRevenue + foodRevenue + drinkRevenue + serviceRevenue;
+    const totalTransactions = roomTransactionCount + foodTransactionCount + serviceTransactionCount;
+
+    // Calculate pending amount from transactions marked as pending
+    const pendingTransactions = await Transaction.find({
+      hotel: hotelId,
+      status: 'pending'
+    });
+    const pendingAmount = pendingTransactions.reduce((sum, tx) => sum + (tx.amount || 0), 0);
 
     const stats = {
-      totalRevenue: 0,
-      roomRevenue: 0,
-      foodRevenue: 0,
-      drinkRevenue: 0,
-      serviceRevenue: 0,
-      totalTransactions: transactions.length,
-      pendingAmount: 0,
-      completedCount: 0
+      totalRevenue: Math.round(totalRevenue * 100) / 100,
+      roomRevenue: Math.round(roomRevenue * 100) / 100,
+      foodRevenue: Math.round(foodRevenue * 100) / 100,
+      drinkRevenue: Math.round(drinkRevenue * 100) / 100,
+      serviceRevenue: Math.round(serviceRevenue * 100) / 100,
+      totalTransactions: totalTransactions,
+      pendingAmount: Math.round(pendingAmount * 100) / 100,
+      completedCount: totalTransactions
     };
 
-    transactions.forEach(tx => {
-      if (tx.status === 'completed') {
-        stats.totalRevenue += tx.amount;
-        stats.completedCount += 1;
-        
-        if (tx.type === 'room') stats.roomRevenue += tx.amount;
-        else if (tx.type === 'food') stats.foodRevenue += tx.amount;
-        else if (tx.type === 'drink') stats.drinkRevenue += tx.amount;
-        else if (tx.type === 'service') stats.serviceRevenue += tx.amount;
-      } else if (tx.status === 'pending') {
-        stats.pendingAmount += tx.amount;
-      }
-    });
+    console.log('💰 Revenue Stats Calculated:', stats);
 
     return res.status(200).json({
       status: 'success',
       data: stats
     });
   } catch (err) {
-    console.error(err);
+    console.error('❌ Error calculating revenue stats:', err);
     return res.status(500).json({ status: 'error', message: 'Internal Server Error' });
+  }
+};
+
+// Sync transactions from real data sources (helper function)
+const syncTransactionsFromSources = async (hotelId) => {
+  try {
+    console.log('🔄 Syncing transactions from real sources...');
+
+    // Get confirmed/checked-in bookings and create room transactions
+    const roomBookings = await Booking.find({
+      hotel: hotelId,
+      status: { $in: ['confirmed', 'checked-in', 'checked-out'] }
+    }).populate('guest', 'name email');
+
+    for (const booking of roomBookings) {
+      // Check if transaction already exists for this booking
+      const existingTx = await Transaction.findOne({
+        hotel: hotelId,
+        booking: booking._id,
+        type: 'room'
+      });
+
+      if (!existingTx && booking.totalPrice > 0) {
+        await Transaction.create({
+          hotel: hotelId,
+          type: 'room',
+          description: `Room booking - ${booking.numberOfNights || 1} nights`,
+          amount: booking.totalPrice,
+          guestName: booking.guest?.name || 'Unknown Guest',
+          guest: booking.guest?._id,
+          booking: booking._id,
+          status: booking.status === 'checked-out' ? 'completed' : 'pending',
+          paymentMethod: booking.paymentMethod || 'card',
+          timestamp: booking.createdAt || new Date()
+        });
+      }
+    }
+
+    // Get delivered food orders and create food/drink transactions
+    const foodOrders = await FoodOrder.find({
+      hotel: hotelId,
+      status: { $in: ['ready', 'delivered'] }
+    }).populate('guest', 'name email');
+
+    for (const order of foodOrders) {
+      // Check if transaction already exists
+      const existingTx = await Transaction.findOne({
+        hotel: hotelId,
+        description: { $regex: order.orderId || '' }
+      });
+
+      if (!existingTx && order.totalPrice > 0) {
+        const type = order.category === 'drink' ? 'drink' : 'food';
+        await Transaction.create({
+          hotel: hotelId,
+          type: type,
+          description: `${type.charAt(0).toUpperCase() + type.slice(1)} order - Room ${order.roomNumber}`,
+          amount: order.totalPrice,
+          guestName: order.guestName || order.guest?.name || 'Unknown Guest',
+          guest: order.guest?._id,
+          status: order.status === 'delivered' ? 'completed' : 'pending',
+          paymentMethod: 'card',
+          timestamp: order.createdAt || new Date()
+        });
+      }
+    }
+
+    console.log('✅ Transactions synced from real sources');
+  } catch (err) {
+    console.error('❌ Error syncing transactions:', err.message);
   }
 };
 

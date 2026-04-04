@@ -310,6 +310,72 @@ const seedData = async () => {
     await PreArrivalCheckIn.insertMany(checkIns);
     console.log(`✅ Created ${checkIns.length} sample pre-arrival check-ins`);
 
+    // ==================== SEED SAMPLE BOOKINGS (for room revenue) ====================
+    // Get actual rooms to link bookings
+    const actualRooms = await Room.find({ hotel: hotelId }).limit(5);
+
+    if (actualRooms.length > 0) {
+      const sampleBookings = [
+        {
+          hotel: hotelId,
+          room: actualRooms[0]._id,
+          guest: new mongoose.Types.ObjectId(),
+          bookingNumber: 'BK-' + Date.now() + '-1',
+          checkInDate: new Date(Date.now() - 86400000 * 3),
+          checkOutDate: new Date(Date.now() - 86400000),
+          numberOfNights: 3,
+          numberOfGuests: 2,
+          roomRate: 450,
+          subtotal: 1350,
+          tax: 135,
+          totalPrice: 1485,
+          status: 'checked-out',
+          paymentStatus: 'paid'
+        },
+        {
+          hotel: hotelId,
+          room: actualRooms[1]?._id || actualRooms[0]._id,
+          guest: new mongoose.Types.ObjectId(),
+          bookingNumber: 'BK-' + Date.now() + '-2',
+          checkInDate: new Date(Date.now() - 86400000 * 2),
+          checkOutDate: new Date(Date.now()),
+          numberOfNights: 2,
+          numberOfGuests: 1,
+          roomRate: 350,
+          subtotal: 700,
+          tax: 70,
+          totalPrice: 770,
+          status: 'checked-in',
+          paymentStatus: 'paid'
+        },
+        {
+          hotel: hotelId,
+          room: actualRooms[2]?._id || actualRooms[0]._id,
+          guest: new mongoose.Types.ObjectId(),
+          bookingNumber: 'BK-' + Date.now() + '-3',
+          checkInDate: new Date(Date.now() + 86400000),
+          checkOutDate: new Date(Date.now() + 86400000 * 3),
+          numberOfNights: 2,
+          numberOfGuests: 3,
+          roomRate: 500,
+          subtotal: 1000,
+          tax: 100,
+          totalPrice: 1100,
+          status: 'confirmed',
+          paymentStatus: 'paid'
+        }
+      ];
+
+      try {
+        const Booking = mongoose.model('Booking');
+        await Booking.deleteMany({ hotel: hotelId });
+        await Booking.insertMany(sampleBookings);
+        console.log(`✅ Created ${sampleBookings.length} sample bookings (room revenue source)`);
+      } catch (e) {
+        console.log('ℹ️  Booking creation skipped (model may not be available)');
+      }
+    }
+
     // ==================== SEED OCCUPANCY ANALYTICS ====================
     // Get actual rooms to match real data
     const rooms = await Room.find({ hotel: hotelId });
