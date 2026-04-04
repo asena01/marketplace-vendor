@@ -122,7 +122,13 @@ export class HotelsComponent implements OnInit {
 
   // Pending booking for after login
   pendingRoomBooking = signal<{ room: Room; hotel: Hotel } | null>(null);
-  
+
+  // Date picker overlay for missing dates
+  showDatePickerOverlay = signal<boolean>(false);
+  pendingRoomForDates = signal<{ room: Room; hotel: Hotel } | null>(null);
+  tempCheckInDate = signal<string>('');
+  tempCheckOutDate = signal<string>('');
+
   // Booking form signals
   customerName = signal<string>('');
   customerEmail = signal<string>('');
@@ -868,7 +874,11 @@ export class HotelsComponent implements OnInit {
 
     // Check if dates are selected
     if (!this.checkInDate() || !this.checkOutDate()) {
-      this.toastService.warning('Please select check-in and check-out dates before booking');
+      console.log('📅 Dates not selected - showing date picker overlay');
+      this.pendingRoomForDates.set({ room, hotel });
+      this.tempCheckInDate.set('');
+      this.tempCheckOutDate.set('');
+      this.showDatePickerOverlay.set(true);
       return;
     }
 
@@ -941,6 +951,42 @@ export class HotelsComponent implements OnInit {
     this.selectedRoom.set(null);
     this.useContactlessCheckIn.set(false); // Reset to traditional booking by default
     this.resetBookingForm();
+  }
+
+  closeDatePickerOverlay(): void {
+    this.showDatePickerOverlay.set(false);
+    this.pendingRoomForDates.set(null);
+    this.tempCheckInDate.set('');
+    this.tempCheckOutDate.set('');
+  }
+
+  confirmDatesAndBook(): void {
+    // Validate dates
+    if (!this.tempCheckInDate() || !this.tempCheckOutDate()) {
+      this.toastService.warning('Please select both check-in and check-out dates');
+      return;
+    }
+
+    const checkIn = new Date(this.tempCheckInDate());
+    const checkOut = new Date(this.tempCheckOutDate());
+
+    if (checkIn >= checkOut) {
+      this.toastService.warning('Check-out date must be after check-in date');
+      return;
+    }
+
+    // Set the dates on the main component
+    this.checkInDate.set(this.tempCheckInDate());
+    this.checkOutDate.set(this.tempCheckOutDate());
+
+    // Close the overlay
+    const pending = this.pendingRoomForDates();
+    this.closeDatePickerOverlay();
+
+    // Proceed with booking if we have room and hotel
+    if (pending) {
+      this.selectRoom(pending.room, pending.hotel);
+    }
   }
 
   calculateStayDays(): number {
