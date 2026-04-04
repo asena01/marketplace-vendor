@@ -64,8 +64,16 @@
             @for (restaurant of filteredRestaurants(); track restaurant.id || restaurant._id) {
               <div class="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
                 <!-- Restaurant Image -->
-                <div class="h-40 bg-gradient-to-br from-orange-100 to-orange-50 flex items-center justify-center text-6xl relative">
-                  {{ restaurant.icon }}
+                <div class="h-40 bg-gradient-to-br from-orange-100 to-orange-50 flex items-center justify-center text-6xl relative overflow-hidden">
+                  @if (restaurant.image) {
+                    <img
+                      [src]="restaurant.image"
+                      [alt]="restaurant.name"
+                      class="w-full h-full object-cover"
+                    />
+                  } @else {
+                    <span>{{ restaurant.icon }}</span>
+                  }
                   @if (!restaurant.isOpen) {
                     <div class="absolute inset-0 bg-black/50 flex items-center justify-center">
                       <span class="bg-red-600 text-white px-4 py-2 rounded-lg font-bold">CLOSED</span>
@@ -130,7 +138,15 @@
             <div class="flex items-start justify-between">
               <div>
                 <div class="flex items-center gap-4 mb-2">
-                  <span class="text-5xl">{{ restaurant!.icon }}</span>
+                  @if (restaurant!.image) {
+                    <img
+                      [src]="restaurant!.image"
+                      [alt]="restaurant!.name"
+                      class="w-16 h-16 rounded-lg object-cover"
+                    />
+                  } @else {
+                    <span class="text-5xl">{{ restaurant!.icon }}</span>
+                  }
                   <div>
                     <h2 class="text-3xl font-bold text-slate-900">{{ restaurant!.name }}</h2>
                     <p class="text-gray-600">{{ restaurant!.cuisine }}</p>
