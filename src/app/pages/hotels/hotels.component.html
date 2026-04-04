@@ -1176,7 +1176,7 @@
 
           <!-- Duration Display -->
           @if (tempCheckInDate() && tempCheckOutDate()) {
-            @let nights = ((new Date(tempCheckOutDate()).getTime() - new Date(tempCheckInDate()).getTime()) / (1000 * 60 * 60 * 24));
+            @let nights = calculateNightsBetweenDates(tempCheckInDate(), tempCheckOutDate());
             @if (nights > 0) {
               <div class="bg-emerald-50 border border-emerald-300 rounded-lg p-4">
                 <p class="text-sm text-gray-600">Duration</p>

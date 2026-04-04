@@ -1373,6 +1373,14 @@ export class HotelsComponent implements OnInit {
     return today.toISOString().split('T')[0];
   }
 
+  calculateNightsBetweenDates(checkIn: string, checkOut: string): number {
+    if (!checkIn || !checkOut) return 0;
+    const checkInDate = new Date(checkIn);
+    const checkOutDate = new Date(checkOut);
+    const nights = (checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24);
+    return nights > 0 ? nights : 0;
+  }
+
   /**
    * Build a complete image URL from a relative or absolute path
    */
