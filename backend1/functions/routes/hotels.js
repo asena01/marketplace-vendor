@@ -40,6 +40,10 @@ router.get('/check-availability/:roomId', async (req, res) => {
       });
     }
 
+    // Calculate number of nights
+    const numberOfNights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+    console.log(`📅 Availability check: ${numberOfNights} night(s) from ${checkIn} to ${checkOut}`);
+
     // Find the room to ensure it exists
     const room = await Room.findById(roomId).populate('hotel', 'name');
     if (!room) {
@@ -74,10 +78,10 @@ router.get('/check-availability/:roomId', async (req, res) => {
         checkInDate: checkIn,
         checkOutDate: checkOut,
         isAvailable,
-        numberOfNights: Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24)),
+        numberOfNights,
         conflictingBookings: conflictingBookings.length,
         message: isAvailable
-          ? `Room is available for ${Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24))} night(s)`
+          ? `Room is available for ${numberOfNights} night(s)`
           : `Room is already booked for the requested dates`
       }
     });

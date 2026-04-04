@@ -11,6 +11,7 @@ import { PaymentService } from '../../services/payment.service';
 import { HotelService } from '../../services/hotel.service';
 import { AuthService } from '../../services/auth.service';
 import { AuthModalService } from '../../services/auth-modal.service';
+import { ToastService } from '../../services/toast.service';
 import { apiConfig } from '../../config/api-config';
 
 interface Room {
@@ -240,6 +241,7 @@ export class HotelsComponent implements OnInit {
     private hotelService: HotelService,
     private authService: AuthService,
     private authModalService: AuthModalService,
+    private toastService: ToastService,
     private router: Router
   ) {
     // Prevent body scroll when modal is open
@@ -857,19 +859,16 @@ export class HotelsComponent implements OnInit {
     // Check if user is logged in
     if (!this.authService.isLoggedIn()) {
       console.log('👤 Not logged in - showing login overlay');
-      console.log('🔐 authModalService:', this.authModalService);
-      console.log('🔐 isLoginOpen before:', this.authModalService.isLoginOpen());
       // Store the pending booking to resume after login
       this.pendingRoomBooking.set({ room, hotel });
       // Open login overlay
       this.authModalService.openLogin();
-      console.log('🔐 isLoginOpen after:', this.authModalService.isLoginOpen());
       return;
     }
 
     // Check if dates are selected
     if (!this.checkInDate() || !this.checkOutDate()) {
-      alert('Please select check-in and check-out dates before booking');
+      this.toastService.warning('Please select check-in and check-out dates before booking');
       return;
     }
 
@@ -877,7 +876,7 @@ export class HotelsComponent implements OnInit {
     const checkIn = new Date(this.checkInDate());
     const checkOut = new Date(this.checkOutDate());
     if (checkIn >= checkOut) {
-      alert('Check-out date must be after check-in date');
+      this.toastService.warning('Check-out date must be after check-in date');
       return;
     }
 
@@ -891,6 +890,7 @@ export class HotelsComponent implements OnInit {
 
         if (response.data.isAvailable) {
           console.log('✅ Room is available for selected dates:', response.data);
+          this.toastService.success(`Room is available for ${response.data.numberOfNights} night(s)`);
 
           // Pre-fill customer info from logged-in user
           const user = this.authService.getCurrentUser();
@@ -910,8 +910,10 @@ export class HotelsComponent implements OnInit {
           this.showBookingForm.set(true);
         } else {
           console.log('❌ Room is not available for selected dates');
-          this.bookingError.set(`Sorry, this room is not available for the selected dates (${response.data.numberOfNights} night(s)). Please select different dates.`);
-          alert(this.bookingError());
+          const nights = response.data.numberOfNights || Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
+          const errorMsg = `Sorry, this room is not available for the selected dates (${nights} night(s)). Please select different dates.`;
+          this.bookingError.set(errorMsg);
+          this.toastService.error(errorMsg);
         }
       },
       error: (error) => {
@@ -919,7 +921,7 @@ export class HotelsComponent implements OnInit {
         const errorMsg = 'Failed to check room availability. Please try again.';
         this.bookingError.set(errorMsg);
         console.error('❌ Availability check error:', error);
-        alert(errorMsg);
+        this.toastService.error(errorMsg);
       }
     });
   }
