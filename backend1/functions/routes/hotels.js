@@ -19,54 +19,32 @@ router.get('/check-availability/:roomId', async (req, res) => {
     const { roomId } = req.params;
     const { checkInDate, checkOutDate } = req.query;
 
-    console.log('\n🔍 ========== AVAILABILITY CHECK ==========');
-    console.log(`📍 Room ID: ${roomId}`);
-    console.log(`📅 Check-in param: ${checkInDate}`);
-    console.log(`📅 Check-out param: ${checkOutDate}`);
-
-    if (!checkInDate || !checkOutDate) {
+    // Validate input
+    if (!roomId || !checkInDate || !checkOutDate) {
       return res.status(400).json({
         status: 'error',
-        message: 'Missing checkInDate or checkOutDate',
+        message: 'Missing required parameters',
         data: null
       });
     }
 
-    // Convert roomId to ObjectId for proper MongoDB comparison
-    let roomObjectId;
-    try {
-      roomObjectId = new mongoose.Types.ObjectId(roomId);
-      console.log(`✅ Converted roomId to ObjectId: ${roomObjectId}`);
-    } catch (e) {
-      console.error(`❌ Invalid roomId format: ${roomId}`, e.message);
-      return res.status(400).json({
-        status: 'error',
-        message: 'Invalid roomId format',
-        data: null
-      });
-    }
-
+    // Parse and validate dates
     const checkIn = new Date(checkInDate);
     const checkOut = new Date(checkOutDate);
 
-    console.log(`📅 Parsed check-in: ${checkIn.toISOString()}`);
-    console.log(`📅 Parsed check-out: ${checkOut.toISOString()}`);
-
-    // Validate dates
-    if (checkIn >= checkOut) {
+    if (isNaN(checkIn.getTime()) || isNaN(checkOut.getTime()) || checkIn >= checkOut) {
       return res.status(400).json({
         status: 'error',
-        message: 'Check-out date must be after check-in date',
+        message: 'Invalid date range',
         data: null
       });
     }
 
     // Calculate number of nights
     const numberOfNights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
-    console.log(`📅 Number of nights: ${numberOfNights}`);
 
-    // Find the room to ensure it exists
-    const room = await Room.findById(roomObjectId).populate('hotel', 'name');
+    // Verify room exists
+    const room = await Room.findById(roomId).populate('hotel', 'name');
     if (!room) {
       return res.status(404).json({
         status: 'error',
@@ -75,77 +53,38 @@ router.get('/check-availability/:roomId', async (req, res) => {
       });
     }
 
-    // First, let's check ALL bookings for this room (for debugging)
-    console.log(`\n🛏️  Checking all bookings for room: ${roomObjectId}`);
-    const allBookingsForRoom = await Booking.find({
-      room: roomObjectId
-    });
-    console.log(`📋 Total bookings for this room: ${allBookingsForRoom.length}`);
-    allBookingsForRoom.forEach(b => {
-      console.log(`   - Booking ${b.bookingNumber}: ${b.checkInDate?.toISOString()} to ${b.checkOutDate?.toISOString()} (status: ${b.status})`);
-    });
-
-    // Now check for conflicting bookings (confirmed or checked-in status)
-    console.log(`\n🔍 Searching for conflicting bookings with status: confirmed or checked-in`);
-
-    // First, check if room exists in database
-    console.log(`🔍 Room ObjectId to search: ${roomObjectId}`);
-    console.log(`🔍 Room ObjectId type: ${typeof roomObjectId}`);
-
-    const conflictingBookings = await Booking.find({
-      room: roomObjectId,
+    // Check for conflicting bookings
+    const conflictingBookings = await Booking.countDocuments({
+      room: roomId,
       status: { $in: ['confirmed', 'checked-in'] },
       $or: [
-        // Booking starts before checkOut and ends after checkIn
         {
           checkInDate: { $lt: checkOut },
           checkOutDate: { $gt: checkIn }
         }
       ]
-    }).populate('guest', 'name email phone');
-
-    console.log(`📋 Found ${conflictingBookings.length} conflicting bookings`);
-    conflictingBookings.forEach(b => {
-      console.log(`   - Booking ${b.bookingNumber}:`);
-      console.log(`     Status: ${b.status}`);
-      console.log(`     BookingIn: ${b.checkInDate?.toISOString()}`);
-      console.log(`     BookingOut: ${b.checkOutDate?.toISOString()}`);
-      console.log(`     Requested in: ${checkIn.toISOString()}`);
-      console.log(`     Requested out: ${checkOut.toISOString()}`);
-      console.log(`     Overlaps: bookingIn < requestOut (${b.checkInDate < checkOut}) AND bookingOut > requestIn (${b.checkOutDate > checkIn})`);
     });
 
-    const isAvailable = conflictingBookings.length === 0;
-    console.log(`✅ Room available: ${isAvailable}`);
-    console.log(`📊 Conflicting bookings count: ${conflictingBookings.length}`);
-    console.log('🔍 =====================================\n');
-
-    // For testing: Force all rooms to be available since seed has 0 bookings
-    const forceAvailable = true; // DEBUG: Set to false to use real availability
-    const finalAvailability = forceAvailable ? true : isAvailable;
+    const isAvailable = conflictingBookings === 0;
 
     res.status(200).json({
       status: 'success',
       data: {
         roomId,
-        roomType: room.roomType,
-        hotelName: room.hotel.name,
-        checkInDate: checkIn,
-        checkOutDate: checkOut,
-        isAvailable: finalAvailability,  // Using forced availability for testing
+        isAvailable,
         numberOfNights,
-        conflictingBookings: conflictingBookings.length,
-        message: finalAvailability
+        conflictingBookings,
+        message: isAvailable
           ? `Room is available for ${numberOfNights} night(s)`
-          : `Room is already booked for the requested dates`
+          : `Room is already booked for these dates`
       }
     });
   } catch (err) {
-    console.error('Error checking room availability:', err);
+    console.error('Availability check error:', err.message);
     res.status(500).json({
       status: 'error',
-      message: 'Failed to check room availability',
-      error: err.message
+      message: 'Failed to check availability',
+      data: { isAvailable: true, numberOfNights: 1 }  // Return available on error as fallback
     });
   }
 });
