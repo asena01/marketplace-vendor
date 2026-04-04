@@ -105,7 +105,8 @@ router.get('/public/search', async (req, res) => {
             amenities: room.amenities || [],
             rating: 4.0,
             reviews: 0,
-            icon: '🛏️'
+            icon: '🛏️',
+            images: room.images || []
           }))
         };
 

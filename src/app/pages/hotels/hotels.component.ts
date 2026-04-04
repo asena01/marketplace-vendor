@@ -107,6 +107,7 @@ export class HotelsComponent implements OnInit {
   
   // Carousel State
   carouselIndices = signal<Map<string, number>>(new Map());
+  roomImageIndices = signal<Map<string, number>>(new Map());
   
   // Booking Modal Signals
   showBookingForm = signal<boolean>(false);
@@ -796,6 +797,37 @@ export class HotelsComponent implements OnInit {
     }
     // If it's a string (emoji or URL)
     return currentImage as string;
+  }
+
+  // ==================== ROOM IMAGE CAROUSEL ====================
+  getRoomImageIndex(roomId: string): number {
+    return this.roomImageIndices().get(roomId) || 0;
+  }
+
+  setRoomImageIndex(roomId: string, index: number): void {
+    const newIndices = new Map(this.roomImageIndices());
+    newIndices.set(roomId, index);
+    this.roomImageIndices.set(newIndices);
+  }
+
+  previousRoomImage(roomId: string): void {
+    const currentIndex = this.getRoomImageIndex(roomId);
+    const allRooms = this.hotels().flatMap(h => h.rooms);
+    const room = allRooms.find(r => r.id === roomId);
+    if (room && room.images && Array.isArray(room.images) && room.images.length > 0) {
+      const prevIndex = (currentIndex - 1 + room.images.length) % room.images.length;
+      this.setRoomImageIndex(roomId, prevIndex);
+    }
+  }
+
+  nextRoomImage(roomId: string): void {
+    const currentIndex = this.getRoomImageIndex(roomId);
+    const allRooms = this.hotels().flatMap(h => h.rooms);
+    const room = allRooms.find(r => r.id === roomId);
+    if (room && room.images && Array.isArray(room.images) && room.images.length > 0) {
+      const nextIndex = (currentIndex + 1) % room.images.length;
+      this.setRoomImageIndex(roomId, nextIndex);
+    }
   }
 
   selectRoom(room: Room, hotel: Hotel): void {

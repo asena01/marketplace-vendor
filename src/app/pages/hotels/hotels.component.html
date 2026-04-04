@@ -477,6 +477,32 @@
                             <div class="space-y-3">
                               @for (room of groupedRoom.rooms; track room.id) {
                                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 transition">
+                                  <!-- Room Image Gallery -->
+                                  @if (room.images && room.images.length > 0) {
+                                    <div class="relative bg-gray-200 rounded-lg h-40 flex items-center justify-center mb-4 overflow-hidden group">
+                                      @let roomImgIndex = getRoomImageIndex(room.id);
+                                      <img [src]="room.images[roomImgIndex]" [alt]="room.bedType" class="w-full h-full object-cover" />
+
+                                      @if (room.images.length > 1) {
+                                        <button
+                                          (click)="previousRoomImage(room.id)"
+                                          class="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white text-gray-900 p-2 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100"
+                                        >
+                                          ←
+                                        </button>
+                                        <button
+                                          (click)="nextRoomImage(room.id)"
+                                          class="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white text-gray-900 p-2 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100"
+                                        >
+                                          →
+                                        </button>
+                                        <div class="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs bg-gray-900/70 text-white px-2 py-1 rounded">
+                                          {{ roomImgIndex + 1 }}/{{ room.images.length }}
+                                        </div>
+                                      }
+                                    </div>
+                                  }
+
                                   <div class="flex items-start justify-between mb-3">
                                     <div class="flex-1">
                                       <p class="text-sm font-bold text-gray-900">{{ room.bedType }}</p>

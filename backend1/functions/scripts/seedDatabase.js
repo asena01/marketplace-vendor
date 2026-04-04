@@ -142,16 +142,16 @@ const seedDatabase = async () => {
     // Create sample rooms
     console.log('🛏️  Creating sample rooms...');
     const roomsData = [
-      { hotel: hotel._id, roomNumber: '101', roomType: 'single', capacity: 1, floor: 1, pricePerNight: 99, status: 'available' },
-      { hotel: hotel._id, roomNumber: '102', roomType: 'double', capacity: 2, floor: 1, pricePerNight: 149, status: 'occupied' },
-      { hotel: hotel._id, roomNumber: '103', roomType: 'suite', capacity: 4, floor: 1, pricePerNight: 299, status: 'available' },
-      { hotel: hotel._id, roomNumber: '201', roomType: 'double', capacity: 2, floor: 2, pricePerNight: 179, status: 'occupied' },
-      { hotel: hotel._id, roomNumber: '202', roomType: 'deluxe', capacity: 2, floor: 2, pricePerNight: 249, status: 'maintenance' },
-      { hotel: hotel._id, roomNumber: '203', roomType: 'suite', capacity: 4, floor: 2, pricePerNight: 349, status: 'available' },
-      { hotel: hotel._id, roomNumber: '301', roomType: 'single', capacity: 1, floor: 3, pricePerNight: 119, status: 'available' },
-      { hotel: hotel._id, roomNumber: '302', roomType: 'double', capacity: 2, floor: 3, pricePerNight: 159, status: 'occupied' },
-      { hotel: hotel._id, roomNumber: '303', roomType: 'deluxe', capacity: 2, floor: 3, pricePerNight: 279, status: 'available' },
-      { hotel: hotel._id, roomNumber: '401', roomType: 'suite', capacity: 4, floor: 4, pricePerNight: 399, status: 'available' }
+      { hotel: hotel._id, roomNumber: '101', roomType: 'single', capacity: 1, floor: 1, pricePerNight: 99, status: 'available', images: ['https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop'] },
+      { hotel: hotel._id, roomNumber: '102', roomType: 'double', capacity: 2, floor: 1, pricePerNight: 149, status: 'occupied', images: ['https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop'] },
+      { hotel: hotel._id, roomNumber: '103', roomType: 'suite', capacity: 4, floor: 1, pricePerNight: 299, status: 'available', images: ['https://images.unsplash.com/photo-1582719508762-e881b08e601d?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&h=400&fit=crop'] },
+      { hotel: hotel._id, roomNumber: '201', roomType: 'double', capacity: 2, floor: 2, pricePerNight: 179, status: 'occupied', images: ['https://images.unsplash.com/photo-1595521624779-f3141f476e94?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop'] },
+      { hotel: hotel._id, roomNumber: '202', roomType: 'deluxe', capacity: 2, floor: 2, pricePerNight: 249, status: 'maintenance', images: ['https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1582719508762-e881b08e601d?w=600&h=400&fit=crop'] },
+      { hotel: hotel._id, roomNumber: '203', roomType: 'suite', capacity: 4, floor: 2, pricePerNight: 349, status: 'available', images: ['https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1595521624779-f3141f476e94?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&h=400&fit=crop'] },
+      { hotel: hotel._id, roomNumber: '301', roomType: 'single', capacity: 1, floor: 3, pricePerNight: 119, status: 'available', images: ['https://images.unsplash.com/photo-1582719508762-e881b08e601d?w=600&h=400&fit=crop'] },
+      { hotel: hotel._id, roomNumber: '302', roomType: 'double', capacity: 2, floor: 3, pricePerNight: 159, status: 'occupied', images: ['https://images.unsplash.com/photo-1595521624779-f3141f476e94?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop'] },
+      { hotel: hotel._id, roomNumber: '303', roomType: 'deluxe', capacity: 2, floor: 3, pricePerNight: 279, status: 'available', images: ['https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1582719508762-e881b08e601d?w=600&h=400&fit=crop'] },
+      { hotel: hotel._id, roomNumber: '401', roomType: 'suite', capacity: 4, floor: 4, pricePerNight: 399, status: 'available', images: ['https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1595521624779-f3141f476e94?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1582719508762-e881b08e601d?w=600&h=400&fit=crop'] }
     ];
 
     const rooms = await Room.insertMany(roomsData);
