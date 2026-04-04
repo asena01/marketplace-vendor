@@ -470,9 +470,57 @@ export class HotelBookingsComponent implements OnInit {
   }
 
   editBooking(booking: any): void {
+    console.log('📝 Editing booking:', booking);
+
+    // Convert dates to YYYY-MM-DD format for date input
+    const checkInDate = this.convertToDateInputFormat(booking.checkInDate);
+    const checkOutDate = this.convertToDateInputFormat(booking.checkOutDate);
+
+    console.log('📅 Formatted dates:', { checkInDate, checkOutDate });
+
+    this.formData = {
+      _id: booking._id,
+      customerName: booking.guestName || booking.guest?.name || booking.customerName || '',
+      customerEmail: booking.guest?.email || booking.customerEmail || '',
+      customerPhone: booking.guest?.phone || booking.customerPhone || '',
+      roomNumber: booking.roomNumber || booking.room?.roomNumber || '',
+      roomType: booking.roomType || booking.room?.roomType || '',
+      checkInDate: checkInDate,
+      checkOutDate: checkOutDate,
+      totalPrice: booking.totalPrice || 0,
+      status: booking.status || 'pending',
+      notes: booking.notes || booking.specialRequests || ''
+    };
+
+    console.log('✅ Form data ready:', this.formData);
     this.isEditing.set(true);
-    this.formData = { ...booking };
     this.showModal.set(true);
+  }
+
+  convertToDateInputFormat(dateValue: any): string {
+    if (!dateValue) return '';
+
+    try {
+      // Handle both string and Date object
+      const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
+
+      if (isNaN(date.getTime())) {
+        console.warn('⚠️ Invalid date:', dateValue);
+        return '';
+      }
+
+      // Format as YYYY-MM-DD for date input
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+
+      const formatted = `${year}-${month}-${day}`;
+      console.log('  Converted', dateValue, '→', formatted);
+      return formatted;
+    } catch (err) {
+      console.error('❌ Error converting date:', err, 'value:', dateValue);
+      return '';
+    }
   }
 
   saveBooking(): void {
@@ -481,26 +529,37 @@ export class HotelBookingsComponent implements OnInit {
       return;
     }
 
+    // Convert dates from YYYY-MM-DD format to ISO string for backend
+    const bookingData = {
+      ...this.formData,
+      checkInDate: new Date(this.formData.checkInDate + 'T00:00:00Z').toISOString(),
+      checkOutDate: new Date(this.formData.checkOutDate + 'T00:00:00Z').toISOString()
+    };
+
+    console.log('💾 Saving booking:', bookingData);
+
     if (this.isEditing()) {
-      this.hotelService.updateBooking(this.formData._id, this.formData).subscribe({
+      this.hotelService.updateBooking(bookingData._id, bookingData).subscribe({
         next: () => {
+          console.log('✅ Booking updated successfully');
           this.loadBookings();
           this.closeModal();
         },
         error: (error: any) => {
-          console.error('Error updating booking:', error);
-          alert('Failed to update booking');
+          console.error('❌ Error updating booking:', error);
+          alert('Failed to update booking: ' + (error.message || 'Unknown error'));
         }
       });
     } else {
-      this.hotelService.createBooking(this.formData).subscribe({
+      this.hotelService.createBooking(bookingData).subscribe({
         next: () => {
+          console.log('✅ Booking created successfully');
           this.loadBookings();
           this.closeModal();
         },
         error: (error: any) => {
-          console.error('Error creating booking:', error);
-          alert('Failed to create booking');
+          console.error('❌ Error creating booking:', error);
+          alert('Failed to create booking: ' + (error.message || 'Unknown error'));
         }
       });
     }
