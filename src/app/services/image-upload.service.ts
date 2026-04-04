@@ -103,7 +103,7 @@ export class ImageUploadService {
       reader.onload = (e) => {
         const canvas = document.createElement('canvas');
         const img = new Image();
-        
+
         img.onload = () => {
           const maxWidth = 200;
           const maxHeight = 200;
@@ -126,7 +126,7 @@ export class ImageUploadService {
           canvas.height = height;
           const ctx = canvas.getContext('2d');
           ctx?.drawImage(img, 0, 0, width, height);
-          
+
           canvas.toBlob((blob) => {
             if (blob) {
               const reader2 = new FileReader();
@@ -143,7 +143,76 @@ export class ImageUploadService {
         img.onerror = () => {
           reject(new Error('Failed to load image'));
         };
-        
+
+        img.src = e.target?.result as string;
+      };
+
+      reader.onerror = () => {
+        reject(new Error('Failed to read file'));
+      };
+
+      reader.readAsDataURL(file);
+    });
+  }
+
+  /**
+   * Compress image using Canvas API
+   * @param file Original image file
+   * @param maxWidth Max width in pixels (default 800)
+   * @param maxHeight Max height in pixels (default 800)
+   * @param quality JPEG quality 0-1 (default 0.7)
+   * @returns Promise with compressed image data URL
+   */
+  async compressImage(file: File, maxWidth: number = 800, maxHeight: number = 800, quality: number = 0.7): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const canvas = document.createElement('canvas');
+        const img = new Image();
+
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+
+          // Calculate new dimensions
+          if (width > height) {
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const reader2 = new FileReader();
+              reader2.onload = (e2) => {
+                const compressedDataUrl = e2.target?.result as string;
+                const originalSizeMB = file.size / 1024 / 1024;
+                const compressedSizeMB = (blob.size / 1024 / 1024);
+                console.log(`🖼️ Image compressed: ${originalSizeMB.toFixed(2)}MB → ${compressedSizeMB.toFixed(2)}MB`);
+                resolve(compressedDataUrl);
+              };
+              reader2.readAsDataURL(blob);
+            } else {
+              resolve(e.target?.result as string);
+            }
+          }, 'image/jpeg', quality);
+        };
+
+        img.onerror = () => {
+          reject(new Error('Failed to load image'));
+        };
+
         img.src = e.target?.result as string;
       };
 
