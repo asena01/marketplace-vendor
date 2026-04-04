@@ -468,6 +468,10 @@ export class VendorSidenavComponent implements OnInit {
         // { label: 'Pricing', icon: '💰', route: `${dashboardPath}/pricing` },
         { label: 'Rooms', icon: '🏨', route: `${dashboardPath}/rooms`, badge: 0 },
         { label: 'Bookings', icon: '📅', route: `${dashboardPath}/bookings` },
+        { label: 'Pre-Checkin', icon: '✓', route: `${dashboardPath}/pre-checkin` },
+        { label: 'Revenue', icon: '💰', route: `${dashboardPath}/revenue` },
+        { label: 'Analytics', icon: '📊', route: `${dashboardPath}/analytics` },
+        { label: 'Staff Logs', icon: '📝', route: `${dashboardPath}/staff-logs` },
         {
           label: 'Food & Beverage',
           icon: '🍽️',
