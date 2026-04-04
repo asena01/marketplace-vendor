@@ -125,7 +125,15 @@ const seedDatabase = async () => {
       rating: 4.7,
       amenities: ['WiFi', 'Gym', 'Pool', 'Restaurant', 'Spa', 'Parking'],
       checkInTime: '14:00',
-      checkOutTime: '11:00'
+      checkOutTime: '11:00',
+      thumbnail: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&h=300&fit=crop',
+      photos: [
+        'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1582719508762-e881b08e601d?w=800&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1595521624779-f3141f476e94?w=800&h=600&fit=crop'
+      ],
+      logo: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=100&h=100&fit=crop'
     };
 
     const hotel = await Hotel.create(hotelData);
