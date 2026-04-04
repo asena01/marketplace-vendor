@@ -6,6 +6,7 @@ import OccupancyAnalytics from '../models/OccupancyAnalytics.js';
 import Hotel from '../models/Hotel.js';
 import Staff from '../models/Staff.js';
 import Booking from '../models/Booking.js';
+import Room from '../models/Room.js';
 import { connectDB } from '../database.js';
 
 const seedData = async () => {
@@ -310,6 +311,24 @@ const seedData = async () => {
     console.log(`✅ Created ${checkIns.length} sample pre-arrival check-ins`);
 
     // ==================== SEED OCCUPANCY ANALYTICS ====================
+    // Get actual rooms to match real data
+    const rooms = await Room.find({ hotel: hotelId });
+    const totalRooms = rooms.length || 10; // Use actual room count or default to 10
+
+    // Group rooms by type
+    const roomsByType = {};
+    rooms.forEach(room => {
+      const type = room.roomType || 'other';
+      if (!roomsByType[type]) {
+        roomsByType[type] = { total: 0, occupied: 0 };
+      }
+      roomsByType[type].total += 1;
+      if (room.status === 'occupied') {
+        roomsByType[type].occupied += 1;
+      }
+    });
+
+    // Create 7 days of analytics
     const analyticsData = [];
     const today = new Date();
 
@@ -318,10 +337,21 @@ const seedData = async () => {
       date.setDate(date.getDate() - i);
       date.setHours(0, 0, 0, 0);
 
-      const occupancyRate = 45 + Math.random() * 45; // 45-90%
-      const totalRooms = 50;
+      // Realistic occupancy based on actual room count
+      const occupancyRate = 40 + Math.random() * 50; // 40-90%
       const occupiedRooms = Math.round((occupancyRate / 100) * totalRooms);
-      const revenue = occupiedRooms * (250 + Math.random() * 150);
+      const revenue = occupiedRooms * (300 + Math.random() * 200); // ₦300-500 per room
+
+      // Build room type breakdown from actual data
+      const roomTypeBreakdown = Object.entries(roomsByType).map(([type, data]) => {
+        const typeOccupancyRate = Math.round((Math.random() * 40 + 30)); // 30-70%
+        return {
+          roomType: type.charAt(0).toUpperCase() + type.slice(1),
+          total: data.total,
+          occupied: Math.round((typeOccupancyRate / 100) * data.total),
+          occupancyRate: typeOccupancyRate
+        };
+      });
 
       analyticsData.push({
         hotel: hotelId,
@@ -330,15 +360,10 @@ const seedData = async () => {
         occupiedRooms,
         totalRooms,
         revenue: Math.round(revenue),
-        totalGuests: occupiedRooms * (1 + Math.random()),
+        totalGuests: Math.round(occupiedRooms * 1.5), // Average 1.5 guests per room
         averageStay: 2.5 + Math.random() * 2,
         peakCheckInTime: '4-6 PM',
-        roomTypeBreakdown: [
-          { roomType: 'Single', total: 15, occupied: Math.round(15 * (occupancyRate / 100)), occupancyRate: Math.round(occupancyRate * 0.9) },
-          { roomType: 'Double', total: 20, occupied: Math.round(20 * (occupancyRate / 100)), occupancyRate: Math.round(occupancyRate * 0.95) },
-          { roomType: 'Suite', total: 10, occupied: Math.round(10 * (occupancyRate / 100)), occupancyRate: Math.round(occupancyRate * 0.8) },
-          { roomType: 'Deluxe', total: 5, occupied: Math.round(5 * (occupancyRate / 100)), occupancyRate: Math.round(occupancyRate * 0.7) }
-        ]
+        roomTypeBreakdown
       });
     }
 
