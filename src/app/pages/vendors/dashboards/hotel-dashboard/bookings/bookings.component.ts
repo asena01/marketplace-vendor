@@ -116,9 +116,16 @@ import { HotelService } from '../../../../../services/hotel.service';
               <tbody class="divide-y">
                 @for (booking of filteredBookings(); track booking._id) {
                   <tr class="hover:bg-slate-50 transition">
-                    <td class="px-6 py-4 text-sm text-slate-900 font-medium">{{ booking.guest.name }}</td>
-                    <td class="px-6 py-4 text-sm text-slate-600">{{ booking._id?.slice(-6) || 'N/A' }}</td>
-                    <td class="px-6 py-4 text-sm text-slate-600">{{ booking.roomNumber || 'TBA' }}</td>
+                    <td class="px-6 py-4 text-sm text-slate-900 font-medium">
+                      {{ booking.guestName || booking.guest?.name || booking.customerName || 'Unknown Guest' }}
+                    </td>
+                    <td class="px-6 py-4 text-sm text-slate-600">
+                      {{ booking.bookingNumber || booking._id?.slice(-6) || 'N/A' }}
+                    </td>
+                    <td class="px-6 py-4 text-sm text-slate-600">
+                      {{ booking.roomType || booking.room?.roomType || 'Unknown' }}
+                      ({{ booking.roomNumber || booking.room?.roomNumber || 'TBA' }})
+                    </td>
                     <td class="px-6 py-4 text-sm text-slate-600">{{ formatDate(booking.checkInDate) }}</td>
                     <td class="px-6 py-4 text-sm text-slate-600">{{ formatDate(booking.checkOutDate) }}</td>
                     <td class="px-6 py-4">
@@ -336,17 +343,85 @@ export class HotelBookingsComponent implements OnInit {
 
   loadBookings(): void {
     this.isLoading.set(true);
+    this.errorMessage.set('');
     this.hotelService.getHotelBookings(1, 100).subscribe({
       next: (response: any) => {
+        console.log('📡 Hotel bookings response:', response);
+
         if (response.status === 'success' && Array.isArray(response.data)) {
-          this.bookings.set(response.data);
+          // Transform bookings to match component expectations
+          const transformedBookings = response.data.map((booking: any, index: number) => {
+            console.log(`\n📝 [Booking ${index}] Raw data:`, JSON.stringify(booking, null, 2));
+
+            // Extract guest name with proper fallbacks
+            let guestName = 'Unknown Guest';
+            if (booking.guest) {
+              if (typeof booking.guest === 'object' && booking.guest.name) {
+                guestName = booking.guest.name;
+                console.log('   ✅ Guest name found from object:', guestName);
+              } else if (typeof booking.guest === 'string') {
+                guestName = 'Guest ' + booking.guest.slice(0, 6);
+                console.log('   ⚠️ Guest ID found as string:', booking.guest);
+              }
+            } else {
+              console.log('   ❌ No guest data found');
+            }
+
+            // Extract room details with proper fallbacks
+            let roomNumber = 'TBA';
+            let roomType = 'Unknown';
+            if (booking.room) {
+              if (typeof booking.room === 'object') {
+                roomNumber = booking.room.roomNumber || 'TBA';
+                roomType = booking.room.roomType || 'Unknown';
+                console.log('   ✅ Room found from object:', { roomNumber, roomType });
+              } else if (typeof booking.room === 'string') {
+                roomNumber = booking.room.slice(0, 6);
+                console.log('   ⚠️ Room ID found as string:', booking.room);
+              }
+            } else {
+              console.log('   ❌ No room data found');
+            }
+
+            // Handle dates - could be string or Date object
+            let checkInDate = booking.checkInDate;
+            let checkOutDate = booking.checkOutDate;
+            console.log('   📅 Dates:', { checkInDate, checkOutDate, type: typeof checkInDate });
+
+            const transformed = {
+              _id: booking._id,
+              guest: booking.guest || { name: guestName },
+              customerName: guestName,
+              room: booking.room || { roomNumber, roomType },
+              roomNumber: roomNumber,
+              roomType: roomType,
+              checkInDate: checkInDate,
+              checkOutDate: checkOutDate,
+              numberOfNights: booking.numberOfNights || 0,
+              totalPrice: booking.totalPrice || 0,
+              status: booking.status || 'pending',
+              notes: booking.specialRequests || '',
+              bookingNumber: booking.bookingNumber || 'N/A',
+              ...booking
+            };
+
+            console.log('   ✅ Transformed:', transformed);
+            return transformed;
+          });
+
+          console.log('✅ Loaded and transformed', transformedBookings.length, 'bookings');
+          console.log('📊 First booking:', transformedBookings[0]);
+          this.bookings.set(transformedBookings);
           this.filterBookings();
+        } else {
+          console.warn('⚠️ Unexpected response format:', response);
+          this.bookings.set([]);
         }
         this.isLoading.set(false);
       },
       error: (error: any) => {
-        console.error('Error loading bookings:', error);
-        this.errorMessage.set('Failed to load bookings');
+        console.error('❌ Error loading bookings:', error);
+        this.errorMessage.set('Failed to load bookings: ' + (error.message || 'Unknown error'));
         this.isLoading.set(false);
       }
     });
@@ -395,9 +470,57 @@ export class HotelBookingsComponent implements OnInit {
   }
 
   editBooking(booking: any): void {
+    console.log('📝 Editing booking:', booking);
+
+    // Convert dates to YYYY-MM-DD format for date input
+    const checkInDate = this.convertToDateInputFormat(booking.checkInDate);
+    const checkOutDate = this.convertToDateInputFormat(booking.checkOutDate);
+
+    console.log('📅 Formatted dates:', { checkInDate, checkOutDate });
+
+    this.formData = {
+      _id: booking._id,
+      customerName: booking.guestName || booking.guest?.name || booking.customerName || '',
+      customerEmail: booking.guest?.email || booking.customerEmail || '',
+      customerPhone: booking.guest?.phone || booking.customerPhone || '',
+      roomNumber: booking.roomNumber || booking.room?.roomNumber || '',
+      roomType: booking.roomType || booking.room?.roomType || '',
+      checkInDate: checkInDate,
+      checkOutDate: checkOutDate,
+      totalPrice: booking.totalPrice || 0,
+      status: booking.status || 'pending',
+      notes: booking.notes || booking.specialRequests || ''
+    };
+
+    console.log('✅ Form data ready:', this.formData);
     this.isEditing.set(true);
-    this.formData = { ...booking };
     this.showModal.set(true);
+  }
+
+  convertToDateInputFormat(dateValue: any): string {
+    if (!dateValue) return '';
+
+    try {
+      // Handle both string and Date object
+      const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
+
+      if (isNaN(date.getTime())) {
+        console.warn('⚠️ Invalid date:', dateValue);
+        return '';
+      }
+
+      // Format as YYYY-MM-DD for date input
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+
+      const formatted = `${year}-${month}-${day}`;
+      console.log('  Converted', dateValue, '→', formatted);
+      return formatted;
+    } catch (err) {
+      console.error('❌ Error converting date:', err, 'value:', dateValue);
+      return '';
+    }
   }
 
   saveBooking(): void {
@@ -406,26 +529,37 @@ export class HotelBookingsComponent implements OnInit {
       return;
     }
 
+    // Convert dates from YYYY-MM-DD format to ISO string for backend
+    const bookingData = {
+      ...this.formData,
+      checkInDate: new Date(this.formData.checkInDate + 'T00:00:00Z').toISOString(),
+      checkOutDate: new Date(this.formData.checkOutDate + 'T00:00:00Z').toISOString()
+    };
+
+    console.log('💾 Saving booking:', bookingData);
+
     if (this.isEditing()) {
-      this.hotelService.updateBooking(this.formData._id, this.formData).subscribe({
+      this.hotelService.updateBooking(bookingData._id, bookingData).subscribe({
         next: () => {
+          console.log('✅ Booking updated successfully');
           this.loadBookings();
           this.closeModal();
         },
         error: (error: any) => {
-          console.error('Error updating booking:', error);
-          alert('Failed to update booking');
+          console.error('❌ Error updating booking:', error);
+          alert('Failed to update booking: ' + (error.message || 'Unknown error'));
         }
       });
     } else {
-      this.hotelService.createBooking(this.formData).subscribe({
+      this.hotelService.createBooking(bookingData).subscribe({
         next: () => {
+          console.log('✅ Booking created successfully');
           this.loadBookings();
           this.closeModal();
         },
         error: (error: any) => {
-          console.error('Error creating booking:', error);
-          alert('Failed to create booking');
+          console.error('❌ Error creating booking:', error);
+          alert('Failed to create booking: ' + (error.message || 'Unknown error'));
         }
       });
     }
@@ -465,10 +599,23 @@ export class HotelBookingsComponent implements OnInit {
     };
   }
 
-  formatDate(dateString: string): string {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  formatDate(dateString: any): string {
+    try {
+      if (!dateString) return 'N/A';
+
+      // Handle both string and Date object
+      const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+
+      if (isNaN(date.getTime())) {
+        console.warn('⚠️ Invalid date:', dateString);
+        return 'N/A';
+      }
+
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    } catch (err) {
+      console.error('❌ Error formatting date:', err, 'input:', dateString);
+      return 'N/A';
+    }
   }
 
   getStatusColor(status: string): string {

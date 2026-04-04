@@ -125,7 +125,15 @@ const seedDatabase = async () => {
       rating: 4.7,
       amenities: ['WiFi', 'Gym', 'Pool', 'Restaurant', 'Spa', 'Parking'],
       checkInTime: '14:00',
-      checkOutTime: '11:00'
+      checkOutTime: '11:00',
+      thumbnail: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&h=300&fit=crop',
+      photos: [
+        'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1582719508762-e881b08e601d?w=800&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1595521624779-f3141f476e94?w=800&h=600&fit=crop'
+      ],
+      logo: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=100&h=100&fit=crop'
     };
 
     const hotel = await Hotel.create(hotelData);
@@ -134,74 +142,96 @@ const seedDatabase = async () => {
     // Create sample rooms
     console.log('🛏️  Creating sample rooms...');
     const roomsData = [
-      { hotel: hotel._id, roomNumber: '101', roomType: 'single', capacity: 1, floor: 1, pricePerNight: 99, status: 'available' },
-      { hotel: hotel._id, roomNumber: '102', roomType: 'double', capacity: 2, floor: 1, pricePerNight: 149, status: 'occupied' },
-      { hotel: hotel._id, roomNumber: '103', roomType: 'suite', capacity: 4, floor: 1, pricePerNight: 299, status: 'available' },
-      { hotel: hotel._id, roomNumber: '201', roomType: 'double', capacity: 2, floor: 2, pricePerNight: 179, status: 'occupied' },
-      { hotel: hotel._id, roomNumber: '202', roomType: 'deluxe', capacity: 2, floor: 2, pricePerNight: 249, status: 'maintenance' },
-      { hotel: hotel._id, roomNumber: '203', roomType: 'suite', capacity: 4, floor: 2, pricePerNight: 349, status: 'available' },
-      { hotel: hotel._id, roomNumber: '301', roomType: 'single', capacity: 1, floor: 3, pricePerNight: 119, status: 'available' },
-      { hotel: hotel._id, roomNumber: '302', roomType: 'double', capacity: 2, floor: 3, pricePerNight: 159, status: 'occupied' },
-      { hotel: hotel._id, roomNumber: '303', roomType: 'deluxe', capacity: 2, floor: 3, pricePerNight: 279, status: 'available' },
-      { hotel: hotel._id, roomNumber: '401', roomType: 'suite', capacity: 4, floor: 4, pricePerNight: 399, status: 'available' }
+      { hotel: hotel._id, roomNumber: '101', roomType: 'single', capacity: 1, floor: 1, pricePerNight: 99, status: 'available', images: ['https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop'] },
+      { hotel: hotel._id, roomNumber: '102', roomType: 'double', capacity: 2, floor: 1, pricePerNight: 149, status: 'occupied', images: ['https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop'] },
+      { hotel: hotel._id, roomNumber: '103', roomType: 'suite', capacity: 4, floor: 1, pricePerNight: 299, status: 'available', images: ['https://images.unsplash.com/photo-1582719508762-e881b08e601d?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&h=400&fit=crop'] },
+      { hotel: hotel._id, roomNumber: '201', roomType: 'double', capacity: 2, floor: 2, pricePerNight: 179, status: 'occupied', images: ['https://images.unsplash.com/photo-1595521624779-f3141f476e94?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop'] },
+      { hotel: hotel._id, roomNumber: '202', roomType: 'deluxe', capacity: 2, floor: 2, pricePerNight: 249, status: 'maintenance', images: ['https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1582719508762-e881b08e601d?w=600&h=400&fit=crop'] },
+      { hotel: hotel._id, roomNumber: '203', roomType: 'suite', capacity: 4, floor: 2, pricePerNight: 349, status: 'available', images: ['https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1595521624779-f3141f476e94?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&h=400&fit=crop'] },
+      { hotel: hotel._id, roomNumber: '301', roomType: 'single', capacity: 1, floor: 3, pricePerNight: 119, status: 'available', images: ['https://images.unsplash.com/photo-1582719508762-e881b08e601d?w=600&h=400&fit=crop'] },
+      { hotel: hotel._id, roomNumber: '302', roomType: 'double', capacity: 2, floor: 3, pricePerNight: 159, status: 'occupied', images: ['https://images.unsplash.com/photo-1595521624779-f3141f476e94?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop'] },
+      { hotel: hotel._id, roomNumber: '303', roomType: 'deluxe', capacity: 2, floor: 3, pricePerNight: 279, status: 'available', images: ['https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1582719508762-e881b08e601d?w=600&h=400&fit=crop'] },
+      { hotel: hotel._id, roomNumber: '401', roomType: 'suite', capacity: 4, floor: 4, pricePerNight: 399, status: 'available', images: ['https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1595521624779-f3141f476e94?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1582719508762-e881b08e601d?w=600&h=400&fit=crop'] }
     ];
 
     const rooms = await Room.insertMany(roomsData);
     console.log('✅ Created', rooms.length, 'rooms');
 
-    // Create sample bookings
+    // Create sample bookings for testing the dashboard
     console.log('📅 Creating sample bookings...');
     const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const nextWeek = new Date(today);
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    const nextWeekPlus3 = new Date(today);
+    nextWeekPlus3.setDate(nextWeekPlus3.getDate() + 10);
+
     const bookingsData = [
       {
         hotel: hotel._id,
-        bookingNumber: 'BK-001',
         guest: guests[0]._id,
-        room: rooms[1]._id,
-        checkInDate: new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000),
-        checkOutDate: new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000),
-        numberOfNights: 4,
-        numberOfGuests: 2,
-        roomRate: 149,
-        totalPrice: 596,
-        status: 'checked-in',
-        paymentStatus: 'paid',
-        paymentMethod: 'credit_card'
-      },
-      {
-        hotel: hotel._id,
-        bookingNumber: 'BK-002',
-        guest: guests[1]._id,
-        room: rooms[3]._id,
-        checkInDate: new Date(today.getTime() + 5 * 24 * 60 * 60 * 1000),
-        checkOutDate: new Date(today.getTime() + 8 * 24 * 60 * 60 * 1000),
-        numberOfNights: 3,
-        numberOfGuests: 2,
-        roomRate: 179,
-        totalPrice: 537,
+        room: rooms[0]._id,
+        checkInDate: tomorrow,
+        checkOutDate: nextWeek,
+        numberOfNights: 6,
+        numberOfGuests: 1,
+        numberOfRooms: 1,
+        roomRate: 99,
+        subtotal: 594,
+        tax: 60,
+        discount: 0,
+        totalPrice: 654,
         status: 'confirmed',
         paymentStatus: 'paid',
-        paymentMethod: 'credit_card'
+        paymentMethod: 'credit_card',
+        specialRequests: 'High floor preferred',
+        bookingNumber: 'BK001'
       },
       {
         hotel: hotel._id,
-        bookingNumber: 'BK-003',
+        guest: guests[1]._id,
+        room: rooms[1]._id,
+        checkInDate: nextWeek,
+        checkOutDate: nextWeekPlus3,
+        numberOfNights: 3,
+        numberOfGuests: 2,
+        numberOfRooms: 1,
+        roomRate: 149,
+        subtotal: 447,
+        tax: 45,
+        discount: 0,
+        totalPrice: 492,
+        status: 'confirmed',
+        paymentStatus: 'paid',
+        paymentMethod: 'debit_card',
+        specialRequests: 'Anniversary celebration',
+        bookingNumber: 'BK002'
+      },
+      {
+        hotel: hotel._id,
         guest: guests[2]._id,
-        room: rooms[7]._id,
-        checkInDate: new Date(today.getTime() + 10 * 24 * 60 * 60 * 1000),
-        checkOutDate: new Date(today.getTime() + 12 * 24 * 60 * 60 * 1000),
+        room: rooms[4]._id,
+        checkInDate: new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000),
+        checkOutDate: new Date(today.getTime() + 5 * 24 * 60 * 60 * 1000),
         numberOfNights: 2,
-        numberOfGuests: 1,
-        roomRate: 159,
-        totalPrice: 318,
+        numberOfGuests: 2,
+        numberOfRooms: 1,
+        roomRate: 249,
+        subtotal: 498,
+        tax: 50,
+        discount: 0,
+        totalPrice: 548,
         status: 'pending',
         paymentStatus: 'unpaid',
-        paymentMethod: 'credit_card'
+        paymentMethod: 'online',
+        specialRequests: null,
+        bookingNumber: 'BK003'
       }
     ];
 
     const bookings = await Booking.insertMany(bookingsData);
-    console.log('✅ Created', bookings.length, 'bookings');
+    console.log('✅ Created', bookings.length, 'sample bookings');
 
     // Create sample staff
     console.log('👨‍💼 Creating sample staff...');
@@ -298,37 +328,40 @@ const seedDatabase = async () => {
     const maintenance = await Maintenance.insertMany(maintenanceData);
     console.log('✅ Created', maintenance.length, 'maintenance requests');
 
-    // Create sample invoices
+    // Create sample invoices (only if bookings exist)
     console.log('🧾 Creating sample invoices...');
-    const invoicesData = [
-      {
-        hotel: hotel._id,
-        invoiceNumber: 'INV-001',
-        booking: bookings[0]._id,
-        guest: guests[0]._id,
-        guestName: 'John Doe',
-        guestEmail: 'john@example.com',
-        amount: 596,
-        tax: 60,
-        totalAmount: 656,
-        status: 'paid',
-        paidDate: new Date()
-      },
-      {
-        hotel: hotel._id,
-        invoiceNumber: 'INV-002',
-        booking: bookings[1]._id,
-        guest: guests[1]._id,
-        guestName: 'Jane Smith',
-        guestEmail: 'jane@example.com',
-        amount: 537,
-        tax: 54,
-        totalAmount: 591,
-        status: 'issued'
-      }
-    ];
+    let invoices = [];
+    if (bookings.length > 0) {
+      const invoicesData = [
+        {
+          hotel: hotel._id,
+          invoiceNumber: 'INV-001',
+          booking: bookings[0]._id,
+          guest: guests[0]._id,
+          guestName: 'John Doe',
+          guestEmail: 'john@example.com',
+          amount: 596,
+          tax: 60,
+          totalAmount: 656,
+          status: 'paid',
+          paidDate: new Date()
+        },
+        {
+          hotel: hotel._id,
+          invoiceNumber: 'INV-002',
+          booking: bookings[1]._id,
+          guest: guests[1]._id,
+          guestName: 'Jane Smith',
+          guestEmail: 'jane@example.com',
+          amount: 537,
+          tax: 54,
+          totalAmount: 591,
+          status: 'issued'
+        }
+      ];
 
-    const invoices = await Invoice.insertMany(invoicesData);
+      invoices = await Invoice.insertMany(invoicesData);
+    }
     console.log('✅ Created', invoices.length, 'invoices');
 
     // Create sample room service menu items

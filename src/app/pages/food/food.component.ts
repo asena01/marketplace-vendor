@@ -9,6 +9,7 @@ import { CurrencyService } from '../../services/currency.service';
 import { PaymentService } from '../../services/payment.service';
 import { FoodService, Restaurant, MenuItem, CartItem as FoodCartItem } from '../../services/food.service';
 import { DeliveryService, DeliveryServiceDefinition } from '../../services/delivery.service';
+import { ToastService } from '../../services/toast.service';
 import { apiConfig } from '../../config/api-config';
 
 interface CartItem {
@@ -170,7 +171,8 @@ export class FoodComponent implements OnInit {
     public currencyService: CurrencyService,
     public paymentService: PaymentService,
     private foodService: FoodService,
-    private deliveryService: DeliveryService
+    private deliveryService: DeliveryService,
+    private toastService: ToastService
   ) {
     // Prevent body scroll when modal is open
     effect(() => {
@@ -470,7 +472,7 @@ export class FoodComponent implements OnInit {
 
     if (!restaurant) {
       console.error('❌ No restaurant selected');
-      alert('Please select a restaurant first');
+      this.toastService.warning('Please select a restaurant first');
       return;
     }
 
@@ -531,7 +533,7 @@ export class FoodComponent implements OnInit {
 
   openCheckout(): void {
     if (this.cartItems().length === 0) {
-      alert('Your cart is empty');
+      this.toastService.warning('Your cart is empty');
       return;
     }
 
@@ -958,5 +960,16 @@ export class FoodComponent implements OnInit {
   buildImageUrl(imagePath: string | undefined): string {
     if (!imagePath) return '';
     return apiConfig.buildImageUrl(imagePath);
+  }
+
+  /**
+   * Check if a string is a URL (image URL, data URL, etc)
+   * Returns true for http://, https://, data:, etc
+   * Returns false for emoji or plain text
+   */
+  isImageUrl(value: string | undefined): boolean {
+    if (!value) return false;
+    // Check if it's a URL (starts with http, https, or data:)
+    return /^(https?:\/\/|data:)/.test(value);
   }
 }

@@ -11,6 +11,7 @@
     "start": "node server.js",
     "dev": "node server.js",
     "seed": "node scripts/seedDatabase.js",
+    "seed:hotel": "node scripts/seedHotelFeatures.js",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log"
   },

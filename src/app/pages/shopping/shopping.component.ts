@@ -9,6 +9,7 @@ import { ReviewService, ProductReview } from '../../services/review.service';
 import { PaymentService, PaymentMethod, PaymentRequest, PaymentResponse } from '../../services/payment.service';
 import { CurrencyService } from '../../services/currency.service';
 import { DeliveryService, DeliveryServiceDefinition } from '../../services/delivery.service';
+import { ToastService } from '../../services/toast.service';
 import { apiConfig } from '../../config/api-config';
 
 interface Product {
@@ -157,7 +158,8 @@ export class ShoppingComponent implements OnInit {
     private reviewService: ReviewService,
     private paymentService: PaymentService,
     public currencyService: CurrencyService,
-    private deliveryService: DeliveryService
+    private deliveryService: DeliveryService,
+    private toastService: ToastService
   ) {
     // Prevent body scroll when cart is open
     effect(() => {
@@ -371,7 +373,7 @@ export class ShoppingComponent implements OnInit {
     // Check if user is logged in
     const userId = localStorage.getItem('userId');
     if (!userId) {
-      alert('Please log in to add items to your cart. Redirecting to login...');
+      this.toastService.warning('Please log in to add items to your cart. Redirecting to login...');
       window.location.href = '/login';
       return;
     }
@@ -537,12 +539,12 @@ export class ShoppingComponent implements OnInit {
     const userId = localStorage.getItem('userId');
 
     if (!userId) {
-      alert('Please log in to submit a review');
+      this.toastService.warning('Please log in to submit a review');
       return;
     }
 
     if (!this.reviewTitle() || !this.reviewComment()) {
-      alert('Please fill in all review fields');
+      this.toastService.warning('Please fill in all review fields');
       return;
     }
 
@@ -561,7 +563,7 @@ export class ShoppingComponent implements OnInit {
     this.reviewService.createReview(review).subscribe({
       next: (response) => {
         if (response.success) {
-          alert('Review submitted successfully!');
+          this.toastService.success('Review submitted successfully!');
           this.loadProductReviews(product.id);
           this.resetReviewForm();
           this.submittingReview.set(false);
@@ -569,7 +571,7 @@ export class ShoppingComponent implements OnInit {
       },
       error: (error) => {
         console.error('Failed to submit review:', error);
-        alert('Failed to submit review. Please try again.');
+        this.toastService.error('Failed to submit review. Please try again.');
         this.submittingReview.set(false);
       }
     });
@@ -591,7 +593,7 @@ export class ShoppingComponent implements OnInit {
       },
       error: (error) => {
         console.error('Failed to delete review:', error);
-        alert('Failed to delete review');
+        this.toastService.error('Failed to delete review');
       }
     });
   }
@@ -602,12 +604,12 @@ export class ShoppingComponent implements OnInit {
 
   openPaymentModal(): void {
     if (this.cart().length === 0) {
-      alert('Your cart is empty. Add items before proceeding to payment.');
+      this.toastService.warning('Your cart is empty. Add items before proceeding to payment.');
       return;
     }
 
     if (!this.validateDeliveryInfo()) {
-      alert(this.deliveryError());
+      this.toastService.warning(this.deliveryError());
       this.showDeliveryOptions.set(true);
       return;
     }
@@ -782,6 +784,7 @@ export class ShoppingComponent implements OnInit {
           this.handlePaymentSuccess(response.data);
         } else {
           console.error('❌ Payment failed:', response.message);
+          this.toastService.error(response.message || 'Payment failed. Please try again.');
           this.paymentError.set(response.message || 'Payment failed. Please try again.');
         }
         this.isProcessingPayment.set(false);
@@ -791,7 +794,9 @@ export class ShoppingComponent implements OnInit {
         console.error('Error status:', error.status);
         console.error('Error statusText:', error.statusText);
         console.error('Error body:', error.error);
-        this.paymentError.set(error.error?.message || error.statusText || 'An error occurred while processing payment');
+        const errorMsg = error.error?.message || error.statusText || 'An error occurred while processing payment';
+        this.toastService.error(errorMsg);
+        this.paymentError.set(errorMsg);
         this.isProcessingPayment.set(false);
       }
     });
@@ -889,7 +894,7 @@ export class ShoppingComponent implements OnInit {
     setTimeout(() => {
       this.cart.set([]);
       this.showPaymentModal.set(false);
-      alert(`✅ Payment Successful!\nTransaction ID: ${response.transactionId || 'TXN-' + Date.now()}\nAmount: ₦${(response.amount || this.cartTotal).toLocaleString()}`);
+      this.toastService.success(`Payment Successful! Transaction ID: ${response.transactionId || 'TXN-' + Date.now()}`);
       this.paymentSuccess.set(false);
       this.resetPaymentForm();
     }, 2000);

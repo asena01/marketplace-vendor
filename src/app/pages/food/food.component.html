@@ -64,8 +64,16 @@
             @for (restaurant of filteredRestaurants(); track restaurant.id || restaurant._id) {
               <div class="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
                 <!-- Restaurant Image -->
-                <div class="h-40 bg-gradient-to-br from-orange-100 to-orange-50 flex items-center justify-center text-6xl relative">
-                  {{ restaurant.icon }}
+                <div class="h-40 bg-gradient-to-br from-orange-100 to-orange-50 flex items-center justify-center text-6xl relative overflow-hidden">
+                  @if (restaurant.image) {
+                    <img
+                      [src]="restaurant.image"
+                      [alt]="restaurant.name"
+                      class="w-full h-full object-cover"
+                    />
+                  } @else {
+                    <span>{{ restaurant.icon }}</span>
+                  }
                   @if (!restaurant.isOpen) {
                     <div class="absolute inset-0 bg-black/50 flex items-center justify-center">
                       <span class="bg-red-600 text-white px-4 py-2 rounded-lg font-bold">CLOSED</span>
@@ -130,7 +138,15 @@
             <div class="flex items-start justify-between">
               <div>
                 <div class="flex items-center gap-4 mb-2">
-                  <span class="text-5xl">{{ restaurant!.icon }}</span>
+                  @if (restaurant!.image) {
+                    <img
+                      [src]="restaurant!.image"
+                      [alt]="restaurant!.name"
+                      class="w-16 h-16 rounded-lg object-cover"
+                    />
+                  } @else {
+                    <span class="text-5xl">{{ restaurant!.icon }}</span>
+                  }
                   <div>
                     <h2 class="text-3xl font-bold text-slate-900">{{ restaurant!.name }}</h2>
                     <p class="text-gray-600">{{ restaurant!.cuisine }}</p>
@@ -186,8 +202,16 @@
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
             @for (item of menuItems(); track item.id) {
               <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group">
-                <div class="h-48 bg-gradient-to-br from-orange-100 to-orange-50 flex items-center justify-center text-6xl group-hover:scale-110 transition-transform">
-                  {{ item.image }}
+                <div class="h-48 bg-gradient-to-br from-orange-100 to-orange-50 flex items-center justify-center text-6xl group-hover:scale-110 transition-transform overflow-hidden relative">
+                  @if (item.image && isImageUrl(item.image)) {
+                    <img
+                      [src]="item.image"
+                      [alt]="item.name"
+                      class="w-full h-full object-cover"
+                    />
+                  } @else {
+                    <span>{{ item.image || '🍽️' }}</span>
+                  }
                 </div>
 
                 <div class="p-6">
@@ -262,7 +286,17 @@
               <div class="bg-gray-50 rounded-lg p-4 space-y-3">
                 <div class="flex items-start justify-between">
                   <div class="flex gap-3 items-start">
-                    <span class="text-3xl">{{ item.menuItem.image }}</span>
+                    <div class="w-12 h-12 flex-shrink-0 rounded-lg bg-gray-200 flex items-center justify-center text-xl overflow-hidden">
+                      @if (item.menuItem.image && isImageUrl(item.menuItem.image)) {
+                        <img
+                          [src]="item.menuItem.image"
+                          [alt]="item.menuItem.name"
+                          class="w-full h-full object-cover"
+                        />
+                      } @else {
+                        <span>{{ item.menuItem.image || '🍽️' }}</span>
+                      }
+                    </div>
                     <div>
                       <h4 class="font-bold text-gray-900">{{ item.menuItem.name }}</h4>
                       <p class="text-sm text-gray-600">{{ formatPrice(item.menuItem.price) }} each</p>

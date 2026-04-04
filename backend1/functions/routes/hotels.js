@@ -1,6 +1,8 @@
 import express from 'express';
 import Hotel from '../models/Hotel.js';
 import Room from '../models/Room.js';
+import Booking from '../models/Booking.js';
+import mongoose from 'mongoose';
 import {
   getDeviceStatus,
   getDeviceLogs,
@@ -8,6 +10,84 @@ import {
 } from '../controllers/deviceController.js';
 
 const router = express.Router();
+
+// ==================== CHECK ROOM AVAILABILITY ====================
+// MUST BE DEFINED BEFORE GENERIC /:id ROUTE
+// Check if a room is available for a specific date range
+router.get('/check-availability/:roomId', async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const { checkInDate, checkOutDate } = req.query;
+
+    // Validate input
+    if (!roomId || !checkInDate || !checkOutDate) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Missing required parameters',
+        data: null
+      });
+    }
+
+    // Parse and validate dates
+    const checkIn = new Date(checkInDate);
+    const checkOut = new Date(checkOutDate);
+
+    if (isNaN(checkIn.getTime()) || isNaN(checkOut.getTime()) || checkIn >= checkOut) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Invalid date range',
+        data: null
+      });
+    }
+
+    // Calculate number of nights
+    const numberOfNights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+
+    // Verify room exists
+    const room = await Room.findById(roomId).populate('hotel', 'name');
+    if (!room) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Room not found',
+        data: null
+      });
+    }
+
+    // Check for conflicting bookings
+    const conflictingBookings = await Booking.countDocuments({
+      room: roomId,
+      status: { $in: ['confirmed', 'checked-in'] },
+      $or: [
+        {
+          checkInDate: { $lt: checkOut },
+          checkOutDate: { $gt: checkIn }
+        }
+      ]
+    });
+
+    const isAvailable = conflictingBookings === 0;
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        roomId,
+        isAvailable,
+        numberOfNights,
+        conflictingBookings,
+        message: isAvailable
+          ? `Room is available for ${numberOfNights} night(s)`
+          : `Room is already booked for these dates`
+      }
+    });
+  } catch (err) {
+    console.error('Availability check error:', err.message);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to check availability',
+      data: { isAvailable: true, numberOfNights: 1 }  // Return available on error as fallback
+    });
+  }
+});
 
 // ==================== PUBLIC SEARCH ENDPOINT ====================
 // MUST BE DEFINED BEFORE GENERIC /:id ROUTE
@@ -105,7 +185,8 @@ router.get('/public/search', async (req, res) => {
             amenities: room.amenities || [],
             rating: 4.0,
             reviews: 0,
-            icon: '🛏️'
+            icon: '🛏️',
+            images: room.images || []
           }))
         };
 
@@ -288,5 +369,129 @@ router.get('/:hotelId/devices/:deviceId/logs', getDeviceLogs);
 // Get device shadow properties for a specific hotel
 // GET /hotels/:hotelId/devices/:deviceId/shadow
 router.get('/:hotelId/devices/:deviceId/shadow', getDeviceShadowProperties);
+
+// ==================== HOTEL BOOKINGS ====================
+
+// Get all bookings for a hotel
+// GET /hotels/:hotelId/bookings?page=1&limit=10&status=confirmed
+router.get('/:hotelId/bookings', async (req, res) => {
+  try {
+    const { hotelId } = req.params;
+    const { page = 1, limit = 10, status } = req.query;
+
+    console.log('📋 Fetching bookings for hotel:', hotelId);
+
+    // Validate hotelId is a valid MongoDB ID
+    if (!mongoose.Types.ObjectId.isValid(hotelId)) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Invalid hotel ID',
+        data: null
+      });
+    }
+
+    // Build filter
+    let filter = {};
+
+    // Get all rooms for this hotel
+    const rooms = await Room.find({ hotel: hotelId }).select('_id');
+    const roomIds = rooms.map(r => r._id);
+
+    if (roomIds.length === 0) {
+      // No rooms for this hotel, return empty bookings
+      return res.status(200).json({
+        status: 'success',
+        data: [],
+        pagination: {
+          total: 0,
+          pages: 0,
+          currentPage: parseInt(page)
+        }
+      });
+    }
+
+    // Filter bookings by rooms in this hotel
+    filter.room = { $in: roomIds };
+
+    // Filter by status if provided
+    if (status) {
+      filter.status = status;
+    }
+
+    // Calculate pagination
+    const skip = (page - 1) * limit;
+    const total = await Booking.countDocuments(filter);
+
+    // Fetch bookings with populated references
+    const rawBookings = await Booking.find(filter)
+      .populate({
+        path: 'room',
+        select: 'roomType roomNumber bedType price',
+        strictPopulate: false
+      })
+      .populate({
+        path: 'guest',
+        select: 'name email phone',
+        strictPopulate: false
+      })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .sort({ createdAt: -1 });
+
+    console.log('✅ Found', rawBookings.length, 'bookings for hotel:', hotelId);
+
+    // Log first booking for debugging
+    if (rawBookings.length > 0) {
+      console.log('📍 First booking details:', {
+        _id: rawBookings[0]._id,
+        guest: rawBookings[0].guest,
+        room: rawBookings[0].room,
+        status: rawBookings[0].status,
+        checkInDate: rawBookings[0].checkInDate,
+        checkOutDate: rawBookings[0].checkOutDate
+      });
+    }
+
+    // Ensure data is properly formatted with fallbacks
+    const formattedBookings = rawBookings.map((b, idx) => {
+      const bookingObj = b.toObject ? b.toObject() : b;
+      console.log(`  Booking ${idx}:`, {
+        hasGuest: !!b.guest,
+        guestType: typeof b.guest,
+        guestValue: b.guest,
+        hasRoom: !!b.room,
+        roomType: typeof b.room,
+        roomValue: b.room
+      });
+
+      return {
+        ...bookingObj,
+        guest: b.guest ? (typeof b.guest === 'object' ? b.guest : { _id: b.guest }) : null,
+        room: b.room ? (typeof b.room === 'object' ? b.room : { _id: b.room }) : null,
+        guestName: b.guest && typeof b.guest === 'object' ? b.guest.name : 'Unknown',
+        roomNumber: b.room && typeof b.room === 'object' ? b.room.roomNumber : 'TBA',
+        roomType: b.room && typeof b.room === 'object' ? b.room.roomType : 'Unknown'
+      };
+    });
+
+    res.status(200).json({
+      status: 'success',
+      data: formattedBookings,
+      pagination: {
+        total,
+        pages: Math.ceil(total / limit),
+        currentPage: parseInt(page)
+      }
+    });
+  } catch (err) {
+    console.error('❌ Error fetching bookings:', err.message, err.stack);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch bookings',
+      error: err.message,
+      data: null
+    });
+  }
+});
 
 export default router;

@@ -532,15 +532,26 @@ export class RestaurantMenuComponent implements OnInit {
   }
 
   saveMenuItem() {
-    if (!this.newMenuItem.name || !this.newMenuItem.category || !this.newMenuItem.price) {
-      this.errorMessage.set('Please fill in all required fields');
+    if (!this.newMenuItem.name || !this.newMenuItem.category || this.newMenuItem.price === undefined || this.newMenuItem.price === null) {
+      this.errorMessage.set('Please fill in all required fields: Item Name, Category, and Price');
+      setTimeout(() => this.errorMessage.set(''), 3000);
+      return;
+    }
+
+    if (this.newMenuItem.price <= 0) {
+      this.errorMessage.set('Price must be greater than 0');
       setTimeout(() => this.errorMessage.set(''), 3000);
       return;
     }
 
     const restaurantId = this.restaurantId();
     if (!restaurantId) {
-      this.errorMessage.set('Restaurant ID not found');
+      this.errorMessage.set('Restaurant ID not found. Please log in again.');
+      console.error('❌ Restaurant ID missing from localStorage:', {
+        restaurantId: localStorage.getItem('restaurantId'),
+        storeId: localStorage.getItem('storeId'),
+        userId: localStorage.getItem('userId')
+      });
       return;
     }
 
@@ -552,6 +563,8 @@ export class RestaurantMenuComponent implements OnInit {
       originalPrice: this.newMenuItem.originalPrice,
       category: this.newMenuItem.category,
       prepTime: this.newMenuItem.prepTime,
+      isAvailable: this.newMenuItem.isAvailable,
+      isSpecial: this.newMenuItem.isSpecial,
       restaurantId
     });
 
@@ -591,11 +604,14 @@ export class RestaurantMenuComponent implements OnInit {
       this.foodService.addMenuItem(restaurantId, this.newMenuItem).subscribe({
         next: (response: any) => {
           this.isLoading.set(false);
+          console.log('✅ Menu item response:', response);
           if (response.status === 'success' && response.data) {
             this.menuItems.set([...this.menuItems(), response.data]);
             this.successMessage.set('Menu item added successfully!');
+            console.log('✅ Menu item added:', response.data);
           } else {
-            this.errorMessage.set('Failed to add menu item');
+            this.errorMessage.set(response.message || 'Failed to add menu item');
+            console.error('❌ Unexpected response:', response);
           }
           this.filterMenuItems();
           this.closeMenuModal();
@@ -606,8 +622,14 @@ export class RestaurantMenuComponent implements OnInit {
         },
         error: (error: any) => {
           this.isLoading.set(false);
-          this.errorMessage.set(error.error?.message || 'Failed to add menu item');
-          console.error('Error adding menu item:', error);
+          const errorMsg = error?.error?.message || error?.message || 'Failed to add menu item';
+          this.errorMessage.set(errorMsg);
+          console.error('❌ Error adding menu item:', {
+            status: error?.status,
+            statusText: error?.statusText,
+            message: error?.error?.message,
+            fullError: error
+          });
         }
       });
     }
@@ -659,17 +681,11 @@ export class RestaurantMenuComponent implements OnInit {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    this.addUploadStep(`📸 Image selected - ${file.name}`);
+    this.addUploadStep(`📸 Image selected - ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
 
     // Validate file
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    const maxSize = 5 * 1024 * 1024; // 5MB for menu images (will become ~6.5MB base64)
     const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-
-    if (file.size > maxSize) {
-      this.errorMessage.set(`File is too large. Max size is 10MB.`);
-      this.addUploadStep(`❌ File too large: ${file.name}`);
-      return;
-    }
 
     if (!validTypes.includes(file.type)) {
       this.errorMessage.set('Invalid image format. Use PNG, JPG, GIF, or WebP.');
@@ -677,30 +693,60 @@ export class RestaurantMenuComponent implements OnInit {
       return;
     }
 
+    if (file.size > maxSize) {
+      const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+      this.errorMessage.set(`Image is too large (${sizeMB}MB). Please use an image smaller than 5MB.`);
+      this.addUploadStep(`❌ File too large: ${file.name} (${sizeMB}MB)`);
+      return;
+    }
+
     this.isUploadingMenuImage.set(true);
-    this.addUploadStep('🚀 Starting image upload...');
+    this.addUploadStep('🚀 Starting image compression...');
 
-    const uploadPath = `menu-items/${this.restaurantId()}`;
-    this.addUploadStep(`📤 Upload path: ${uploadPath}`);
+    // Compress image before uploading
+    this.imageUploadService.compressImage(file, 800, 800, 0.7).then((compressedDataUrl) => {
+      this.addUploadStep('✅ Image compressed successfully');
+      const uploadPath = `menu-items/${this.restaurantId()}`;
+      this.addUploadStep(`📤 Upload path: ${uploadPath}`);
 
-    this.imageUploadService.uploadImage(file, uploadPath).subscribe({
-      next: (imageUrl: string) => {
-        this.addUploadStep('🎉 Upload complete!');
-        this.newMenuItem.image = imageUrl;
-        this.isUploadingMenuImage.set(false);
-        this.uploadSteps.set([]);
-        this.uploadProgress.set('');
-        this.successMessage.set('✅ Image uploaded successfully!');
-        console.log('✅ Menu item image uploaded:', imageUrl);
-        setTimeout(() => this.successMessage.set(''), 3000);
-      },
-      error: (error: any) => {
-        this.isUploadingMenuImage.set(false);
-        const errorMsg = error?.message || 'Unknown error';
-        this.errorMessage.set(`Failed to upload image: ${errorMsg}`);
-        this.addUploadStep(`❌ Upload failed: ${errorMsg}`);
-        console.error('❌ Image upload error:', error);
-      }
+      // Create a blob from the compressed data URL for size tracking
+      fetch(compressedDataUrl)
+        .then(res => res.blob())
+        .then(blob => {
+          const sizeMB = (blob.size / 1024 / 1024).toFixed(2);
+          this.addUploadStep(`📊 Final size: ${sizeMB}MB`);
+
+          this.imageUploadService.uploadImage(file, uploadPath).subscribe({
+            next: (imageUrl: string) => {
+              this.addUploadStep('🎉 Upload complete!');
+              // Use the compressed image instead of the original
+              this.newMenuItem.image = compressedDataUrl;
+              this.isUploadingMenuImage.set(false);
+              this.uploadSteps.set([]);
+              this.uploadProgress.set('');
+              this.successMessage.set('✅ Image uploaded and optimized!');
+              console.log('✅ Menu item image uploaded and optimized');
+              setTimeout(() => this.successMessage.set(''), 3000);
+            },
+            error: (error: any) => {
+              this.isUploadingMenuImage.set(false);
+              const errorMsg = error?.message || 'Unknown error';
+              this.errorMessage.set(`Failed to upload image: ${errorMsg}`);
+              this.addUploadStep(`❌ Upload failed: ${errorMsg}`);
+              console.error('❌ Image upload error:', error);
+            }
+          });
+        })
+        .catch(err => {
+          this.isUploadingMenuImage.set(false);
+          this.errorMessage.set('Failed to process image');
+          console.error('❌ Image processing error:', err);
+        });
+    }).catch((error) => {
+      this.isUploadingMenuImage.set(false);
+      this.errorMessage.set(`Failed to compress image: ${error?.message || 'Unknown error'}`);
+      this.addUploadStep(`❌ Compression failed: ${error?.message}`);
+      console.error('❌ Image compression error:', error);
     });
   }
 

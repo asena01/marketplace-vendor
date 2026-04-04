@@ -30,6 +30,7 @@ export interface Restaurant {
   phone: string;
   hours?: string;
   isOpen: boolean;
+  image?: string; // Restaurant profile image
   operatingHours?: {
     open: string;
     close: string;
@@ -62,11 +63,11 @@ export interface ApiResponse<T> {
   providedIn: 'root'
 })
 export class FoodService {
-  // ⚠️ REPLACED: Firebase Cloud Functions endpoint with local backend API
+  // ⚠️ Backend API URL - Using localhost for development
   // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api/restaurants'
-  // NEW: Local Node.js/Express backend
-  //private apiUrl = 'http://localhost:5001/restaurants';
-   private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/restaurants';
+  // REMOTE: 'https://api-qpczzmaezq-uc.a.run.app/restaurants'
+  // LOCAL: Using localhost for development
+  private apiUrl = 'http://localhost:5001/restaurants';
 
   constructor(private http: HttpClient) {}
 
@@ -74,15 +75,17 @@ export class FoodService {
    * Get vendor headers with restaurant ID for authorization
    */
   private getVendorHeaders(): HttpHeaders {
-    const storeId = localStorage.getItem('storeId');
+    // Use same priority as menu component: restaurantId > storeId > userId
     const restaurantId = localStorage.getItem('restaurantId');
-    const userId = storeId || restaurantId || '';
+    const storeId = localStorage.getItem('storeId');
+    const userId = localStorage.getItem('userId');
+    const vendorId = restaurantId || storeId || userId || '';
 
-    console.log('🔐 FoodService Headers:', { storeId, restaurantId, vendorId: userId });
+    console.log('🔐 FoodService Headers:', { restaurantId, storeId, userId, vendorId });
 
     return new HttpHeaders({
       'Content-Type': 'application/json',
-      'x-vendor-id': userId
+      'x-vendor-id': vendorId
     });
   }
 
@@ -138,14 +141,25 @@ export class FoodService {
   // POST create menu item (admin/restaurant)
   addMenuItem(restaurantId: string, menuItem: any): Observable<ApiResponse<MenuItem>> {
     const headers = this.getVendorHeaders();
+    console.log(`📤 Creating menu item for restaurant:`, {
+      restaurantId,
+      name: menuItem.name,
+      price: menuItem.price,
+      category: menuItem.category
+    });
     return this.http.post<ApiResponse<MenuItem>>(
       `${this.apiUrl}/${restaurantId}/menus`,
       menuItem,
       { headers }
     ).pipe(
       catchError((error) => {
-        console.error('Error adding menu item:', error);
-        return of({ status: 'error', data: null as any });
+        const errorMessage = error?.error?.message || error?.message || 'Network error adding menu item';
+        console.error('❌ Error adding menu item:', errorMessage, error);
+        return of({
+          status: 'error',
+          data: null as any,
+          message: errorMessage
+        });
       })
     );
   }

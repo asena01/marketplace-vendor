@@ -129,6 +129,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    cuisineType: [String], // For restaurants: e.g., ['French', 'International']
     isVerified: {
       type: Boolean,
       default: false,

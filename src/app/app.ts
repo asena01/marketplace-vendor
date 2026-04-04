@@ -3,6 +3,7 @@ import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { LoginOverlayComponent } from './components/auth-overlay/login-overlay.component';
 import { SignupOverlayComponent } from './components/auth-overlay/signup-overlay.component';
+import { ToastDisplayComponent } from './components/toast-display/toast-display.component';
 import { AuthModalService } from './services/auth-modal.service';
 
 @Component({
@@ -11,7 +12,8 @@ import { AuthModalService } from './services/auth-modal.service';
     RouterOutlet,
     CommonModule,
     LoginOverlayComponent,
-    SignupOverlayComponent
+    SignupOverlayComponent,
+    ToastDisplayComponent
   ],
   templateUrl: './app.html',
   styleUrl: './app.css'

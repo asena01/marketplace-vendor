@@ -3,10 +3,15 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { CustomerService } from '../../../services/customer.service';
 import { HotelService } from '../../../services/hotel.service';
+import { ToastService } from '../../../services/toast.service';
 
 interface HotelBooking {
   _id: string;
+  hotelId?: string;
+  hotel?: any;
   hotelName: string;
+  roomId?: string;
+  room?: any;
   roomType: string;
   checkIn: string;
   checkOut: string;
@@ -14,6 +19,8 @@ interface HotelBooking {
   totalPrice: number;
   status: 'confirmed' | 'pending' | 'checked-in' | 'checked-out' | 'completed' | 'cancelled';
   roomServiceOrders?: any[];
+  bedType?: string;
+  guestCount?: number;
 }
 
 interface RoomServiceItem {
@@ -196,6 +203,108 @@ interface RoomServiceItem {
           </div>
         </div>
       }
+
+      <!-- Booking Details Modal -->
+      @if (showBookingDetailsModal() && bookingDetailsData()) {
+        @let booking = bookingDetailsData();
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 border-b border-blue-800 sticky top-0">
+              <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-bold">Booking Details</h2>
+                <button (click)="closeBookingDetails()" class="text-3xl font-bold hover:text-blue-100 transition">✕</button>
+              </div>
+            </div>
+
+            <!-- Content -->
+            <div class="p-6 space-y-6">
+              <!-- Hotel & Room Info -->
+              <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h3 class="font-bold text-gray-900 mb-4">Hotel & Room Information</h3>
+                <div class="space-y-3">
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Hotel Name</span>
+                    <span class="font-semibold text-gray-900">{{ booking!.hotelName }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Room Type</span>
+                    <span class="font-semibold text-gray-900">{{ booking!.roomType }}</span>
+                  </div>
+                  @if (booking!.bedType) {
+                    <div class="flex justify-between">
+                      <span class="text-gray-600">Bed Type</span>
+                      <span class="font-semibold text-gray-900">{{ booking!.bedType }}</span>
+                    </div>
+                  }
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Booking ID</span>
+                    <span class="font-mono text-gray-900">{{ booking!._id.slice(0, 12) }}...</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Dates Info -->
+              <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                <h3 class="font-bold text-gray-900 mb-4">Stay Duration</h3>
+                <div class="space-y-3">
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Check-in</span>
+                    <span class="font-semibold text-gray-900">{{ formatDate(booking!.checkIn) }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Check-out</span>
+                    <span class="font-semibold text-gray-900">{{ formatDate(booking!.checkOut) }}</span>
+                  </div>
+                  <div class="flex justify-between border-t pt-3">
+                    <span class="text-gray-600">Number of Nights</span>
+                    <span class="font-bold text-emerald-600">{{ booking!.nights }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Pricing Info -->
+              <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <h3 class="font-bold text-gray-900 mb-4">Pricing</h3>
+                <div class="space-y-3">
+                  <div class="flex justify-between text-lg">
+                    <span class="text-gray-600">Total Price</span>
+                    <span class="font-bold text-purple-600">₦{{ booking!.totalPrice.toLocaleString() }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Status Info -->
+              <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h3 class="font-bold text-gray-900 mb-4">Status</h3>
+                <div class="flex items-center gap-3">
+                  <span [class]="getStatusBadgeClass(booking!.status)">
+                    {{ getStatusBadge(booking!.status) }}
+                  </span>
+                  <span class="text-sm text-gray-600">Last updated: Today</span>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="flex gap-3 pt-4 border-t">
+                @if (booking!.status === 'checked-in' || booking!.status === 'confirmed') {
+                  <button
+                    (click)="orderRoomService(booking!)"
+                    class="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2">
+                    <mat-icon>room_service</mat-icon>
+                    <span>Order Room Service</span>
+                  </button>
+                }
+                <button
+                  (click)="closeBookingDetails()"
+                  class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 px-4 py-3 rounded-lg font-semibold transition">
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
     </div>
   `,
   styles: [`
@@ -213,10 +322,13 @@ export class CustomerHotelBookingsComponent implements OnInit {
   selectedBooking = signal<HotelBooking | null>(null);
   selectedItems = signal<string[]>([]);
   showRoomServiceModal = signal(false);
+  showBookingDetailsModal = signal(false);
+  bookingDetailsData = signal<HotelBooking | null>(null);
 
   constructor(
     private customerService: CustomerService,
-    private hotelService: HotelService
+    private hotelService: HotelService,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -242,10 +354,34 @@ export class CustomerHotelBookingsComponent implements OnInit {
         // Transform backend data to match HotelBooking interface
         const transformedBookings = bookingsData.map((booking: any) => {
           console.log('📝 Transforming booking:', booking);
+          console.log('   Hotel object:', booking.hotel);
+          console.log('   Room object:', booking.room);
+
+          // Get hotel name from different possible locations
+          const hotelName = booking.hotel?.name ||
+                           (booking.hotel && typeof booking.hotel === 'string' ? booking.hotel : null) ||
+                           booking.hotelName ||
+                           'Unknown Hotel';
+
+          // Get room type from different possible locations
+          const roomType = booking.room?.roomType ||
+                          booking.room?.type ||
+                          (booking.room && typeof booking.room === 'string' ? booking.room : null) ||
+                          booking.roomType ||
+                          'Unknown Room';
+
+          console.log('   Final hotelName:', hotelName);
+          console.log('   Final roomType:', roomType);
+
           return {
             _id: booking._id,
-            hotelName: booking.hotel?.name || booking.hotelName || 'Unknown Hotel',
-            roomType: booking.room?.roomType || booking.roomType || 'Unknown Room',
+            hotelId: booking.hotel?._id || booking.hotelId,
+            hotel: booking.hotel,
+            hotelName: hotelName,
+            roomId: booking.room?._id || booking.roomId,
+            room: booking.room,
+            roomType: roomType,
+            bedType: booking.room?.bedType,
             checkIn: booking.checkInDate || booking.checkIn,
             checkOut: booking.checkOutDate || booking.checkOut,
             nights: booking.numberOfNights || Math.ceil(
@@ -253,6 +389,7 @@ export class CustomerHotelBookingsComponent implements OnInit {
                new Date(booking.checkInDate || booking.checkIn).getTime()) / (1000 * 60 * 60 * 24)
             ),
             totalPrice: booking.totalPrice,
+            guestCount: booking.numberOfGuests,
             status: booking.status,
             roomServiceOrders: booking.roomServiceOrders
           };
@@ -320,7 +457,13 @@ export class CustomerHotelBookingsComponent implements OnInit {
 
   viewBookingDetails(booking: HotelBooking): void {
     console.log('View booking details:', booking);
-    // TODO: Implement view details modal
+    this.bookingDetailsData.set(booking);
+    this.showBookingDetailsModal.set(true);
+  }
+
+  closeBookingDetails(): void {
+    this.showBookingDetailsModal.set(false);
+    this.bookingDetailsData.set(null);
   }
 
   orderRoomService(booking: HotelBooking): void {
@@ -421,7 +564,7 @@ export class CustomerHotelBookingsComponent implements OnInit {
 
   submitRoomServiceOrder(): void {
     if (!this.selectedBooking() || this.selectedItems().length === 0) {
-      alert('Please select at least one item');
+      this.toastService.warning('Please select at least one item');
       return;
     }
 
@@ -434,14 +577,14 @@ export class CustomerHotelBookingsComponent implements OnInit {
     this.customerService.orderRoomService(orderData).subscribe(
       (response: any) => {
         if (response.success) {
-          alert('✓ Room service order placed successfully!');
+          this.toastService.success('Room service order placed successfully!');
           this.showRoomServiceModal.set(false);
           this.selectedItems.set([]);
         }
       },
       (error) => {
         console.error('Error placing room service order:', error);
-        alert('Failed to place room service order');
+        this.toastService.error('Failed to place room service order');
       }
     );
   }

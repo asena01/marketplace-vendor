@@ -10,6 +10,8 @@ import { CurrencyService } from '../../services/currency.service';
 import { PaymentService } from '../../services/payment.service';
 import { HotelService } from '../../services/hotel.service';
 import { AuthService } from '../../services/auth.service';
+import { AuthModalService } from '../../services/auth-modal.service';
+import { ToastService } from '../../services/toast.service';
 import { apiConfig } from '../../config/api-config';
 
 interface Room {
@@ -24,6 +26,7 @@ interface Room {
   rating: number;
   reviews: number;
   icon: string;
+  images?: string[]; // Room photos/images
 }
 
 interface GroupedRoom {
@@ -107,6 +110,7 @@ export class HotelsComponent implements OnInit {
   
   // Carousel State
   carouselIndices = signal<Map<string, number>>(new Map());
+  roomImageIndices = signal<Map<string, number>>(new Map());
   
   // Booking Modal Signals
   showBookingForm = signal<boolean>(false);
@@ -115,7 +119,16 @@ export class HotelsComponent implements OnInit {
   isLoadingBooking = signal<boolean>(false);
   bookingSuccess = signal<boolean>(false);
   bookingError = signal<string>('');
-  
+
+  // Pending booking for after login
+  pendingRoomBooking = signal<{ room: Room; hotel: Hotel } | null>(null);
+
+  // Date picker overlay for missing dates
+  showDatePickerOverlay = signal<boolean>(false);
+  pendingRoomForDates = signal<{ room: Room; hotel: Hotel } | null>(null);
+  tempCheckInDate = signal<string>('');
+  tempCheckOutDate = signal<string>('');
+
   // Booking form signals
   customerName = signal<string>('');
   customerEmail = signal<string>('');
@@ -233,6 +246,8 @@ export class HotelsComponent implements OnInit {
     public paymentService: PaymentService,
     private hotelService: HotelService,
     private authService: AuthService,
+    private authModalService: AuthModalService,
+    private toastService: ToastService,
     private router: Router
   ) {
     // Prevent body scroll when modal is open
@@ -267,6 +282,23 @@ export class HotelsComponent implements OnInit {
     console.log('🔌 Backend URL configured: http://localhost:5001');
     this.checkBackendConnection();
     this.loadHotelsFromAPI();
+
+    // Watch for login completion and resume pending booking
+    effect(() => {
+      const isLoginOpen = this.authModalService.isLoginOpen();
+
+      // If login modal was open and is now closed, and user is logged in
+      if (!isLoginOpen && this.authService.isLoggedIn() && this.pendingRoomBooking()) {
+        const pending = this.pendingRoomBooking();
+        if (pending) {
+          console.log('✅ User logged in successfully, resuming booking...');
+          // Clear the pending booking
+          this.pendingRoomBooking.set(null);
+          // Trigger the booking with the stored room and hotel
+          this.selectRoom(pending.room, pending.hotel);
+        }
+      }
+    });
   }
 
   /**
@@ -636,7 +668,7 @@ export class HotelsComponent implements OnInit {
 
   search(): void {
     if (!this.checkInDate() || !this.checkOutDate() || !this.searchLocation()) {
-      alert('Please fill in all search fields');
+      this.toastService.warning('Please fill in all search fields');
       return;
     }
 
@@ -798,31 +830,119 @@ export class HotelsComponent implements OnInit {
     return currentImage as string;
   }
 
+  // ==================== ROOM IMAGE CAROUSEL ====================
+  getRoomImageIndex(roomId: string): number {
+    return this.roomImageIndices().get(roomId) || 0;
+  }
+
+  setRoomImageIndex(roomId: string, index: number): void {
+    const newIndices = new Map(this.roomImageIndices());
+    newIndices.set(roomId, index);
+    this.roomImageIndices.set(newIndices);
+  }
+
+  previousRoomImage(roomId: string): void {
+    const currentIndex = this.getRoomImageIndex(roomId);
+    const allRooms = this.hotels().flatMap(h => h.rooms);
+    const room = allRooms.find(r => r.id === roomId);
+    if (room && room.images && Array.isArray(room.images) && room.images.length > 0) {
+      const prevIndex = (currentIndex - 1 + room.images.length) % room.images.length;
+      this.setRoomImageIndex(roomId, prevIndex);
+    }
+  }
+
+  nextRoomImage(roomId: string): void {
+    const currentIndex = this.getRoomImageIndex(roomId);
+    const allRooms = this.hotels().flatMap(h => h.rooms);
+    const room = allRooms.find(r => r.id === roomId);
+    if (room && room.images && Array.isArray(room.images) && room.images.length > 0) {
+      const nextIndex = (currentIndex + 1) % room.images.length;
+      this.setRoomImageIndex(roomId, nextIndex);
+    }
+  }
+
   selectRoom(room: Room, hotel: Hotel): void {
     // Check if user is logged in
     if (!this.authService.isLoggedIn()) {
-      console.log('👤 Not logged in - redirecting to login');
-      alert('Please log in first to book a room');
-      this.router.navigate(['/login']);
+      console.log('👤 Not logged in - showing login overlay');
+      // Store the pending booking to resume after login
+      this.pendingRoomBooking.set({ room, hotel });
+      // Open login overlay
+      this.authModalService.openLogin();
       return;
     }
 
-    // Pre-fill customer info from logged-in user
-    const user = this.authService.getCurrentUser();
-    if (user) {
-      this.customerName.set(user.name || '');
-      this.customerEmail.set(user.email || '');
-      this.customerPhone.set(user.phone || '');
-      console.log('✅ Pre-filled customer info from logged-in user:', {
-        name: user.name,
-        email: user.email,
-        phone: user.phone
-      });
+    // Check if dates are selected
+    if (!this.checkInDate() || !this.checkOutDate()) {
+      console.log('📅 Dates not selected - showing date picker overlay');
+      this.pendingRoomForDates.set({ room, hotel });
+      this.tempCheckInDate.set('');
+      this.tempCheckOutDate.set('');
+      this.showDatePickerOverlay.set(true);
+      return;
     }
 
-    this.selectedHotel.set(hotel);
-    this.selectedRoom.set(room);
-    this.showBookingForm.set(true);
+    // Validate date range
+    const checkIn = new Date(this.checkInDate());
+    const checkOut = new Date(this.checkOutDate());
+
+    console.log('📅 Frontend date check:');
+    console.log('   checkInDate() input:', this.checkInDate());
+    console.log('   checkOutDate() input:', this.checkOutDate());
+    console.log('   checkIn Date object:', checkIn);
+    console.log('   checkOut Date object:', checkOut);
+    console.log('   checkIn ISO:', checkIn.toISOString());
+    console.log('   checkOut ISO:', checkOut.toISOString());
+
+    if (checkIn >= checkOut) {
+      this.toastService.warning('Check-out date must be after check-in date');
+      return;
+    }
+
+    // Check room availability for the selected dates
+    this.isLoadingBooking.set(true);
+    this.bookingError.set('');
+
+    this.hotelService.checkRoomAvailability(room.id, checkIn, checkOut).subscribe({
+      next: (response) => {
+        this.isLoadingBooking.set(false);
+
+        if (response.data.isAvailable) {
+          console.log('✅ Room is available for selected dates:', response.data);
+          this.toastService.success(`Room is available for ${response.data.numberOfNights} night(s)`);
+
+          // Pre-fill customer info from logged-in user
+          const user = this.authService.getCurrentUser();
+          if (user) {
+            this.customerName.set(user.name || '');
+            this.customerEmail.set(user.email || '');
+            this.customerPhone.set(user.phone || '');
+            console.log('✅ Pre-filled customer info from logged-in user:', {
+              name: user.name,
+              email: user.email,
+              phone: user.phone
+            });
+          }
+
+          this.selectedHotel.set(hotel);
+          this.selectedRoom.set(room);
+          this.showBookingForm.set(true);
+        } else {
+          console.log('❌ Room is not available for selected dates');
+          const nights = response.data.numberOfNights || Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
+          const errorMsg = `Sorry, this room is not available for the selected dates (${nights} night(s)). Please select different dates.`;
+          this.bookingError.set(errorMsg);
+          this.toastService.error(errorMsg);
+        }
+      },
+      error: (error) => {
+        this.isLoadingBooking.set(false);
+        const errorMsg = 'Failed to check room availability. Please try again.';
+        this.bookingError.set(errorMsg);
+        console.error('❌ Availability check error:', error);
+        this.toastService.error(errorMsg);
+      }
+    });
   }
 
   closeBooking(): void {
@@ -831,6 +951,42 @@ export class HotelsComponent implements OnInit {
     this.selectedRoom.set(null);
     this.useContactlessCheckIn.set(false); // Reset to traditional booking by default
     this.resetBookingForm();
+  }
+
+  closeDatePickerOverlay(): void {
+    this.showDatePickerOverlay.set(false);
+    this.pendingRoomForDates.set(null);
+    this.tempCheckInDate.set('');
+    this.tempCheckOutDate.set('');
+  }
+
+  confirmDatesAndBook(): void {
+    // Validate dates
+    if (!this.tempCheckInDate() || !this.tempCheckOutDate()) {
+      this.toastService.warning('Please select both check-in and check-out dates');
+      return;
+    }
+
+    const checkIn = new Date(this.tempCheckInDate());
+    const checkOut = new Date(this.tempCheckOutDate());
+
+    if (checkIn >= checkOut) {
+      this.toastService.warning('Check-out date must be after check-in date');
+      return;
+    }
+
+    // Set the dates on the main component
+    this.checkInDate.set(this.tempCheckInDate());
+    this.checkOutDate.set(this.tempCheckOutDate());
+
+    // Close the overlay
+    const pending = this.pendingRoomForDates();
+    this.closeDatePickerOverlay();
+
+    // Proceed with booking if we have room and hotel
+    if (pending) {
+      this.selectRoom(pending.room, pending.hotel);
+    }
   }
 
   calculateStayDays(): number {
@@ -1157,7 +1313,7 @@ export class HotelsComponent implements OnInit {
 
   submitReview(): void {
     if (this.reviewRating() === 0 || !this.reviewText().trim()) {
-      alert('Please provide a rating and review text');
+      this.toastService.warning('Please provide a rating and review text');
       return;
     }
 
@@ -1167,7 +1323,7 @@ export class HotelsComponent implements OnInit {
       text: this.reviewText()
     });
 
-    alert('Thank you for your review!');
+    this.toastService.success('Thank you for your review!');
     this.closeReviewModal();
   }
 
@@ -1215,6 +1371,14 @@ export class HotelsComponent implements OnInit {
   getMinDate(): string {
     const today = new Date();
     return today.toISOString().split('T')[0];
+  }
+
+  calculateNightsBetweenDates(checkIn: string, checkOut: string): number {
+    if (!checkIn || !checkOut) return 0;
+    const checkInDate = new Date(checkIn);
+    const checkOutDate = new Date(checkOut);
+    const nights = (checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24);
+    return nights > 0 ? nights : 0;
   }
 
   /**

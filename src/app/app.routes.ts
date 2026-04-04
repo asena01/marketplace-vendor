@@ -80,6 +80,10 @@ import { SmartLockUnlockComponent } from './pages/smart-lock/unlock.component';
 import { BookingConfirmationComponent } from './pages/customer/booking-confirmation.component';
 import { RoomDeviceAssignmentComponent } from './pages/vendors/dashboards/hotel-dashboard/room-device-assignment/room-device-assignment.component';
 import { DeviceAssignmentManagerComponent } from './pages/admin/admin-dashboard/device-assignment-manager/device-assignment-manager.component';
+import { RevenueComponent } from './pages/vendors/dashboards/hotel-dashboard/revenue/revenue.component';
+import { StaffLogsComponent } from './pages/vendors/dashboards/hotel-dashboard/staff-logs/staff-logs.component';
+import { PreCheckinComponent } from './pages/vendors/dashboards/hotel-dashboard/pre-checkin/pre-checkin.component';
+import { AnalyticsComponent } from './pages/vendors/dashboards/hotel-dashboard/analytics/analytics.component';
 import { VendorGuard } from './guards/vendor.guard';
 import { AdminGuard } from './guards/admin.guard';
 import { PermissionGuard, PermissionsGuard, RoleGuard, RolesGuard } from './guards/permission.guard';
@@ -111,6 +115,10 @@ export const routes: Routes = [
       { path: 'rooms', component: HotelRoomsComponent },
       { path: 'staff', component: HotelStaffComponent },
       { path: 'bookings', component: HotelBookingsComponent },
+      { path: 'revenue', component: RevenueComponent },
+      { path: 'staff-logs', component: StaffLogsComponent },
+      { path: 'pre-checkin', component: PreCheckinComponent },
+      { path: 'analytics', component: AnalyticsComponent },
       { path: 'food-orders', component: HotelFoodOrdersComponent },
       { path: 'food-menu', component: HotelFoodMenuComponent },
       { path: 'food-delivery', component: HotelFoodDeliveryComponent },

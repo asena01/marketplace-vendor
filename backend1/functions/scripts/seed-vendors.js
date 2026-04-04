@@ -57,6 +57,10 @@ const vendorData = [
     vendorType: 'restaurant',
     businessName: 'Fine Dining Restaurant',
     businessDescription: 'Upscale restaurant serving international cuisine',
+    businessImage: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"%3E%3Crect fill="%23FF6B35" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="white" font-size="40" font-family="Arial"%3EFine Dining%3C/text%3E%3C/svg%3E',
+    cuisineType: ['French', 'International'],
+    address: '123 Upscale Street, Downtown',
+    city: 'Lagos',
     isVerified: true,
     status: 'active',
     kycStatus: 'approved'
@@ -70,6 +74,10 @@ const vendorData = [
     vendorType: 'restaurant',
     businessName: 'Taste of Africa',
     businessDescription: 'Traditional African dishes with modern twist',
+    businessImage: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"%3E%3Crect fill="%23F4A261" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="white" font-size="40" font-family="Arial"%3ETaste Africa%3C/text%3E%3C/svg%3E',
+    cuisineType: ['African', 'Nigerian'],
+    address: '456 Heritage Avenue, Lekki',
+    city: 'Lagos',
     isVerified: true,
     status: 'active',
     kycStatus: 'approved'
@@ -83,6 +91,10 @@ const vendorData = [
     vendorType: 'restaurant',
     businessName: 'Quick Bites Cafe',
     businessDescription: 'Fast casual restaurant with healthy options',
+    businessImage: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"%3E%3Crect fill="%232A9D8F" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="white" font-size="40" font-family="Arial"%3EQuick Bites%3C/text%3E%3C/svg%3E',
+    cuisineType: ['Fast Food', 'Healthy'],
+    address: '789 Quick Lane, VI',
+    city: 'Lagos',
     isVerified: false,
     status: 'pending',
     kycStatus: 'pending'
