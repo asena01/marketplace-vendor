@@ -10,6 +10,7 @@ import { CurrencyService } from '../../services/currency.service';
 import { PaymentService } from '../../services/payment.service';
 import { HotelService } from '../../services/hotel.service';
 import { AuthService } from '../../services/auth.service';
+import { AuthModalService } from '../../services/auth-modal.service';
 import { apiConfig } from '../../config/api-config';
 
 interface Room {
@@ -116,6 +117,9 @@ export class HotelsComponent implements OnInit {
   isLoadingBooking = signal<boolean>(false);
   bookingSuccess = signal<boolean>(false);
   bookingError = signal<string>('');
+
+  // Pending booking for after login
+  pendingRoomBooking = signal<{ room: Room; hotel: Hotel } | null>(null);
   
   // Booking form signals
   customerName = signal<string>('');
@@ -234,6 +238,7 @@ export class HotelsComponent implements OnInit {
     public paymentService: PaymentService,
     private hotelService: HotelService,
     private authService: AuthService,
+    private authModalService: AuthModalService,
     private router: Router
   ) {
     // Prevent body scroll when modal is open
@@ -268,6 +273,23 @@ export class HotelsComponent implements OnInit {
     console.log('🔌 Backend URL configured: http://localhost:5001');
     this.checkBackendConnection();
     this.loadHotelsFromAPI();
+
+    // Watch for login completion and resume pending booking
+    effect(() => {
+      const isLoginOpen = this.authModalService.isLoginOpen();
+
+      // If login modal was open and is now closed, and user is logged in
+      if (!isLoginOpen && this.authService.isLoggedIn() && this.pendingRoomBooking()) {
+        const pending = this.pendingRoomBooking();
+        if (pending) {
+          console.log('✅ User logged in successfully, resuming booking...');
+          // Clear the pending booking
+          this.pendingRoomBooking.set(null);
+          // Trigger the booking with the stored room and hotel
+          this.selectRoom(pending.room, pending.hotel);
+        }
+      }
+    });
   }
 
   /**
@@ -833,9 +855,11 @@ export class HotelsComponent implements OnInit {
   selectRoom(room: Room, hotel: Hotel): void {
     // Check if user is logged in
     if (!this.authService.isLoggedIn()) {
-      console.log('👤 Not logged in - redirecting to login');
-      alert('Please log in first to book a room');
-      this.router.navigate(['/login']);
+      console.log('👤 Not logged in - showing login overlay');
+      // Store the pending booking to resume after login
+      this.pendingRoomBooking.set({ room, hotel });
+      // Open login overlay
+      this.authModalService.openLogin();
       return;
     }
 
