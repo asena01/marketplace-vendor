@@ -2,7 +2,7 @@
   <app-header></app-header>
 
   <!-- Backend Status Warning -->
-  <div class="bg-red-50 border-b-4 border-red-600 p-4">
+  <!--<div class="bg-red-50 border-b-4 border-red-600 p-4">
     <div class="max-w-6xl mx-auto">
       <p class="text-red-800 font-semibold">⚠️ IMPORTANT: Backend Server Required</p>
       <p class="text-red-700 text-sm mt-1">
@@ -11,7 +11,7 @@
       </p>
       <p class="text-red-600 text-xs mt-2">Once started, you'll see "🚀 MarketHub Backend running on http://localhost:5001" in the terminal.</p>
     </div>
-  </div>
+  </div>-->
 
   <!-- Hero Section -->
   <section class="pt-12 pb-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-emerald-600 to-emerald-500">
@@ -359,9 +359,9 @@
                       } @else {
                         <span>{{ currentImg }}</span>
                       }
-                      @if (hotel.images && hotel.images.length > 1) {
+                      @if (hotel.photos && hotel.photos.length > 1) {
                         <div class="absolute bottom-1 left-1/2 -translate-x-1/2 text-xs bg-gray-900/70 text-white px-2 py-1 rounded">
-                          {{ getCarouselIndex(hotel.id) + 1 }}/{{ hotel.images.length }}
+                          {{ getCarouselIndex(hotel.id) + 1 }}/{{ hotel.photos.length }}
                         </div>
                       }
                     </div>
@@ -435,7 +435,7 @@
                           <span>{{ currentImg }}</span>
                         }
 
-                        @if (hotel.images && hotel.images.length > 1) {
+                        @if (hotel.photos && hotel.photos.length > 1) {
                           <button 
                             (click)="previousImage(hotel.id)"
                             class="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white text-gray-900 p-3 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100"
@@ -449,7 +449,7 @@
                             →
                           </button>
                           <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                            @for (img of hotel.images; track $index) {
+                            @for (img of hotel.photos; track $index) {
                               <button
                                 (click)="setCarouselIndex(hotel.id, $index)"
                                 [class]="'w-2 h-2 rounded-full transition-all ' +

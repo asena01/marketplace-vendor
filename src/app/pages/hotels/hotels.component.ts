@@ -43,7 +43,7 @@ interface Hotel {
   price: number;
   rooms: Room[];
   amenities: string[];
-  images: Array<{ url: string; thumbnail: string; alt: string }> | string[]; // API images or fallback emojis
+  photos: Array<{ url: string; thumbnail: string; alt: string }> | string[]; // API images or fallback emojis
   discount?: number;
   description?: string;
   imageUrl?: string;
@@ -250,9 +250,9 @@ export class HotelsComponent implements OnInit {
     effect(() => {
       const interval = setInterval(() => {
         this.hotels().forEach(hotel => {
-          if (hotel.images && Array.isArray(hotel.images) && hotel.images.length > 1) {
+          if (hotel.photos && Array.isArray(hotel.photos) && hotel.photos.length > 1) {
             const currentIndex = this.getCarouselIndex(hotel.id);
-            const nextIndex = (currentIndex + 1) % hotel.images.length;
+            const nextIndex = (currentIndex + 1) % hotel.photos.length;
             this.setCarouselIndex(hotel.id, nextIndex);
           }
         });
@@ -320,8 +320,8 @@ export class HotelsComponent implements OnInit {
             // CRITICAL: Include contactlessCheckInEnabled from API response
             contactlessCheckInEnabled: hotel.contactlessCheckInEnabled === true,
             // Convert image URLs to array
-            images: hotel.images && hotel.images.length > 0
-              ? hotel.images.map((img: any) => typeof img === 'string'
+            photos: hotel.photos && hotel.photos.length > 0
+              ? hotel.photos.map((img: any) => typeof img === 'string'
                   ? { url: img, thumbnail: hotel.thumbnail || img, alt: hotel.name }
                   : img)
               : [],
@@ -375,7 +375,7 @@ export class HotelsComponent implements OnInit {
         discount: 10,
         amenities: ['WiFi', 'Pool', 'Gym', 'Restaurant', 'Spa', 'Parking'],
         description: 'Experience ultimate luxury with world-class amenities and impeccable service',
-        images: ['🏛️', '🛏️', '🏊', '🍽️'],
+        photos: ['🏛️', '🛏️', '🏊', '🍽️'],
         rooms: [
           {
             id: 'room-1-1',
@@ -430,7 +430,7 @@ export class HotelsComponent implements OnInit {
         discount: 15,
         amenities: ['WiFi', 'Beach Access', 'Water Sports', 'Restaurant', 'Bar', 'Parking'],
         description: 'Relax by pristine beaches with all-inclusive amenities and stunning ocean views',
-        images: ['🏖️', '🌊', '🏄', '🍹'],
+        photos: ['🏖️', '🌊', '🏄', '🍹'],
         rooms: [
           {
             id: 'room-2-1',
@@ -472,7 +472,7 @@ export class HotelsComponent implements OnInit {
         discount: 0,
         amenities: ['WiFi', 'Fireplace', 'Spa', 'Hiking Trails', 'Restaurant', 'Parking'],
         description: 'Escape to pristine mountain peaks with cozy lodges and natural hot springs',
-        images: ['🏔️', '❄️', '🔥', '🥾'],
+        photos: ['🏔️', '❄️', '🔥', '🥾'],
         rooms: [
           {
             id: 'room-3-1',
@@ -514,7 +514,7 @@ export class HotelsComponent implements OnInit {
         discount: 20,
         amenities: ['WiFi', 'Rooftop Bar', 'Gym', 'Restaurant', 'Parking'],
         description: 'Modern design meets urban convenience in the heart of the city',
-        images: ['🏙️', '🍷', '💪', '🍽️'],
+        photos: ['🏙️', '🍷', '💪', '🍽️'],
         rooms: [
           {
             id: 'room-4-1',
@@ -556,7 +556,7 @@ export class HotelsComponent implements OnInit {
         discount: 25,
         amenities: ['WiFi', 'Business Center', 'Gym', 'Café', 'Meeting Rooms'],
         description: 'Perfect for business travelers with modern facilities and excellent connectivity',
-        images: ['🏢', '💼', '📞', '☕'],
+        photos: ['🏢', '💼', '📞', '☕'],
         rooms: [
           {
             id: 'room-5-1',
@@ -598,7 +598,7 @@ export class HotelsComponent implements OnInit {
         discount: 5,
         amenities: ['All-Inclusive', 'Water Sports', 'Snorkeling', 'Overwater Bungalows', 'Restaurant', 'Spa'],
         description: 'Ultimate tropical escape with overwater bungalows and pristine reefs',
-        images: ['🏝️', '🤿', '🐠', '🌴'],
+        photos: ['🏝️', '🤿', '🐠', '🌴'],
         rooms: [
           {
             id: 'room-6-1',
@@ -768,8 +768,8 @@ export class HotelsComponent implements OnInit {
   previousImage(hotelId: string): void {
     const currentIndex = this.getCarouselIndex(hotelId);
     const hotel = this.hotels().find(h => h.id === hotelId);
-    if (hotel && hotel.images && Array.isArray(hotel.images) && hotel.images.length > 0) {
-      const prevIndex = (currentIndex - 1 + hotel.images.length) % hotel.images.length;
+    if (hotel && hotel.photos && Array.isArray(hotel.photos) && hotel.photos.length > 0) {
+      const prevIndex = (currentIndex - 1 + hotel.photos.length) % hotel.photos.length;
       this.setCarouselIndex(hotelId, prevIndex);
     }
   }
@@ -777,19 +777,19 @@ export class HotelsComponent implements OnInit {
   nextImage(hotelId: string): void {
     const currentIndex = this.getCarouselIndex(hotelId);
     const hotel = this.hotels().find(h => h.id === hotelId);
-    if (hotel && hotel.images && Array.isArray(hotel.images) && hotel.images.length > 0) {
-      const nextIndex = (currentIndex + 1) % hotel.images.length;
+    if (hotel && hotel.photos && Array.isArray(hotel.photos) && hotel.photos.length > 0) {
+      const nextIndex = (currentIndex + 1) % hotel.photos.length;
       this.setCarouselIndex(hotelId, nextIndex);
     }
   }
 
   getCurrentImage(hotel: Hotel): string {
     const index = this.getCarouselIndex(hotel.id);
-    if (!hotel.images || hotel.images.length === 0) {
+    if (!hotel.photos || hotel.photos.length === 0) {
       return hotel.icon || '🏨';
     }
 
-    const currentImage = hotel.images[index];
+    const currentImage = hotel.photos[index];
     // If it's an object with URL (from API)
     if (typeof currentImage === 'object' && 'url' in currentImage) {
       return currentImage.url;

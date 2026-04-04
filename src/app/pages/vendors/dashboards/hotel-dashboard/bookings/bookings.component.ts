@@ -116,7 +116,7 @@ import { HotelService } from '../../../../../services/hotel.service';
               <tbody class="divide-y">
                 @for (booking of filteredBookings(); track booking._id) {
                   <tr class="hover:bg-slate-50 transition">
-                    <td class="px-6 py-4 text-sm text-slate-900 font-medium">{{ booking.customerName }}</td>
+                    <td class="px-6 py-4 text-sm text-slate-900 font-medium">{{ booking.guest.name }}</td>
                     <td class="px-6 py-4 text-sm text-slate-600">{{ booking._id?.slice(-6) || 'N/A' }}</td>
                     <td class="px-6 py-4 text-sm text-slate-600">{{ booking.roomNumber || 'TBA' }}</td>
                     <td class="px-6 py-4 text-sm text-slate-600">{{ formatDate(booking.checkInDate) }}</td>

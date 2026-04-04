@@ -142,7 +142,7 @@ import { forkJoin } from 'rxjs';
               @for (booking of bookings(); track booking._id) {
                 <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
                   <div>
-                    <p class="font-medium text-slate-900">{{ booking.customerName || 'Guest' }}</p>
+                    <p class="font-medium text-slate-900">{{ booking.guest.name || 'Guest' }}</p>
                     <p class="text-sm text-slate-600">Room {{ booking.roomNumber || 'TBA' }} - {{ booking.roomType || 'Standard' }}</p>
                   </div>
                   <span class="px-3 py-1 rounded-full text-xs font-medium" [ngClass]="{
