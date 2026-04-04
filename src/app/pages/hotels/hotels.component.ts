@@ -25,6 +25,7 @@ interface Room {
   rating: number;
   reviews: number;
   icon: string;
+  images?: string[]; // Room photos/images
 }
 
 interface GroupedRoom {
@@ -856,10 +857,13 @@ export class HotelsComponent implements OnInit {
     // Check if user is logged in
     if (!this.authService.isLoggedIn()) {
       console.log('👤 Not logged in - showing login overlay');
+      console.log('🔐 authModalService:', this.authModalService);
+      console.log('🔐 isLoginOpen before:', this.authModalService.isLoginOpen());
       // Store the pending booking to resume after login
       this.pendingRoomBooking.set({ room, hotel });
       // Open login overlay
       this.authModalService.openLogin();
+      console.log('🔐 isLoginOpen after:', this.authModalService.isLoginOpen());
       return;
     }
 
