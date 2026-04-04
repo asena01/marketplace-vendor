@@ -157,13 +157,81 @@ const seedDatabase = async () => {
     const rooms = await Room.insertMany(roomsData);
     console.log('✅ Created', rooms.length, 'rooms');
 
-    // Create sample bookings - NONE for now to allow testing all dates
+    // Create sample bookings for testing the dashboard
     console.log('📅 Creating sample bookings...');
     const today = new Date();
-    const bookingsData = []; // Empty - all rooms available for testing
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const nextWeek = new Date(today);
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    const nextWeekPlus3 = new Date(today);
+    nextWeekPlus3.setDate(nextWeekPlus3.getDate() + 10);
+
+    const bookingsData = [
+      {
+        hotel: hotel._id,
+        guest: guests[0]._id,
+        room: rooms[0]._id,
+        checkInDate: tomorrow,
+        checkOutDate: nextWeek,
+        numberOfNights: 6,
+        numberOfGuests: 1,
+        numberOfRooms: 1,
+        roomRate: 99,
+        subtotal: 594,
+        tax: 60,
+        discount: 0,
+        totalPrice: 654,
+        status: 'confirmed',
+        paymentStatus: 'paid',
+        paymentMethod: 'credit_card',
+        specialRequests: 'High floor preferred',
+        bookingNumber: 'BK001'
+      },
+      {
+        hotel: hotel._id,
+        guest: guests[1]._id,
+        room: rooms[1]._id,
+        checkInDate: nextWeek,
+        checkOutDate: nextWeekPlus3,
+        numberOfNights: 3,
+        numberOfGuests: 2,
+        numberOfRooms: 1,
+        roomRate: 149,
+        subtotal: 447,
+        tax: 45,
+        discount: 0,
+        totalPrice: 492,
+        status: 'confirmed',
+        paymentStatus: 'paid',
+        paymentMethod: 'debit_card',
+        specialRequests: 'Anniversary celebration',
+        bookingNumber: 'BK002'
+      },
+      {
+        hotel: hotel._id,
+        guest: guests[2]._id,
+        room: rooms[4]._id,
+        checkInDate: new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000),
+        checkOutDate: new Date(today.getTime() + 5 * 24 * 60 * 60 * 1000),
+        numberOfNights: 2,
+        numberOfGuests: 2,
+        numberOfRooms: 1,
+        roomRate: 249,
+        subtotal: 498,
+        tax: 50,
+        discount: 0,
+        totalPrice: 548,
+        status: 'pending',
+        paymentStatus: 'unpaid',
+        paymentMethod: 'online',
+        specialRequests: null,
+        bookingNumber: 'BK003'
+      }
+    ];
 
     const bookings = await Booking.insertMany(bookingsData);
-    console.log('✅ Created', bookings.length, 'bookings (all rooms available for testing)');
+    console.log('✅ Created', bookings.length, 'sample bookings');
 
     // Create sample staff
     console.log('👨‍💼 Creating sample staff...');

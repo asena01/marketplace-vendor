@@ -370,4 +370,86 @@ router.get('/:hotelId/devices/:deviceId/logs', getDeviceLogs);
 // GET /hotels/:hotelId/devices/:deviceId/shadow
 router.get('/:hotelId/devices/:deviceId/shadow', getDeviceShadowProperties);
 
+// ==================== HOTEL BOOKINGS ====================
+
+// Get all bookings for a hotel
+// GET /hotels/:hotelId/bookings?page=1&limit=10&status=confirmed
+router.get('/:hotelId/bookings', async (req, res) => {
+  try {
+    const { hotelId } = req.params;
+    const { page = 1, limit = 10, status } = req.query;
+
+    console.log('📋 Fetching bookings for hotel:', hotelId);
+
+    // Validate hotelId is a valid MongoDB ID
+    if (!mongoose.Types.ObjectId.isValid(hotelId)) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Invalid hotel ID',
+        data: null
+      });
+    }
+
+    // Build filter
+    let filter = {};
+
+    // Get all rooms for this hotel
+    const rooms = await Room.find({ hotel: hotelId }).select('_id');
+    const roomIds = rooms.map(r => r._id);
+
+    if (roomIds.length === 0) {
+      // No rooms for this hotel, return empty bookings
+      return res.status(200).json({
+        status: 'success',
+        data: [],
+        pagination: {
+          total: 0,
+          pages: 0,
+          currentPage: parseInt(page)
+        }
+      });
+    }
+
+    // Filter bookings by rooms in this hotel
+    filter.room = { $in: roomIds };
+
+    // Filter by status if provided
+    if (status) {
+      filter.status = status;
+    }
+
+    // Calculate pagination
+    const skip = (page - 1) * limit;
+    const total = await Booking.countDocuments(filter);
+
+    // Fetch bookings with populated references
+    const bookings = await Booking.find(filter)
+      .populate('room', 'roomType roomNumber bedType price')
+      .populate('guest', 'name email phone')
+      .skip(skip)
+      .limit(parseInt(limit))
+      .sort({ createdAt: -1 });
+
+    console.log('✅ Found', bookings.length, 'bookings for hotel:', hotelId);
+
+    res.status(200).json({
+      status: 'success',
+      data: bookings,
+      pagination: {
+        total,
+        pages: Math.ceil(total / limit),
+        currentPage: parseInt(page)
+      }
+    });
+  } catch (err) {
+    console.error('❌ Error fetching bookings:', err.message);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch bookings',
+      error: err.message,
+      data: null
+    });
+  }
+});
+
 export default router;

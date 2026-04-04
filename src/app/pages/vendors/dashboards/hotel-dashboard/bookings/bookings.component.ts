@@ -336,17 +336,47 @@ export class HotelBookingsComponent implements OnInit {
 
   loadBookings(): void {
     this.isLoading.set(true);
+    this.errorMessage.set('');
     this.hotelService.getHotelBookings(1, 100).subscribe({
       next: (response: any) => {
+        console.log('📡 Hotel bookings response:', response);
+
         if (response.status === 'success' && Array.isArray(response.data)) {
-          this.bookings.set(response.data);
+          // Transform bookings to match component expectations
+          const transformedBookings = response.data.map((booking: any) => {
+            console.log('📝 Transforming booking:', booking);
+
+            return {
+              _id: booking._id,
+              guest: booking.guest,
+              customerName: booking.guest?.name || 'Unknown Guest',
+              customerEmail: booking.guest?.email || 'N/A',
+              customerPhone: booking.guest?.phone || 'N/A',
+              room: booking.room,
+              roomNumber: booking.room?.roomNumber || 'TBA',
+              roomType: booking.room?.roomType || 'Unknown',
+              checkInDate: booking.checkInDate,
+              checkOutDate: booking.checkOutDate,
+              numberOfNights: booking.numberOfNights || 0,
+              totalPrice: booking.totalPrice || 0,
+              status: booking.status || 'pending',
+              notes: booking.specialRequests || '',
+              ...booking
+            };
+          });
+
+          console.log('✅ Loaded and transformed', transformedBookings.length, 'bookings');
+          this.bookings.set(transformedBookings);
           this.filterBookings();
+        } else {
+          console.warn('⚠️ Unexpected response format:', response);
+          this.bookings.set([]);
         }
         this.isLoading.set(false);
       },
       error: (error: any) => {
-        console.error('Error loading bookings:', error);
-        this.errorMessage.set('Failed to load bookings');
+        console.error('❌ Error loading bookings:', error);
+        this.errorMessage.set('Failed to load bookings: ' + (error.message || 'Unknown error'));
         this.isLoading.set(false);
       }
     });
