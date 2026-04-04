@@ -532,15 +532,26 @@ export class RestaurantMenuComponent implements OnInit {
   }
 
   saveMenuItem() {
-    if (!this.newMenuItem.name || !this.newMenuItem.category || !this.newMenuItem.price) {
-      this.errorMessage.set('Please fill in all required fields');
+    if (!this.newMenuItem.name || !this.newMenuItem.category || this.newMenuItem.price === undefined || this.newMenuItem.price === null) {
+      this.errorMessage.set('Please fill in all required fields: Item Name, Category, and Price');
+      setTimeout(() => this.errorMessage.set(''), 3000);
+      return;
+    }
+
+    if (this.newMenuItem.price <= 0) {
+      this.errorMessage.set('Price must be greater than 0');
       setTimeout(() => this.errorMessage.set(''), 3000);
       return;
     }
 
     const restaurantId = this.restaurantId();
     if (!restaurantId) {
-      this.errorMessage.set('Restaurant ID not found');
+      this.errorMessage.set('Restaurant ID not found. Please log in again.');
+      console.error('❌ Restaurant ID missing from localStorage:', {
+        restaurantId: localStorage.getItem('restaurantId'),
+        storeId: localStorage.getItem('storeId'),
+        userId: localStorage.getItem('userId')
+      });
       return;
     }
 
@@ -552,6 +563,8 @@ export class RestaurantMenuComponent implements OnInit {
       originalPrice: this.newMenuItem.originalPrice,
       category: this.newMenuItem.category,
       prepTime: this.newMenuItem.prepTime,
+      isAvailable: this.newMenuItem.isAvailable,
+      isSpecial: this.newMenuItem.isSpecial,
       restaurantId
     });
 
@@ -591,11 +604,14 @@ export class RestaurantMenuComponent implements OnInit {
       this.foodService.addMenuItem(restaurantId, this.newMenuItem).subscribe({
         next: (response: any) => {
           this.isLoading.set(false);
+          console.log('✅ Menu item response:', response);
           if (response.status === 'success' && response.data) {
             this.menuItems.set([...this.menuItems(), response.data]);
             this.successMessage.set('Menu item added successfully!');
+            console.log('✅ Menu item added:', response.data);
           } else {
-            this.errorMessage.set('Failed to add menu item');
+            this.errorMessage.set(response.message || 'Failed to add menu item');
+            console.error('❌ Unexpected response:', response);
           }
           this.filterMenuItems();
           this.closeMenuModal();
@@ -606,8 +622,14 @@ export class RestaurantMenuComponent implements OnInit {
         },
         error: (error: any) => {
           this.isLoading.set(false);
-          this.errorMessage.set(error.error?.message || 'Failed to add menu item');
-          console.error('Error adding menu item:', error);
+          const errorMsg = error?.error?.message || error?.message || 'Failed to add menu item';
+          this.errorMessage.set(errorMsg);
+          console.error('❌ Error adding menu item:', {
+            status: error?.status,
+            statusText: error?.statusText,
+            message: error?.error?.message,
+            fullError: error
+          });
         }
       });
     }

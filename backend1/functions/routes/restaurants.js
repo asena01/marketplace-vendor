@@ -194,28 +194,50 @@ router.post('/:restaurantId/menus', async (req, res) => {
     const vendorId = req.headers['x-vendor-id'];
 
     console.log(`📝 Adding menu item to restaurant:`, {
-      restaurantId,
-      vendorId,
-      headerSent: req.headers['x-vendor-id'],
-      authorized: vendorId === restaurantId,
+      restaurantId: restaurantId,
+      vendorId: vendorId,
+      allHeaders: req.headers,
       bodyName: req.body?.name,
-      bodyPrice: req.body?.price
+      bodyPrice: req.body?.price,
+      bodyCategory: req.body?.category,
+      bodyPrepTime: req.body?.prepTime
     });
 
+    // Debug: Check the comparison
+    const isAuthorized = vendorId && vendorId === restaurantId;
+    console.log(`🔐 Authorization check: "${vendorId}" === "${restaurantId}" = ${isAuthorized}`);
+
     if (!vendorId || vendorId !== restaurantId) {
-      console.error('❌ Unauthorized attempt:', { restaurantId, vendorId });
+      console.error('❌ Unauthorized attempt:', {
+        restaurantId,
+        vendorId,
+        headerValue: req.headers['x-vendor-id'],
+        match: vendorId === restaurantId
+      });
       return res.status(403).json({
         status: 'error',
-        message: 'Unauthorized: vendor ID does not match'
+        message: `Unauthorized: vendor ID mismatch. Expected: ${restaurantId}, Got: ${vendorId}`
       });
     }
 
     let menu = await Menu.findOne({ restaurantId });
 
     if (!menu) {
+      // Convert vendorId to ObjectId if it's a valid MongoDB ID
+      let restaurantObjId;
+      try {
+        if (mongoose.Types.ObjectId.isValid(vendorId)) {
+          restaurantObjId = new mongoose.Types.ObjectId(vendorId);
+        } else {
+          restaurantObjId = new mongoose.Types.ObjectId();
+        }
+      } catch (e) {
+        restaurantObjId = new mongoose.Types.ObjectId();
+      }
+
       menu = new Menu({
         restaurantId,
-        restaurant: vendorId,
+        restaurant: restaurantObjId,
         items: [],
         isActive: true
       });
@@ -225,24 +247,24 @@ router.post('/:restaurantId/menus', async (req, res) => {
       _id: new mongoose.Types.ObjectId(),
       name: req.body.name,
       description: req.body.description || '',
-      price: req.body.price || 0,
-      discountPrice: req.body.discountPrice || req.body.price || 0,
-      originalPrice: req.body.originalPrice || null,
+      price: Number(req.body.price) || 0,
+      discountPrice: req.body.discountPrice ? Number(req.body.discountPrice) : null, // Optional: display/marked price
+      originalPrice: req.body.originalPrice ? Number(req.body.originalPrice) : null,
       category: req.body.category || 'main-course',
       vendorId: restaurantId, // Always set to the restaurant creating the item
       image: req.body.image,
       imageUrl: req.body.imageUrl,
       imageStoragePath: req.body.imageStoragePath,
       isAvailable: req.body.isAvailable !== false,
-      preparationTime: req.body.prepTime || req.body.preparationTime || 15,
-      prepTime: req.body.prepTime || req.body.preparationTime || 15,
+      preparationTime: Number(req.body.prepTime) || Number(req.body.preparationTime) || 15,
+      prepTime: Number(req.body.prepTime) || Number(req.body.preparationTime) || 15,
       spiceLevel: req.body.spiceLevel || 'mild',
-      allergens: req.body.allergens || [],
-      vegetarian: req.body.vegetarian || false,
-      vegan: req.body.vegan || false,
-      tags: req.body.tags || [],
+      allergens: Array.isArray(req.body.allergens) ? req.body.allergens : [],
+      vegetarian: Boolean(req.body.vegetarian) || false,
+      vegan: Boolean(req.body.vegan) || false,
+      tags: Array.isArray(req.body.tags) ? req.body.tags : [],
       ratings: req.body.ratings || { average: 0, count: 0 },
-      isSpecial: req.body.isSpecial || false,
+      isSpecial: Boolean(req.body.isSpecial) || false,
       createdAt: new Date()
     };
 
@@ -257,6 +279,15 @@ router.post('/:restaurantId/menus', async (req, res) => {
 
     menu.items.push(newItem);
     menu.lastUpdated = new Date();
+
+    console.log(`💾 Saving menu with item:`, {
+      restaurantId: menu.restaurantId,
+      itemName: newItem.name,
+      itemPrice: newItem.price,
+      itemCategory: newItem.category,
+      totalItems: menu.items.length
+    });
+
     await menu.save();
 
     console.log(`✅ Menu item added: ${newItem.name} to restaurant ${restaurantId}`);
@@ -268,11 +299,23 @@ router.post('/:restaurantId/menus', async (req, res) => {
     });
   } catch (error) {
     console.error('❌ Error adding menu item:', error.message);
-    console.error('Stack:', error.stack);
+    console.error('❌ Error details:', {
+      name: error.name,
+      message: error.message,
+      validationErrors: error.errors ? Object.keys(error.errors).map(k => `${k}: ${error.errors[k].message}`) : null,
+      stack: error.stack
+    });
+
+    // Provide detailed error response
+    let errorMessage = error.message;
+    if (error.name === 'ValidationError') {
+      const validationMessages = Object.values(error.errors).map(e => e.message);
+      errorMessage = 'Validation error: ' + validationMessages.join(', ');
+    }
+
     res.status(500).json({
       status: 'error',
-      message: error.message,
-      error: error.toString()
+      message: errorMessage
     });
   }
 });
