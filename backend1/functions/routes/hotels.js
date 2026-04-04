@@ -423,18 +423,60 @@ router.get('/:hotelId/bookings', async (req, res) => {
     const total = await Booking.countDocuments(filter);
 
     // Fetch bookings with populated references
-    const bookings = await Booking.find(filter)
-      .populate('room', 'roomType roomNumber bedType price')
-      .populate('guest', 'name email phone')
+    const rawBookings = await Booking.find(filter)
+      .populate({
+        path: 'room',
+        select: 'roomType roomNumber bedType price',
+        strictPopulate: false
+      })
+      .populate({
+        path: 'guest',
+        select: 'name email phone',
+        strictPopulate: false
+      })
       .skip(skip)
       .limit(parseInt(limit))
       .sort({ createdAt: -1 });
 
-    console.log('✅ Found', bookings.length, 'bookings for hotel:', hotelId);
+    console.log('✅ Found', rawBookings.length, 'bookings for hotel:', hotelId);
+
+    // Log first booking for debugging
+    if (rawBookings.length > 0) {
+      console.log('📍 First booking details:', {
+        _id: rawBookings[0]._id,
+        guest: rawBookings[0].guest,
+        room: rawBookings[0].room,
+        status: rawBookings[0].status,
+        checkInDate: rawBookings[0].checkInDate,
+        checkOutDate: rawBookings[0].checkOutDate
+      });
+    }
+
+    // Ensure data is properly formatted with fallbacks
+    const formattedBookings = rawBookings.map((b, idx) => {
+      const bookingObj = b.toObject ? b.toObject() : b;
+      console.log(`  Booking ${idx}:`, {
+        hasGuest: !!b.guest,
+        guestType: typeof b.guest,
+        guestValue: b.guest,
+        hasRoom: !!b.room,
+        roomType: typeof b.room,
+        roomValue: b.room
+      });
+
+      return {
+        ...bookingObj,
+        guest: b.guest ? (typeof b.guest === 'object' ? b.guest : { _id: b.guest }) : null,
+        room: b.room ? (typeof b.room === 'object' ? b.room : { _id: b.room }) : null,
+        guestName: b.guest && typeof b.guest === 'object' ? b.guest.name : 'Unknown',
+        roomNumber: b.room && typeof b.room === 'object' ? b.room.roomNumber : 'TBA',
+        roomType: b.room && typeof b.room === 'object' ? b.room.roomType : 'Unknown'
+      };
+    });
 
     res.status(200).json({
       status: 'success',
-      data: bookings,
+      data: formattedBookings,
       pagination: {
         total,
         pages: Math.ceil(total / limit),
@@ -442,7 +484,7 @@ router.get('/:hotelId/bookings', async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('❌ Error fetching bookings:', err.message);
+    console.error('❌ Error fetching bookings:', err.message, err.stack);
     res.status(500).json({
       status: 'error',
       message: 'Failed to fetch bookings',
