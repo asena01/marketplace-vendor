@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HotelService } from '../../../../../services/hotel.service';
 import { AuthService } from '../../../../../services/auth.service';
-import { ImageUploadService } from '../../../../../services/image-upload.service';
+// import { ImageUploadService } from '../../../../../services/image-upload.service'; // IMAGE UPLOAD COMMENTED OUT
 
 interface Room {
   _id?: string;
@@ -275,7 +275,8 @@ interface Room {
                 </div>
               </div>
 
-              <!-- Room Images -->
+              <!-- Room Images - COMMENTED OUT FOR NOW -->
+              <!--
               <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">Room Images</label>
 
@@ -409,8 +410,8 @@ export class HotelRoomsComponent implements OnInit {
 
   constructor(
     private hotelService: HotelService,
-    private authService: AuthService,
-    private imageUploadService: ImageUploadService
+    private authService: AuthService
+    // private imageUploadService: ImageUploadService // IMAGE UPLOAD COMMENTED OUT
   ) {}
 
   ngOnInit() {
@@ -581,6 +582,8 @@ export class HotelRoomsComponent implements OnInit {
     }
   }
 
+  // IMAGE UPLOAD METHODS - COMMENTED OUT FOR NOW
+  /*
   onImageSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const files: File[] = Array.from(input.files || []);
@@ -665,6 +668,7 @@ export class HotelRoomsComponent implements OnInit {
       this.onImageSelected(syntheticEvent);
     }
   }
+  */
 
   private getEmptyRoom(): Room {
     return {
