@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { CustomerService } from '../../../services/customer.service';
 import { HotelService } from '../../../services/hotel.service';
+import { ToastService } from '../../../services/toast.service';
 
 interface HotelBooking {
   _id: string;
@@ -216,7 +217,8 @@ export class CustomerHotelBookingsComponent implements OnInit {
 
   constructor(
     private customerService: CustomerService,
-    private hotelService: HotelService
+    private hotelService: HotelService,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -421,7 +423,7 @@ export class CustomerHotelBookingsComponent implements OnInit {
 
   submitRoomServiceOrder(): void {
     if (!this.selectedBooking() || this.selectedItems().length === 0) {
-      alert('Please select at least one item');
+      this.toastService.warning('Please select at least one item');
       return;
     }
 
@@ -434,14 +436,14 @@ export class CustomerHotelBookingsComponent implements OnInit {
     this.customerService.orderRoomService(orderData).subscribe(
       (response: any) => {
         if (response.success) {
-          alert('✓ Room service order placed successfully!');
+          this.toastService.success('Room service order placed successfully!');
           this.showRoomServiceModal.set(false);
           this.selectedItems.set([]);
         }
       },
       (error) => {
         console.error('Error placing room service order:', error);
-        alert('Failed to place room service order');
+        this.toastService.error('Failed to place room service order');
       }
     );
   }

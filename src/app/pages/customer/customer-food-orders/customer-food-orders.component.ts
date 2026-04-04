@@ -2,6 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { CustomerService } from '../../../services/customer.service';
+import { ToastService } from '../../../services/toast.service';
 
 interface FoodOrder {
   _id: string;
@@ -284,7 +285,7 @@ export class CustomerFoodOrdersComponent implements OnInit {
   selectedOrder = signal<FoodOrder | null>(null);
   showOrderModal = signal(false);
 
-  constructor(private customerService: CustomerService) {}
+  constructor(private customerService: CustomerService, private toastService: ToastService) {}
 
   ngOnInit(): void {
     this.loadFoodOrders();
@@ -384,7 +385,7 @@ export class CustomerFoodOrdersComponent implements OnInit {
     this.closeOrderModal();
 
     console.log('✅ Order cancelled successfully');
-    alert('Order has been cancelled');
+    this.toastService.success('Order has been cancelled');
 
     // In a real app, this would call: this.customerService.cancelFoodOrder(order._id)
   }

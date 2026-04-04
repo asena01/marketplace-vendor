@@ -662,7 +662,7 @@ export class HotelsComponent implements OnInit {
 
   search(): void {
     if (!this.checkInDate() || !this.checkOutDate() || !this.searchLocation()) {
-      alert('Please fill in all search fields');
+      this.toastService.warning('Please fill in all search fields');
       return;
     }
 
@@ -1267,7 +1267,7 @@ export class HotelsComponent implements OnInit {
 
   submitReview(): void {
     if (this.reviewRating() === 0 || !this.reviewText().trim()) {
-      alert('Please provide a rating and review text');
+      this.toastService.warning('Please provide a rating and review text');
       return;
     }
 
@@ -1277,7 +1277,7 @@ export class HotelsComponent implements OnInit {
       text: this.reviewText()
     });
 
-    alert('Thank you for your review!');
+    this.toastService.success('Thank you for your review!');
     this.closeReviewModal();
   }
 
