@@ -221,78 +221,40 @@ export class StaffLogsComponent implements OnInit {
   }
 
   loadActivityLogs() {
-    // Mock data - Replace with actual API call
-    const mockLogs: ActivityLog[] = [
-      {
-        _id: '1',
-        staffId: 'staff1',
-        staffName: 'Alice Johnson',
-        staffPosition: 'front-desk',
-        action: 'login',
-        description: 'Staff logged in to system',
-        timestamp: new Date().toISOString(),
-        status: 'success'
+    // Load activity logs from API
+    this.hotelService.getStaffLogs(1, 100, this.selectedAction || undefined).subscribe({
+      next: (response: any) => {
+        if (response.status === 'success' && response.data) {
+          this.activityLogs.set(response.data);
+        } else {
+          this.activityLogs.set([]);
+        }
+        this.loadStaffStats();
+        this.filterLogs();
       },
-      {
-        _id: '2',
-        staffId: 'staff2',
-        staffName: 'Bob Smith',
-        staffPosition: 'housekeeping',
-        action: 'room-cleaned',
-        description: 'Room 101 cleaned and inspected',
-        actionDetail: 'Room ready for guests',
-        timestamp: new Date(Date.now() - 1800000).toISOString(),
-        status: 'success'
-      },
-      {
-        _id: '3',
-        staffId: 'staff1',
-        staffName: 'Alice Johnson',
-        staffPosition: 'front-desk',
-        action: 'check-in',
-        description: 'Guest checked in',
-        actionDetail: 'John Doe - Room 101',
-        timestamp: new Date(Date.now() - 3600000).toISOString(),
-        status: 'success'
-      },
-      {
-        _id: '4',
-        staffId: 'staff3',
-        staffName: 'Carol Davis',
-        staffPosition: 'kitchen',
-        action: 'order-processed',
-        description: 'Room service order prepared',
-        actionDetail: '2 orders - Ready for delivery',
-        timestamp: new Date(Date.now() - 5400000).toISOString(),
-        status: 'success'
-      },
-      {
-        _id: '5',
-        staffId: 'staff2',
-        staffName: 'Bob Smith',
-        staffPosition: 'housekeeping',
-        action: 'guest-complaint',
-        description: 'Guest complaint logged',
-        actionDetail: 'Room temperature issue',
-        timestamp: new Date(Date.now() - 7200000).toISOString(),
-        status: 'pending'
-      },
-      {
-        _id: '6',
-        staffId: 'staff4',
-        staffName: 'David Wilson',
-        staffPosition: 'maintenance',
-        action: 'maintenance',
-        description: 'Maintenance task completed',
-        actionDetail: 'Room 205 AC repaired',
-        timestamp: new Date(Date.now() - 9000000).toISOString(),
-        status: 'success'
+      error: (error) => {
+        console.error('Error loading activity logs:', error);
+        this.activityLogs.set([]);
+        this.calculateStats();
       }
-    ];
+    });
+  }
 
-    this.activityLogs.set(mockLogs);
-    this.calculateStats();
-    this.filterLogs();
+  loadStaffStats() {
+    // Load staff stats from API
+    this.hotelService.getStaffLogsStats().subscribe({
+      next: (response: any) => {
+        if (response.status === 'success' && response.data) {
+          this.staffStats.set(response.data);
+        } else {
+          this.calculateStats();
+        }
+      },
+      error: (error) => {
+        console.error('Error loading staff stats:', error);
+        this.calculateStats();
+      }
+    });
   }
 
   calculateStats() {

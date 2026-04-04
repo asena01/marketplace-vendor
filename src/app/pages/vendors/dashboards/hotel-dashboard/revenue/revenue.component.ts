@@ -245,63 +245,40 @@ export class RevenueComponent implements OnInit {
   }
 
   loadTransactions() {
-    // Mock data - Replace with actual API call
-    const mockTransactions: Transaction[] = [
-      {
-        _id: '1',
-        type: 'room',
-        description: 'Room 101 - 3 nights',
-        amount: 450,
-        guestName: 'John Doe',
-        status: 'completed',
-        timestamp: new Date().toISOString(),
-        roomNumber: '101'
+    // Load transactions from API
+    this.hotelService.getRevenue(1, 100, this.selectedType || undefined, this.selectedStatus || undefined, this.searchGuest || undefined).subscribe({
+      next: (response: any) => {
+        if (response.status === 'success' && response.data) {
+          this.transactions.set(response.data);
+        } else {
+          this.transactions.set([]);
+        }
+        this.loadRevenueStats();
+        this.filterTransactions();
       },
-      {
-        _id: '2',
-        type: 'food',
-        description: 'Room Service - Dinner',
-        amount: 85,
-        guestName: 'Jane Smith',
-        status: 'completed',
-        timestamp: new Date(Date.now() - 3600000).toISOString(),
-        roomNumber: '202'
-      },
-      {
-        _id: '3',
-        type: 'drink',
-        description: 'Mini Bar - Beverages',
-        amount: 45,
-        guestName: 'Mike Johnson',
-        status: 'completed',
-        timestamp: new Date(Date.now() - 7200000).toISOString(),
-        roomNumber: '305'
-      },
-      {
-        _id: '4',
-        type: 'room',
-        description: 'Room 202 - 2 nights',
-        amount: 298,
-        guestName: 'Jane Smith',
-        status: 'pending',
-        timestamp: new Date(Date.now() - 10800000).toISOString(),
-        roomNumber: '202'
-      },
-      {
-        _id: '5',
-        type: 'service',
-        description: 'Spa Treatment',
-        amount: 120,
-        guestName: 'Sarah Davis',
-        status: 'completed',
-        timestamp: new Date(Date.now() - 14400000).toISOString(),
-        roomNumber: '401'
+      error: (error) => {
+        console.error('Error loading transactions:', error);
+        this.transactions.set([]);
+        this.calculateStats();
       }
-    ];
+    });
+  }
 
-    this.transactions.set(mockTransactions);
-    this.calculateStats();
-    this.filterTransactions();
+  loadRevenueStats() {
+    // Load revenue stats from API
+    this.hotelService.getRevenueStats().subscribe({
+      next: (response: any) => {
+        if (response.status === 'success' && response.data) {
+          this.revenueStats.set(response.data);
+        } else {
+          this.calculateStats();
+        }
+      },
+      error: (error) => {
+        console.error('Error loading revenue stats:', error);
+        this.calculateStats();
+      }
+    });
   }
 
   calculateStats() {

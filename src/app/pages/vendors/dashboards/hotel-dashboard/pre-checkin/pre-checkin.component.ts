@@ -341,76 +341,40 @@ export class PreCheckinComponent implements OnInit {
   }
 
   loadCheckIns() {
-    // Mock data - Replace with actual API call
-    const mockCheckIns: GuestCheckIn[] = [
-      {
-        _id: '1',
-        bookingId: 'BK001',
-        guestName: 'John Doe',
-        email: 'john@example.com',
-        phone: '+234-800-1234567',
-        idType: 'passport',
-        idNumber: 'A12345678',
-        checkInDate: new Date(Date.now() + 3600000).toISOString(),
-        checkOutDate: new Date(Date.now() + 259200000).toISOString(),
-        roomType: 'double',
-        numberOfGuests: 2,
-        specialRequests: 'High floor preferred',
-        status: 'pending'
+    // Load check-ins from API
+    this.hotelService.getPreCheckins(1, 100, this.selectedStatus || undefined).subscribe({
+      next: (response: any) => {
+        if (response.status === 'success' && response.data) {
+          this.checkIns.set(response.data);
+        } else {
+          this.checkIns.set([]);
+        }
+        this.loadCheckInStats();
+        this.filterCheckIns();
       },
-      {
-        _id: '2',
-        bookingId: 'BK002',
-        guestName: 'Jane Smith',
-        email: 'jane@example.com',
-        phone: '+234-800-2345678',
-        idType: 'national-id',
-        idNumber: 'NG-123-456-789',
-        checkInDate: new Date(Date.now() + 7200000).toISOString(),
-        checkOutDate: new Date(Date.now() + 345600000).toISOString(),
-        roomType: 'suite',
-        numberOfGuests: 1,
-        specialRequests: '',
-        status: 'verified'
-      },
-      {
-        _id: '3',
-        bookingId: 'BK003',
-        guestName: 'Mike Johnson',
-        email: 'mike@example.com',
-        phone: '+234-800-3456789',
-        idType: 'driver-license',
-        idNumber: 'DL-98765432',
-        checkInDate: new Date(Date.now() + 10800000).toISOString(),
-        checkOutDate: new Date(Date.now() + 432000000).toISOString(),
-        roomType: 'single',
-        numberOfGuests: 1,
-        vehicleInfo: 'Toyota Camry - ABC 123 XY',
-        specialRequests: 'Late check-in requested',
-        status: 'pending'
-      },
-      {
-        _id: '4',
-        bookingId: 'BK004',
-        guestName: 'Sarah Davis',
-        email: 'sarah@example.com',
-        phone: '+234-800-4567890',
-        idType: 'passport',
-        idNumber: 'B87654321',
-        checkInDate: new Date(Date.now() + 14400000).toISOString(),
-        checkOutDate: new Date(Date.now() + 518400000).toISOString(),
-        roomType: 'deluxe',
-        numberOfGuests: 3,
-        specialRequests: 'Crib for baby needed',
-        status: 'completed',
-        completedAt: new Date(Date.now() - 3600000).toISOString(),
-        verifiedBy: 'Alice Johnson'
+      error: (error) => {
+        console.error('Error loading check-ins:', error);
+        this.checkIns.set([]);
+        this.calculateStats();
       }
-    ];
+    });
+  }
 
-    this.checkIns.set(mockCheckIns);
-    this.calculateStats();
-    this.filterCheckIns();
+  loadCheckInStats() {
+    // Load check-in stats from API
+    this.hotelService.getCheckInStats().subscribe({
+      next: (response: any) => {
+        if (response.status === 'success' && response.data) {
+          this.checkInStats.set(response.data);
+        } else {
+          this.calculateStats();
+        }
+      },
+      error: (error) => {
+        console.error('Error loading check-in stats:', error);
+        this.calculateStats();
+      }
+    });
   }
 
   calculateStats() {
@@ -473,36 +437,49 @@ export class PreCheckinComponent implements OnInit {
 
   verifyIdentity(checkIn: GuestCheckIn) {
     if (checkIn._id) {
-      // Update status to verified
-      const updated = { ...checkIn, status: 'verified' as const };
-      const index = this.checkIns().findIndex(c => c._id === checkIn._id);
-      if (index !== -1) {
-        const updated_list = [...this.checkIns()];
-        updated_list[index] = updated;
-        this.checkIns.set(updated_list);
-        this.calculateStats();
-        this.filterCheckIns();
-      }
+      // Call API to verify identity
+      this.hotelService.verifyGuestIdentity(checkIn._id, 'hotel-staff').subscribe({
+        next: (response: any) => {
+          if (response.status === 'success') {
+            // Update local state with response data
+            const index = this.checkIns().findIndex(c => c._id === checkIn._id);
+            if (index !== -1) {
+              const updated_list = [...this.checkIns()];
+              updated_list[index] = { ...response.data };
+              this.checkIns.set(updated_list);
+              this.calculateStats();
+              this.filterCheckIns();
+            }
+          }
+        },
+        error: (error) => {
+          console.error('Error verifying identity:', error);
+        }
+      });
     }
   }
 
   completeCheckIn(checkIn: GuestCheckIn) {
     if (checkIn._id) {
-      // Update status to completed
-      const updated = {
-        ...checkIn,
-        status: 'completed' as const,
-        completedAt: new Date().toISOString(),
-        verifiedBy: 'Hotel Staff'
-      };
-      const index = this.checkIns().findIndex(c => c._id === checkIn._id);
-      if (index !== -1) {
-        const updated_list = [...this.checkIns()];
-        updated_list[index] = updated;
-        this.checkIns.set(updated_list);
-        this.calculateStats();
-        this.filterCheckIns();
-      }
+      // Call API to complete check-in
+      this.hotelService.completeCheckIn(checkIn._id).subscribe({
+        next: (response: any) => {
+          if (response.status === 'success') {
+            // Update local state with response data
+            const index = this.checkIns().findIndex(c => c._id === checkIn._id);
+            if (index !== -1) {
+              const updated_list = [...this.checkIns()];
+              updated_list[index] = { ...response.data };
+              this.checkIns.set(updated_list);
+              this.calculateStats();
+              this.filterCheckIns();
+            }
+          }
+        },
+        error: (error) => {
+          console.error('Error completing check-in:', error);
+        }
+      });
     }
   }
 

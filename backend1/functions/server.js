@@ -18,6 +18,11 @@ import foodOrderRoutes from './routes/foodOrders.js';
 import menuRoutes from './routes/menus.js';
 import roomServiceRoutes from './routes/roomService.js';
 import deviceRoutes from './routes/devices.js';
+// New hotel feature routes
+import revenueRoutes from './routes/revenue.js';
+import staffLogsRoutes from './routes/staffLogs.js';
+import preCheckinRoutes from './routes/preCheckin.js';
+import analyticsRoutes from './routes/analytics.js';
 import adminRoutes from './routes/admin.js';
 import deliveryRoutesOld from './routes/delivery.js';
 import restaurantRoutes from './routes/restaurants.js';
@@ -477,6 +482,11 @@ app.use('/hotels/:hotelId/invoices', invoiceRoutes);
 app.use('/hotels/:hotelId/food-orders', foodOrderRoutes);
 app.use('/hotels/:hotelId/menus', menuRoutes);
 app.use('/hotels/:hotelId/room-service', roomServiceRoutes);
+// New hotel feature routes
+app.use('/hotels/:hotelId/revenue', revenueRoutes);
+app.use('/hotels/:hotelId/staff-logs', staffLogsRoutes);
+app.use('/hotels/:hotelId/pre-checkin', preCheckinRoutes);
+app.use('/hotels/:hotelId/analytics', analyticsRoutes);
 
 // Restaurant Delivery Routes
 app.use('/restaurants', restaurantRoutes);

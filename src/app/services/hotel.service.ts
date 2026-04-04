@@ -1351,4 +1351,186 @@ export class HotelService {
     );
   }
 
+  // ==================== REVENUE ====================
+  getRevenue(page = 1, limit = 10, type?: string, status?: string, guestName?: string): Observable<ApiResponse<any>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('limit', limit.toString());
+
+    if (type) params = params.set('type', type);
+    if (status) params = params.set('status', status);
+    if (guestName) params = params.set('guestName', guestName);
+
+    return this.http.get<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/revenue`, { params }).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch revenue:', error);
+        return of({ status: 'error', data: [], message: error.message });
+      })
+    );
+  }
+
+  getRevenueStats(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/revenue/stats`).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch revenue stats:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  createTransaction(transactionData: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/revenue`, transactionData).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to create transaction:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  updateTransactionStatus(transactionId: string, status: string): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/revenue/${transactionId}/status`, { status }).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to update transaction status:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  // ==================== STAFF LOGS ====================
+  getStaffLogs(page = 1, limit = 20, action?: string, staffId?: string): Observable<ApiResponse<any>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('limit', limit.toString());
+
+    if (action) params = params.set('action', action);
+    if (staffId) params = params.set('staffId', staffId);
+
+    return this.http.get<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/staff-logs`, { params }).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch staff logs:', error);
+        return of({ status: 'error', data: [], message: error.message });
+      })
+    );
+  }
+
+  getStaffLogsStats(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/staff-logs/stats`).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch staff logs stats:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  createStaffLog(logData: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/staff-logs`, logData).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to create staff log:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  // ==================== PRE-ARRIVAL CHECK-IN ====================
+  getPreCheckins(page = 1, limit = 10, status?: string): Observable<ApiResponse<any>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('limit', limit.toString());
+
+    if (status) params = params.set('status', status);
+
+    return this.http.get<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/pre-checkin`, { params }).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch pre-checkins:', error);
+        return of({ status: 'error', data: [], message: error.message });
+      })
+    );
+  }
+
+  getCheckInStats(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/pre-checkin/stats`).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch check-in stats:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  createPreCheckin(checkinData: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/pre-checkin`, checkinData).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to create pre-checkin:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  verifyGuestIdentity(checkinId: string, verifiedBy: string): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/pre-checkin/${checkinId}/verify`, { verifiedBy }).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to verify guest identity:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  completeCheckIn(checkinId: string): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/pre-checkin/${checkinId}/complete`, {}).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to complete check-in:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  // ==================== ANALYTICS ====================
+  getAnalyticsStats(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/analytics/stats`).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch analytics stats:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  getOccupancyTrend(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/analytics/occupancy-trend`).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch occupancy trend:', error);
+        return of({ status: 'error', data: [], message: error.message });
+      })
+    );
+  }
+
+  getRevenueTrend(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/analytics/revenue-trend`).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch revenue trend:', error);
+        return of({ status: 'error', data: [], message: error.message });
+      })
+    );
+  }
+
+  getOccupancyData(page = 1, limit = 10): Observable<ApiResponse<any>> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('limit', limit.toString());
+
+    return this.http.get<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/analytics/occupancy-data`, { params }).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch occupancy data:', error);
+        return of({ status: 'error', data: [], message: error.message });
+      })
+    );
+  }
+
+  recalculateOccupancy(): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/analytics/recalculate`, {}).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to recalculate occupancy:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
 }

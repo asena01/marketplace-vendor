@@ -237,30 +237,46 @@ export class AnalyticsComponent implements OnInit {
   }
 
   loadAnalytics() {
-    // Mock data - Replace with actual API call
-    const mockData: OccupancyData[] = [];
-    const today = new Date();
+    // Load analytics data from API
+    this.hotelService.getOccupancyTrend().subscribe({
+      next: (response: any) => {
+        if (response.status === 'success' && response.data) {
+          const formattedData = response.data.map((item: any) => ({
+            date: item.date || new Date().toISOString(),
+            occupancyRate: item.occupancyRate || 0,
+            occupiedRooms: item.occupiedRooms || 0,
+            totalRooms: item.totalRooms || 0,
+            revenue: item.revenue || 0
+          }));
+          this.occupancyData.set(formattedData);
+        } else {
+          this.occupancyData.set([]);
+        }
+        this.loadAnalyticsStats();
+      },
+      error: (error) => {
+        console.error('Error loading occupancy trend:', error);
+        this.occupancyData.set([]);
+        this.calculateStats();
+      }
+    });
+  }
 
-    for (let i = 29; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      
-      const occupancyRate = Math.floor(Math.random() * 40 + 50); // 50-90%
-      const totalRooms = 10;
-      const occupiedRooms = Math.floor((occupancyRate / 100) * totalRooms);
-      const revenue = occupiedRooms * (Math.random() * 100 + 150);
-
-      mockData.push({
-        date: date.toISOString(),
-        occupancyRate,
-        occupiedRooms,
-        totalRooms,
-        revenue
-      });
-    }
-
-    this.occupancyData.set(mockData);
-    this.calculateStats();
+  loadAnalyticsStats() {
+    // Load analytics stats from API
+    this.hotelService.getAnalyticsStats().subscribe({
+      next: (response: any) => {
+        if (response.status === 'success' && response.data) {
+          this.analyticsStats.set(response.data);
+        } else {
+          this.calculateStats();
+        }
+      },
+      error: (error) => {
+        console.error('Error loading analytics stats:', error);
+        this.calculateStats();
+      }
+    });
   }
 
   calculateStats() {
