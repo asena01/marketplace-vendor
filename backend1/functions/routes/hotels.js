@@ -9,6 +9,88 @@ import {
 
 const router = express.Router();
 
+// ==================== CHECK ROOM AVAILABILITY ====================
+// MUST BE DEFINED BEFORE GENERIC /:id ROUTE
+// Check if a room is available for a specific date range
+router.get('/check-availability/:roomId', async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const { checkInDate, checkOutDate } = req.query;
+
+    if (!checkInDate || !checkOutDate) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Missing checkInDate or checkOutDate',
+        data: null
+      });
+    }
+
+    const Booking = (await import('../models/Booking.js')).default;
+    const Room = (await import('../models/Room.js')).default;
+
+    const checkIn = new Date(checkInDate);
+    const checkOut = new Date(checkOutDate);
+
+    // Validate dates
+    if (checkIn >= checkOut) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Check-out date must be after check-in date',
+        data: null
+      });
+    }
+
+    // Find the room to ensure it exists
+    const room = await Room.findById(roomId).populate('hotel', 'name');
+    if (!room) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Room not found',
+        data: null
+      });
+    }
+
+    // Check for conflicting bookings (confirmed or checked-in status)
+    const conflictingBookings = await Booking.find({
+      room: roomId,
+      status: { $in: ['confirmed', 'checked-in'] },
+      $or: [
+        // Booking starts before checkOut and ends after checkIn
+        {
+          checkInDate: { $lt: checkOut },
+          checkOutDate: { $gt: checkIn }
+        }
+      ]
+    }).populate('guest', 'name email phone');
+
+    const isAvailable = conflictingBookings.length === 0;
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        roomId,
+        roomType: room.roomType,
+        hotelName: room.hotel.name,
+        checkInDate: checkIn,
+        checkOutDate: checkOut,
+        isAvailable,
+        numberOfNights: Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24)),
+        conflictingBookings: conflictingBookings.length,
+        message: isAvailable
+          ? `Room is available for ${Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24))} night(s)`
+          : `Room is already booked for the requested dates`
+      }
+    });
+  } catch (err) {
+    console.error('Error checking room availability:', err);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to check room availability',
+      error: err.message
+    });
+  }
+});
+
 // ==================== PUBLIC SEARCH ENDPOINT ====================
 // MUST BE DEFINED BEFORE GENERIC /:id ROUTE
 // Search public hotels (for customers browsing available hotels)

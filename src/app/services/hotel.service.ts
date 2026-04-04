@@ -1064,6 +1064,30 @@ export class HotelService {
     );
   }
 
+  // ==================== ROOM AVAILABILITY ====================
+  checkRoomAvailability(roomId: string, checkInDate: Date, checkOutDate: Date): Observable<ApiResponse<any>> {
+    const params = new HttpParams()
+      .set('checkInDate', checkInDate.toISOString())
+      .set('checkOutDate', checkOutDate.toISOString());
+
+    return this.http.get<ApiResponse<any>>(
+      `${API_URL}/hotels/check-availability/${roomId}`,
+      { params }
+    ).pipe(
+      tap((data) => {
+        console.log('✅ Room availability checked:', data.data);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to check room availability:', error);
+        return of({
+          status: 'error',
+          data: { isAvailable: false },
+          message: error.message
+        } as ApiResponse<any>);
+      })
+    );
+  }
+
   // ==================== SMART LOCK ACCESS ====================
   /**
    * Create smart lock access for a confirmed booking

@@ -839,22 +839,61 @@ export class HotelsComponent implements OnInit {
       return;
     }
 
-    // Pre-fill customer info from logged-in user
-    const user = this.authService.getCurrentUser();
-    if (user) {
-      this.customerName.set(user.name || '');
-      this.customerEmail.set(user.email || '');
-      this.customerPhone.set(user.phone || '');
-      console.log('✅ Pre-filled customer info from logged-in user:', {
-        name: user.name,
-        email: user.email,
-        phone: user.phone
-      });
+    // Check if dates are selected
+    if (!this.checkInDate() || !this.checkOutDate()) {
+      alert('Please select check-in and check-out dates before booking');
+      return;
     }
 
-    this.selectedHotel.set(hotel);
-    this.selectedRoom.set(room);
-    this.showBookingForm.set(true);
+    // Validate date range
+    const checkIn = new Date(this.checkInDate());
+    const checkOut = new Date(this.checkOutDate());
+    if (checkIn >= checkOut) {
+      alert('Check-out date must be after check-in date');
+      return;
+    }
+
+    // Check room availability for the selected dates
+    this.isLoadingBooking.set(true);
+    this.bookingError.set('');
+
+    this.hotelService.checkRoomAvailability(room.id, checkIn, checkOut).subscribe({
+      next: (response) => {
+        this.isLoadingBooking.set(false);
+
+        if (response.data.isAvailable) {
+          console.log('✅ Room is available for selected dates:', response.data);
+
+          // Pre-fill customer info from logged-in user
+          const user = this.authService.getCurrentUser();
+          if (user) {
+            this.customerName.set(user.name || '');
+            this.customerEmail.set(user.email || '');
+            this.customerPhone.set(user.phone || '');
+            console.log('✅ Pre-filled customer info from logged-in user:', {
+              name: user.name,
+              email: user.email,
+              phone: user.phone
+            });
+          }
+
+          this.selectedHotel.set(hotel);
+          this.selectedRoom.set(room);
+          this.showBookingForm.set(true);
+        } else {
+          console.log('❌ Room is not available for selected dates');
+          this.bookingError.set(`Sorry, this room is not available for the selected dates (${response.data.numberOfNights} night(s)). Please select different dates.`);
+          alert(this.bookingError());
+        }
+      },
+      error: (error) => {
+        this.isLoadingBooking.set(false);
+        const errorMsg = 'Failed to check room availability. Please try again.';
+        this.bookingError.set(errorMsg);
+        console.error('❌ Availability check error:', error);
+        alert(errorMsg);
+      }
+    });
   }
 
   closeBooking(): void {
