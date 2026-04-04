@@ -961,4 +961,15 @@ export class FoodComponent implements OnInit {
     if (!imagePath) return '';
     return apiConfig.buildImageUrl(imagePath);
   }
+
+  /**
+   * Check if a string is a URL (image URL, data URL, etc)
+   * Returns true for http://, https://, data:, etc
+   * Returns false for emoji or plain text
+   */
+  isImageUrl(value: string | undefined): boolean {
+    if (!value) return false;
+    // Check if it's a URL (starts with http, https, or data:)
+    return /^(https?:\/\/|data:)/.test(value);
+  }
 }
