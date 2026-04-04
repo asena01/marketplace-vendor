@@ -34,6 +34,14 @@ router.get('/', async (req, res) => {
 
     console.log(`✅ Found ${restaurants.length} restaurants`);
 
+    // Helper function to generate placeholder SVG image
+    const generatePlaceholderImage = (name) => {
+      const colors = ['FF6B35', 'F4A261', '2A9D8F', 'E76F51', 'D62828'];
+      const colorIndex = name.charCodeAt(0) % colors.length;
+      const color = colors[colorIndex];
+      return `data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"%3E%3Crect fill="%23${color}" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="white" font-size="32" font-family="Arial" font-weight="bold"%3E${encodeURIComponent(name.substring(0, 20))}%3C/text%3E%3C/svg%3E`;
+    };
+
     res.status(200).json({
       status: 'success',
       data: restaurants.map(r => ({
@@ -43,8 +51,8 @@ router.get('/', async (req, res) => {
         name: r.businessName || r.name || 'Restaurant',
         description: r.businessDescription || '',
         cuisine: r.cuisineType?.join(', ') || 'Cuisine',
-        address: r.address || '',
-        city: r.city || '',
+        address: r.address?.street || r.address || '',
+        city: r.address?.city || r.city || '',
         phone: r.phone || '',
         email: r.email || '',
         rating: 4.5,
@@ -53,7 +61,8 @@ router.get('/', async (req, res) => {
         deliveryFee: 2.99,
         minOrder: 10,
         icon: '🍽️',
-        image: r.image || r.profileImage || null, // Restaurant profile image from User model
+        // Use businessImage if available, otherwise generate a placeholder
+        image: r.businessImage || generatePlaceholderImage(r.businessName || r.name || 'Restaurant'),
         isOpen: true,
         menus: []
       }))
