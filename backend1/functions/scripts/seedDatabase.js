@@ -157,59 +157,13 @@ const seedDatabase = async () => {
     const rooms = await Room.insertMany(roomsData);
     console.log('✅ Created', rooms.length, 'rooms');
 
-    // Create sample bookings (only block future dates to leave present/near dates available for testing)
+    // Create sample bookings - NONE for now to allow testing all dates
     console.log('📅 Creating sample bookings...');
     const today = new Date();
-    const bookingsData = [
-      {
-        hotel: hotel._id,
-        bookingNumber: 'BK-001',
-        guest: guests[0]._id,
-        room: rooms[1]._id,
-        checkInDate: new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-        checkOutDate: new Date(today.getTime() + 35 * 24 * 60 * 60 * 1000), // 35 days from now
-        numberOfNights: 5,
-        numberOfGuests: 2,
-        roomRate: 149,
-        totalPrice: 745,
-        status: 'confirmed',
-        paymentStatus: 'paid',
-        paymentMethod: 'credit_card'
-      },
-      {
-        hotel: hotel._id,
-        bookingNumber: 'BK-002',
-        guest: guests[1]._id,
-        room: rooms[3]._id,
-        checkInDate: new Date(today.getTime() + 50 * 24 * 60 * 60 * 1000), // 50 days from now
-        checkOutDate: new Date(today.getTime() + 55 * 24 * 60 * 60 * 1000), // 55 days from now
-        numberOfNights: 5,
-        numberOfGuests: 2,
-        roomRate: 179,
-        totalPrice: 895,
-        status: 'confirmed',
-        paymentStatus: 'paid',
-        paymentMethod: 'credit_card'
-      },
-      {
-        hotel: hotel._id,
-        bookingNumber: 'BK-003',
-        guest: guests[2]._id,
-        room: rooms[7]._id,
-        checkInDate: new Date(today.getTime() + 70 * 24 * 60 * 60 * 1000), // 70 days from now
-        checkOutDate: new Date(today.getTime() + 75 * 24 * 60 * 60 * 1000), // 75 days from now
-        numberOfNights: 5,
-        numberOfGuests: 1,
-        roomRate: 159,
-        totalPrice: 795,
-        status: 'confirmed',
-        paymentStatus: 'paid',
-        paymentMethod: 'credit_card'
-      }
-    ];
+    const bookingsData = []; // Empty - all rooms available for testing
 
     const bookings = await Booking.insertMany(bookingsData);
-    console.log('✅ Created', bookings.length, 'bookings');
+    console.log('✅ Created', bookings.length, 'bookings (all rooms available for testing)');
 
     // Create sample staff
     console.log('👨‍💼 Creating sample staff...');
@@ -306,37 +260,40 @@ const seedDatabase = async () => {
     const maintenance = await Maintenance.insertMany(maintenanceData);
     console.log('✅ Created', maintenance.length, 'maintenance requests');
 
-    // Create sample invoices
+    // Create sample invoices (only if bookings exist)
     console.log('🧾 Creating sample invoices...');
-    const invoicesData = [
-      {
-        hotel: hotel._id,
-        invoiceNumber: 'INV-001',
-        booking: bookings[0]._id,
-        guest: guests[0]._id,
-        guestName: 'John Doe',
-        guestEmail: 'john@example.com',
-        amount: 596,
-        tax: 60,
-        totalAmount: 656,
-        status: 'paid',
-        paidDate: new Date()
-      },
-      {
-        hotel: hotel._id,
-        invoiceNumber: 'INV-002',
-        booking: bookings[1]._id,
-        guest: guests[1]._id,
-        guestName: 'Jane Smith',
-        guestEmail: 'jane@example.com',
-        amount: 537,
-        tax: 54,
-        totalAmount: 591,
-        status: 'issued'
-      }
-    ];
+    let invoices = [];
+    if (bookings.length > 0) {
+      const invoicesData = [
+        {
+          hotel: hotel._id,
+          invoiceNumber: 'INV-001',
+          booking: bookings[0]._id,
+          guest: guests[0]._id,
+          guestName: 'John Doe',
+          guestEmail: 'john@example.com',
+          amount: 596,
+          tax: 60,
+          totalAmount: 656,
+          status: 'paid',
+          paidDate: new Date()
+        },
+        {
+          hotel: hotel._id,
+          invoiceNumber: 'INV-002',
+          booking: bookings[1]._id,
+          guest: guests[1]._id,
+          guestName: 'Jane Smith',
+          guestEmail: 'jane@example.com',
+          amount: 537,
+          tax: 54,
+          totalAmount: 591,
+          status: 'issued'
+        }
+      ];
 
-    const invoices = await Invoice.insertMany(invoicesData);
+      invoices = await Invoice.insertMany(invoicesData);
+    }
     console.log('✅ Created', invoices.length, 'invoices');
 
     // Create sample room service menu items

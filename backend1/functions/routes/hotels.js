@@ -62,8 +62,18 @@ router.get('/check-availability/:roomId', async (req, res) => {
       });
     }
 
-    // Check for conflicting bookings (confirmed or checked-in status)
-    console.log(`\n🛏️  Searching for conflicting bookings for room: ${roomId}`);
+    // First, let's check ALL bookings for this room (for debugging)
+    console.log(`\n🛏️  Checking all bookings for room: ${roomId}`);
+    const allBookingsForRoom = await Booking.find({
+      room: roomId
+    });
+    console.log(`📋 Total bookings for this room: ${allBookingsForRoom.length}`);
+    allBookingsForRoom.forEach(b => {
+      console.log(`   - Booking ${b.bookingNumber}: ${b.checkInDate?.toISOString()} to ${b.checkOutDate?.toISOString()} (status: ${b.status})`);
+    });
+
+    // Now check for conflicting bookings (confirmed or checked-in status)
+    console.log(`\n🔍 Searching for conflicting bookings with status: confirmed or checked-in`);
     const conflictingBookings = await Booking.find({
       room: roomId,
       status: { $in: ['confirmed', 'checked-in'] },
@@ -78,7 +88,13 @@ router.get('/check-availability/:roomId', async (req, res) => {
 
     console.log(`📋 Found ${conflictingBookings.length} conflicting bookings`);
     conflictingBookings.forEach(b => {
-      console.log(`   - Booking ${b.bookingNumber}: ${b.checkInDate?.toISOString()} to ${b.checkOutDate?.toISOString()} (status: ${b.status})`);
+      console.log(`   - Booking ${b.bookingNumber}:`);
+      console.log(`     Status: ${b.status}`);
+      console.log(`     BookingIn: ${b.checkInDate?.toISOString()}`);
+      console.log(`     BookingOut: ${b.checkOutDate?.toISOString()}`);
+      console.log(`     Requested in: ${checkIn.toISOString()}`);
+      console.log(`     Requested out: ${checkOut.toISOString()}`);
+      console.log(`     Overlaps: bookingIn < requestOut (${b.checkInDate < checkOut}) AND bookingOut > requestIn (${b.checkOutDate > checkIn})`);
     });
 
     const isAvailable = conflictingBookings.length === 0;
