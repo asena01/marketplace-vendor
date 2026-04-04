@@ -59,7 +59,7 @@ interface AnalyticsStats {
         <!-- Total Guests -->
         <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-6 shadow-md border-l-4 border-purple-500">
           <p class="text-slate-600 text-sm font-medium">Total Guests</p>
-          <p class="text-3xl font-bold text-purple-600 mt-2">{{ analyticsStats().totalGuests }}</p>
+          <p class="text-3xl font-bold text-purple-600 mt-2">{{ formatNumber(analyticsStats().totalGuests, 0) }}</p>
           <p class="text-xs text-slate-500 mt-2">Checked in</p>
         </div>
       </div>
@@ -267,7 +267,18 @@ export class AnalyticsComponent implements OnInit {
     this.hotelService.getAnalyticsStats().subscribe({
       next: (response: any) => {
         if (response.status === 'success' && response.data) {
-          this.analyticsStats.set(response.data);
+          const data = response.data;
+          // Round all numeric values to 2 decimals
+          const roundedStats: AnalyticsStats = {
+            averageOccupancy: this.roundTo(data.averageOccupancy || 0, 0),
+            peakOccupancy: this.roundTo(data.peakOccupancy || 0, 0),
+            lowOccupancy: this.roundTo(data.lowOccupancy || 0, 0),
+            averageRevenue: this.roundTo(data.averageRevenue || 0, 0),
+            totalRevenue: this.roundTo(data.totalRevenue || 0, 0),
+            totalGuests: this.roundTo(data.totalGuests || 0, 2),
+            averageStay: this.roundTo(data.averageStay || 0, 2)
+          };
+          this.analyticsStats.set(roundedStats);
         } else {
           this.calculateStats();
         }
@@ -281,7 +292,7 @@ export class AnalyticsComponent implements OnInit {
 
   calculateStats() {
     const data = this.occupancyData();
-    
+
     const stats: AnalyticsStats = {
       averageOccupancy: Math.round(
         data.reduce((sum, d) => sum + d.occupancyRate, 0) / data.length
@@ -292,8 +303,8 @@ export class AnalyticsComponent implements OnInit {
         data.reduce((sum, d) => sum + d.revenue, 0) / data.length
       ),
       totalRevenue: Math.round(data.reduce((sum, d) => sum + d.revenue, 0)),
-      totalGuests: data.reduce((sum, d) => sum + d.occupiedRooms, 0),
-      averageStay: 3.5 // Mock value
+      totalGuests: this.roundTo(data.reduce((sum, d) => sum + d.occupiedRooms, 0), 2),
+      averageStay: this.roundTo(3.5, 2) // Mock value
     };
 
     this.analyticsStats.set(stats);
@@ -305,12 +316,21 @@ export class AnalyticsComponent implements OnInit {
 
   getRevenuePercentage(revenue: number): number {
     const maxRevenue = Math.max(...this.occupancyData().map(d => d.revenue));
-    return maxRevenue > 0 ? (revenue / maxRevenue) * 100 : 0;
+    const percentage = maxRevenue > 0 ? (revenue / maxRevenue) * 100 : 0;
+    return this.roundTo(percentage, 2);
   }
 
   getAverageRate(revenue: number, occupiedRooms: number): string {
     if (occupiedRooms === 0) return '0';
     return Math.round(revenue / occupiedRooms).toLocaleString();
+  }
+
+  roundTo(value: number, decimals: number): number {
+    return Math.round(value * Math.pow(10, decimals)) / Math.pow(10, decimals);
+  }
+
+  formatNumber(value: number, decimals: number = 2): number {
+    return this.roundTo(value, decimals);
   }
 
   formatCurrency(amount: number): string {
