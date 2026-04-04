@@ -53,6 +53,7 @@ router.get('/', async (req, res) => {
         deliveryFee: 2.99,
         minOrder: 10,
         icon: '🍽️',
+        image: r.image || r.profileImage || null, // Restaurant profile image from User model
         isOpen: true,
         menus: []
       }))

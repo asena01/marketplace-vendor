@@ -30,6 +30,7 @@ export interface Restaurant {
   phone: string;
   hours?: string;
   isOpen: boolean;
+  image?: string; // Restaurant profile image
   operatingHours?: {
     open: string;
     close: string;
