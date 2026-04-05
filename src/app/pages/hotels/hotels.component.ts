@@ -111,6 +111,10 @@ export class HotelsComponent implements OnInit {
   // Carousel State
   carouselIndices = signal<Map<string, number>>(new Map());
   roomImageIndices = signal<Map<string, number>>(new Map());
+
+  // Room Group Pagination
+  roomGroupPages = signal<Map<string, number>>(new Map()); // Key: ${hotelId}_${roomType}
+  roomsPerPage = 5;
   
   // Booking Modal Signals
   showBookingForm = signal<boolean>(false);
@@ -860,6 +864,63 @@ export class HotelsComponent implements OnInit {
       const nextIndex = (currentIndex + 1) % room.images.length;
       this.setRoomImageIndex(roomId, nextIndex);
     }
+  }
+
+  // ==================== ROOM GROUP PAGINATION ====================
+  getRoomGroupPageKey(hotelId: string, roomType: string): string {
+    return `${hotelId}_${roomType}`;
+  }
+
+  getRoomGroupPage(hotelId: string, roomType: string): number {
+    const key = this.getRoomGroupPageKey(hotelId, roomType);
+    return this.roomGroupPages().get(key) || 1;
+  }
+
+  setRoomGroupPage(hotelId: string, roomType: string, page: number): void {
+    const key = this.getRoomGroupPageKey(hotelId, roomType);
+    const newPages = new Map(this.roomGroupPages());
+    newPages.set(key, page);
+    this.roomGroupPages.set(newPages);
+  }
+
+  getPaginatedRooms(rooms: Room[]): Room[] {
+    // This will be called with the full room list for a specific type
+    // We need hotelId and roomType to determine pagination
+    // This will be handled in template with proper context
+    return rooms;
+  }
+
+  getDisplayedRooms(hotelId: string, roomType: string, allRooms: Room[]): Room[] {
+    const currentPage = this.getRoomGroupPage(hotelId, roomType);
+    const startIndex = (currentPage - 1) * this.roomsPerPage;
+    const endIndex = startIndex + this.roomsPerPage;
+    return allRooms.slice(startIndex, endIndex);
+  }
+
+  getTotalRoomPages(totalRooms: number): number {
+    return Math.ceil(totalRooms / this.roomsPerPage);
+  }
+
+  canGoToPreviousPage(hotelId: string, roomType: string): boolean {
+    return this.getRoomGroupPage(hotelId, roomType) > 1;
+  }
+
+  canGoToNextPage(hotelId: string, roomType: string, totalRooms: number): boolean {
+    const currentPage = this.getRoomGroupPage(hotelId, roomType);
+    const totalPages = this.getTotalRoomPages(totalRooms);
+    return currentPage < totalPages;
+  }
+
+  goToPreviousRoomPage(hotelId: string, roomType: string): void {
+    const currentPage = this.getRoomGroupPage(hotelId, roomType);
+    if (currentPage > 1) {
+      this.setRoomGroupPage(hotelId, roomType, currentPage - 1);
+    }
+  }
+
+  goToNextRoomPage(hotelId: string, roomType: string): void {
+    const currentPage = this.getRoomGroupPage(hotelId, roomType);
+    this.setRoomGroupPage(hotelId, roomType, currentPage + 1);
   }
 
   selectRoom(room: Room, hotel: Hotel): void {
