@@ -397,50 +397,7 @@ export class HotelDrinkMenuComponent implements OnInit {
 
   private hotelId: string = '';
 
-  drinkItems = signal<DrinkItem[]>([
-    {
-      _id: '1',
-      name: 'Espresso',
-      category: 'hot-beverages',
-      price: 4.99,
-      description: 'Rich and bold Italian coffee',
-      preparationTime: 3,
-      temperature: 'hot',
-      isActive: true
-    },
-    {
-      _id: '2',
-      name: 'Iced Tea',
-      category: 'cold-beverages',
-      price: 5.99,
-      description: 'Refreshing cold brewed tea',
-      preparationTime: 5,
-      temperature: 'cold',
-      isActive: true
-    },
-    {
-      _id: '3',
-      name: 'Fresh Orange Juice',
-      category: 'juices',
-      price: 5.99,
-      description: 'Freshly squeezed orange juice',
-      preparationTime: 3,
-      ingredients: ['Oranges', 'Water', 'Sugar'],
-      temperature: 'cold',
-      isActive: true
-    },
-    {
-      _id: '4',
-      name: 'Mojito',
-      category: 'mocktails',
-      price: 7.99,
-      description: 'Refreshing mint and lime drink',
-      preparationTime: 5,
-      ingredients: ['Mint', 'Lime', 'Sugar', 'Water'],
-      temperature: 'cold',
-      isActive: true
-    }
-  ]);
+  drinkItems = signal<DrinkItem[]>([]);
   filteredDrinkItems = signal<DrinkItem[]>([]);
 
   formData: DrinkItem = {
@@ -460,7 +417,33 @@ export class HotelDrinkMenuComponent implements OnInit {
 
   ngOnInit(): void {
     this.hotelId = localStorage.getItem('hotelId') || localStorage.getItem('userId') || '';
-    this.filterDrinkItems();
+    this.loadDrinkItems();
+  }
+
+  loadDrinkItems(): void {
+    this.isLoading.set(true);
+    this.errorMessage.set('');
+
+    this.hotelService.getRoomServiceItems(1, 100).subscribe({
+      next: (response: any) => {
+        if (response.status === 'success' && Array.isArray(response.data)) {
+          // Filter items that are beverages (drinks)
+          const beverageItems = response.data.filter((item: any) => item.category === 'beverage');
+          this.drinkItems.set(beverageItems);
+          this.filterDrinkItems();
+          console.log('✅ Drink items loaded:', beverageItems);
+        } else {
+          this.drinkItems.set([]);
+          this.filterDrinkItems();
+        }
+        this.isLoading.set(false);
+      },
+      error: (error: any) => {
+        console.error('Error loading drink items:', error);
+        this.errorMessage.set('Failed to load drinks. Please try again.');
+        this.isLoading.set(false);
+      }
+    });
   }
 
   filterDrinkItems(): void {
@@ -512,35 +495,81 @@ export class HotelDrinkMenuComponent implements OnInit {
       return;
     }
 
-    if (this.editingDrink()) {
-      // Update existing
-      const updatedItems = this.drinkItems().map(item =>
-        item._id === this.editingDrink()?._id ? this.formData : item
-      );
-      this.drinkItems.set(updatedItems);
-    } else {
-      // Add new
-      const newDrink = { ...this.formData, _id: Date.now().toString() };
-      this.drinkItems.set([...this.drinkItems(), newDrink]);
-    }
+    // Ensure category is 'beverage' for drinks
+    const drinkData = { ...this.formData, category: 'beverage' };
 
-    this.filterDrinkItems();
-    this.closeModal();
+    if (this.editingDrink() && this.editingDrink()?._id) {
+      // Update existing drink via API
+      this.isLoading.set(true);
+      this.hotelService.updateRoomServiceItem(this.editingDrink()!._id!, drinkData).subscribe({
+        next: (response: any) => {
+          this.isLoading.set(false);
+          if (response.status === 'success') {
+            this.loadDrinkItems();
+            this.errorMessage.set('');
+          } else {
+            this.errorMessage.set('Failed to update drink');
+          }
+          this.closeModal();
+        },
+        error: (error: any) => {
+          this.isLoading.set(false);
+          this.errorMessage.set(error.error?.message || 'Failed to update drink');
+          console.error('Error updating drink:', error);
+        }
+      });
+    } else {
+      // Create new drink via API
+      this.isLoading.set(true);
+      this.hotelService.createRoomServiceItem(drinkData).subscribe({
+        next: (response: any) => {
+          this.isLoading.set(false);
+          if (response.status === 'success') {
+            this.loadDrinkItems();
+            this.errorMessage.set('');
+          } else {
+            this.errorMessage.set('Failed to create drink');
+          }
+          this.closeModal();
+        },
+        error: (error: any) => {
+          this.isLoading.set(false);
+          this.errorMessage.set(error.error?.message || 'Failed to create drink');
+          console.error('Error creating drink:', error);
+        }
+      });
+    }
   }
 
   toggleDrinkStatus(item: DrinkItem): void {
-    const updatedItems = this.drinkItems().map(d =>
-      d._id === item._id ? { ...d, isActive: !d.isActive } : d
-    );
-    this.drinkItems.set(updatedItems);
-    this.filterDrinkItems();
+    const updatedDrink = { ...item, isActive: !item.isActive };
+    this.isLoading.set(true);
+    this.hotelService.updateRoomServiceItem(item._id!, updatedDrink).subscribe({
+      next: () => {
+        this.isLoading.set(false);
+        this.loadDrinkItems();
+      },
+      error: (error: any) => {
+        this.isLoading.set(false);
+        console.error('Error updating drink status:', error);
+      }
+    });
   }
 
   deleteDrink(itemId: string): void {
     if (!confirm('Are you sure you want to delete this drink?')) return;
-    const updatedItems = this.drinkItems().filter(d => d._id !== itemId);
-    this.drinkItems.set(updatedItems);
-    this.filterDrinkItems();
+    this.isLoading.set(true);
+    this.hotelService.deleteRoomServiceItem(itemId).subscribe({
+      next: () => {
+        this.isLoading.set(false);
+        this.loadDrinkItems();
+      },
+      error: (error: any) => {
+        this.isLoading.set(false);
+        this.errorMessage.set('Failed to delete drink');
+        console.error('Error deleting drink:', error);
+      }
+    });
   }
 
   closeModal(): void {
