@@ -211,7 +211,7 @@ interface RoomServiceItem {
                 <!-- Action Buttons -->
                 <div class="flex gap-3 mt-6">
                   <button
-                    (click)="submitRoomServiceOrder()"
+                    (click)="showOrderConfirmation.set(true)"
                     class="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2">
                     <mat-icon class="text-lg">check_circle</mat-icon>
                     <span>Confirm & Place Order</span>
@@ -233,6 +233,71 @@ interface RoomServiceItem {
                   </button>
                 </div>
               }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Order Confirmation Modal -->
+      @if (showOrderConfirmation()) {
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-orange-600 to-orange-700 text-white p-6 border-b border-orange-800">
+              <div class="flex items-center justify-center gap-3">
+                <mat-icon class="text-3xl">warning</mat-icon>
+                <h2 class="text-xl font-bold">Confirm Your Order</h2>
+              </div>
+            </div>
+
+            <!-- Content -->
+            <div class="p-6 space-y-4">
+              <p class="text-gray-700 text-center font-semibold">
+                You are about to place an order for:
+              </p>
+
+              <!-- Order Items List -->
+              <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
+                @for (itemId of selectedItems(); track itemId) {
+                  @for (item of roomServiceItems(); track item._id) {
+                    @if (item._id === itemId) {
+                      <div class="flex items-center justify-between text-sm py-2 border-b last:border-b-0">
+                        <span class="text-gray-900 font-medium">{{ item.name }}</span>
+                        <span class="font-semibold text-gray-900">₦{{ item.price.toLocaleString() }}</span>
+                      </div>
+                    }
+                  }
+                }
+              </div>
+
+              <!-- Total Price -->
+              <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                  <p class="text-lg font-bold text-gray-900">Order Total:</p>
+                  <p class="text-2xl font-bold text-green-600">₦{{ calculateOrderTotal().toLocaleString() }}</p>
+                </div>
+              </div>
+
+              <!-- Confirmation Message -->
+              <p class="text-sm text-gray-600 text-center">
+                Once placed, your order will be prepared and delivered to your room. Continue?
+              </p>
+
+              <!-- Action Buttons -->
+              <div class="flex gap-3 pt-4 border-t">
+                <button
+                  (click)="submitRoomServiceOrder()"
+                  class="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2">
+                  <mat-icon class="text-lg">done_all</mat-icon>
+                  <span>Yes, Place Order</span>
+                </button>
+                <button
+                  (click)="showOrderConfirmation.set(false)"
+                  class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 px-4 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2">
+                  <mat-icon class="text-lg">close</mat-icon>
+                  <span>Cancel</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -406,6 +471,7 @@ export class CustomerHotelBookingsComponent implements OnInit {
   showRoomServiceModal = signal(false);
   showBookingDetailsModal = signal(false);
   bookingDetailsData = signal<HotelBooking | null>(null);
+  showOrderConfirmation = signal(false);
 
   constructor(
     private customerService: CustomerService,
@@ -684,6 +750,7 @@ export class CustomerHotelBookingsComponent implements OnInit {
         console.log('✅ Room service order response:', response);
         if (response.success) {
           this.toastService.success('Room service order placed successfully!');
+          this.showOrderConfirmation.set(false);
           this.showRoomServiceModal.set(false);
           this.selectedItems.set([]);
           // Reload bookings to show new order
