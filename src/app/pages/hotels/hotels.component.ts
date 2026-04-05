@@ -98,7 +98,7 @@ export class HotelsComponent implements OnInit {
   hotelError = signal<string>('');
   
   // Filter Signals
-  priceRange = signal<[number, number]>([0, 1000]);
+  priceRange = signal<[number, number]>([0, 500000]);
   minRating = signal<number>(0);
   selectedAmenities = signal<string[]>([]);
   selectedPropertyTypes = signal<string[]>([]);
@@ -236,7 +236,7 @@ export class HotelsComponent implements OnInit {
 
   maxPrice = computed(() => {
     const prices = this.hotels().map(h => h.price);
-    return Math.max(...prices, 1000);
+    return Math.max(...prices, 500000);
   });
 
   Math = Math; // Expose Math to template
@@ -369,7 +369,8 @@ export class HotelsComponent implements OnInit {
                   amenities: room.amenities || [],
                   rating: room.rating || 4.0,
                   reviews: room.reviews || room.reviewCount || 0,
-                  icon: room.icon || 'bed'
+                  icon: room.icon || 'bed',
+                  images: room.images && Array.isArray(room.images) ? room.images : []
                 }))
               : []
           }));
