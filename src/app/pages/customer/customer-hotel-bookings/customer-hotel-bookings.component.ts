@@ -618,6 +618,9 @@ export class CustomerHotelBookingsComponent implements OnInit {
     this.selectedBooking.set(booking);
     this.selectedItems.set([]);
     this.showRoomServiceModal.set(true);
+    // Close booking details modal if it's open
+    this.showBookingDetailsModal.set(false);
+    this.bookingDetailsData.set(null);
     this.loadRoomServiceItems(booking._id);
   }
 
