@@ -130,6 +130,13 @@ interface MenuItem {
         } @else {
           @for (item of filteredMenuItems(); track item._id) {
             <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
+              <!-- Item Image -->
+              @if (item.image) {
+                <div class="relative w-full h-40 bg-slate-100 overflow-hidden">
+                  <img [src]="item.image" [alt]="item.name" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
+                </div>
+              }
+
               <!-- Item Header -->
               <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 p-4 text-white">
                 <div class="flex justify-between items-start">

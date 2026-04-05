@@ -115,6 +115,13 @@ interface DrinkItem {
         } @else {
           @for (item of filteredDrinkItems(); track item._id) {
             <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
+              <!-- Drink Image -->
+              @if (item.image) {
+                <div class="relative w-full h-40 bg-slate-100 overflow-hidden">
+                  <img [src]="item.image" [alt]="item.name" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
+                </div>
+              }
+
               <!-- Drink Header -->
               <div class="bg-gradient-to-r from-cyan-500 to-blue-600 p-4 text-white">
                 <div class="flex justify-between items-start">
