@@ -2,6 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HotelService } from '../../../../../services/hotel.service';
+import { ImageUploadService } from '../../../../../services/image-upload.service';
 
 interface DrinkItem {
   _id?: string;
@@ -13,6 +14,7 @@ interface DrinkItem {
   ingredients?: string[];
   isActive: boolean;
   temperature?: 'hot' | 'cold' | 'room-temp';
+  image?: string;
 }
 
 @Component({
@@ -284,6 +286,62 @@ interface DrinkItem {
                 ></textarea>
               </div>
 
+              <!-- Image Upload -->
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Drink Image</label>
+
+                @if (isUploadingImages()) {
+                  <div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div class="flex items-center gap-2">
+                      <div class="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                      <span class="text-sm font-medium text-blue-900">Uploading image...</span>
+                    </div>
+                  </div>
+                }
+
+                <div
+                  class="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center cursor-pointer hover:border-blue-500 transition"
+                  (dragover)="$event.preventDefault(); isDragging.set(true)"
+                  (dragleave)="isDragging.set(false)"
+                  (drop)="onDropImage($event)"
+                  [class.border-blue-500]="isDragging()"
+                  [class.bg-blue-50]="isDragging()"
+                  [class.opacity-50]="isUploadingImages()"
+                  [class.pointer-events-none]="isUploadingImages()"
+                >
+                  <input
+                    #imageInput
+                    type="file"
+                    accept="image/*"
+                    (change)="onImageSelected($event)"
+                    [disabled]="isUploadingImages()"
+                    style="display: none"
+                    class="hidden"
+                  />
+                  <div (click)="imageInput.click()" [class.cursor-not-allowed]="isUploadingImages()">
+                    <p class="text-sm font-medium text-slate-700">Click to upload or drag and drop</p>
+                    <p class="text-xs text-slate-500 mt-1">PNG, JPG, GIF up to 10MB</p>
+                  </div>
+                </div>
+
+                @if (formData.image) {
+                  <div class="mt-3">
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Image Preview</label>
+                    <div class="relative inline-block">
+                      <img [src]="formData.image" alt="Drink image" class="h-24 w-24 object-cover rounded-lg border-2 border-slate-300" />
+                      <button
+                        type="button"
+                        (click)="removeImage()"
+                        [disabled]="isUploadingImages()"
+                        class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white opacity-0 hover:opacity-100 transition rounded-lg disabled:opacity-50"
+                      >
+                        <span class="text-2xl">×</span>
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+
               <!-- Active -->
               <label class="flex items-center gap-2">
                 <input
@@ -327,6 +385,10 @@ export class HotelDrinkMenuComponent implements OnInit {
   searchQuery = signal('');
   selectedCategory = signal('');
   editingDrink = signal<DrinkItem | null>(null);
+  isUploadingImages = signal(false);
+  isDragging = signal(false);
+
+  private hotelId: string = '';
 
   drinkItems = signal<DrinkItem[]>([
     {
@@ -384,9 +446,13 @@ export class HotelDrinkMenuComponent implements OnInit {
     isActive: true
   };
 
-  constructor(private hotelService: HotelService) {}
+  constructor(
+    private hotelService: HotelService,
+    private imageUploadService: ImageUploadService
+  ) {}
 
   ngOnInit(): void {
+    this.hotelId = localStorage.getItem('hotelId') || localStorage.getItem('userId') || '';
     this.filterDrinkItems();
   }
 
@@ -417,7 +483,8 @@ export class HotelDrinkMenuComponent implements OnInit {
       description: '',
       preparationTime: 5,
       temperature: 'hot',
-      isActive: true
+      isActive: true,
+      image: ''
     };
     this.showModal.set(true);
   }
@@ -425,6 +492,10 @@ export class HotelDrinkMenuComponent implements OnInit {
   editDrink(item: DrinkItem): void {
     this.editingDrink.set(item);
     this.formData = { ...item };
+    // Ensure image field is initialized
+    if (!this.formData.image) {
+      this.formData.image = '';
+    }
     this.showModal.set(true);
   }
 
@@ -482,5 +553,78 @@ export class HotelDrinkMenuComponent implements OnInit {
 
   getCategories(): string[] {
     return [...new Set(this.drinkItems().map(item => item.category))];
+  }
+
+  // IMAGE UPLOAD METHODS
+  onImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (!file) return;
+
+    // Validate file
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
+    if (file.size > maxSize) {
+      this.errorMessage.set(`File is too large. Max size is 10MB.`);
+      return;
+    }
+
+    if (!validTypes.includes(file.type)) {
+      this.errorMessage.set(`File is not a valid image format.`);
+      return;
+    }
+
+    this.isUploadingImages.set(true);
+
+    // Generate upload path
+    const uploadPath = `drinks/${this.hotelId}/${this.formData.name || 'new'}`;
+
+    // Use ImageUploadService to upload image
+    this.imageUploadService.uploadImage(file, uploadPath).subscribe({
+      next: (imageUrl: string) => {
+        if (!imageUrl) {
+          this.errorMessage.set('Upload failed: No image URL returned');
+          this.isUploadingImages.set(false);
+          return;
+        }
+
+        this.formData.image = imageUrl;
+        this.isUploadingImages.set(false);
+        this.errorMessage.set('');
+
+        console.log(`✅ Drink image uploaded successfully`);
+      },
+      error: (error: any) => {
+        this.isUploadingImages.set(false);
+        const errorMsg = error?.message || 'Unknown error';
+        this.errorMessage.set(`Upload failed: ${errorMsg}`);
+        console.error('❌ Image upload error:', error);
+      }
+    });
+
+    // Clear input
+    input.value = '';
+  }
+
+  removeImage(): void {
+    this.formData.image = '';
+    console.log('🗑️ Drink image removed');
+  }
+
+  onDropImage(event: DragEvent): void {
+    event.preventDefault();
+    this.isDragging.set(false);
+    const file = event.dataTransfer?.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      // Create a synthetic event
+      const syntheticEvent = {
+        target: {
+          files: [file]
+        }
+      } as any;
+      this.onImageSelected(syntheticEvent);
+    }
   }
 }
