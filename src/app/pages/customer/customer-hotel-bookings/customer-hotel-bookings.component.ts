@@ -178,38 +178,61 @@ interface RoomServiceItem {
                 }
               </div>
 
-              <!-- Order Summary -->
+              <!-- Order Summary & Review -->
               @if (selectedItems().length > 0) {
                 <div class="mt-6 border-t pt-4">
-                  <h4 class="font-semibold text-gray-900 mb-3">Order Summary:</h4>
-                  <div class="space-y-2 mb-4">
+                  <h4 class="font-semibold text-gray-900 mb-3">Order Review:</h4>
+                  <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
                     @for (itemId of selectedItems(); track itemId) {
-                      <p class="text-sm text-gray-700">{{ itemId }}: ₦500</p>
+                      @for (item of roomServiceItems(); track item._id) {
+                        @if (item._id === itemId) {
+                          <div class="flex items-center justify-between py-2 border-b last:border-b-0">
+                            <div class="flex-1">
+                              <p class="font-medium text-gray-900">{{ item.name }}</p>
+                              <p class="text-xs text-gray-600">{{ item.category }}</p>
+                            </div>
+                            <div class="text-right">
+                              <p class="font-semibold text-gray-900">₦{{ item.price.toLocaleString() }}</p>
+                              <p class="text-xs text-gray-600">x1</p>
+                            </div>
+                          </div>
+                        }
+                      }
                     }
                   </div>
-                  <div class="border-t pt-2">
-                    <p class="text-lg font-bold text-gray-900">
-                      Total: ₦{{ calculateOrderTotal() }}
-                    </p>
+                  <div class="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                      <p class="text-lg font-bold text-gray-900">Order Total:</p>
+                      <p class="text-2xl font-bold text-green-600">₦{{ calculateOrderTotal().toLocaleString() }}</p>
+                    </div>
                   </div>
                 </div>
-              }
 
-              <!-- Action Buttons -->
-              <div class="flex gap-3 mt-6">
-                <button
-                  (click)="submitRoomServiceOrder()"
-                  class="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold transition flex items-center justify-center gap-2">
-                  <mat-icon class="text-lg">check_circle</mat-icon>
-                  <span>Place Order</span>
-                </button>
-                <button
-                  (click)="showRoomServiceModal.set(false)"
-                  class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 px-4 py-2 rounded-lg font-semibold transition flex items-center justify-center gap-2">
-                  <mat-icon class="text-lg">cancel</mat-icon>
-                  <span>Cancel</span>
-                </button>
-              </div>
+                <!-- Action Buttons -->
+                <div class="flex gap-3 mt-6">
+                  <button
+                    (click)="submitRoomServiceOrder()"
+                    class="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2">
+                    <mat-icon class="text-lg">check_circle</mat-icon>
+                    <span>Confirm & Place Order</span>
+                  </button>
+                  <button
+                    (click)="clearSelectedItems()"
+                    class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 px-4 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2">
+                    <mat-icon class="text-lg">edit</mat-icon>
+                    <span>Edit Selection</span>
+                  </button>
+                </div>
+              } @else {
+                <div class="flex gap-3 mt-6">
+                  <button
+                    (click)="showRoomServiceModal.set(false)"
+                    class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 px-4 py-2 rounded-lg font-semibold transition flex items-center justify-center gap-2">
+                    <mat-icon class="text-lg">cancel</mat-icon>
+                    <span>Close</span>
+                  </button>
+                </div>
+              }
             </div>
           </div>
         </div>
@@ -287,7 +310,7 @@ interface RoomServiceItem {
 
               <!-- Status Info -->
               <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <h3 class="font-bold text-gray-900 mb-4">Status</h3>
+                <h3 class="font-bold text-gray-900 mb-4">Booking Status</h3>
                 <div class="flex items-center gap-3">
                   <span [class]="getStatusBadgeClass(booking!.status)">
                     {{ getStatusBadge(booking!.status) }}
@@ -295,6 +318,54 @@ interface RoomServiceItem {
                   <span class="text-sm text-gray-600">Last updated: Today</span>
                 </div>
               </div>
+
+              <!-- Room Service Orders History -->
+              @if (booking!.roomServiceOrders && booking!.roomServiceOrders.length > 0) {
+                <div class="border rounded-lg p-4">
+                  <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <mat-icon class="text-orange-600">room_service</mat-icon>
+                    Room Service Orders
+                  </h3>
+                  <div class="space-y-3">
+                    @for (order of booking!.roomServiceOrders; track order._id) {
+                      <div class="bg-gray-50 border rounded-lg p-3">
+                        <div class="flex items-center justify-between mb-2">
+                          <p class="font-semibold text-gray-900 text-sm">Order ID: {{ order._id.substring(0, 8) }}</p>
+                          <span [class]="getOrderStatusBadgeClass(order.status)">
+                            {{ getOrderStatusBadge(order.status) }}
+                          </span>
+                        </div>
+                        <div class="space-y-1 text-xs text-gray-600 mb-2">
+                          <p><strong>Ordered:</strong> {{ formatDate(order.orderedAt) }}</p>
+                          @if (order.deliveredAt) {
+                            <p><strong>Delivered:</strong> {{ formatDate(order.deliveredAt) }}</p>
+                          }
+                        </div>
+                        <div class="bg-white border-t pt-2">
+                          <p class="text-xs font-semibold text-gray-900 mb-1">Items:</p>
+                          <div class="space-y-1">
+                            @for (item of order.items; track item.itemId) {
+                              <div class="flex items-center justify-between text-xs">
+                                <span class="text-gray-700">{{ item.name }} x{{ item.quantity }}</span>
+                                <span class="font-semibold text-gray-900">₦{{ (item.price * item.quantity).toLocaleString() }}</span>
+                              </div>
+                            }
+                          </div>
+                          <div class="border-t mt-2 pt-2 flex items-center justify-between text-sm">
+                            <span class="font-semibold text-gray-900">Total:</span>
+                            <span class="font-bold text-orange-600">₦{{ order.totalPrice.toLocaleString() }}</span>
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              } @else {
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
+                  <mat-icon class="text-3xl text-gray-400 block mx-auto mb-2">room_service</mat-icon>
+                  <p class="text-sm text-gray-600">No room service orders yet</p>
+                </div>
+              }
 
               <!-- Action Buttons -->
               <div class="flex gap-3 pt-4 border-t">
@@ -566,6 +637,10 @@ export class CustomerHotelBookingsComponent implements OnInit {
     this.selectedItems.set([...selected]);
   }
 
+  clearSelectedItems(): void {
+    this.selectedItems.set([]);
+  }
+
   calculateOrderTotal(): number {
     const items = this.roomServiceItems();
     return this.selectedItems().reduce((total, itemId) => {
@@ -611,6 +686,8 @@ export class CustomerHotelBookingsComponent implements OnInit {
           this.toastService.success('Room service order placed successfully!');
           this.showRoomServiceModal.set(false);
           this.selectedItems.set([]);
+          // Reload bookings to show new order
+          this.loadBookings();
         } else {
           this.toastService.error('Failed to place room service order');
         }
@@ -620,5 +697,27 @@ export class CustomerHotelBookingsComponent implements OnInit {
         this.toastService.error('Failed to place room service order');
       }
     );
+  }
+
+  getOrderStatusBadge(status: string): string {
+    const badges: { [key: string]: string } = {
+      pending: 'Pending',
+      preparing: 'Preparing',
+      ready: 'Ready for Pickup',
+      delivered: 'Delivered',
+      cancelled: 'Cancelled'
+    };
+    return badges[status] || status;
+  }
+
+  getOrderStatusBadgeClass(status: string): string {
+    const classes: { [key: string]: string } = {
+      pending: 'inline-block px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 text-xs font-semibold',
+      preparing: 'inline-block px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-semibold',
+      ready: 'inline-block px-2 py-1 rounded-full bg-purple-100 text-purple-800 text-xs font-semibold',
+      delivered: 'inline-block px-2 py-1 rounded-full bg-green-100 text-green-800 text-xs font-semibold',
+      cancelled: 'inline-block px-2 py-1 rounded-full bg-red-100 text-red-800 text-xs font-semibold'
+    };
+    return classes[status] || 'inline-block px-2 py-1 rounded-full bg-gray-100 text-gray-800 text-xs font-semibold';
   }
 }
