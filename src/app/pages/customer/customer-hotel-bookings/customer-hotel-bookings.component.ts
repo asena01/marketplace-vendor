@@ -580,22 +580,43 @@ export class CustomerHotelBookingsComponent implements OnInit {
       return;
     }
 
+    const booking = this.selectedBooking();
+    const items = this.roomServiceItems();
+
+    // Transform selected item IDs into full item objects with quantities
+    const orderItems = this.selectedItems().map(itemId => {
+      const item = items.find(i => i._id === itemId);
+      return {
+        itemId: item?._id,
+        name: item?.name,
+        price: item?.price,
+        quantity: 1
+      };
+    });
+
     const orderData = {
-      items: this.selectedItems(),
+      bookingId: booking?._id,
+      hotelId: booking?.hotelId,
+      items: orderItems,
       totalPrice: this.calculateOrderTotal(),
       notes: ''
     };
 
+    console.log('📤 Submitting room service order:', orderData);
+
     this.customerService.orderRoomService(orderData).subscribe(
       (response: any) => {
+        console.log('✅ Room service order response:', response);
         if (response.success) {
           this.toastService.success('Room service order placed successfully!');
           this.showRoomServiceModal.set(false);
           this.selectedItems.set([]);
+        } else {
+          this.toastService.error('Failed to place room service order');
         }
       },
       (error) => {
-        console.error('Error placing room service order:', error);
+        console.error('❌ Error placing room service order:', error);
         this.toastService.error('Failed to place room service order');
       }
     );
