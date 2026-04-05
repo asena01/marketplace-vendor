@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import mongoose from 'mongoose';
 import { connectDB } from './database.js';
 import User from './models/User.js';
 import productRoutes from './routes/products.js';
@@ -505,9 +506,8 @@ app.post('/hotel-bookings/:bookingId/room-service-orders', async (req, res) => {
       });
     }
 
-    const RoomServiceOrder = require('mongoose').Types.ObjectId;
     const roomServiceOrder = {
-      _id: new (require('mongoose').Types.ObjectId)(),
+      _id: new mongoose.Types.ObjectId(),
       items,
       totalPrice,
       notes,
