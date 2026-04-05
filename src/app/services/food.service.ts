@@ -68,7 +68,7 @@ export class FoodService {
   // REMOTE: 'https://api-qpczzmaezq-uc.a.run.app/restaurants'
   // LOCAL: Using localhost for development
   private apiUrl = 'http://localhost:5001/restaurants';
-
+  //private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/restaurants';
   constructor(private http: HttpClient) {}
 
   /**
