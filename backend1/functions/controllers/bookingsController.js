@@ -258,6 +258,69 @@ const updatePaymentStatus = async (req, res) => {
   }
 };
 
+// Add room service order to a booking
+const addRoomServiceOrder = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const { items, totalPrice, notes } = req.body;
+
+    console.log('🍽️ ========== ADD ROOM SERVICE ORDER ==========');
+    console.log('📌 Booking ID:', bookingId);
+    console.log('📦 Order items:', items);
+    console.log('💰 Total price:', totalPrice);
+    console.log('📝 Notes:', notes);
+
+    if (!bookingId || !items || items.length === 0) {
+      return res.status(400).json({
+        status: "error",
+        message: "Missing required fields: bookingId, items"
+      });
+    }
+
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({
+        status: "error",
+        message: "Booking not found"
+      });
+    }
+
+    const roomServiceOrder = {
+      _id: new mongoose.Types.ObjectId(),
+      items,
+      totalPrice,
+      notes,
+      status: 'pending',
+      orderedAt: new Date()
+    };
+
+    if (!booking.roomServiceOrders) {
+      booking.roomServiceOrders = [];
+    }
+    booking.roomServiceOrders.push(roomServiceOrder);
+    await booking.save();
+
+    console.log('✅ Room service order added successfully!');
+    console.log('🔔 Order ID:', roomServiceOrder._id);
+
+    return res.status(201).json({
+      status: "success",
+      message: "Room service order placed successfully",
+      data: {
+        orderId: roomServiceOrder._id,
+        booking
+      }
+    });
+  } catch (err) {
+    console.error('❌ Error adding room service order:', err);
+    return res.status(500).json({
+      status: "error",
+      message: "Failed to place room service order",
+      error: err.message
+    });
+  }
+};
+
 export {
   getAllBookings,
   getBookingById,
@@ -265,5 +328,6 @@ export {
   updateBooking,
   deleteBooking,
   updateBookingStatus,
-  updatePaymentStatus
+  updatePaymentStatus,
+  addRoomServiceOrder
 };

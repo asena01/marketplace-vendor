@@ -6,7 +6,8 @@ import {
   updateBooking,
   deleteBooking,
   updateBookingStatus,
-  updatePaymentStatus
+  updatePaymentStatus,
+  addRoomServiceOrder
 } from '../controllers/bookingsController.js';
 
 const router = express.Router({ mergeParams: true });
@@ -99,5 +100,8 @@ router.put('/:id/payment-status', updatePaymentStatus);
 
 // DELETE booking
 router.delete('/:id', deleteBooking);
+
+// POST add room service order
+router.post('/:bookingId/room-service-orders', addRoomServiceOrder);
 
 export default router;

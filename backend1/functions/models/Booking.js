@@ -79,6 +79,33 @@ const BookingSchema = new Schema({
       default: false
     }
   },
+  roomServiceOrders: [{
+    _id: Schema.Types.ObjectId,
+    items: [{
+      itemId: {
+        type: Schema.Types.ObjectId,
+        ref: 'RoomServiceMenuItem'
+      },
+      name: String,
+      price: Number,
+      quantity: {
+        type: Number,
+        default: 1
+      }
+    }],
+    totalPrice: Number,
+    notes: String,
+    status: {
+      type: String,
+      enum: ['pending', 'preparing', 'ready', 'delivered', 'cancelled'],
+      default: 'pending'
+    },
+    orderedAt: {
+      type: Date,
+      default: Date.now
+    },
+    deliveredAt: Date
+  }],
   createdAt: {
     type: Date,
     default: Date.now

@@ -216,7 +216,11 @@ export class CustomerService {
   }
 
   orderRoomService(roomServiceData: any): Observable<CustomerResponse<any>> {
-    return this.http.post<CustomerResponse<any>>(`${this.apiUrl}/room-service`, roomServiceData);
+    const { bookingId, ...data } = roomServiceData;
+    return this.http.post<CustomerResponse<any>>(
+      `${this.apiUrl2}/hotel-bookings/${bookingId}/room-service-orders`,
+      data
+    );
   }
 
   // Service bookings
