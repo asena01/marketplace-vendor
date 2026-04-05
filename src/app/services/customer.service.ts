@@ -50,10 +50,10 @@ export interface CustomerResponse<T> {
   providedIn: 'root'
 })
 export class CustomerService {
-  //private apiUrl = 'http://localhost:5001/customers';
-  //private apiUrl2 = 'http://localhost:5001';
-  private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/customers';
-  private apiUrl2 = 'https://api-qpczzmaezq-uc.a.run.app';
+  private apiUrl = 'http://localhost:5001/customers';
+  private apiUrl2 = 'http://localhost:5001';
+  //private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/customers';
+  //private apiUrl2 = 'https://api-qpczzmaezq-uc.a.run.app';
   constructor(private http: HttpClient) {}
 
   // Get business customers
@@ -216,7 +216,11 @@ export class CustomerService {
   }
 
   orderRoomService(roomServiceData: any): Observable<CustomerResponse<any>> {
-    return this.http.post<CustomerResponse<any>>(`${this.apiUrl}/room-service`, roomServiceData);
+    const { bookingId, ...data } = roomServiceData;
+    return this.http.post<CustomerResponse<any>>(
+      `${this.apiUrl2}/hotel-bookings/${bookingId}/room-service-orders`,
+      data
+    );
   }
 
   // Service bookings

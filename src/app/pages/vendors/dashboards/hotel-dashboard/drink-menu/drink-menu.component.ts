@@ -2,6 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HotelService } from '../../../../../services/hotel.service';
+import { ImageUploadService } from '../../../../../services/image-upload.service';
 
 interface DrinkItem {
   _id?: string;
@@ -13,6 +14,7 @@ interface DrinkItem {
   ingredients?: string[];
   isActive: boolean;
   temperature?: 'hot' | 'cold' | 'room-temp';
+  image?: string;
 }
 
 @Component({
@@ -113,6 +115,13 @@ interface DrinkItem {
         } @else {
           @for (item of filteredDrinkItems(); track item._id) {
             <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
+              <!-- Drink Image -->
+              @if (item.image) {
+                <div class="relative w-full h-40 bg-slate-100 overflow-hidden">
+                  <img [src]="item.image" [alt]="item.name" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
+                </div>
+              }
+
               <!-- Drink Header -->
               <div class="bg-gradient-to-r from-cyan-500 to-blue-600 p-4 text-white">
                 <div class="flex justify-between items-start">
@@ -284,6 +293,62 @@ interface DrinkItem {
                 ></textarea>
               </div>
 
+              <!-- Image Upload -->
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Drink Image</label>
+
+                @if (isUploadingImages()) {
+                  <div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div class="flex items-center gap-2">
+                      <div class="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                      <span class="text-sm font-medium text-blue-900">Uploading image...</span>
+                    </div>
+                  </div>
+                }
+
+                <div
+                  class="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center cursor-pointer hover:border-blue-500 transition"
+                  (dragover)="$event.preventDefault(); isDragging.set(true)"
+                  (dragleave)="isDragging.set(false)"
+                  (drop)="onDropImage($event)"
+                  [class.border-blue-500]="isDragging()"
+                  [class.bg-blue-50]="isDragging()"
+                  [class.opacity-50]="isUploadingImages()"
+                  [class.pointer-events-none]="isUploadingImages()"
+                >
+                  <input
+                    #imageInput
+                    type="file"
+                    accept="image/*"
+                    (change)="onImageSelected($event)"
+                    [disabled]="isUploadingImages()"
+                    style="display: none"
+                    class="hidden"
+                  />
+                  <div (click)="imageInput.click()" [class.cursor-not-allowed]="isUploadingImages()">
+                    <p class="text-sm font-medium text-slate-700">Click to upload or drag and drop</p>
+                    <p class="text-xs text-slate-500 mt-1">PNG, JPG, GIF up to 10MB</p>
+                  </div>
+                </div>
+
+                @if (formData.image) {
+                  <div class="mt-3">
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Image Preview</label>
+                    <div class="relative inline-block">
+                      <img [src]="formData.image" alt="Drink image" class="h-24 w-24 object-cover rounded-lg border-2 border-slate-300" />
+                      <button
+                        type="button"
+                        (click)="removeImage()"
+                        [disabled]="isUploadingImages()"
+                        class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white opacity-0 hover:opacity-100 transition rounded-lg disabled:opacity-50"
+                      >
+                        <span class="text-2xl">×</span>
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+
               <!-- Active -->
               <label class="flex items-center gap-2">
                 <input
@@ -327,51 +392,12 @@ export class HotelDrinkMenuComponent implements OnInit {
   searchQuery = signal('');
   selectedCategory = signal('');
   editingDrink = signal<DrinkItem | null>(null);
+  isUploadingImages = signal(false);
+  isDragging = signal(false);
 
-  drinkItems = signal<DrinkItem[]>([
-    {
-      _id: '1',
-      name: 'Espresso',
-      category: 'hot-beverages',
-      price: 4.99,
-      description: 'Rich and bold Italian coffee',
-      preparationTime: 3,
-      temperature: 'hot',
-      isActive: true
-    },
-    {
-      _id: '2',
-      name: 'Iced Tea',
-      category: 'cold-beverages',
-      price: 5.99,
-      description: 'Refreshing cold brewed tea',
-      preparationTime: 5,
-      temperature: 'cold',
-      isActive: true
-    },
-    {
-      _id: '3',
-      name: 'Fresh Orange Juice',
-      category: 'juices',
-      price: 5.99,
-      description: 'Freshly squeezed orange juice',
-      preparationTime: 3,
-      ingredients: ['Oranges', 'Water', 'Sugar'],
-      temperature: 'cold',
-      isActive: true
-    },
-    {
-      _id: '4',
-      name: 'Mojito',
-      category: 'mocktails',
-      price: 7.99,
-      description: 'Refreshing mint and lime drink',
-      preparationTime: 5,
-      ingredients: ['Mint', 'Lime', 'Sugar', 'Water'],
-      temperature: 'cold',
-      isActive: true
-    }
-  ]);
+  private hotelId: string = '';
+
+  drinkItems = signal<DrinkItem[]>([]);
   filteredDrinkItems = signal<DrinkItem[]>([]);
 
   formData: DrinkItem = {
@@ -384,10 +410,40 @@ export class HotelDrinkMenuComponent implements OnInit {
     isActive: true
   };
 
-  constructor(private hotelService: HotelService) {}
+  constructor(
+    private hotelService: HotelService,
+    private imageUploadService: ImageUploadService
+  ) {}
 
   ngOnInit(): void {
-    this.filterDrinkItems();
+    this.hotelId = localStorage.getItem('hotelId') || localStorage.getItem('userId') || '';
+    this.loadDrinkItems();
+  }
+
+  loadDrinkItems(): void {
+    this.isLoading.set(true);
+    this.errorMessage.set('');
+
+    this.hotelService.getRoomServiceItems(1, 100).subscribe({
+      next: (response: any) => {
+        if (response.status === 'success' && Array.isArray(response.data)) {
+          // Filter items that are beverages (drinks)
+          const beverageItems = response.data.filter((item: any) => item.category === 'beverage');
+          this.drinkItems.set(beverageItems);
+          this.filterDrinkItems();
+          console.log('✅ Drink items loaded:', beverageItems);
+        } else {
+          this.drinkItems.set([]);
+          this.filterDrinkItems();
+        }
+        this.isLoading.set(false);
+      },
+      error: (error: any) => {
+        console.error('Error loading drink items:', error);
+        this.errorMessage.set('Failed to load drinks. Please try again.');
+        this.isLoading.set(false);
+      }
+    });
   }
 
   filterDrinkItems(): void {
@@ -417,7 +473,8 @@ export class HotelDrinkMenuComponent implements OnInit {
       description: '',
       preparationTime: 5,
       temperature: 'hot',
-      isActive: true
+      isActive: true,
+      image: ''
     };
     this.showModal.set(true);
   }
@@ -425,6 +482,10 @@ export class HotelDrinkMenuComponent implements OnInit {
   editDrink(item: DrinkItem): void {
     this.editingDrink.set(item);
     this.formData = { ...item };
+    // Ensure image field is initialized
+    if (!this.formData.image) {
+      this.formData.image = '';
+    }
     this.showModal.set(true);
   }
 
@@ -434,35 +495,81 @@ export class HotelDrinkMenuComponent implements OnInit {
       return;
     }
 
-    if (this.editingDrink()) {
-      // Update existing
-      const updatedItems = this.drinkItems().map(item =>
-        item._id === this.editingDrink()?._id ? this.formData : item
-      );
-      this.drinkItems.set(updatedItems);
-    } else {
-      // Add new
-      const newDrink = { ...this.formData, _id: Date.now().toString() };
-      this.drinkItems.set([...this.drinkItems(), newDrink]);
-    }
+    // Ensure category is 'beverage' for drinks
+    const drinkData = { ...this.formData, category: 'beverage' };
 
-    this.filterDrinkItems();
-    this.closeModal();
+    if (this.editingDrink() && this.editingDrink()?._id) {
+      // Update existing drink via API
+      this.isLoading.set(true);
+      this.hotelService.updateRoomServiceItem(this.editingDrink()!._id!, drinkData).subscribe({
+        next: (response: any) => {
+          this.isLoading.set(false);
+          if (response.status === 'success') {
+            this.loadDrinkItems();
+            this.errorMessage.set('');
+          } else {
+            this.errorMessage.set('Failed to update drink');
+          }
+          this.closeModal();
+        },
+        error: (error: any) => {
+          this.isLoading.set(false);
+          this.errorMessage.set(error.error?.message || 'Failed to update drink');
+          console.error('Error updating drink:', error);
+        }
+      });
+    } else {
+      // Create new drink via API
+      this.isLoading.set(true);
+      this.hotelService.createRoomServiceItem(drinkData).subscribe({
+        next: (response: any) => {
+          this.isLoading.set(false);
+          if (response.status === 'success') {
+            this.loadDrinkItems();
+            this.errorMessage.set('');
+          } else {
+            this.errorMessage.set('Failed to create drink');
+          }
+          this.closeModal();
+        },
+        error: (error: any) => {
+          this.isLoading.set(false);
+          this.errorMessage.set(error.error?.message || 'Failed to create drink');
+          console.error('Error creating drink:', error);
+        }
+      });
+    }
   }
 
   toggleDrinkStatus(item: DrinkItem): void {
-    const updatedItems = this.drinkItems().map(d =>
-      d._id === item._id ? { ...d, isActive: !d.isActive } : d
-    );
-    this.drinkItems.set(updatedItems);
-    this.filterDrinkItems();
+    const updatedDrink = { ...item, isActive: !item.isActive };
+    this.isLoading.set(true);
+    this.hotelService.updateRoomServiceItem(item._id!, updatedDrink).subscribe({
+      next: () => {
+        this.isLoading.set(false);
+        this.loadDrinkItems();
+      },
+      error: (error: any) => {
+        this.isLoading.set(false);
+        console.error('Error updating drink status:', error);
+      }
+    });
   }
 
   deleteDrink(itemId: string): void {
     if (!confirm('Are you sure you want to delete this drink?')) return;
-    const updatedItems = this.drinkItems().filter(d => d._id !== itemId);
-    this.drinkItems.set(updatedItems);
-    this.filterDrinkItems();
+    this.isLoading.set(true);
+    this.hotelService.deleteRoomServiceItem(itemId).subscribe({
+      next: () => {
+        this.isLoading.set(false);
+        this.loadDrinkItems();
+      },
+      error: (error: any) => {
+        this.isLoading.set(false);
+        this.errorMessage.set('Failed to delete drink');
+        console.error('Error deleting drink:', error);
+      }
+    });
   }
 
   closeModal(): void {
@@ -482,5 +589,78 @@ export class HotelDrinkMenuComponent implements OnInit {
 
   getCategories(): string[] {
     return [...new Set(this.drinkItems().map(item => item.category))];
+  }
+
+  // IMAGE UPLOAD METHODS
+  onImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (!file) return;
+
+    // Validate file
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
+    if (file.size > maxSize) {
+      this.errorMessage.set(`File is too large. Max size is 10MB.`);
+      return;
+    }
+
+    if (!validTypes.includes(file.type)) {
+      this.errorMessage.set(`File is not a valid image format.`);
+      return;
+    }
+
+    this.isUploadingImages.set(true);
+
+    // Generate upload path
+    const uploadPath = `drinks/${this.hotelId}/${this.formData.name || 'new'}`;
+
+    // Use ImageUploadService to upload image
+    this.imageUploadService.uploadImage(file, uploadPath).subscribe({
+      next: (imageUrl: string) => {
+        if (!imageUrl) {
+          this.errorMessage.set('Upload failed: No image URL returned');
+          this.isUploadingImages.set(false);
+          return;
+        }
+
+        this.formData.image = imageUrl;
+        this.isUploadingImages.set(false);
+        this.errorMessage.set('');
+
+        console.log(`✅ Drink image uploaded successfully`);
+      },
+      error: (error: any) => {
+        this.isUploadingImages.set(false);
+        const errorMsg = error?.message || 'Unknown error';
+        this.errorMessage.set(`Upload failed: ${errorMsg}`);
+        console.error('❌ Image upload error:', error);
+      }
+    });
+
+    // Clear input
+    input.value = '';
+  }
+
+  removeImage(): void {
+    this.formData.image = '';
+    console.log('🗑️ Drink image removed');
+  }
+
+  onDropImage(event: DragEvent): void {
+    event.preventDefault();
+    this.isDragging.set(false);
+    const file = event.dataTransfer?.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      // Create a synthetic event
+      const syntheticEvent = {
+        target: {
+          files: [file]
+        }
+      } as any;
+      this.onImageSelected(syntheticEvent);
+    }
   }
 }

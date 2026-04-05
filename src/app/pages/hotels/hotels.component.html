@@ -475,34 +475,8 @@
                             </div>
 
                             <div class="space-y-3">
-                              @for (room of groupedRoom.rooms; track room.id) {
+                              @for (room of getDisplayedRooms(hotel.id, groupedRoom.type, groupedRoom.rooms); track room.id) {
                                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 transition">
-                                  <!-- Room Image Gallery -->
-                                  @if (room.images && room.images.length > 0) {
-                                    <div class="relative bg-gray-200 rounded-lg h-40 flex items-center justify-center mb-4 overflow-hidden group">
-                                      @let roomImgIndex = getRoomImageIndex(room.id);
-                                      <img [src]="room.images[roomImgIndex]" [alt]="room.bedType" class="w-full h-full object-cover" />
-
-                                      @if (room.images.length > 1) {
-                                        <button
-                                          (click)="previousRoomImage(room.id)"
-                                          class="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white text-gray-900 p-2 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100"
-                                        >
-                                          ←
-                                        </button>
-                                        <button
-                                          (click)="nextRoomImage(room.id)"
-                                          class="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white text-gray-900 p-2 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100"
-                                        >
-                                          →
-                                        </button>
-                                        <div class="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs bg-gray-900/70 text-white px-2 py-1 rounded">
-                                          {{ roomImgIndex + 1 }}/{{ room.images.length }}
-                                        </div>
-                                      }
-                                    </div>
-                                  }
-
                                   <div class="flex items-start justify-between mb-3">
                                     <div class="flex-1">
                                       <p class="text-sm font-bold text-gray-900">{{ room.bedType }}</p>
@@ -539,6 +513,29 @@
                                 </div>
                               }
                             </div>
+
+                            <!-- Room Pagination -->
+                            @if (groupedRoom.rooms.length > 5) {
+                              <div class="mt-4 flex items-center justify-center gap-2 flex-wrap pt-3 border-t border-gray-200">
+                                <button
+                                  (click)="goToPreviousRoomPage(hotel.id, groupedRoom.type)"
+                                  [disabled]="!canGoToPreviousPage(hotel.id, groupedRoom.type)"
+                                  class="px-3 py-1 bg-white border border-gray-300 rounded text-sm text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                                >
+                                  ← Prev
+                                </button>
+                                <span class="text-sm text-gray-600">
+                                  Page {{ getRoomGroupPage(hotel.id, groupedRoom.type) }} of {{ getTotalRoomPages(groupedRoom.rooms.length) }}
+                                </span>
+                                <button
+                                  (click)="goToNextRoomPage(hotel.id, groupedRoom.type)"
+                                  [disabled]="!canGoToNextPage(hotel.id, groupedRoom.type, groupedRoom.rooms.length)"
+                                  class="px-3 py-1 bg-white border border-gray-300 rounded text-sm text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                                >
+                                  Next →
+                                </button>
+                              </div>
+                            }
                           </div>
                         }
                       </div>
@@ -739,6 +736,35 @@
               </div>
             </div>
           </div>
+
+          <!-- Room Images Carousel -->
+          @if (room!.images && room!.images.length > 0) {
+            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <h3 class="font-bold text-gray-900 mb-3">Room Photos</h3>
+              <div class="relative bg-gradient-to-br from-gray-200 to-gray-100 rounded-lg h-64 flex items-center justify-center overflow-hidden group">
+                @let roomImgIndex = getRoomImageIndex(room!.id);
+                <img [src]="room!.images[roomImgIndex]" [alt]="room!.bedType" class="w-full h-full object-cover" />
+
+                @if (room!.images.length > 1) {
+                  <button
+                    (click)="previousRoomImage(room!.id)"
+                    class="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white text-gray-900 p-3 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100"
+                  >
+                    ←
+                  </button>
+                  <button
+                    (click)="nextRoomImage(room!.id)"
+                    class="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white text-gray-900 p-3 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100"
+                  >
+                    →
+                  </button>
+                  <div class="absolute bottom-4 left-1/2 -translate-x-1/2 text-sm bg-gray-900/70 text-white px-3 py-2 rounded-full">
+                    {{ roomImgIndex + 1 }}/{{ room!.images.length }}
+                  </div>
+                }
+              </div>
+            </div>
+          }
 
           <!-- Guest Information -->
           <div class="bg-gray-50 rounded-lg p-4 space-y-4 border border-gray-200">

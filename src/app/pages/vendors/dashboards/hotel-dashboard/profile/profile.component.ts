@@ -924,8 +924,8 @@ export class HotelProfileComponent implements OnInit {
       return;
     }
 
-    // Clear previous and add new previews
-    this.formData.photos = [];
+    // Keep existing photos and add new previews (append instead of replace)
+    const existingPhotos = [...(this.formData.photos || [])];
     const newPhotos: string[] = [];
     let loadedCount = 0;
 
@@ -938,7 +938,7 @@ export class HotelProfileComponent implements OnInit {
 
         // Update the photos array reference to trigger change detection
         if (loadedCount === files.length) {
-          this.formData.photos = [...newPhotos];
+          this.formData.photos = [...existingPhotos, ...newPhotos];
         }
       };
       reader.readAsDataURL(file);
@@ -980,8 +980,9 @@ export class HotelProfileComponent implements OnInit {
 
         console.log('🎉 Upload successful. Image URLs:', imageUrls);
 
-        // Replace preview URLs with actual uploaded URLs
-        this.formData.photos = imageUrls;
+        // Remove data URL previews and append actual uploaded URLs
+        const nonPreviewPhotos = (this.formData.photos || []).filter((url: string) => !url.startsWith('data:'));
+        this.formData.photos = [...nonPreviewPhotos, ...imageUrls];
         this.addUploadStep(`✅ Images updated with uploaded URLs: ${imageUrls.length} total`);
 
         // Set the first image as thumbnail if not already set or is a data URL

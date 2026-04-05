@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AuthModalService } from '../../services/auth-modal.service';
+import { AuthService } from '../../services/auth.service';
 import { MARKETPLACE_SERVICES } from '../../shared/data/marketplace-data';
 import { Service } from '../../shared/models/marketplace.model';
 
@@ -22,7 +23,14 @@ interface TrendingItem {
 export class HomeComponent {
   services: Service[] = MARKETPLACE_SERVICES;
 
-  constructor(public authModalService: AuthModalService) {}
+  constructor(
+    public authModalService: AuthModalService,
+    public authService: AuthService
+  ) {}
+
+  isLoggedIn(): boolean {
+    return this.authService.isLoggedIn();
+  }
 
   // Main services (Services and Delivery)
   mainServices = [

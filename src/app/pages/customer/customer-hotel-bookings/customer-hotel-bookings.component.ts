@@ -30,6 +30,7 @@ interface RoomServiceItem {
   price: number;
   description: string;
   available: boolean;
+  image?: string;
 }
 
 @Component({
@@ -148,17 +149,27 @@ interface RoomServiceItem {
                 @if (roomServiceItems().length > 0) {
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto">
                     @for (item of roomServiceItems(); track item._id) {
-                      <div class="border rounded-lg p-4 hover:shadow-md transition cursor-pointer"
+                      <div class="border rounded-lg overflow-hidden hover:shadow-md transition cursor-pointer"
                            (click)="selectItem(item)"
                            [class.ring-2]="selectedItems().includes(item._id)"
                            [class.ring-blue-500]="selectedItems().includes(item._id)">
-                        <p class="font-semibold text-gray-900">{{ item.name }}</p>
-                        <p class="text-sm text-gray-600">{{ item.category }}</p>
-                        <p class="text-sm text-gray-700 mt-2">{{ item.description }}</p>
-                        <p class="text-lg font-bold text-green-600 mt-2">₦{{ item.price.toLocaleString() }}</p>
-                        @if (!item.available) {
-                          <p class="text-xs text-red-600 font-semibold mt-2">Currently Unavailable</p>
+                        <!-- Item Image -->
+                        @if (item.image) {
+                          <div class="relative w-full h-32 bg-slate-100 overflow-hidden">
+                            <img [src]="item.image" [alt]="item.name" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
+                          </div>
                         }
+
+                        <!-- Item Details -->
+                        <div class="p-4">
+                          <p class="font-semibold text-gray-900">{{ item.name }}</p>
+                          <p class="text-sm text-gray-600">{{ item.category }}</p>
+                          <p class="text-sm text-gray-700 mt-2">{{ item.description }}</p>
+                          <p class="text-lg font-bold text-green-600 mt-2">₦{{ item.price.toLocaleString() }}</p>
+                          @if (!item.available) {
+                            <p class="text-xs text-red-600 font-semibold mt-2">Currently Unavailable</p>
+                          }
+                        </div>
                       </div>
                     }
                   </div>
@@ -167,35 +178,123 @@ interface RoomServiceItem {
                 }
               </div>
 
-              <!-- Order Summary -->
+              <!-- Order Summary & Review -->
               @if (selectedItems().length > 0) {
                 <div class="mt-6 border-t pt-4">
-                  <h4 class="font-semibold text-gray-900 mb-3">Order Summary:</h4>
-                  <div class="space-y-2 mb-4">
+                  <h4 class="font-semibold text-gray-900 mb-3">Order Review:</h4>
+                  <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
                     @for (itemId of selectedItems(); track itemId) {
-                      <p class="text-sm text-gray-700">{{ itemId }}: ₦500</p>
+                      @for (item of roomServiceItems(); track item._id) {
+                        @if (item._id === itemId) {
+                          <div class="flex items-center justify-between py-2 border-b last:border-b-0">
+                            <div class="flex-1">
+                              <p class="font-medium text-gray-900">{{ item.name }}</p>
+                              <p class="text-xs text-gray-600">{{ item.category }}</p>
+                            </div>
+                            <div class="text-right">
+                              <p class="font-semibold text-gray-900">₦{{ item.price.toLocaleString() }}</p>
+                              <p class="text-xs text-gray-600">x1</p>
+                            </div>
+                          </div>
+                        }
+                      }
                     }
                   </div>
-                  <div class="border-t pt-2">
-                    <p class="text-lg font-bold text-gray-900">
-                      Total: ₦{{ calculateOrderTotal() }}
-                    </p>
+                  <div class="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                      <p class="text-lg font-bold text-gray-900">Order Total:</p>
+                      <p class="text-2xl font-bold text-green-600">₦{{ calculateOrderTotal().toLocaleString() }}</p>
+                    </div>
                   </div>
                 </div>
+
+                <!-- Action Buttons -->
+                <div class="flex gap-3 mt-6">
+                  <button
+                    (click)="showOrderConfirmation.set(true)"
+                    class="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2">
+                    <mat-icon class="text-lg">check_circle</mat-icon>
+                    <span>Confirm & Place Order</span>
+                  </button>
+                  <button
+                    (click)="clearSelectedItems()"
+                    class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 px-4 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2">
+                    <mat-icon class="text-lg">edit</mat-icon>
+                    <span>Edit Selection</span>
+                  </button>
+                </div>
+              } @else {
+                <div class="flex gap-3 mt-6">
+                  <button
+                    (click)="showRoomServiceModal.set(false)"
+                    class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 px-4 py-2 rounded-lg font-semibold transition flex items-center justify-center gap-2">
+                    <mat-icon class="text-lg">cancel</mat-icon>
+                    <span>Close</span>
+                  </button>
+                </div>
               }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Order Confirmation Modal -->
+      @if (showOrderConfirmation()) {
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-orange-600 to-orange-700 text-white p-6 border-b border-orange-800">
+              <div class="flex items-center justify-center gap-3">
+                <mat-icon class="text-3xl">warning</mat-icon>
+                <h2 class="text-xl font-bold">Confirm Your Order</h2>
+              </div>
+            </div>
+
+            <!-- Content -->
+            <div class="p-6 space-y-4">
+              <p class="text-gray-700 text-center font-semibold">
+                You are about to place an order for:
+              </p>
+
+              <!-- Order Items List -->
+              <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
+                @for (itemId of selectedItems(); track itemId) {
+                  @for (item of roomServiceItems(); track item._id) {
+                    @if (item._id === itemId) {
+                      <div class="flex items-center justify-between text-sm py-2 border-b last:border-b-0">
+                        <span class="text-gray-900 font-medium">{{ item.name }}</span>
+                        <span class="font-semibold text-gray-900">₦{{ item.price.toLocaleString() }}</span>
+                      </div>
+                    }
+                  }
+                }
+              </div>
+
+              <!-- Total Price -->
+              <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                  <p class="text-lg font-bold text-gray-900">Order Total:</p>
+                  <p class="text-2xl font-bold text-green-600">₦{{ calculateOrderTotal().toLocaleString() }}</p>
+                </div>
+              </div>
+
+              <!-- Confirmation Message -->
+              <p class="text-sm text-gray-600 text-center">
+                Once placed, your order will be prepared and delivered to your room. Continue?
+              </p>
 
               <!-- Action Buttons -->
-              <div class="flex gap-3 mt-6">
+              <div class="flex gap-3 pt-4 border-t">
                 <button
                   (click)="submitRoomServiceOrder()"
-                  class="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold transition flex items-center justify-center gap-2">
-                  <mat-icon class="text-lg">check_circle</mat-icon>
-                  <span>Place Order</span>
+                  class="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2">
+                  <mat-icon class="text-lg">done_all</mat-icon>
+                  <span>Yes, Place Order</span>
                 </button>
                 <button
-                  (click)="showRoomServiceModal.set(false)"
-                  class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 px-4 py-2 rounded-lg font-semibold transition flex items-center justify-center gap-2">
-                  <mat-icon class="text-lg">cancel</mat-icon>
+                  (click)="showOrderConfirmation.set(false)"
+                  class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 px-4 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2">
+                  <mat-icon class="text-lg">close</mat-icon>
                   <span>Cancel</span>
                 </button>
               </div>
@@ -276,7 +375,7 @@ interface RoomServiceItem {
 
               <!-- Status Info -->
               <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <h3 class="font-bold text-gray-900 mb-4">Status</h3>
+                <h3 class="font-bold text-gray-900 mb-4">Booking Status</h3>
                 <div class="flex items-center gap-3">
                   <span [class]="getStatusBadgeClass(booking!.status)">
                     {{ getStatusBadge(booking!.status) }}
@@ -284,6 +383,54 @@ interface RoomServiceItem {
                   <span class="text-sm text-gray-600">Last updated: Today</span>
                 </div>
               </div>
+
+              <!-- Room Service Orders History -->
+              @if (booking!.roomServiceOrders && booking!.roomServiceOrders.length > 0) {
+                <div class="border rounded-lg p-4">
+                  <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <mat-icon class="text-orange-600">room_service</mat-icon>
+                    Room Service Orders
+                  </h3>
+                  <div class="space-y-3">
+                    @for (order of booking!.roomServiceOrders; track order._id) {
+                      <div class="bg-gray-50 border rounded-lg p-3">
+                        <div class="flex items-center justify-between mb-2">
+                          <p class="font-semibold text-gray-900 text-sm">Order ID: {{ order._id.substring(0, 8) }}</p>
+                          <span [class]="getOrderStatusBadgeClass(order.status)">
+                            {{ getOrderStatusBadge(order.status) }}
+                          </span>
+                        </div>
+                        <div class="space-y-1 text-xs text-gray-600 mb-2">
+                          <p><strong>Ordered:</strong> {{ formatDate(order.orderedAt) }}</p>
+                          @if (order.deliveredAt) {
+                            <p><strong>Delivered:</strong> {{ formatDate(order.deliveredAt) }}</p>
+                          }
+                        </div>
+                        <div class="bg-white border-t pt-2">
+                          <p class="text-xs font-semibold text-gray-900 mb-1">Items:</p>
+                          <div class="space-y-1">
+                            @for (item of order.items; track item.itemId) {
+                              <div class="flex items-center justify-between text-xs">
+                                <span class="text-gray-700">{{ item.name }} x{{ item.quantity }}</span>
+                                <span class="font-semibold text-gray-900">₦{{ (item.price * item.quantity).toLocaleString() }}</span>
+                              </div>
+                            }
+                          </div>
+                          <div class="border-t mt-2 pt-2 flex items-center justify-between text-sm">
+                            <span class="font-semibold text-gray-900">Total:</span>
+                            <span class="font-bold text-orange-600">₦{{ order.totalPrice.toLocaleString() }}</span>
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              } @else {
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
+                  <mat-icon class="text-3xl text-gray-400 block mx-auto mb-2">room_service</mat-icon>
+                  <p class="text-sm text-gray-600">No room service orders yet</p>
+                </div>
+              }
 
               <!-- Action Buttons -->
               <div class="flex gap-3 pt-4 border-t">
@@ -324,6 +471,7 @@ export class CustomerHotelBookingsComponent implements OnInit {
   showRoomServiceModal = signal(false);
   showBookingDetailsModal = signal(false);
   bookingDetailsData = signal<HotelBooking | null>(null);
+  showOrderConfirmation = signal(false);
 
   constructor(
     private customerService: CustomerService,
@@ -470,6 +618,9 @@ export class CustomerHotelBookingsComponent implements OnInit {
     this.selectedBooking.set(booking);
     this.selectedItems.set([]);
     this.showRoomServiceModal.set(true);
+    // Close booking details modal if it's open
+    this.showBookingDetailsModal.set(false);
+    this.bookingDetailsData.set(null);
     this.loadRoomServiceItems(booking._id);
   }
 
@@ -496,7 +647,8 @@ export class CustomerHotelBookingsComponent implements OnInit {
           category: item.category,
           price: item.price,
           description: item.description,
-          available: item.available !== false // Default to true if not specified
+          available: item.available !== false, // Default to true if not specified
+          image: item.image
         }));
 
         this.roomServiceItems.set(transformedItems);
@@ -554,6 +706,10 @@ export class CustomerHotelBookingsComponent implements OnInit {
     this.selectedItems.set([...selected]);
   }
 
+  clearSelectedItems(): void {
+    this.selectedItems.set([]);
+  }
+
   calculateOrderTotal(): number {
     const items = this.roomServiceItems();
     return this.selectedItems().reduce((total, itemId) => {
@@ -568,24 +724,70 @@ export class CustomerHotelBookingsComponent implements OnInit {
       return;
     }
 
+    const booking = this.selectedBooking();
+    const items = this.roomServiceItems();
+
+    // Transform selected item IDs into full item objects with quantities
+    const orderItems = this.selectedItems().map(itemId => {
+      const item = items.find(i => i._id === itemId);
+      return {
+        itemId: item?._id,
+        name: item?.name,
+        price: item?.price,
+        quantity: 1
+      };
+    });
+
     const orderData = {
-      items: this.selectedItems(),
+      bookingId: booking?._id,
+      hotelId: booking?.hotelId,
+      items: orderItems,
       totalPrice: this.calculateOrderTotal(),
       notes: ''
     };
 
+    console.log('📤 Submitting room service order:', orderData);
+
     this.customerService.orderRoomService(orderData).subscribe(
       (response: any) => {
+        console.log('✅ Room service order response:', response);
         if (response.success) {
           this.toastService.success('Room service order placed successfully!');
+          this.showOrderConfirmation.set(false);
           this.showRoomServiceModal.set(false);
           this.selectedItems.set([]);
+          // Reload bookings to show new order
+          this.loadBookings();
+        } else {
+          this.toastService.error('Failed to place room service order');
         }
       },
       (error) => {
-        console.error('Error placing room service order:', error);
+        console.error('❌ Error placing room service order:', error);
         this.toastService.error('Failed to place room service order');
       }
     );
+  }
+
+  getOrderStatusBadge(status: string): string {
+    const badges: { [key: string]: string } = {
+      pending: 'Pending',
+      preparing: 'Preparing',
+      ready: 'Ready for Pickup',
+      delivered: 'Delivered',
+      cancelled: 'Cancelled'
+    };
+    return badges[status] || status;
+  }
+
+  getOrderStatusBadgeClass(status: string): string {
+    const classes: { [key: string]: string } = {
+      pending: 'inline-block px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 text-xs font-semibold',
+      preparing: 'inline-block px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-semibold',
+      ready: 'inline-block px-2 py-1 rounded-full bg-purple-100 text-purple-800 text-xs font-semibold',
+      delivered: 'inline-block px-2 py-1 rounded-full bg-green-100 text-green-800 text-xs font-semibold',
+      cancelled: 'inline-block px-2 py-1 rounded-full bg-red-100 text-red-800 text-xs font-semibold'
+    };
+    return classes[status] || 'inline-block px-2 py-1 rounded-full bg-gray-100 text-gray-800 text-xs font-semibold';
   }
 }
