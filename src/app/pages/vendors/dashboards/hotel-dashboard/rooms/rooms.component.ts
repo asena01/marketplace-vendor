@@ -481,6 +481,12 @@ export class HotelRoomsComponent implements OnInit {
   editRoom(room: Room) {
     this.isEditing.set(true);
     this.newRoom = { ...room };
+    // Ensure images array is properly initialized for editing
+    if (!this.newRoom.images) {
+      this.newRoom.images = [];
+    }
+    // Create a new array to avoid mutating the original room's images
+    this.newRoom.images = [...this.newRoom.images];
     this.showRoomModal.set(true);
   }
 
@@ -507,7 +513,8 @@ export class HotelRoomsComponent implements OnInit {
             const index = this.rooms().findIndex(r => r._id === this.newRoom._id);
             if (index !== -1) {
               const updated = [...this.rooms()];
-              updated[index] = response.data || this.newRoom;
+              // Merge response data with newRoom to preserve images and other local data
+              updated[index] = { ...this.newRoom, ...response.data };
               this.rooms.set(updated);
             }
             this.successMessage.set('Room updated successfully!');
