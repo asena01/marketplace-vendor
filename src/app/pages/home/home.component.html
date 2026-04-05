@@ -17,14 +17,16 @@
   </p>
 
   <!-- Hero CTA Buttons -->
-  <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-    <button (click)="authModalService.openSignup()" class="bg-white text-primary hover:bg-gray-100 font-bold py-3 px-8 rounded-lg transition-all duration-300 transform hover:scale-105 cursor-pointer">
-      Create Account
-    </button>
-    <button (click)="authModalService.openLogin()" class="border-2 border-white text-white hover:bg-white/10 font-bold py-3 px-8 rounded-lg transition-all duration-300 cursor-pointer">
-      Sign In
-    </button>
-  </div>
+  @if (!isLoggedIn()) {
+    <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+      <button (click)="authModalService.openSignup()" class="bg-white text-primary hover:bg-gray-100 font-bold py-3 px-8 rounded-lg transition-all duration-300 transform hover:scale-105 cursor-pointer">
+        Create Account
+      </button>
+      <button (click)="authModalService.openLogin()" class="border-2 border-white text-white hover:bg-white/10 font-bold py-3 px-8 rounded-lg transition-all duration-300 cursor-pointer">
+        Sign In
+      </button>
+    </div>
+  }
 
   <div class="stats-grid grid grid-cols-2 md:grid-cols-5 gap-6 max-w-5xl mx-auto">
     <div class="text-white">
