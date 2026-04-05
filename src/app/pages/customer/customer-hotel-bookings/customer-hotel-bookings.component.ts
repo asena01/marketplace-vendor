@@ -30,6 +30,7 @@ interface RoomServiceItem {
   price: number;
   description: string;
   available: boolean;
+  image?: string;
 }
 
 @Component({
@@ -148,17 +149,27 @@ interface RoomServiceItem {
                 @if (roomServiceItems().length > 0) {
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto">
                     @for (item of roomServiceItems(); track item._id) {
-                      <div class="border rounded-lg p-4 hover:shadow-md transition cursor-pointer"
+                      <div class="border rounded-lg overflow-hidden hover:shadow-md transition cursor-pointer"
                            (click)="selectItem(item)"
                            [class.ring-2]="selectedItems().includes(item._id)"
                            [class.ring-blue-500]="selectedItems().includes(item._id)">
-                        <p class="font-semibold text-gray-900">{{ item.name }}</p>
-                        <p class="text-sm text-gray-600">{{ item.category }}</p>
-                        <p class="text-sm text-gray-700 mt-2">{{ item.description }}</p>
-                        <p class="text-lg font-bold text-green-600 mt-2">₦{{ item.price.toLocaleString() }}</p>
-                        @if (!item.available) {
-                          <p class="text-xs text-red-600 font-semibold mt-2">Currently Unavailable</p>
+                        <!-- Item Image -->
+                        @if (item.image) {
+                          <div class="relative w-full h-32 bg-slate-100 overflow-hidden">
+                            <img [src]="item.image" [alt]="item.name" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
+                          </div>
                         }
+
+                        <!-- Item Details -->
+                        <div class="p-4">
+                          <p class="font-semibold text-gray-900">{{ item.name }}</p>
+                          <p class="text-sm text-gray-600">{{ item.category }}</p>
+                          <p class="text-sm text-gray-700 mt-2">{{ item.description }}</p>
+                          <p class="text-lg font-bold text-green-600 mt-2">₦{{ item.price.toLocaleString() }}</p>
+                          @if (!item.available) {
+                            <p class="text-xs text-red-600 font-semibold mt-2">Currently Unavailable</p>
+                          }
+                        </div>
                       </div>
                     }
                   </div>
@@ -496,7 +507,8 @@ export class CustomerHotelBookingsComponent implements OnInit {
           category: item.category,
           price: item.price,
           description: item.description,
-          available: item.available !== false // Default to true if not specified
+          available: item.available !== false, // Default to true if not specified
+          image: item.image
         }));
 
         this.roomServiceItems.set(transformedItems);
