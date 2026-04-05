@@ -477,6 +477,70 @@ app.get('/hotel-bookings/customer/:customerId', async (req, res) => {
     });
   }
 });
+
+// Room Service Order - Add order to booking
+app.post('/hotel-bookings/:bookingId/room-service-orders', async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const { items, totalPrice, notes } = req.body;
+
+    console.log('🍽️ ========== ADD ROOM SERVICE ORDER ==========');
+    console.log('📌 Booking ID:', bookingId);
+    console.log('📦 Order items:', items);
+    console.log('💰 Total price:', totalPrice);
+    console.log('📝 Notes:', notes);
+
+    if (!bookingId || !items || items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields: bookingId, items'
+      });
+    }
+
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    const RoomServiceOrder = require('mongoose').Types.ObjectId;
+    const roomServiceOrder = {
+      _id: new (require('mongoose').Types.ObjectId)(),
+      items,
+      totalPrice,
+      notes,
+      status: 'pending',
+      orderedAt: new Date()
+    };
+
+    if (!booking.roomServiceOrders) {
+      booking.roomServiceOrders = [];
+    }
+    booking.roomServiceOrders.push(roomServiceOrder);
+    await booking.save();
+
+    console.log('✅ Room service order added successfully!');
+    console.log('🔔 Order ID:', roomServiceOrder._id);
+
+    return res.status(201).json({
+      success: true,
+      message: 'Room service order placed successfully',
+      data: {
+        orderId: roomServiceOrder._id,
+        booking
+      }
+    });
+  } catch (err) {
+    console.error('❌ Error adding room service order:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to place room service order',
+      error: err.message
+    });
+  }
+});
 app.use('/hotels/:hotelId/staff', staffRoutes);
 app.use('/hotels/:hotelId/maintenance', maintenanceRoutes);
 app.use('/hotels/:hotelId/invoices', invoiceRoutes);
