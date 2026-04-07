@@ -29,9 +29,25 @@ interface Room {
   images?: string[]; // Room photos/images
 }
 
+interface RoomVariant {
+  id: string; // Unique ID for this variant
+  type: string;
+  bedType: string;
+  price: number;
+  originalPrice: number;
+  amenities: string[];
+  maxGuests: number;
+  rating: number;
+  reviews: number;
+  icon: string;
+  images?: string[];
+  availableCount: number; // How many of this exact variant are available
+  roomIds: string[]; // IDs of actual room objects that match this variant
+}
+
 interface GroupedRoom {
   type: string;
-  rooms: Room[];
+  variants: RoomVariant[];
   availableCount: number;
 }
 
@@ -779,19 +795,53 @@ export class HotelsComponent implements OnInit {
   }
 
   getGroupedRooms(hotel: Hotel): GroupedRoom[] {
-    const grouped = new Map<string, Room[]>();
-    
+    const variantMap = new Map<string, RoomVariant>();
+    const typeVariantsMap = new Map<string, RoomVariant[]>();
+
     hotel.rooms.forEach(room => {
-      if (!grouped.has(room.type)) {
-        grouped.set(room.type, []);
+      // Create a unique key for this room variant (same type, bed type, price, amenities)
+      const amenitiesKey = [...room.amenities].sort().join('|');
+      const variantKey = `${room.type}|${room.bedType}|${room.price}|${room.maxGuests}|${amenitiesKey}`;
+
+      if (!variantMap.has(variantKey)) {
+        // Create a new variant
+        const variant: RoomVariant = {
+          id: room.id, // Use the first room's ID as the variant ID
+          type: room.type,
+          bedType: room.bedType,
+          price: room.price,
+          originalPrice: room.originalPrice || room.price,
+          amenities: room.amenities,
+          maxGuests: room.maxGuests,
+          rating: room.rating,
+          reviews: room.reviews,
+          icon: room.icon,
+          images: room.images,
+          availableCount: 0,
+          roomIds: []
+        };
+        variantMap.set(variantKey, variant);
       }
-      grouped.get(room.type)!.push(room);
+
+      // Add this room to the variant
+      const variant = variantMap.get(variantKey)!;
+      variant.availableCount++;
+      variant.roomIds.push(room.id);
     });
 
-    return Array.from(grouped.entries()).map(([type, rooms]) => ({
+    // Group variants by room type
+    variantMap.forEach((variant, _key) => {
+      if (!typeVariantsMap.has(variant.type)) {
+        typeVariantsMap.set(variant.type, []);
+      }
+      typeVariantsMap.get(variant.type)!.push(variant);
+    });
+
+    // Convert to GroupedRoom format
+    return Array.from(typeVariantsMap.entries()).map(([type, variants]) => ({
       type,
-      rooms,
-      availableCount: rooms.length
+      variants,
+      availableCount: variants.reduce((sum, v) => sum + v.availableCount, 0)
     }));
   }
 
@@ -924,6 +974,14 @@ export class HotelsComponent implements OnInit {
   goToNextRoomPage(hotelId: string, roomType: string): void {
     const currentPage = this.getRoomGroupPage(hotelId, roomType);
     this.setRoomGroupPage(hotelId, roomType, currentPage + 1);
+  }
+
+  selectRoomVariant(variant: RoomVariant, hotel: Hotel): void {
+    // Get the first available room from the variant
+    const availableRoom = hotel.rooms.find(r => variant.roomIds.includes(r.id));
+    if (availableRoom) {
+      this.selectRoom(availableRoom, hotel);
+    }
   }
 
   selectRoom(room: Room, hotel: Hotel): void {

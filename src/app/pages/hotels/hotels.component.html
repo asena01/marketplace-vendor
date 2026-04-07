@@ -477,67 +477,51 @@
                             </div>
 
                             <div class="space-y-3">
-                              @for (room of getDisplayedRooms(hotel.id, groupedRoom.type, groupedRoom.rooms); track room.id) {
+                              @for (variant of groupedRoom.variants; track variant.id) {
                                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 transition">
                                   <div class="flex items-start justify-between mb-3">
                                     <div class="flex-1">
-                                      <p class="text-sm font-bold text-gray-900">{{ room.bedType }}</p>
-                                      <p class="text-xs text-gray-600">Capacity: Up to {{ room.maxGuests }} guest(s)</p>
+                                      <div class="flex items-center gap-2">
+                                        <p class="text-sm font-bold text-gray-900">{{ variant.bedType }}</p>
+                                        @if (variant.availableCount > 1) {
+                                          <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-semibold">
+                                            {{ variant.availableCount }} units
+                                          </span>
+                                        }
+                                      </div>
+                                      <p class="text-xs text-gray-600">Capacity: Up to {{ variant.maxGuests }} guest(s)</p>
                                     </div>
                                     <div class="text-right">
-                                      <p class="text-lg font-bold text-emerald-600">{{ formatPrice(room.price) }}</p>
+                                      <p class="text-lg font-bold text-emerald-600">{{ formatPrice(variant.price) }}</p>
                                       <p class="text-xs text-gray-600">per night</p>
                                     </div>
                                   </div>
 
                                   <div class="mb-3">
                                     <div class="flex flex-wrap gap-1 mb-2">
-                                      @for (amenity of room.amenities.slice(0, 3); track amenity) {
+                                      @for (amenity of variant.amenities.slice(0, 3); track amenity) {
                                         <span class="text-xs bg-white text-gray-700 px-2 py-1 rounded border border-gray-200">{{ amenity }}</span>
                                       }
-                                      @if (room.amenities.length > 3) {
-                                        <span class="text-xs text-gray-600 px-2 py-1">+{{ room.amenities.length - 3 }} more</span>
+                                      @if (variant.amenities.length > 3) {
+                                        <span class="text-xs text-gray-600 px-2 py-1">+{{ variant.amenities.length - 3 }} more</span>
                                       }
                                     </div>
                                     <div class="flex items-center gap-1 text-xs">
                                       <span class="text-yellow-500">⭐</span>
-                                      <span class="font-semibold text-gray-900">{{ room.rating }}</span>
-                                      <span class="text-gray-600">({{ room.reviews }} reviews)</span>
+                                      <span class="font-semibold text-gray-900">{{ variant.rating }}</span>
+                                      <span class="text-gray-600">({{ variant.reviews }} reviews)</span>
                                     </div>
                                   </div>
 
                                   <button
-                                    (click)="selectRoom(room, hotel)"
+                                    (click)="selectRoomVariant(variant, hotel)"
                                     class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg transition"
                                   >
-                                    📖 View & Book
+                                    📖 Book Now ({{ variant.availableCount }} available)
                                   </button>
                                 </div>
                               }
                             </div>
-
-                            <!-- Room Pagination -->
-                            @if (groupedRoom.rooms.length > 5) {
-                              <div class="mt-4 flex items-center justify-center gap-2 flex-wrap pt-3 border-t border-gray-200">
-                                <button
-                                  (click)="goToPreviousRoomPage(hotel.id, groupedRoom.type)"
-                                  [disabled]="!canGoToPreviousPage(hotel.id, groupedRoom.type)"
-                                  class="px-3 py-1 bg-white border border-gray-300 rounded text-sm text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                                >
-                                  ← Prev
-                                </button>
-                                <span class="text-sm text-gray-600">
-                                  Page {{ getRoomGroupPage(hotel.id, groupedRoom.type) }} of {{ getTotalRoomPages(groupedRoom.rooms.length) }}
-                                </span>
-                                <button
-                                  (click)="goToNextRoomPage(hotel.id, groupedRoom.type)"
-                                  [disabled]="!canGoToNextPage(hotel.id, groupedRoom.type, groupedRoom.rooms.length)"
-                                  class="px-3 py-1 bg-white border border-gray-300 rounded text-sm text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                                >
-                                  Next →
-                                </button>
-                              </div>
-                            }
                           </div>
                         }
                       </div>
