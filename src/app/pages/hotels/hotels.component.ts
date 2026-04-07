@@ -1229,6 +1229,8 @@ export class HotelsComponent implements OnInit {
 
           setTimeout(() => {
             alert(`✅ Booking Confirmed!\n\nHotel: ${this.selectedHotel()!.name}\nRoom: ${this.selectedRoom()!.type}\nTotal: ${this.formatPrice(booking.totalPrice)}\n\n🔐 Smart Lock Access:\nYour access code and QR code have been sent to ${this.customerEmail()}`);
+            // Refresh hotel list to update available room counts
+            this.loadHotelsFromAPI();
             this.closeBooking();
             this.bookingSuccess.set(false);
           }, 1500);
@@ -1253,6 +1255,8 @@ export class HotelsComponent implements OnInit {
 
           setTimeout(() => {
             alert(`✅ Booking Confirmed!\n\nHotel: ${this.selectedHotel()!.name}\nRoom: ${this.selectedRoom()!.type}\nTotal: ${this.formatPrice(booking.totalPrice)}\n\nConfirmation email sent to ${this.customerEmail()}`);
+            // Refresh hotel list to update available room counts
+            this.loadHotelsFromAPI();
             this.closeBooking();
             this.bookingSuccess.set(false);
           }, 1500);
