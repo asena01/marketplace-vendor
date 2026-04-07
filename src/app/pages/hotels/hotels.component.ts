@@ -1090,6 +1090,38 @@ export class HotelsComponent implements OnInit {
     });
   }
 
+  /**
+   * Decrement room availability after successful booking
+   * This immediately updates the UI by removing the booked room from inventory
+   */
+  decrementRoomAvailability(): void {
+    const selectedHotel = this.selectedHotel();
+    const selectedRoom = this.selectedRoom();
+
+    if (!selectedHotel || !selectedRoom) {
+      console.log('⚠️ No hotel or room selected for decrement');
+      return;
+    }
+
+    // Find the booked room in the hotel's rooms array
+    const roomIndex = selectedHotel.rooms.findIndex(r => r.id === selectedRoom.id);
+
+    if (roomIndex !== -1) {
+      // Remove this room from the inventory
+      selectedHotel.rooms.splice(roomIndex, 1);
+      console.log(`📉 Room decremented. Remaining rooms of type "${selectedRoom.type}": ${selectedHotel.rooms.filter(r => r.type === selectedRoom.type).length}`);
+
+      // Update the hotels signal to trigger UI refresh
+      const updatedHotels = this.hotels().map(h =>
+        h.id === selectedHotel.id ? selectedHotel : h
+      );
+      this.hotels.set(updatedHotels);
+      console.log('✅ Room availability updated in UI');
+    } else {
+      console.log('⚠️ Booked room not found in hotel rooms array');
+    }
+  }
+
   closeBooking(): void {
     this.showBookingForm.set(false);
     this.selectedHotel.set(null);
@@ -1251,7 +1283,9 @@ export class HotelsComponent implements OnInit {
 
           setTimeout(() => {
             alert(`✅ Booking Confirmed!\n\nHotel: ${this.selectedHotel()!.name}\nRoom: ${this.selectedRoom()!.type}\nTotal: ${this.formatPrice(booking.totalPrice)}\n\n🔐 Smart Lock Access:\nYour access code and QR code have been sent to ${this.customerEmail()}`);
-            // Refresh hotel list to update available room counts
+            // Decrement room availability immediately in the UI
+            this.decrementRoomAvailability();
+            // Then refresh hotel list from API to ensure sync
             this.loadHotelsFromAPI();
             this.closeBooking();
             this.bookingSuccess.set(false);
@@ -1277,7 +1311,9 @@ export class HotelsComponent implements OnInit {
 
           setTimeout(() => {
             alert(`✅ Booking Confirmed!\n\nHotel: ${this.selectedHotel()!.name}\nRoom: ${this.selectedRoom()!.type}\nTotal: ${this.formatPrice(booking.totalPrice)}\n\nConfirmation email sent to ${this.customerEmail()}`);
-            // Refresh hotel list to update available room counts
+            // Decrement room availability immediately in the UI
+            this.decrementRoomAvailability();
+            // Then refresh hotel list from API to ensure sync
             this.loadHotelsFromAPI();
             this.closeBooking();
             this.bookingSuccess.set(false);
