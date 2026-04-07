@@ -34,19 +34,47 @@ interface VendorChat {
   imports: [CommonModule, FormsModule, MatIconModule],
   template: `
     <div class="space-y-6">
-      <!-- Header -->
-      <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg p-6 shadow-md">
-        <div class="flex items-start justify-between">
-          <div>
-            <h2 class="text-3xl font-bold flex items-center gap-2 mb-2">
-              <mat-icon class="text-3xl">chat_bubble</mat-icon>
-              <span>Chat Support</span>
-            </h2>
-            <p class="text-blue-100">Chat directly with vendors about your orders and get instant support</p>
+      <!-- Support Header Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Chat Support Card -->
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg p-6 shadow-md">
+          <div class="flex items-start justify-between mb-4">
+            <div>
+              <h2 class="text-2xl font-bold flex items-center gap-2 mb-2">
+                <mat-icon class="text-3xl">chat_bubble</mat-icon>
+                <span>Chat Support</span>
+              </h2>
+              <p class="text-blue-100 text-sm">Chat directly with vendors about your orders</p>
+            </div>
           </div>
-          <div class="text-right">
+          <div class="bg-blue-400 bg-opacity-30 rounded-lg p-3 mt-4">
             <p class="text-3xl font-bold">{{ conversations().length }}</p>
-            <p class="text-blue-100 text-sm">Active Chats</p>
+            <p class="text-blue-100 text-xs mt-1 uppercase tracking-wider">Active Conversations</p>
+          </div>
+        </div>
+
+        <!-- Phone Support Card -->
+        <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg p-6 shadow-md">
+          <div class="flex items-start justify-between">
+            <div>
+              <h2 class="text-2xl font-bold flex items-center gap-2 mb-2">
+                <mat-icon class="text-3xl">phone</mat-icon>
+                <span>Phone Support</span>
+              </h2>
+              <p class="text-green-100 text-sm">Speak with our support team directly</p>
+            </div>
+          </div>
+          <div class="mt-4 space-y-3">
+            <div class="bg-green-400 bg-opacity-30 rounded-lg p-3">
+              <p class="text-sm font-semibold text-green-50">Support Number</p>
+              <p class="text-2xl font-bold mt-2 font-mono">+234 700 000 0000</p>
+            </div>
+            <button
+              (click)="callSupport()"
+              class="w-full bg-white hover:bg-gray-100 text-green-600 font-bold py-3 rounded-lg transition flex items-center justify-center gap-2">
+              <mat-icon class="text-lg">phone_in_talk</mat-icon>
+              <span>Start Phone Call</span>
+            </button>
           </div>
         </div>
       </div>
@@ -707,5 +735,16 @@ export class CustomerChatSupportComponent implements OnInit {
       closed: 'text-gray-600'
     };
     return classes[status] || 'text-gray-600';
+  }
+
+  /**
+   * Initiate a phone call to support
+   */
+  callSupport(): void {
+    const supportPhone = '+234 700 000 0000';
+    const cleanPhone = supportPhone.replace(/\s/g, '');
+    // Use tel: protocol to initiate phone call
+    window.location.href = `tel:${cleanPhone}`;
+    console.log('📞 Initiating phone call to support: ' + supportPhone);
   }
 }
