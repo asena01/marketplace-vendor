@@ -303,6 +303,10 @@ export class HotelsComponent implements OnInit {
   ngOnInit(): void {
     console.log('🚀 Hotels component initialized');
     console.log('🔌 Backend URL configured: http://localhost:5001');
+
+    // Set default dates for availability check
+    this.setDefaultDates();
+
     this.checkBackendConnection();
     this.loadHotelsFromAPI();
 
@@ -322,6 +326,24 @@ export class HotelsComponent implements OnInit {
         }
       }
     });
+  }
+
+  /**
+   * Set default check-in and check-out dates for availability
+   */
+  private setDefaultDates(): void {
+    // Set check-in to today
+    const today = new Date();
+    const todayString = today.toISOString().split('T')[0];
+    this.checkInDate.set(todayString);
+    console.log('📅 Default check-in date set to: ' + todayString);
+
+    // Set check-out to tomorrow (1 night stay)
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowString = tomorrow.toISOString().split('T')[0];
+    this.checkOutDate.set(tomorrowString);
+    console.log('📅 Default check-out date set to: ' + tomorrowString);
   }
 
   /**
