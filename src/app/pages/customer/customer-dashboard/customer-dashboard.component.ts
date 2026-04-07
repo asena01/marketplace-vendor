@@ -6,6 +6,10 @@ import { FormsModule } from '@angular/forms';
 import { CustomerService } from '../../../services/customer.service';
 import { AuthService } from '../../../services/auth.service';
 
+// Type definitions
+type DashboardSection = 'dashboard' | 'my-bookings' | 'browse' | 'support' | 'profile';
+type ServiceType = 'hotels' | 'food' | 'shopping' | 'services' | 'tours' | null;
+
 // Tab components
 import { CustomerProfileComponent } from '../customer-profile/customer-profile.component';
 import { CustomerHotelBookingsComponent } from '../customer-hotel-bookings/customer-hotel-bookings.component';
@@ -14,6 +18,13 @@ import { CustomerShoppingComponent } from '../customer-shopping/customer-shoppin
 import { CustomerServicesBookingsComponent } from '../customer-services-bookings/customer-services-bookings.component';
 import { CustomerToursBookingsComponent } from '../customer-tours-bookings/customer-tours-bookings.component';
 import { CustomerChatSupportComponent } from '../customer-chat-support/customer-chat-support.component';
+
+// Browse components
+import { HotelsComponent } from '../../hotels/hotels.component';
+import { FoodComponent } from '../../food/food.component';
+import { ShoppingComponent } from '../../shopping/shopping.component';
+import { ServicesComponent } from '../../services/services.component';
+import { ToursComponent } from '../../tours/tours.component';
 
 @Component({
   selector: 'app-customer-dashboard',
@@ -28,7 +39,12 @@ import { CustomerChatSupportComponent } from '../customer-chat-support/customer-
     CustomerShoppingComponent,
     CustomerServicesBookingsComponent,
     CustomerToursBookingsComponent,
-    CustomerChatSupportComponent
+    CustomerChatSupportComponent,
+    HotelsComponent,
+    FoodComponent,
+    ShoppingComponent,
+    ServicesComponent,
+    ToursComponent
   ],
   template: `
     <div class="min-h-screen bg-gray-50 flex flex-col">
@@ -181,6 +197,81 @@ import { CustomerChatSupportComponent } from '../customer-chat-support/customer-
               </button>
             </div>
 
+            <!-- Browse Services -->
+            <div class="mb-6">
+              <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mb-3">Browse Services</h3>
+
+              <button
+                (click)="setSection('browse', 'hotels')"
+                [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
+                  (activeSection() === 'browse' && activeType() === 'hotels'
+                    ? 'bg-green-50 text-green-600 border-l-4 border-green-600'
+                    : 'text-gray-700 hover:bg-gray-100')"
+              >
+                <mat-icon class="text-xl">search</mat-icon>
+                <span class="flex items-center gap-2">
+                  <mat-icon class="text-lg">hotel</mat-icon>
+                  <span>Browse Hotels</span>
+                </span>
+              </button>
+
+              <button
+                (click)="setSection('browse', 'food')"
+                [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
+                  (activeSection() === 'browse' && activeType() === 'food'
+                    ? 'bg-green-50 text-green-600 border-l-4 border-green-600'
+                    : 'text-gray-700 hover:bg-gray-100')"
+              >
+                <mat-icon class="text-xl">search</mat-icon>
+                <span class="flex items-center gap-2">
+                  <mat-icon class="text-lg">restaurant</mat-icon>
+                  <span>Browse Restaurants</span>
+                </span>
+              </button>
+
+              <button
+                (click)="setSection('browse', 'shopping')"
+                [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
+                  (activeSection() === 'browse' && activeType() === 'shopping'
+                    ? 'bg-green-50 text-green-600 border-l-4 border-green-600'
+                    : 'text-gray-700 hover:bg-gray-100')"
+              >
+                <mat-icon class="text-xl">search</mat-icon>
+                <span class="flex items-center gap-2">
+                  <mat-icon class="text-lg">shopping_bag</mat-icon>
+                  <span>Browse Shopping</span>
+                </span>
+              </button>
+
+              <button
+                (click)="setSection('browse', 'services')"
+                [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
+                  (activeSection() === 'browse' && activeType() === 'services'
+                    ? 'bg-green-50 text-green-600 border-l-4 border-green-600'
+                    : 'text-gray-700 hover:bg-gray-100')"
+              >
+                <mat-icon class="text-xl">search</mat-icon>
+                <span class="flex items-center gap-2">
+                  <mat-icon class="text-lg">miscellaneous_services</mat-icon>
+                  <span>Browse Services</span>
+                </span>
+              </button>
+
+              <button
+                (click)="setSection('browse', 'tours')"
+                [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
+                  (activeSection() === 'browse' && activeType() === 'tours'
+                    ? 'bg-green-50 text-green-600 border-l-4 border-green-600'
+                    : 'text-gray-700 hover:bg-gray-100')"
+              >
+                <mat-icon class="text-xl">search</mat-icon>
+                <span class="flex items-center gap-2">
+                  <mat-icon class="text-lg">flight</mat-icon>
+                  <span>Browse Tours</span>
+                </span>
+              </button>
+            </div>
+
             <!-- Support & Profile -->
             <div>
               <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mb-3">Support</h3>
@@ -288,35 +379,83 @@ import { CustomerChatSupportComponent } from '../customer-chat-support/customer-
                   </div>
                 </div>
 
-                <!-- Quick Actions -->
+                <!-- Quick Actions Section 1: My Active Bookings -->
                 <div class="bg-white rounded-lg shadow p-6">
-                  <h3 class="text-xl font-bold text-gray-900 mb-4">Quick Actions</h3>
+                  <h3 class="text-xl font-bold text-gray-900 mb-4">My Active Bookings</h3>
                   <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <button
                       (click)="setSection('my-bookings', 'hotels')"
                       class="bg-gradient-to-br from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 border border-blue-200 rounded-lg p-4 text-left transition"
                     >
-                      <mat-icon class="text-3xl text-blue-600 mb-2">hotel</mat-icon>
+                      <div class="flex items-center justify-between mb-2">
+                        <mat-icon class="text-3xl text-blue-600">hotel</mat-icon>
+                        @if (hotelCount() > 0) {
+                          <span class="bg-blue-600 text-white text-xs font-bold rounded-full px-2 py-1">{{ hotelCount() }}</span>
+                        }
+                      </div>
                       <h4 class="font-bold text-gray-900">My Hotel Bookings</h4>
-                      <p class="text-sm text-gray-600">View and manage your hotel stays</p>
+                      <p class="text-sm text-gray-600">View and manage your stays</p>
                     </button>
 
                     <button
                       (click)="setSection('my-bookings', 'food')"
                       class="bg-gradient-to-br from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-200 border border-orange-200 rounded-lg p-4 text-left transition"
                     >
-                      <mat-icon class="text-3xl text-orange-600 mb-2">restaurant</mat-icon>
+                      <div class="flex items-center justify-between mb-2">
+                        <mat-icon class="text-3xl text-orange-600">restaurant</mat-icon>
+                        @if (foodCount() > 0) {
+                          <span class="bg-orange-600 text-white text-xs font-bold rounded-full px-2 py-1">{{ foodCount() }}</span>
+                        }
+                      </div>
                       <h4 class="font-bold text-gray-900">Food Orders</h4>
-                      <p class="text-sm text-gray-600">Track your food orders</p>
+                      <p class="text-sm text-gray-600">Track your orders</p>
                     </button>
 
                     <button
                       (click)="setSection('my-bookings', 'shopping')"
                       class="bg-gradient-to-br from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 border border-purple-200 rounded-lg p-4 text-left transition"
                     >
-                      <mat-icon class="text-3xl text-purple-600 mb-2">shopping_bag</mat-icon>
+                      <div class="flex items-center justify-between mb-2">
+                        <mat-icon class="text-3xl text-purple-600">shopping_bag</mat-icon>
+                        @if (shoppingCount() > 0) {
+                          <span class="bg-purple-600 text-white text-xs font-bold rounded-full px-2 py-1">{{ shoppingCount() }}</span>
+                        }
+                      </div>
                       <h4 class="font-bold text-gray-900">Shopping Orders</h4>
-                      <p class="text-sm text-gray-600">Manage your shopping purchases</p>
+                      <p class="text-sm text-gray-600">Manage purchases</p>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Quick Actions Section 2: Browse & Discover -->
+                <div class="bg-white rounded-lg shadow p-6">
+                  <h3 class="text-xl font-bold text-gray-900 mb-4">Discover More</h3>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button
+                      (click)="setSection('browse', 'hotels')"
+                      class="bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 border border-green-200 rounded-lg p-4 text-left transition"
+                    >
+                      <mat-icon class="text-3xl text-green-600 mb-2">search</mat-icon>
+                      <h4 class="font-bold text-gray-900">Find Hotels</h4>
+                      <p class="text-sm text-gray-600">Browse and book new hotels</p>
+                    </button>
+
+                    <button
+                      (click)="setSection('browse', 'food')"
+                      class="bg-gradient-to-br from-yellow-50 to-yellow-100 hover:from-yellow-100 hover:to-yellow-200 border border-yellow-200 rounded-lg p-4 text-left transition"
+                    >
+                      <mat-icon class="text-3xl text-yellow-600 mb-2">search</mat-icon>
+                      <h4 class="font-bold text-gray-900">Find Restaurants</h4>
+                      <p class="text-sm text-gray-600">Order from new restaurants</p>
+                    </button>
+
+                    <button
+                      (click)="setSection('browse', 'tours')"
+                      class="bg-gradient-to-br from-indigo-50 to-indigo-100 hover:from-indigo-100 hover:to-indigo-200 border border-indigo-200 rounded-lg p-4 text-left transition"
+                    >
+                      <mat-icon class="text-3xl text-indigo-600 mb-2">search</mat-icon>
+                      <h4 class="font-bold text-gray-900">Explore Tours</h4>
+                      <p class="text-sm text-gray-600">Discover new travel packages</p>
                     </button>
                   </div>
                 </div>
@@ -343,6 +482,26 @@ import { CustomerChatSupportComponent } from '../customer-chat-support/customer-
               <app-customer-tours-bookings></app-customer-tours-bookings>
             }
 
+            @if (activeSection() === 'browse' && activeType() === 'hotels') {
+              <app-hotels></app-hotels>
+            }
+
+            @if (activeSection() === 'browse' && activeType() === 'food') {
+              <app-food></app-food>
+            }
+
+            @if (activeSection() === 'browse' && activeType() === 'shopping') {
+              <app-shopping></app-shopping>
+            }
+
+            @if (activeSection() === 'browse' && activeType() === 'services') {
+              <app-services></app-services>
+            }
+
+            @if (activeSection() === 'browse' && activeType() === 'tours') {
+              <app-tours></app-tours>
+            }
+
             @if (activeSection() === 'support') {
               <app-customer-chat-support></app-customer-chat-support>
             }
@@ -364,8 +523,8 @@ import { CustomerChatSupportComponent } from '../customer-chat-support/customer-
   `]
 })
 export class CustomerDashboardComponent implements OnInit {
-  activeSection = signal<'dashboard' | 'my-bookings' | 'support' | 'profile'>('dashboard');
-  activeType = signal<'hotels' | 'food' | 'shopping' | 'services' | 'tours' | null>(null);
+  activeSection = signal<DashboardSection>('dashboard');
+  activeType = signal<ServiceType>(null);
   isMobileMenuOpen = signal<boolean>(false);
 
   // Signals for tracking counts of active bookings/orders
@@ -554,7 +713,7 @@ export class CustomerDashboardComponent implements OnInit {
     });
   }
 
-  setSection(section: 'dashboard' | 'my-bookings' | 'support' | 'profile', type: 'hotels' | 'food' | 'shopping' | 'services' | 'tours' | null): void {
+  setSection(section: DashboardSection, type: ServiceType): void {
     this.activeSection.set(section);
     if (type) {
       this.activeType.set(type);
