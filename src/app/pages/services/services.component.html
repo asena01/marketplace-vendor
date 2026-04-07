@@ -1,5 +1,7 @@
 <div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-  <app-header></app-header>
+  @if (!embedded) {
+    <app-header></app-header>
+  }
 
   <!-- Hero Section -->
   <section class="pt-12 pb-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-purple-600 to-purple-500">

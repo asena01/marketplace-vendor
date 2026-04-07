@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, effect, computed } from '@angular/core';
+import { Component, OnInit, signal, effect, computed, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
@@ -82,6 +82,9 @@ interface FilterOptions {
   styleUrl: './hotels.component.css'
 })
 export class HotelsComponent implements OnInit {
+  // Embedded mode for use within dashboard (hides header and navigation)
+  @Input() embedded: boolean = false;
+
   hotelsService = MARKETPLACE_SERVICES.find(s => s.id === 'hotels')!;
   categories = this.hotelsService.categories || [];
 

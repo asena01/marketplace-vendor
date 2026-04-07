@@ -483,23 +483,23 @@ import { ToursComponent } from '../../tours/tours.component';
             }
 
             @if (activeSection() === 'browse' && activeType() === 'hotels') {
-              <app-hotels></app-hotels>
+              <app-hotels [embedded]="true"></app-hotels>
             }
 
             @if (activeSection() === 'browse' && activeType() === 'food') {
-              <app-food></app-food>
+              <app-food [embedded]="true"></app-food>
             }
 
             @if (activeSection() === 'browse' && activeType() === 'shopping') {
-              <app-shopping></app-shopping>
+              <app-shopping [embedded]="true"></app-shopping>
             }
 
             @if (activeSection() === 'browse' && activeType() === 'services') {
-              <app-services></app-services>
+              <app-services [embedded]="true"></app-services>
             }
 
             @if (activeSection() === 'browse' && activeType() === 'tours') {
-              <app-tours></app-tours>
+              <app-tours [embedded]="true"></app-tours>
             }
 
             @if (activeSection() === 'support') {

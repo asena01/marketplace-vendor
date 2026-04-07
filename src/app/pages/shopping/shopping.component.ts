@@ -1,4 +1,4 @@
-import { Component, signal, effect, OnInit } from '@angular/core';
+import { Component, signal, effect, OnInit, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -62,6 +62,8 @@ interface CartItem {
   `]
 })
 export class ShoppingComponent implements OnInit {
+  // Embedded mode for use within dashboard (hides header and navigation)
+  @Input() embedded: boolean = false;
   shoppingService = MARKETPLACE_SERVICES.find(s => s.id === 'shopping')!;
   categories = this.shoppingService.categories || [];
 

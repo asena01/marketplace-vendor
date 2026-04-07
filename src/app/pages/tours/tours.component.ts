@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HeaderComponent } from '../../components/header/header.component';
@@ -14,6 +14,9 @@ import { apiConfig } from '../../config/api-config';
   styleUrl: './tours.component.css'
 })
 export class ToursComponent implements OnInit {
+  // Embedded mode for use within dashboard (hides header and navigation)
+  @Input() embedded: boolean = false;
+
   marketplaceService = MARKETPLACE_SERVICES.find(s => s.id === 'tours')!;
 
   tours = signal<Tour[]>([]);

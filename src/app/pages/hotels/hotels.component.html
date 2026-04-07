@@ -1,5 +1,7 @@
 <div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-  <app-header></app-header>
+  @if (!embedded) {
+    <app-header></app-header>
+  }
 
   <!-- Backend Status Warning -->
   <!--<div class="bg-red-50 border-b-4 border-red-600 p-4">

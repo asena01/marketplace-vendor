@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, effect, computed } from '@angular/core';
+import { Component, OnInit, signal, effect, computed, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
@@ -51,6 +51,9 @@ interface Order {
   styleUrl: './food.component.css'
 })
 export class FoodComponent implements OnInit {
+  // Embedded mode for use within dashboard (hides header and navigation)
+  @Input() embedded: boolean = false;
+
   Object = Object; // Expose Object to template
   categories: any[] = [];
 

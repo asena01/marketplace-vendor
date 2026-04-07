@@ -1,5 +1,7 @@
 <div class="min-h-screen bg-white">
-  <app-header></app-header>
+  @if (!embedded) {
+    <app-header></app-header>
+  }
 
   <!-- Sticky Header with Search (Mobile Only) -->
   <div class="sticky top-16 z-20 bg-white border-b border-gray-200 shadow-sm lg:hidden">
