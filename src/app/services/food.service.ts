@@ -67,8 +67,8 @@ export class FoodService {
   // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api/restaurants'
   // REMOTE: 'https://api-qpczzmaezq-uc.a.run.app/restaurants'
   // LOCAL: Using localhost for development
-  private apiUrl = 'http://localhost:5001/restaurants';
-  //private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/restaurants';
+  //private apiUrl = 'http://localhost:5001/restaurants';
+  private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/restaurants';
   constructor(private http: HttpClient) {}
 
   /**
