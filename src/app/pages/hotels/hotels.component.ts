@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, effect, computed } from '@angular/core';
+import { Component, OnInit, signal, effect, computed, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
@@ -29,9 +29,25 @@ interface Room {
   images?: string[]; // Room photos/images
 }
 
+interface RoomVariant {
+  id: string; // Unique ID for this variant
+  type: string;
+  bedType: string;
+  price: number;
+  originalPrice: number;
+  amenities: string[];
+  maxGuests: number;
+  rating: number;
+  reviews: number;
+  icon: string;
+  images?: string[];
+  availableCount: number; // How many of this exact variant are available
+  roomIds: string[]; // IDs of actual room objects that match this variant
+}
+
 interface GroupedRoom {
   type: string;
-  rooms: Room[];
+  variants: RoomVariant[];
   availableCount: number;
 }
 
@@ -82,6 +98,9 @@ interface FilterOptions {
   styleUrl: './hotels.component.css'
 })
 export class HotelsComponent implements OnInit {
+  // Embedded mode for use within dashboard (hides header and navigation)
+  @Input() embedded: boolean = false;
+
   hotelsService = MARKETPLACE_SERVICES.find(s => s.id === 'hotels')!;
   categories = this.hotelsService.categories || [];
 
@@ -284,6 +303,10 @@ export class HotelsComponent implements OnInit {
   ngOnInit(): void {
     console.log('🚀 Hotels component initialized');
     console.log('🔌 Backend URL configured: http://localhost:5001');
+
+    // Set default dates for availability check
+    this.setDefaultDates();
+
     this.checkBackendConnection();
     this.loadHotelsFromAPI();
 
@@ -303,6 +326,24 @@ export class HotelsComponent implements OnInit {
         }
       }
     });
+  }
+
+  /**
+   * Set default check-in and check-out dates for availability
+   */
+  private setDefaultDates(): void {
+    // Set check-in to today
+    const today = new Date();
+    const todayString = today.toISOString().split('T')[0];
+    this.checkInDate.set(todayString);
+    console.log('📅 Default check-in date set to: ' + todayString);
+
+    // Set check-out to tomorrow (1 night stay)
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowString = tomorrow.toISOString().split('T')[0];
+    this.checkOutDate.set(tomorrowString);
+    console.log('📅 Default check-out date set to: ' + tomorrowString);
   }
 
   /**
@@ -776,19 +817,53 @@ export class HotelsComponent implements OnInit {
   }
 
   getGroupedRooms(hotel: Hotel): GroupedRoom[] {
-    const grouped = new Map<string, Room[]>();
-    
+    const variantMap = new Map<string, RoomVariant>();
+    const typeVariantsMap = new Map<string, RoomVariant[]>();
+
     hotel.rooms.forEach(room => {
-      if (!grouped.has(room.type)) {
-        grouped.set(room.type, []);
+      // Create a unique key for this room variant (same type, bed type, price, amenities)
+      const amenitiesKey = [...room.amenities].sort().join('|');
+      const variantKey = `${room.type}|${room.bedType}|${room.price}|${room.maxGuests}|${amenitiesKey}`;
+
+      if (!variantMap.has(variantKey)) {
+        // Create a new variant
+        const variant: RoomVariant = {
+          id: room.id, // Use the first room's ID as the variant ID
+          type: room.type,
+          bedType: room.bedType,
+          price: room.price,
+          originalPrice: room.originalPrice || room.price,
+          amenities: room.amenities,
+          maxGuests: room.maxGuests,
+          rating: room.rating,
+          reviews: room.reviews,
+          icon: room.icon,
+          images: room.images,
+          availableCount: 0,
+          roomIds: []
+        };
+        variantMap.set(variantKey, variant);
       }
-      grouped.get(room.type)!.push(room);
+
+      // Add this room to the variant
+      const variant = variantMap.get(variantKey)!;
+      variant.availableCount++;
+      variant.roomIds.push(room.id);
     });
 
-    return Array.from(grouped.entries()).map(([type, rooms]) => ({
+    // Group variants by room type
+    variantMap.forEach((variant, _key) => {
+      if (!typeVariantsMap.has(variant.type)) {
+        typeVariantsMap.set(variant.type, []);
+      }
+      typeVariantsMap.get(variant.type)!.push(variant);
+    });
+
+    // Convert to GroupedRoom format
+    return Array.from(typeVariantsMap.entries()).map(([type, variants]) => ({
       type,
-      rooms,
-      availableCount: rooms.length
+      variants,
+      availableCount: variants.reduce((sum, v) => sum + v.availableCount, 0)
     }));
   }
 
@@ -923,6 +998,14 @@ export class HotelsComponent implements OnInit {
     this.setRoomGroupPage(hotelId, roomType, currentPage + 1);
   }
 
+  selectRoomVariant(variant: RoomVariant, hotel: Hotel): void {
+    // Get the first available room from the variant
+    const availableRoom = hotel.rooms.find(r => variant.roomIds.includes(r.id));
+    if (availableRoom) {
+      this.selectRoom(availableRoom, hotel);
+    }
+  }
+
   selectRoom(room: Room, hotel: Hotel): void {
     // Check if user is logged in
     if (!this.authService.isLoggedIn()) {
@@ -1005,6 +1088,38 @@ export class HotelsComponent implements OnInit {
         this.toastService.error(errorMsg);
       }
     });
+  }
+
+  /**
+   * Decrement room availability after successful booking
+   * This immediately updates the UI by removing the booked room from inventory
+   */
+  decrementRoomAvailability(): void {
+    const selectedHotel = this.selectedHotel();
+    const selectedRoom = this.selectedRoom();
+
+    if (!selectedHotel || !selectedRoom) {
+      console.log('⚠️ No hotel or room selected for decrement');
+      return;
+    }
+
+    // Find the booked room in the hotel's rooms array
+    const roomIndex = selectedHotel.rooms.findIndex(r => r.id === selectedRoom.id);
+
+    if (roomIndex !== -1) {
+      // Remove this room from the inventory
+      selectedHotel.rooms.splice(roomIndex, 1);
+      console.log(`📉 Room decremented. Remaining rooms of type "${selectedRoom.type}": ${selectedHotel.rooms.filter(r => r.type === selectedRoom.type).length}`);
+
+      // Update the hotels signal to trigger UI refresh
+      const updatedHotels = this.hotels().map(h =>
+        h.id === selectedHotel.id ? selectedHotel : h
+      );
+      this.hotels.set(updatedHotels);
+      console.log('✅ Room availability updated in UI');
+    } else {
+      console.log('⚠️ Booked room not found in hotel rooms array');
+    }
   }
 
   closeBooking(): void {
@@ -1168,6 +1283,10 @@ export class HotelsComponent implements OnInit {
 
           setTimeout(() => {
             alert(`✅ Booking Confirmed!\n\nHotel: ${this.selectedHotel()!.name}\nRoom: ${this.selectedRoom()!.type}\nTotal: ${this.formatPrice(booking.totalPrice)}\n\n🔐 Smart Lock Access:\nYour access code and QR code have been sent to ${this.customerEmail()}`);
+            // Decrement room availability immediately in the UI
+            this.decrementRoomAvailability();
+            // Then refresh hotel list from API to ensure sync
+            this.loadHotelsFromAPI();
             this.closeBooking();
             this.bookingSuccess.set(false);
           }, 1500);
@@ -1192,6 +1311,10 @@ export class HotelsComponent implements OnInit {
 
           setTimeout(() => {
             alert(`✅ Booking Confirmed!\n\nHotel: ${this.selectedHotel()!.name}\nRoom: ${this.selectedRoom()!.type}\nTotal: ${this.formatPrice(booking.totalPrice)}\n\nConfirmation email sent to ${this.customerEmail()}`);
+            // Decrement room availability immediately in the UI
+            this.decrementRoomAvailability();
+            // Then refresh hotel list from API to ensure sync
+            this.loadHotelsFromAPI();
             this.closeBooking();
             this.bookingSuccess.set(false);
           }, 1500);

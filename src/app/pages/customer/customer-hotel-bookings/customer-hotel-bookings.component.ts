@@ -59,56 +59,99 @@ interface RoomServiceItem {
         </div>
       </div>
 
-      <!-- Bookings Table -->
+      <!-- Bookings Grid (Card Layout) -->
       @if (bookings().length > 0) {
-        <div class="bg-white rounded-lg shadow overflow-hidden">
-          <table class="w-full">
-            <thead class="bg-gray-50 border-b">
-              <tr>
-                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Booking ID</th>
-                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Hotel Name</th>
-                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Room Type</th>
-                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Check-in</th>
-                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Nights</th>
-                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Total Price</th>
-                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
-                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y">
-              @for (booking of bookings(); track booking._id) {
-                <tr class="hover:bg-gray-50">
-                  <td class="px-6 py-3 text-sm text-gray-700 font-mono">{{ booking._id.slice(0, 8) }}</td>
-                  <td class="px-6 py-3 text-sm text-gray-700">{{ booking.hotelName }}</td>
-                  <td class="px-6 py-3 text-sm text-gray-700">{{ booking.roomType }}</td>
-                  <td class="px-6 py-3 text-sm text-gray-700">{{ formatDate(booking.checkIn) }}</td>
-                  <td class="px-6 py-3 text-sm text-gray-700">{{ booking.nights }}</td>
-                  <td class="px-6 py-3 text-sm font-semibold text-gray-900">₦{{ booking.totalPrice.toLocaleString() }}</td>
-                  <td class="px-6 py-3 text-sm">
-                    <span [class]="getStatusBadgeClass(booking.status)">
-                      {{ getStatusBadge(booking.status) }}
-                    </span>
-                  </td>
-                  <td class="px-6 py-3 text-sm space-x-2">
-                    <button
-                      (click)="viewBookingDetails(booking)"
-                      class="text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1 inline-flex">
-                      <mat-icon class="text-sm">visibility</mat-icon>
-                      <span>View</span>
-                    </button>
-                    @if (booking.status === 'checked-in' || booking.status === 'confirmed') {
-                      <button
-                        (click)="orderRoomService(booking)"
-                        class="text-green-600 hover:text-green-800 font-semibold flex items-center gap-1 inline-flex">
-                        <mat-icon class="text-sm">room_service</mat-icon>
-                        <span>Room Service</span>
-                      </button>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-6">
+          @for (booking of bookings(); track booking._id) {
+            <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition overflow-hidden border-l-4 border-blue-500">
+              <!-- Card Header -->
+              <div class="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-4 border-b border-blue-200 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <mat-icon class="text-3xl text-blue-600">hotel</mat-icon>
+                  <div>
+                    <h3 class="text-lg font-bold text-gray-900">{{ booking.hotelName }}</h3>
+                    <p class="text-sm text-gray-600">Booking #{{ booking._id.slice(0, 8) }}</p>
+                  </div>
+                </div>
+                <span [class]="getStatusBadgeClass(booking.status)">
+                  {{ getStatusBadge(booking.status) }}
+                </span>
+              </div>
+
+              <!-- Card Body -->
+              <div class="p-6 space-y-4">
+                <!-- Booking Details Grid -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div class="bg-gray-50 p-3 rounded-lg">
+                    <p class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Room Type</p>
+                    <p class="text-lg font-bold text-gray-900 mt-1">{{ booking.roomType | titlecase }}</p>
+                  </div>
+                  <div class="bg-gray-50 p-3 rounded-lg">
+                    <p class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Check-in</p>
+                    <p class="text-lg font-bold text-gray-900 mt-1">{{ formatDate(booking.checkIn) }}</p>
+                  </div>
+                  <div class="bg-gray-50 p-3 rounded-lg">
+                    <p class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Check-out</p>
+                    <p class="text-lg font-bold text-gray-900 mt-1">{{ formatDate(booking.checkOut) }}</p>
+                  </div>
+                  <div class="bg-gray-50 p-3 rounded-lg">
+                    <p class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Nights</p>
+                    <p class="text-lg font-bold text-gray-900 mt-1">{{ booking.nights }}</p>
+                  </div>
+                </div>
+
+                <!-- Additional Info -->
+                @if (booking.bedType || booking.guestCount) {
+                  <div class="border-t pt-4 space-y-2">
+                    @if (booking.bedType) {
+                      <div class="flex items-center justify-between">
+                        <span class="text-gray-600 text-sm">
+                          <mat-icon class="text-base align-middle">bed</mat-icon>
+                          Bed Type
+                        </span>
+                        <span class="font-semibold text-gray-900">{{ booking.bedType | titlecase }}</span>
+                      </div>
                     }
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
+                    @if (booking.guestCount) {
+                      <div class="flex items-center justify-between">
+                        <span class="text-gray-600 text-sm">
+                          <mat-icon class="text-base align-middle">person</mat-icon>
+                          Guests
+                        </span>
+                        <span class="font-semibold text-gray-900">{{ booking.guestCount }}</span>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- Price Section -->
+                <div class="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg border border-green-200">
+                  <div class="flex items-center justify-between">
+                    <span class="text-gray-600 font-semibold">Total Price</span>
+                    <span class="text-3xl font-bold text-green-600">₦{{ booking.totalPrice.toLocaleString() }}</span>
+                  </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex gap-3 pt-4 border-t">
+                  <button
+                    (click)="viewBookingDetails(booking)"
+                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2">
+                    <mat-icon class="text-lg">visibility</mat-icon>
+                    <span>View Details</span>
+                  </button>
+                  @if (booking.status === 'checked-in' || booking.status === 'confirmed') {
+                    <button
+                      (click)="orderRoomService(booking)"
+                      class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2">
+                      <mat-icon class="text-lg">room_service</mat-icon>
+                      <span>Room Service</span>
+                    </button>
+                  }
+                </div>
+              </div>
+            </div>
+          }
         </div>
       } @else {
         <div class="bg-white rounded-lg shadow p-12 text-center">

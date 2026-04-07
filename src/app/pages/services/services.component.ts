@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -18,6 +18,9 @@ import { apiConfig } from '../../config/api-config';
   styleUrl: './services.component.css'
 })
 export class ServicesComponent implements OnInit {
+  // Embedded mode for use within dashboard (hides header and navigation)
+  @Input() embedded: boolean = false;
+
   servicesService = MARKETPLACE_SERVICES.find(s => s.id === 'services')!;
   categories = this.servicesService.categories || [];
 
