@@ -20,6 +20,7 @@ import { ForgotPasswordComponent } from './pages/auth/forgot-password/forgot-pas
 import { VendorDashboardComponent } from './pages/vendors/dashboard/vendor-dashboard.component';
 import { VendorLoginComponent } from './pages/auth/vendor-login/vendor-login.component';
 import { AdminDashboardComponent } from './pages/admin/admin-dashboard/admin-dashboard.component';
+import { AdminHotelDetailComponent } from './pages/admin/admin-vendors/admin-hotel-detail.component';
 import { VendorDetailComponent } from './pages/admin/admin-vendors/vendor-detail.component';
 import { DeliveryDashboardComponent } from './pages/delivery/delivery-dashboard/delivery-dashboard.component';
 import { CustomerDashboardComponent } from './pages/customer/customer-dashboard/customer-dashboard.component';
@@ -43,8 +44,6 @@ import { HotelNotificationsComponent } from './pages/vendors/dashboards/hotel-da
 import { HotelReviewsComponent } from './pages/vendors/dashboards/hotel-dashboard/reviews/reviews.component';
 import { HotelBookingsComponent } from './pages/vendors/dashboards/hotel-dashboard/bookings/bookings.component';
 import { HotelProfileComponent } from './pages/vendors/dashboards/hotel-dashboard/profile/profile.component';
-import { HotelFoodOrdersComponent } from './pages/vendors/dashboards/hotel-dashboard/food-orders/food-orders.component';
-import { HotelFoodMenuComponent } from './pages/vendors/dashboards/hotel-dashboard/food-menu/food-menu.component';
 import { HotelFoodDeliveryComponent } from './pages/vendors/dashboards/hotel-dashboard/food-delivery/food-delivery.component';
 import { HotelDrinkOrdersComponent } from './pages/vendors/dashboards/hotel-dashboard/drink-orders/drink-orders.component';
 import { HotelDrinkMenuComponent } from './pages/vendors/dashboards/hotel-dashboard/drink-menu/drink-menu.component';
@@ -84,15 +83,54 @@ import { RevenueComponent } from './pages/vendors/dashboards/hotel-dashboard/rev
 import { StaffLogsComponent } from './pages/vendors/dashboards/hotel-dashboard/staff-logs/staff-logs.component';
 import { PreCheckinComponent } from './pages/vendors/dashboards/hotel-dashboard/pre-checkin/pre-checkin.component';
 import { AnalyticsComponent } from './pages/vendors/dashboards/hotel-dashboard/analytics/analytics.component';
+import { HotelChatCenterComponent } from './pages/vendors/dashboards/hotel-dashboard/chat-center/chat-center.component';
+import { StaffLoginComponent } from './pages/staff/staff-login.component';
+import { StaffDashboardComponent } from './pages/staff/staff-dashboard.component';
+import { StaffMyScheduleComponent } from './pages/staff/staff-my-schedule.component';
+import { StaffMyTasksComponent } from './pages/staff/staff-my-tasks.component';
+import { StaffTimesheetComponent } from './pages/staff/staff-timesheet.component';
+import { StaffProfileComponent } from './pages/staff/staff-profile.component';
+import { StaffAccessOverviewComponent } from './pages/staff/staff-access-overview.component';
+import { StaffGuestsComponent } from './pages/staff/staff-guests.component';
+import { HotelFoodOrdersComponent } from './pages/vendors/dashboards/hotel-dashboard/food-orders/food-orders.component';
+import { HotelFoodMenuComponent } from './pages/vendors/dashboards/hotel-dashboard/food-menu/food-menu.component';
+import { HotelServicesComponent } from './pages/vendors/dashboards/hotel-dashboard/services/services.component';
 import { VendorGuard } from './guards/vendor.guard';
 import { AdminGuard } from './guards/admin.guard';
-import { PermissionGuard, PermissionsGuard, RoleGuard, RolesGuard } from './guards/permission.guard';
+import { PermissionGuard, PermissionsGuard, RoleGuard, RolesGuard, StaffRouteGuard } from './guards/permission.guard';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'login', component: LoginComponent },
+  { path: 'staff-login', component: StaffLoginComponent },
   { path: 'vendor-login', component: VendorLoginComponent },
   { path: 'customer-dashboard', component: CustomerDashboardComponent },
+  {
+    path: 'staff-dashboard',
+    component: StaffDashboardComponent,
+    children: [
+      { path: '', redirectTo: 'my-schedule', pathMatch: 'full' },
+      { path: 'overview', component: StaffAccessOverviewComponent, canActivate: [StaffRouteGuard], data: { staffModules: ['overview'] } },
+      { path: 'bookings', component: HotelBookingsComponent, canActivate: [StaffRouteGuard], data: { staffModules: ['bookings'] } },
+      { path: 'rooms', component: HotelRoomsComponent, canActivate: [StaffRouteGuard], data: { staffModules: ['rooms'] } },
+      { path: 'guests', component: StaffGuestsComponent, canActivate: [StaffRouteGuard], data: { staffModules: ['guests'] } },
+      { path: 'pre-checkin', component: PreCheckinComponent, canActivate: [StaffRouteGuard], data: { staffModules: ['pre-checkin'] } },
+      { path: 'food-orders', component: HotelFoodOrdersComponent, canActivate: [StaffRouteGuard], data: { staffModules: ['food-orders'] } },
+      { path: 'food-menu', component: HotelFoodMenuComponent, canActivate: [StaffRouteGuard], data: { staffModules: ['food-menu'] } },
+      { path: 'services', component: HotelServicesComponent, canActivate: [StaffRouteGuard], data: { staffModules: ['services'] } },
+      { path: 'chat', component: HotelChatCenterComponent, canActivate: [StaffRouteGuard], data: { staffModules: ['chat'] } },
+      { path: 'my-schedule', component: StaffMyScheduleComponent, canActivate: [StaffRouteGuard], data: { staffModules: ['my-schedule'] } },
+      { path: 'my-tasks', component: StaffMyTasksComponent, canActivate: [StaffRouteGuard], data: { staffModules: ['my-tasks'] } },
+      { path: 'timesheet', component: StaffTimesheetComponent, canActivate: [StaffRouteGuard], data: { staffModules: ['timesheet'] } },
+      { path: 'profile', component: StaffProfileComponent, canActivate: [StaffRouteGuard], data: { staffModules: ['profile'] } },
+      { path: 'access', component: StaffAccessOverviewComponent, canActivate: [StaffRouteGuard], data: { staffModules: ['overview'] } }
+    ]
+  },
+  {
+    path: 'admin-dashboard/hotels/:vendorId',
+    component: AdminHotelDetailComponent,
+    canActivate: [AdminGuard]
+  },
   {
     path: 'admin-dashboard',
     component: AdminDashboardComponent,
@@ -119,8 +157,10 @@ export const routes: Routes = [
       { path: 'staff-logs', component: StaffLogsComponent },
       { path: 'pre-checkin', component: PreCheckinComponent },
       { path: 'analytics', component: AnalyticsComponent },
+      { path: 'chat-center', component: HotelChatCenterComponent },
       { path: 'food-orders', component: HotelFoodOrdersComponent },
       { path: 'food-menu', component: HotelFoodMenuComponent },
+      { path: 'services', component: HotelServicesComponent },
       { path: 'food-delivery', component: HotelFoodDeliveryComponent },
       { path: 'drink-orders', component: HotelDrinkOrdersComponent },
       { path: 'drink-menu', component: HotelDrinkMenuComponent },

@@ -43,6 +43,22 @@ const VendorChatSchema = new mongoose.Schema(
       enum: ['open', 'closed', 'pending'],
       default: 'open'
     },
+    unreadForCustomer: {
+      type: Number,
+      default: 0
+    },
+    unreadForVendor: {
+      type: Number,
+      default: 0
+    },
+    lastReadAtCustomer: {
+      type: Date,
+      default: null
+    },
+    lastReadAtVendor: {
+      type: Date,
+      default: null
+    },
     messages: [
       {
         _id: mongoose.Schema.Types.ObjectId,

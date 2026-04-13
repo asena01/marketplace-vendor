@@ -649,6 +649,27 @@ import { AngularFireUploadService } from '../../../../../services/angular-fire-u
             }
           </div>
 
+          @if (securitySummary()) {
+            <div class="grid grid-cols-1 gap-3 md:grid-cols-4">
+              <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <p class="text-xs uppercase tracking-wide text-slate-500">Total Rooms</p>
+                <p class="mt-2 text-2xl font-bold text-slate-900">{{ securitySummary()?.totalRooms || 0 }}</p>
+              </div>
+              <div class="rounded-xl border border-blue-100 bg-blue-50 p-4">
+                <p class="text-xs uppercase tracking-wide text-blue-700">Contactless Ready</p>
+                <p class="mt-2 text-2xl font-bold text-slate-900">{{ securitySummary()?.contactlessReadyRooms || 0 }}</p>
+              </div>
+              <div class="rounded-xl border border-amber-100 bg-amber-50 p-4">
+                <p class="text-xs uppercase tracking-wide text-amber-700">Monitored Only</p>
+                <p class="mt-2 text-2xl font-bold text-slate-900">{{ securitySummary()?.monitoredOnlyRooms || 0 }}</p>
+              </div>
+              <div class="rounded-xl border border-indigo-100 bg-indigo-50 p-4">
+                <p class="text-xs uppercase tracking-wide text-indigo-700">Unassigned Devices</p>
+                <p class="mt-2 text-2xl font-bold text-slate-900">{{ securitySummary()?.unassignedDevices || 0 }}</p>
+              </div>
+            </div>
+          }
+
         </div>
       </div>
 
@@ -675,6 +696,13 @@ export class HotelProfileComponent implements OnInit {
   isSaving = signal(false);
   errorMessage = signal('');
   successMessage = signal('');
+  securitySummary = signal<{
+    totalRooms: number;
+    contactlessReadyRooms: number;
+    monitoredOnlyRooms: number;
+    assignedDevices: number;
+    unassignedDevices: number;
+  } | null>(null);
   isUploadingImages = signal(false);
   isDraggingImages = signal(false);
   uploadSteps = signal<string[]>([]);
@@ -739,6 +767,7 @@ export class HotelProfileComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadProfile();
+    this.loadSecuritySummary();
   }
 
   loadProfile(): void {
@@ -828,6 +857,22 @@ export class HotelProfileComponent implements OnInit {
         const errorMsg = error.error?.message || error.message || `HTTP ${error.status}`;
         this.errorMessage.set(`❌ Failed to load profile: ${errorMsg}`);
         this.isLoading.set(false);
+      }
+    });
+  }
+
+  loadSecuritySummary(): void {
+    this.hotelService.getRoomSecuritySummary().subscribe({
+      next: (response: any) => {
+        if (response.status === 'success' && response.data) {
+          this.securitySummary.set(response.data);
+          return;
+        }
+        this.securitySummary.set(null);
+      },
+      error: (error: any) => {
+        console.error('Error loading room security summary:', error);
+        this.securitySummary.set(null);
       }
     });
   }

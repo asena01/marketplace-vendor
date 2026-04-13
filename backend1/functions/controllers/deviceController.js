@@ -60,17 +60,39 @@ const getDeviceLogs = async (req, res) => {
     
     try {
         console.log(`📋 Fetching logs for device: ${deviceId}`);
-        
-        const response = await context.request({
+
+        const buildQuery = (mode = 'full') => {
+            const query = { size: mode === 'fallback' ? 20 : 100 };
+
+            if (mode === 'full') {
+                if (start_time && !Number.isNaN(Number(start_time))) {
+                    query.start_time = String(start_time);
+                }
+
+                if (end_time && !Number.isNaN(Number(end_time))) {
+                    query.end_time = String(end_time);
+                }
+
+                if (typeof codes === 'string' && codes.trim().length > 0) {
+                    query.codes = codes.trim();
+                }
+            }
+
+            return query;
+        };
+
+        const requestLogs = async (query) => context.request({
             path: `/v2.0/cloud/thing/${deviceId}/report-logs`,
             method: 'GET',
-            query: {
-                codes,
-                start_time,
-                end_time,
-                size: 100,
-            },
+            query,
         });
+
+        let response = await requestLogs(buildQuery('full'));
+
+        if (!response.success && String(response.msg || '').toLowerCase().includes('illegal param')) {
+            console.warn(`⚠️ Tuya rejected full log query for ${deviceId}, retrying with minimal params`);
+            response = await requestLogs(buildQuery('fallback'));
+        }
         
         if (response.success) {
             let logs = response.result?.logs;
@@ -104,10 +126,15 @@ const getDeviceLogs = async (req, res) => {
             });
         } else {
             console.error(`❌ Failed to fetch device logs:`, response.msg);
-            return res.status(400).json({ 
-                status: 'error',
-                error: "Error fetching logs",
-                message: response.msg
+            return res.status(200).json({
+                status: 'success',
+                deviceId,
+                logs: [],
+                totalLogs: 0,
+                timeDifferences: [],
+                message: response.msg === 'illegal param'
+                    ? 'This device does not expose report logs through the Tuya log endpoint.'
+                    : response.msg
             });
         }
     } catch (error) {

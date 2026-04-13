@@ -18,7 +18,7 @@ const DeviceSchema = new Schema({
   roomNumber: Number,
   deviceType: {
     type: String,
-    enum: ['motion_sensor', 'smart_lock', 'thermostat', 'camera', 'light', 'speaker'],
+    enum: ['motion_sensor', 'door_sensor', 'smart_lock', 'thermostat', 'camera', 'light', 'speaker'],
     default: 'motion_sensor'
   },
   status: {

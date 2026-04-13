@@ -28,12 +28,29 @@ const reviewSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       default: null,
     },
+    bookingId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Booking',
+      default: null,
+    },
     productId: {
       type: mongoose.Schema.Types.ObjectId,
       default: null,
     },
     productName: {
       type: String,
+      default: null,
+    },
+    roomNumber: {
+      type: String,
+      default: null,
+    },
+    checkInDate: {
+      type: Date,
+      default: null,
+    },
+    checkOutDate: {
+      type: Date,
       default: null,
     },
     rating: {

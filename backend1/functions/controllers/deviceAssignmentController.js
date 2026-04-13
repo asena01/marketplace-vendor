@@ -1,6 +1,93 @@
 import Device from '../models/Device.js';
 import Room from '../models/Room.js';
 import Hotel from '../models/Hotel.js';
+import { TuyaContext } from '@tuya/tuya-connector-nodejs';
+
+const TUYA_ACCESS_KEY = process.env.TUYA_ACCESS_KEY || "uacrm8an77hjqghy7qug";
+const TUYA_SECRET_KEY = process.env.TUYA_SECRET_KEY || "59c473f01d2f4ca3ba7cb77ccd258661";
+const TUYA_REGION = process.env.TUYA_REGION || "https://openapi.tuyaeu.com";
+
+const tuyaContext = new TuyaContext({
+  baseUrl: TUYA_REGION,
+  accessKey: TUYA_ACCESS_KEY,
+  secretKey: TUYA_SECRET_KEY,
+});
+
+const isDoorSensorDevice = (device) => {
+  if (!device) return false;
+  return device.deviceType === 'door_sensor' || device.deviceType === 'motion_sensor' || (
+    device.deviceType === 'motion_sensor' &&
+    (device.metadata?.sensorRole === 'door_sensor' || device.metadata?.usage === 'door_monitoring')
+  );
+};
+
+const deriveAccessMode = (room) => {
+  const hasSmartLock = !!room.smartLockDevice;
+  const hasDoorSensor = !!room.doorSensorDevice;
+
+  if (hasSmartLock && hasDoorSensor) return 'hybrid';
+  if (hasSmartLock) return 'smart_lock';
+  if (hasDoorSensor) return 'door_sensor';
+  return 'none';
+};
+
+const applyRoomSecurityState = async (room, device, action = 'assign') => {
+  if (!room || !device) return;
+
+  if (device.deviceType === 'smart_lock') {
+    room.smartLockDevice = action === 'assign' ? device._id : null;
+  }
+
+  if (isDoorSensorDevice(device)) {
+    room.doorSensorDevice = action === 'assign' ? device._id : null;
+  }
+
+  room.accessMode = deriveAccessMode(room);
+  room.contactlessReady = ['smart_lock', 'hybrid'].includes(room.accessMode);
+  room.monitoringEnabled = ['door_sensor', 'hybrid'].includes(room.accessMode);
+  await room.save();
+};
+
+const normalizeTuyaDevices = (result) => {
+  if (Array.isArray(result)) return result;
+  if (Array.isArray(result?.list)) return result.list;
+  if (Array.isArray(result?.devices)) return result.devices;
+  return [];
+};
+
+const resolveTuyaOnline = (device = {}) => {
+  if (typeof device.isOnline === 'boolean') return device.isOnline;
+  if (typeof device.online === 'boolean') return device.online;
+  return false;
+};
+
+const resolveTuyaUpdateTime = (device = {}) => {
+  return device.update_time || device.updateTime || device.activeTime || null;
+};
+
+const fetchTuyaLiveDeviceMap = async () => {
+  try {
+    const response = await tuyaContext.request({
+      path: '/v2.0/cloud/thing/device',
+      method: 'GET',
+      query: { page_size: 20 }
+    });
+
+    if (!response.success) {
+      return new Map();
+    }
+
+    return new Map(
+      normalizeTuyaDevices(response.result).map((device) => {
+        const normalizedDeviceId = device.device_id || device.id || device.uuid || device.dev_id || '';
+        return [normalizedDeviceId, device];
+      })
+    );
+  } catch (error) {
+    console.error('⚠️ Failed to refresh hotel device statuses from Tuya:', error.message);
+    return new Map();
+  }
+};
 
 /**
  * Get all devices with their room assignments
@@ -10,14 +97,46 @@ export const getDeviceAssignments = async (req, res) => {
   try {
     const { hotelId } = req.params;
 
-    // Get all devices for this hotel
-    const devices = await Device.find({ hotel: hotelId })
-      .populate('room', 'roomNumber roomType floor')
+    // Devices visible to this hotel:
+    // - devices already assigned to this hotel
+    // - accepted devices not yet assigned to any hotel/room
+    const devices = await Device.find({
+      $or: [
+        { hotel: hotelId },
+        { hotel: null, room: null }
+      ]
+    })
+      .populate('room', 'roomNumber roomType floor accessMode contactlessReady monitoringEnabled smartLockDevice doorSensorDevice')
       .sort({ roomNumber: 1, deviceType: 1 });
+
+    const tuyaLiveMap = await fetchTuyaLiveDeviceMap();
+    await Promise.all(
+      devices.map(async (device) => {
+        const tuyaId = device.tuyaDeviceId || device.deviceId;
+        if (!tuyaId || !tuyaLiveMap.has(tuyaId)) {
+          return;
+        }
+
+        const liveDevice = tuyaLiveMap.get(tuyaId);
+        const liveStatus = resolveTuyaOnline(liveDevice);
+        const updateTime = resolveTuyaUpdateTime(liveDevice);
+        const liveLastSeen = updateTime ? new Date(Number(updateTime) * 1000) : null;
+
+        if (device.status !== liveStatus || String(device.lastDetectionTime || '') !== String(liveLastSeen || '')) {
+          device.status = liveStatus;
+          if (liveLastSeen) {
+            device.lastDetectionTime = liveLastSeen;
+          }
+          await device.save();
+        }
+      })
+    );
 
     // Get all rooms for this hotel
     const rooms = await Room.find({ hotel: hotelId })
-      .select('roomNumber roomType floor capacity status')
+      .populate('smartLockDevice', 'deviceId deviceType status')
+      .populate('doorSensorDevice', 'deviceId deviceType status')
+      .select('roomNumber roomType floor capacity status accessMode contactlessReady monitoringEnabled smartLockDevice doorSensorDevice')
       .sort({ roomNumber: 1 });
 
     // Build assignment map
@@ -41,7 +160,9 @@ export const getDeviceAssignments = async (req, res) => {
           totalDevices: devices.length,
           assignedDevices: devices.filter(d => d.room).length,
           unassignedDevices: unassignedDevices.length,
-          totalRooms: rooms.length
+          totalRooms: rooms.length,
+          contactlessReadyRooms: rooms.filter(r => r.contactlessReady === true).length,
+          monitoredOnlyRooms: rooms.filter(r => r.accessMode === 'door_sensor').length
         }
       }
     });
@@ -62,12 +183,15 @@ export const assignDeviceToRoom = async (req, res) => {
   try {
     const { hotelId, deviceId, roomId } = req.params;
 
-    // Verify device exists and belongs to this hotel
+    // Verify device exists and is either already owned by this hotel or globally unassigned
     const device = await Device.findById(deviceId);
-    if (!device || device.hotel?.toString() !== hotelId) {
+    const deviceBelongsToAnotherHotel =
+      device?.hotel && device.hotel.toString() !== hotelId;
+
+    if (!device || deviceBelongsToAnotherHotel) {
       return res.status(404).json({
         status: 'failed',
-        message: 'Device not found or does not belong to this hotel'
+        message: 'Device not found or already belongs to another hotel'
       });
     }
 
@@ -80,15 +204,24 @@ export const assignDeviceToRoom = async (req, res) => {
       });
     }
 
-    // Check if device is already assigned to another room
+    // Clear the previous room's security profile when moving access hardware.
+    let previousRoom = null;
     if (device.room && device.room.toString() !== roomId) {
       console.warn(`Device ${deviceId} reassigned from room ${device.room} to room ${roomId}`);
+      previousRoom = await Room.findById(device.room);
     }
 
     // Update device assignment
+    device.hotel = hotelId;
     device.room = roomId;
     device.roomNumber = parseInt(room.roomNumber) || null;
     await device.save();
+    if (previousRoom) {
+      await applyRoomSecurityState(previousRoom, device, 'unassign');
+    }
+    await applyRoomSecurityState(room, device, 'assign');
+    await room.populate('smartLockDevice', 'deviceId deviceType status');
+    await room.populate('doorSensorDevice', 'deviceId deviceType status');
 
     return res.status(200).json({
       status: 'success',
@@ -98,6 +231,13 @@ export const assignDeviceToRoom = async (req, res) => {
         deviceName: device.deviceId,
         roomId: room._id,
         roomNumber: room.roomNumber,
+        roomSecurity: {
+          accessMode: room.accessMode,
+          contactlessReady: room.contactlessReady,
+          monitoringEnabled: room.monitoringEnabled,
+          smartLockDevice: room.smartLockDevice,
+          doorSensorDevice: room.doorSensorDevice
+        },
         assignment: {
           assignedAt: device.updatedAt,
           deviceType: device.deviceType,
@@ -131,9 +271,13 @@ export const unassignDeviceFromRoom = async (req, res) => {
     }
 
     const previousRoomId = device.room;
+    const previousRoom = previousRoomId ? await Room.findById(previousRoomId) : null;
     device.room = null;
     device.roomNumber = null;
     await device.save();
+    if (previousRoom) {
+      await applyRoomSecurityState(previousRoom, device, 'unassign');
+    }
 
     return res.status(200).json({
       status: 'success',
@@ -188,6 +332,13 @@ export const getRoomDevices = async (req, res) => {
           activeDevices: devices.filter(d => d.status).length,
           inactiveDevices: devices.filter(d => !d.status).length,
           deviceTypes: [...new Set(devices.map(d => d.deviceType))]
+        },
+        security: {
+          accessMode: room.accessMode || 'none',
+          contactlessReady: room.contactlessReady === true,
+          monitoringEnabled: room.monitoringEnabled === true,
+          smartLockDevice: room.smartLockDevice || null,
+          doorSensorDevice: room.doorSensorDevice || null
         }
       }
     });

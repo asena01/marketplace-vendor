@@ -1,15 +1,15 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
-import { of } from 'rxjs';
+import { Observable, forkJoin, of } from 'rxjs';
+import { tap, catchError, map } from 'rxjs/operators';
 import { AuthService } from './auth.service';
+import { apiConfig } from '../config/api-config';
 
 // ⚠️ REPLACED: Firebase Cloud Functions endpoint with local backend API
 // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api'
-// NEW: Local Node.js/Express backend
-  //const API_URL = 'http://localhost:5001';
-  const API_URL = 'https://api-qpczzmaezq-uc.a.run.app';
+// Local development backend for now
+//const API_URL = apiConfig.getApiBaseUrl();
+const API_URL = 'http://localhost:5001';
 interface ApiResponse<T> {
   status: string;
   message?: string;
@@ -21,6 +21,104 @@ interface ApiResponse<T> {
   };
 }
 
+export interface HotelAmenityService {
+  _id?: string;
+  hotel?: string;
+  category: 'service' | 'laundry' | 'massage' | 'spa' | 'gym' | 'shuttle';
+  name: string;
+  description: string;
+  serviceDetails?: string;
+  price: number;
+  pricingType?: 'per-request' | 'per-hour' | 'per-session' | 'per-day';
+  duration?: string;
+  availability?: string;
+  icon?: string;
+  image?: string;
+  requiresScheduling?: boolean;
+  available?: boolean;
+  isActive?: boolean;
+  sortOrder?: number;
+}
+
+export interface RoomSecuritySummary {
+  totalDevices: number;
+  assignedDevices: number;
+  unassignedDevices: number;
+  totalRooms: number;
+  contactlessReadyRooms: number;
+  monitoredOnlyRooms: number;
+}
+
+export interface HotelSecurityDevice {
+  _id?: string;
+  deviceId?: string;
+  name?: string;
+  deviceType?: string;
+  status?: boolean | string;
+  isActive?: boolean;
+  lastActive?: string;
+  createdAt?: string;
+  roomId?: string;
+  roomNumber?: string;
+  roomType?: string;
+  assignmentState: 'assigned' | 'unassigned';
+}
+
+export interface HotelSecurityRoom {
+  _id: string;
+  roomNumber: string;
+  roomType: string;
+  accessMode: string;
+  contactlessReady: boolean;
+  monitoringEnabled: boolean;
+  smartLockDevice?: { _id?: string; deviceId?: string; status?: boolean | string } | null;
+  doorSensorDevice?: { _id?: string; deviceId?: string; status?: boolean | string } | null;
+  devices: HotelSecurityDevice[];
+}
+
+export interface SmartAccessGrantRecord {
+  _id: string;
+  room?: { _id?: string; roomNumber?: string; accessMode?: string };
+  device?: { _id?: string; deviceId?: string; deviceType?: string };
+  subjectStaff?: { _id?: string; name?: string; email?: string; position?: string; department?: string };
+  grantType?: string;
+  accessCode?: string;
+  validFrom?: string;
+  validUntil?: string;
+  status?: 'active' | 'revoked' | 'expired';
+  metadata?: { notes?: string };
+}
+
+export interface BookingSmartLockAccessData {
+  bookingId: string;
+  bookingNumber: string;
+  status: string;
+  checkInDate: string;
+  checkOutDate: string;
+  hotelName: string;
+  contactlessCheckInEnabled: boolean;
+  room?: any;
+  smartLockAccess?: {
+    accessToken?: string;
+    backupPin?: string;
+    qrCode?: string;
+    expiresAt?: string;
+    enabled?: boolean;
+    unlockAttempts?: Array<{
+      timestamp: string;
+      success: boolean;
+      deviceId?: string;
+      error?: string;
+    }>;
+  } | null;
+}
+
+export interface StaffKeyAccessWorkspaceData {
+  summary: RoomSecuritySummary;
+  contactlessRooms: HotelSecurityRoom[];
+  grants: SmartAccessGrantRecord[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -30,6 +128,13 @@ export class HotelService {
 
   constructor(private http: HttpClient) {
     this.setHotelId();
+  }
+
+  private getHotelVendorHeaders(): HttpHeaders {
+    return new HttpHeaders({
+      'Content-Type': 'application/json',
+      'x-vendor-id': this.hotelId || localStorage.getItem('hotelId') || ''
+    });
   }
 
   setHotelId(id?: string) {
@@ -129,6 +234,142 @@ export class HotelService {
     );
   }
 
+  getDeviceAssignments(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/device-assignments`
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch device assignments:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  private getEmptyRoomSecuritySummary(): RoomSecuritySummary {
+    return {
+      totalDevices: 0,
+      assignedDevices: 0,
+      unassignedDevices: 0,
+      totalRooms: 0,
+      contactlessReadyRooms: 0,
+      monitoredOnlyRooms: 0
+    };
+  }
+
+  private mapSecuritySummary(summary: any): RoomSecuritySummary {
+    return {
+      totalDevices: Number(summary?.totalDevices) || 0,
+      assignedDevices: Number(summary?.assignedDevices) || 0,
+      unassignedDevices: Number(summary?.unassignedDevices) || 0,
+      totalRooms: Number(summary?.totalRooms) || 0,
+      contactlessReadyRooms: Number(summary?.contactlessReadyRooms) || 0,
+      monitoredOnlyRooms: Number(summary?.monitoredOnlyRooms) || 0
+    };
+  }
+
+  private mapSecurityDevice(device: any, room?: any, assignmentState: 'assigned' | 'unassigned' = 'assigned'): HotelSecurityDevice {
+    return {
+      ...device,
+      roomId: room?._id,
+      roomNumber: room?.roomNumber,
+      roomType: room?.roomType,
+      name: device?.name || device?.deviceId,
+      assignmentState
+    };
+  }
+
+  private mapSecurityRoom(entry: any): HotelSecurityRoom {
+    const room = entry?.room || {};
+    const devices = Array.isArray(entry?.devices) ? entry.devices : [];
+
+    return {
+      _id: room?._id,
+      roomNumber: room?.roomNumber || 'N/A',
+      roomType: room?.roomType || 'Standard',
+      accessMode: room?.accessMode || 'none',
+      contactlessReady: room?.contactlessReady === true,
+      monitoringEnabled: room?.monitoringEnabled === true,
+      smartLockDevice: room?.smartLockDevice || null,
+      doorSensorDevice: room?.doorSensorDevice || null,
+      devices: devices.map((device: any) => this.mapSecurityDevice(device, room, 'assigned'))
+    };
+  }
+
+  getRoomSecurityOverview(): Observable<ApiResponse<{
+    summary: RoomSecuritySummary;
+    rooms: HotelSecurityRoom[];
+    assignedDevices: HotelSecurityDevice[];
+    unassignedDevices: HotelSecurityDevice[];
+    allDevices: HotelSecurityDevice[];
+  }>> {
+    return this.getDeviceAssignments().pipe(
+      map((response: ApiResponse<any>) => {
+        if (response.status !== 'success' || !response.data) {
+          return {
+            status: response.status,
+            message: response.message,
+            data: {
+              summary: this.getEmptyRoomSecuritySummary(),
+              rooms: [],
+              assignedDevices: [],
+              unassignedDevices: [],
+              allDevices: []
+            }
+          };
+        }
+
+        const assignmentMap = response.data?.assignmentMap || {};
+        const rooms = Object.values(assignmentMap).map((entry: any) => this.mapSecurityRoom(entry));
+        const assignedDevices = rooms.flatMap((room) => room.devices);
+        const unassignedDevices = Array.isArray(response.data?.unassignedDevices)
+          ? response.data.unassignedDevices.map((device: any) => this.mapSecurityDevice(device, null, 'unassigned'))
+          : [];
+
+        return {
+          status: 'success',
+          message: response.message,
+          data: {
+            summary: this.mapSecuritySummary(response.data?.summary),
+            rooms,
+            assignedDevices,
+            unassignedDevices,
+            allDevices: [...assignedDevices, ...unassignedDevices]
+          }
+        };
+      })
+    );
+  }
+
+  getRoomSecuritySummary(): Observable<ApiResponse<RoomSecuritySummary>> {
+    return this.getRoomSecurityOverview().pipe(
+      map((response) => ({
+        status: response.status,
+        message: response.message,
+        data: response.data?.summary || this.getEmptyRoomSecuritySummary()
+      }))
+    );
+  }
+
+  getContactlessRooms(): Observable<ApiResponse<HotelSecurityRoom[]>> {
+    return this.getRoomSecurityOverview().pipe(
+      map((response) => ({
+        status: response.status,
+        message: response.message,
+        data: (response.data?.rooms || []).filter((room) => room.contactlessReady)
+      }))
+    );
+  }
+
+  getHotelSecurityDevices(): Observable<ApiResponse<HotelSecurityDevice[]>> {
+    return this.getRoomSecurityOverview().pipe(
+      map((response) => ({
+        status: response.status,
+        message: response.message,
+        data: response.data?.allDevices || []
+      }))
+    );
+  }
+
   createRoom(roomData: any): Observable<ApiResponse<any>> {
     return this.http.post<ApiResponse<any>>(
       `${API_URL}/hotels/${this.hotelId}/rooms`,
@@ -156,12 +397,66 @@ export class HotelService {
     );
   }
 
+  getRoomTasks(page = 1, limit = 10, status?: string, taskType?: string): Observable<ApiResponse<any[]>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('limit', limit.toString());
+
+    if (status) params = params.set('status', status);
+    if (taskType) params = params.set('taskType', taskType);
+
+    return this.http.get<ApiResponse<any[]>>(
+      `${API_URL}/hotels/${this.hotelId}/room-tasks`,
+      { params }
+    );
+  }
+
+  createRoomTask(taskData: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/room-tasks`,
+      taskData
+    );
+  }
+
+  upsertSourceTask(taskData: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/room-tasks/source-link`,
+      taskData
+    );
+  }
+
+  assignRoomTask(taskId: string, assignedStaffId?: string, assignedBy?: string, assignedByName?: string): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/room-tasks/${taskId}/assign`,
+      { assignedStaffId, assignedBy, assignedByName }
+    );
+  }
+
+  updateRoomTaskStatus(taskId: string, status: string, completionNotes?: string): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/room-tasks/${taskId}/status`,
+      { status, completionNotes }
+    );
+  }
+
+  getMyRoomTasks(staffId: string, status?: string): Observable<ApiResponse<any[]>> {
+    let params = new HttpParams();
+    if (status) {
+      params = params.set('status', status);
+    }
+
+    return this.http.get<ApiResponse<any[]>>(
+      `${API_URL}/hotels/${this.hotelId}/room-tasks/my/${staffId}`,
+      { params }
+    );
+  }
+
   // ==================== BOOKINGS ====================
   getBookings(page = 1, limit = 10, status?: string): Observable<ApiResponse<any[]>> {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('limit', limit.toString());
-    
+
     if (status) params = params.set('status', status);
 
     return this.http.get<ApiResponse<any[]>>(
@@ -246,7 +541,7 @@ export class HotelService {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('limit', limit.toString());
-    
+
     if (status) params = params.set('status', status);
 
     return this.http.get<ApiResponse<any[]>>(
@@ -275,6 +570,78 @@ export class HotelService {
     );
   }
 
+  resetStaffPassword(staffId: string): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/staff/${staffId}/reset-password`,
+      {}
+    );
+  }
+
+  getStaffActivitySummary(staffId: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/staff/${staffId}/activity-summary`
+    );
+  }
+
+  getStaffSchedule(weekStart: string, weekEnd?: string): Observable<ApiResponse<any>> {
+    let params = new HttpParams().set('weekStart', weekStart);
+    if (weekEnd) {
+      params = params.set('weekEnd', weekEnd);
+    }
+    return this.http.get<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/staff/schedule-generator`,
+      { params }
+    );
+  }
+
+  generateStaffSchedule(payload: { weekStart: string; weekEnd?: string; notes?: string; generatedBy?: string }): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/staff/schedule-generator`,
+      payload
+    );
+  }
+
+  updateStaffScheduleEntry(scheduleId: string, entryId: string, payload: any): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/staff/schedule-generator/${scheduleId}/entries/${entryId}`,
+      payload
+    );
+  }
+
+  deleteStaffScheduleEntry(scheduleId: string, entryId: string): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/staff/schedule-generator/${scheduleId}/entries/${entryId}`
+    );
+  }
+
+  deleteStaffScheduleWeek(scheduleId: string): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/staff/schedule-generator/${scheduleId}`
+    );
+  }
+
+  getMyStaffSchedule(staffId: string, weekStart: string): Observable<ApiResponse<any>> {
+    const params = new HttpParams().set('weekStart', weekStart);
+    return this.http.get<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/staff/${staffId}/my-schedule`,
+      { params }
+    );
+  }
+
+  respondToStaffSchedule(staffId: string, entryId: string, responseStatus: 'accepted' | 'rejected', responseNote?: string): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/staff/${staffId}/schedule-response`,
+      { entryId, responseStatus, responseNote }
+    );
+  }
+
+  requestScheduleSwap(staffId: string, entryId: string, targetEntryId: string, reason?: string): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/staff/${staffId}/request-swap`,
+      { entryId, targetEntryId, reason }
+    );
+  }
+
   deleteStaff(staffId: string): Observable<ApiResponse<any>> {
     return this.http.delete<ApiResponse<any>>(
       `${API_URL}/hotels/${this.hotelId}/staff/${staffId}`
@@ -286,7 +653,7 @@ export class HotelService {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('limit', limit.toString());
-    
+
     if (status) params = params.set('status', status);
     if (priority) params = params.set('priority', priority);
 
@@ -334,7 +701,7 @@ export class HotelService {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('limit', limit.toString());
-    
+
     if (status) params = params.set('status', status);
 
     return this.http.get<ApiResponse<any[]>>(
@@ -441,12 +808,44 @@ export class HotelService {
     );
   }
 
+  getHotelChats(page = 1, limit = 50, status?: string): Observable<ApiResponse<any[]>> {
+    let params = new HttpParams()
+      .set('vendorType', 'hotel')
+      .set('page', page.toString())
+      .set('limit', limit.toString());
+
+    if (status) {
+      params = params.set('status', status);
+    }
+
+    return this.http.get<ApiResponse<any[]>>(
+      `${API_URL}/customers/vendor-chats-by-vendor/${this.hotelId}`,
+      { params, headers: this.getHotelVendorHeaders() }
+    );
+  }
+
+  sendHotelChatReply(chatId: string, message: string, vendorName?: string): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/customers/vendor-chats/${chatId}/vendor-reply`,
+      { message, vendorName },
+      { headers: this.getHotelVendorHeaders() }
+    );
+  }
+
+  markHotelChatRead(chatId: string): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${API_URL}/customers/vendor-chats/${chatId}/read-vendor`,
+      {},
+      { headers: this.getHotelVendorHeaders() }
+    );
+  }
+
   // ==================== MENUS ====================
   getMenus(page = 1, limit = 10, type?: string): Observable<ApiResponse<any[]>> {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('limit', limit.toString());
-    
+
     if (type) params = params.set('type', type);
 
     return this.http.get<ApiResponse<any[]>>(
@@ -493,7 +892,7 @@ export class HotelService {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('limit', limit.toString());
-    
+
     if (category) params = params.set('category', category);
 
     return this.http.get<ApiResponse<any[]>>(
@@ -528,6 +927,54 @@ export class HotelService {
     );
   }
 
+  // ==================== HOTEL AMENITY SERVICES ====================
+  getAmenityServices(page = 1, limit = 100, category?: string, includeInactive = false): Observable<ApiResponse<HotelAmenityService[]>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('limit', limit.toString())
+      .set('includeInactive', includeInactive.toString());
+
+    if (category) params = params.set('category', category);
+
+    return this.http.get<ApiResponse<HotelAmenityService[]>>(
+      `${API_URL}/hotels/${this.hotelId}/amenity-services`,
+      { params }
+    );
+  }
+
+  getAmenityServiceById(serviceId: string): Observable<ApiResponse<HotelAmenityService>> {
+    return this.http.get<ApiResponse<HotelAmenityService>>(
+      `${API_URL}/hotels/${this.hotelId}/amenity-services/${serviceId}`
+    );
+  }
+
+  createAmenityService(serviceData: HotelAmenityService): Observable<ApiResponse<HotelAmenityService>> {
+    return this.http.post<ApiResponse<HotelAmenityService>>(
+      `${API_URL}/hotels/${this.hotelId}/amenity-services`,
+      serviceData
+    );
+  }
+
+  updateAmenityService(serviceId: string, serviceData: Partial<HotelAmenityService>): Observable<ApiResponse<HotelAmenityService>> {
+    return this.http.put<ApiResponse<HotelAmenityService>>(
+      `${API_URL}/hotels/${this.hotelId}/amenity-services/${serviceId}`,
+      serviceData
+    );
+  }
+
+  deleteAmenityService(serviceId: string): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/amenity-services/${serviceId}`
+    );
+  }
+
+  updateHotelServiceOrderStatus(bookingId: string, orderId: string, status: 'pending' | 'confirmed' | 'in-progress' | 'completed' | 'cancelled'): Observable<any> {
+    return this.http.put(
+      `${API_URL}/hotel-bookings/${bookingId}/hotel-service-orders/${orderId}/status`,
+      { status }
+    );
+  }
+
   // ==================== REVIEWS ====================
   getReviews(page = 1, limit = 10): Observable<ApiResponse<any[]>> {
     let params = new HttpParams()
@@ -557,6 +1004,18 @@ export class HotelService {
     );
   }
 
+  createHotelReview(hotelId: string, review: {
+    bookingId: string;
+    customerId: string;
+    customerName: string;
+    customerEmail?: string;
+    rating: number;
+    title: string;
+    comment: string;
+  }): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(`${API_URL}/hotels/${hotelId}/reviews`, review);
+  }
+
   // ==================== HOTELS ====================
   getHotels(page = 1, limit = 10): Observable<ApiResponse<any[]>> {
     const params = new HttpParams()
@@ -583,15 +1042,18 @@ export class HotelService {
     );
   }
 
-  getPublicHotels(page = 1, limit = 10, location?: string): Observable<ApiResponse<any[]>> {
+  getPublicHotels(page = 1, limit = 10, location?: string, checkIn?: string, checkOut?: string, guests?: number): Observable<ApiResponse<any[]>> {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('limit', limit.toString());
 
     if (location) params = params.set('location', location);
+    if (checkIn) params = params.set('checkIn', checkIn);
+    if (checkOut) params = params.set('checkOut', checkOut);
+    if (guests) params = params.set('guests', guests.toString());
 
     const url = `${API_URL}/hotels/public/search`;
-    console.log('🔗 Public Hotels Search API Request:', { url, params: { page, limit, location } });
+    console.log('🔗 Public Hotels Search API Request:', { url, params: { page, limit, location, checkIn, checkOut, guests } });
 
     return this.http.get<ApiResponse<any[]>>(url, { params }).pipe(
       tap((data) => {
@@ -1179,6 +1641,102 @@ export class HotelService {
     );
   }
 
+  getBookingSmartLockAccess(bookingId: string): Observable<ApiResponse<BookingSmartLockAccessData>> {
+    return this.http.get<ApiResponse<BookingSmartLockAccessData>>(
+      `${API_URL}/smart-lock/access/${bookingId}`
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch booking smart lock access:', error);
+        return of({ status: 'error', data: null as any, message: error.message });
+      })
+    );
+  }
+
+  /**
+   * Get smart access grants for this hotel.
+   */
+  getSmartAccessGrants(subjectType?: 'guest' | 'staff', status = 'active'): Observable<ApiResponse<SmartAccessGrantRecord[]>> {
+    let params = new HttpParams().set('status', status);
+    if (subjectType) {
+      params = params.set('subjectType', subjectType);
+    }
+
+    return this.http.get<ApiResponse<SmartAccessGrantRecord[]>>(
+      `${API_URL}/hotels/${this.hotelId}/smart-access/grants`,
+      { params }
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch smart access grants:', error);
+        return of({ status: 'error', data: [], message: error.message });
+      })
+    );
+  }
+
+  getStaffKeyAccessWorkspaceData(): Observable<ApiResponse<StaffKeyAccessWorkspaceData>> {
+    return forkJoin({
+      security: this.getRoomSecurityOverview(),
+      grants: this.getSmartAccessGrants('staff', 'active')
+    }).pipe(
+      map(({ security, grants }) => ({
+        status: security.status === 'success' && grants.status === 'success' ? 'success' : 'error',
+        message: security.message || grants.message,
+        data: {
+          summary: security.data?.summary || this.getEmptyRoomSecuritySummary(),
+          contactlessRooms: (security.data?.rooms || []).filter((room) => room.contactlessReady),
+          grants: Array.isArray(grants.data) ? grants.data : []
+        }
+      })),
+      catchError((error) => {
+        console.error('❌ Failed to load staff key access workspace:', error);
+        return of({
+          status: 'error',
+          message: error.message,
+          data: {
+            summary: this.getEmptyRoomSecuritySummary(),
+            contactlessRooms: [],
+            grants: []
+          }
+        });
+      })
+    );
+  }
+
+  /**
+   * Assign a temporary smart lock key to a staff member for a room.
+   */
+  assignStaffSmartAccess(payload: {
+    staffId: string;
+    roomId: string;
+    validFrom: string;
+    validUntil: string;
+    notes?: string;
+  }): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/smart-access/staff`,
+      payload
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to assign staff smart access:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  /**
+   * Revoke an existing smart access grant.
+   */
+  revokeSmartAccessGrant(grantId: string): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${API_URL}/hotels/${this.hotelId}/smart-access/${grantId}/revoke`,
+      {}
+    ).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to revoke smart access grant:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
   // ==================== AUTO-ASSIGNMENT ====================
   /**
    * Get devices assigned to a specific room
@@ -1373,6 +1931,38 @@ export class HotelService {
     return this.http.get<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/revenue/stats`).pipe(
       catchError((error) => {
         console.error('❌ Failed to fetch revenue stats:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  getIncomeReport(period: 'daily' | 'monthly' | 'custom', date?: string, endDate?: string): Observable<ApiResponse<any>> {
+    let params = new HttpParams().set('period', period);
+
+    if (date) {
+      params = params.set('date', date);
+    }
+    if (endDate) {
+      params = params.set('endDate', endDate);
+    }
+
+    return this.http.get<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/revenue/report`, { params }).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to fetch income report:', error);
+        return of({ status: 'error', data: null, message: error.message });
+      })
+    );
+  }
+
+  sendIncomeReportEmail(recipientEmail: string, period: 'daily' | 'monthly' | 'custom', date?: string, endDate?: string): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(`${API_URL}/hotels/${this.hotelId}/revenue/report/email`, {
+      recipientEmail,
+      period,
+      date,
+      endDate
+    }).pipe(
+      catchError((error) => {
+        console.error('❌ Failed to send income report email:', error);
         return of({ status: 'error', data: null, message: error.message });
       })
     );

@@ -1,4 +1,5 @@
 import express from 'express';
+import Room from '../models/Room.js';
 import {
   getAllBookings,
   getBookingById,
@@ -9,6 +10,7 @@ import {
   updatePaymentStatus,
   addRoomServiceOrder
 } from '../controllers/bookingsController.js';
+import { provisionSmartLockAccessForBooking } from '../controllers/smartLockController.js';
 
 const router = express.Router({ mergeParams: true });
 
@@ -30,10 +32,11 @@ router.post('/auto-confirm', async (req, res) => {
     console.log('🆔 Identity verification:', identity);
     console.log('🔐 =========================================');
 
-    // Create the booking with confirmed status and smart lock access
+    // Create the booking first, then provision a real temporary smart key
     const Booking = (await import('../models/Booking.js')).default;
 
     const bookingData = {
+      bookingNumber: 'BK-' + Date.now().toString().slice(-10),
       hotel: hotelId || booking.hotelId,
       guest: booking.customerId,
       room: booking.roomId,
@@ -45,21 +48,28 @@ router.post('/auto-confirm', async (req, res) => {
       specialRequests: booking.specialRequests,
       paymentMethod: 'contactless',
       paymentStatus: 'paid', // Auto-confirm means immediate payment
-      status: 'confirmed', // Auto-confirmed
-      smartLockAccess: {
-        accessToken: 'CONTACTLESS_' + Date.now(),
-        backupPin: Math.random().toString().slice(2, 8),
-        qrCode: 'QR_' + Date.now(),
-        enabled: true,
-        expiresAt: new Date(booking.checkOut)
-      }
+      status: 'confirmed' // Auto-confirmed
     };
 
-    console.log('💾 Creating booking with smart lock access...');
+    console.log('💾 Creating booking with contactless-ready smart key flow...');
     console.log('📝 Final booking data to be saved:', JSON.stringify(bookingData, null, 2));
 
     const newBooking = new Booking(bookingData);
     await newBooking.save();
+    await Room.findByIdAndUpdate(booking.roomId, { status: 'reserved' });
+
+    let smartKeyData = null;
+    try {
+      const provisioned = await provisionSmartLockAccessForBooking({
+        bookingId: newBooking._id,
+        hotelId: hotelId || booking.hotelId,
+        sendEmail: true,
+        setupDevice: true
+      });
+      smartKeyData = provisioned.data;
+    } catch (accessError) {
+      console.warn('⚠️ Contactless booking created, but smart key provisioning failed:', accessError.message);
+    }
 
     console.log('✅ CONTACTLESS BOOKING CREATED SUCCESSFULLY!');
     console.log('📌 Booking ID:', newBooking._id);
@@ -74,7 +84,10 @@ router.post('/auto-confirm', async (req, res) => {
     return res.status(201).json({
       status: 'success',
       message: 'Booking created with auto-confirmation',
-      data: newBooking
+      data: {
+        ...newBooking.toObject(),
+        smartKeyAccess: smartKeyData
+      }
     });
   } catch (err) {
     console.error('Error creating booking with auto-confirmation:', err);

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, Router } from '@angular/router';
 import { PermissionService } from '../services/permission.service';
+import { AuthService } from '../services/auth.service';
 
 /**
  * Guard to protect routes based on specific permission
@@ -171,5 +172,56 @@ export class RolesGuard implements CanActivate {
     console.warn(`Access denied: One of these roles required for route '${state.url}': ${requiredRoles.join(', ')}`);
     this.router.navigate(['/']);
     return false;
+  }
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class StaffRouteGuard implements CanActivate {
+  constructor(
+    private authService: AuthService,
+    private router: Router
+  ) {}
+
+  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
+    const user = this.authService.getCurrentUser();
+
+    if (!user || user.userType !== 'staff') {
+      this.router.navigate(['/staff-login']);
+      return false;
+    }
+
+    const requiredModules = (route.data['staffModules'] as string[] | undefined) || [];
+    if (!requiredModules.length) {
+      return true;
+    }
+
+    if (this.hasStaffRouteAccess(user, requiredModules)) {
+      return true;
+    }
+
+    console.warn(`Access denied: Staff modules ${requiredModules.join(', ')} required for route '${state.url}'`);
+    this.router.navigate(['/staff-dashboard/my-tasks']);
+    return false;
+  }
+
+  private hasStaffRouteAccess(user: any, requiredModules: string[]): boolean {
+    const position = String(user?.position || user?.staffPosition || '').toLowerCase();
+    const department = String(user?.department || '').toLowerCase();
+    const accessRole = String(user?.accessRole || '').toLowerCase();
+
+    const isHousekeepingStaff =
+      accessRole === 'housekeeping' ||
+      position === 'housekeeping' ||
+      position === 'housekeeper' ||
+      department === 'housekeeping';
+
+    if (isHousekeepingStaff) {
+      return requiredModules.every((module) => ['housekeeping', 'my-tasks', 'my-schedule', 'timesheet', 'profile'].includes(module));
+    }
+
+    const allowedModules = new Set((user?.allowedModules || []).map((module: string) => String(module).toLowerCase()));
+    return requiredModules.every((module) => allowedModules.has(module.toLowerCase()));
   }
 }

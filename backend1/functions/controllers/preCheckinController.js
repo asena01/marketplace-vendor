@@ -1,5 +1,7 @@
 import PreArrivalCheckIn from '../models/PreArrivalCheckIn.js';
 import Booking from '../models/Booking.js';
+import Room from '../models/Room.js';
+import mongoose from 'mongoose';
 
 // Get all pre-checkins for a hotel
 const getAllPreCheckins = async (req, res) => {
@@ -159,23 +161,79 @@ const completeCheckIn = async (req, res) => {
   try {
     const { hotelId, id } = req.params;
 
-    const checkin = await PreArrivalCheckIn.findOneAndUpdate(
-      { _id: id, hotel: hotelId },
-      {
-        status: 'completed',
-        completedAt: new Date()
-      },
-      { new: true }
-    ).populate('guest', 'name email phone').populate('booking', 'bookingNumber checkInDate checkOutDate');
+    const checkin = await PreArrivalCheckIn.findOne({ _id: id, hotel: hotelId });
 
     if (!checkin) {
       return res.status(404).json({ status: 'failed', message: 'Check-in record not found' });
     }
 
+    let booking = null;
+
+    if (checkin.booking) {
+      booking = await Booking.findOne({ _id: checkin.booking, hotel: hotelId });
+    }
+
+    if (!booking && checkin.bookingId) {
+      const bookingLookup = [{ bookingNumber: checkin.bookingId }];
+      if (mongoose.Types.ObjectId.isValid(checkin.bookingId)) {
+        bookingLookup.push({ _id: checkin.bookingId });
+      }
+
+      booking = await Booking.findOne({
+        hotel: hotelId,
+        $or: bookingLookup
+      });
+    }
+
+    if (!booking) {
+      return res.status(404).json({
+        status: 'failed',
+        message: 'Linked booking not found for this pre-check-in record'
+      });
+    }
+
+    if (booking.status === 'cancelled' || booking.status === 'checked-out') {
+      return res.status(400).json({
+        status: 'failed',
+        message: `Cannot complete check-in for a ${booking.status} booking`
+      });
+    }
+
+    booking.status = 'checked-in';
+    await booking.save();
+
+    if (booking.room) {
+      await Room.findOneAndUpdate(
+        { _id: booking.room, hotel: hotelId },
+        {
+          status: 'occupied',
+          currentGuest: booking.guest,
+          checkInDate: booking.checkInDate,
+          checkOutDate: booking.checkOutDate
+        }
+      );
+    }
+
+    checkin.status = 'completed';
+    checkin.completedAt = new Date();
+    checkin.booking = booking._id;
+    checkin.bookingId = booking._id.toString();
+    await checkin.save();
+
+    await checkin.populate('guest', 'name email phone');
+    await checkin.populate({
+      path: 'booking',
+      select: 'bookingNumber checkInDate checkOutDate status room',
+      populate: {
+        path: 'room',
+        select: 'roomNumber roomType status'
+      }
+    });
+
     return res.status(200).json({
       status: 'success',
       data: checkin,
-      message: 'Check-in completed successfully'
+      message: 'Check-in completed successfully and booking/room status synced'
     });
   } catch (err) {
     console.error(err);

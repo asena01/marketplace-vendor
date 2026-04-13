@@ -29,21 +29,18 @@ export class ApiConfigService {
    */
   private detectEnvironment(): ApiConfig {
     const hostname = window.location.hostname;
-    const port = window.location.port;
-    const protocol = window.location.protocol;
 
     // Development environment (localhost)
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    if (hostname === 'localhost' || hostname === 'https://api-qpczzmaezq-uc.a.run.app') {
       return {
-        apiBaseUrl: 'http://127.0.0.1:5001/uni-backend01/us-central1/api',
-        uploadBaseUrl: 'http://127.0.0.1:5001/uni-backend01/us-central1/api/uploads',
+        apiBaseUrl: 'https://api-qpczzmaezq-uc.a.run.app',
+        uploadBaseUrl: 'http://127.0.0.1:5001/uploads',
         environment: 'development'
       };
     }
 
     // Production environment
-    // Update these URLs based on your production domain
-    const productionDomain = 'https://api-qpczzmaezq-uc.a.run.app'; // Update with your domain
+    const productionDomain = 'https://api-qpczzmaezq-uc.a.run.app';
     return {
       apiBaseUrl: productionDomain,
       uploadBaseUrl: `${productionDomain}/uploads`,

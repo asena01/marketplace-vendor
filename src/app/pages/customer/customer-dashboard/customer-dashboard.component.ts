@@ -1,13 +1,14 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
 import { CustomerService } from '../../../services/customer.service';
 import { AuthService } from '../../../services/auth.service';
+import { ChatRealtimeEvent, ChatRealtimeService } from '../../../services/chat-realtime.service';
 
 // Type definitions
-type DashboardSection = 'dashboard' | 'my-bookings' | 'browse' | 'support' | 'profile';
+type DashboardSection = 'dashboard' | 'my-bookings' | 'browse' | 'profile';
 type ServiceType = 'hotels' | 'food' | 'shopping' | 'services' | 'tours' | null;
 
 // Tab components
@@ -17,7 +18,6 @@ import { CustomerFoodOrdersComponent } from '../customer-food-orders/customer-fo
 import { CustomerShoppingComponent } from '../customer-shopping/customer-shopping.component';
 import { CustomerServicesBookingsComponent } from '../customer-services-bookings/customer-services-bookings.component';
 import { CustomerToursBookingsComponent } from '../customer-tours-bookings/customer-tours-bookings.component';
-import { CustomerChatSupportComponent } from '../customer-chat-support/customer-chat-support.component';
 
 // Browse components
 import { HotelsComponent } from '../../hotels/hotels.component';
@@ -39,7 +39,6 @@ import { ToursComponent } from '../../tours/tours.component';
     CustomerShoppingComponent,
     CustomerServicesBookingsComponent,
     CustomerToursBookingsComponent,
-    CustomerChatSupportComponent,
     HotelsComponent,
     FoodComponent,
     ShoppingComponent,
@@ -92,6 +91,186 @@ import { ToursComponent } from '../../tours/tours.component';
         </div>
       </header>
 
+      <!-- Mobile Sidebar Overlay -->
+      @if (isMobileMenuOpen()) {
+        <div
+          class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          (click)="toggleMobileMenu()"
+        ></div>
+
+        <aside class="fixed top-0 left-0 w-72 h-full bg-white z-50 md:hidden overflow-y-auto shadow-2xl">
+          <div class="p-6">
+            <div class="flex items-center justify-between mb-8">
+              <div class="flex items-center gap-3 text-blue-600">
+                <mat-icon>dashboard</mat-icon>
+                <span class="font-bold text-xl">Menu</span>
+              </div>
+              <button (click)="toggleMobileMenu()" class="text-gray-500">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+
+            <nav class="space-y-6">
+              <!-- Overview -->
+              <div>
+                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Overview</h3>
+                <button
+                  (click)="setSection('dashboard', null)"
+                  class="w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition"
+                  [class.bg-blue-50]="activeSection() === 'dashboard'"
+                  [class.text-blue-600]="activeSection() === 'dashboard'"
+                >
+                  <mat-icon>dashboard</mat-icon>
+                  <span class="font-medium">My Dashboard</span>
+                </button>
+              </div>
+
+              <!-- My Acquired Services -->
+              @if (hotelCount() > 0 || foodCount() > 0 || shoppingCount() > 0 || toursCount() > 0 || servicesCount() > 0) {
+                <div>
+                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">My Services</h3>
+                <div class="space-y-1">
+                  @if (hotelCount() > 0) {
+                    <button
+                      (click)="openHotelSection()"
+                      class="w-full text-left px-4 py-2.5 rounded-xl flex items-center justify-between transition"
+                      [class.bg-blue-50]="activeSection() === 'my-bookings' && activeType() === 'hotels'"
+                      [class.text-blue-600]="activeSection() === 'my-bookings' && activeType() === 'hotels'"
+                    >
+                      <span class="flex items-center gap-3">
+                        <mat-icon class="text-lg">hotel</mat-icon>
+                        <span class="text-sm font-medium">{{ primaryHotelNavLabel() }}</span>
+                      </span>
+                    </button>
+                  }
+                  @if (foodCount() > 0) {
+                    <button
+                      (click)="setSection('my-bookings', 'food')"
+                      class="w-full text-left px-4 py-2.5 rounded-xl flex items-center justify-between transition"
+                      [class.bg-blue-50]="activeSection() === 'my-bookings' && activeType() === 'food'"
+                      [class.text-blue-600]="activeSection() === 'my-bookings' && activeType() === 'food'"
+                    >
+                      <span class="flex items-center gap-3">
+                        <mat-icon class="text-lg">restaurant</mat-icon>
+                        <span class="text-sm font-medium">My Restaurant Orders</span>
+                      </span>
+                    </button>
+                  }
+                  @if (shoppingCount() > 0) {
+                    <button
+                      (click)="setSection('my-bookings', 'shopping')"
+                      class="w-full text-left px-4 py-2.5 rounded-xl flex items-center justify-between transition"
+                      [class.bg-blue-50]="activeSection() === 'my-bookings' && activeType() === 'shopping'"
+                      [class.text-blue-600]="activeSection() === 'my-bookings' && activeType() === 'shopping'"
+                    >
+                      <span class="flex items-center gap-3">
+                        <mat-icon class="text-lg">shopping_bag</mat-icon>
+                        <span class="text-sm font-medium">My Shopping</span>
+                      </span>
+                    </button>
+                  }
+                  @if (toursCount() > 0) {
+                    <button
+                      (click)="setSection('my-bookings', 'tours')"
+                      class="w-full text-left px-4 py-2.5 rounded-xl flex items-center justify-between transition"
+                      [class.bg-blue-50]="activeSection() === 'my-bookings' && activeType() === 'tours'"
+                      [class.text-blue-600]="activeSection() === 'my-bookings' && activeType() === 'tours'"
+                    >
+                      <span class="flex items-center gap-3">
+                        <mat-icon class="text-lg">flight</mat-icon>
+                        <span class="text-sm font-medium">My Tours</span>
+                      </span>
+                    </button>
+                  }
+                  @if (servicesCount() > 0) {
+                    <button
+                      (click)="setSection('my-bookings', 'services')"
+                      class="w-full text-left px-4 py-2.5 rounded-xl flex items-center justify-between transition"
+                      [class.bg-blue-50]="activeSection() === 'my-bookings' && activeType() === 'services'"
+                      [class.text-blue-600]="activeSection() === 'my-bookings' && activeType() === 'services'"
+                    >
+                      <span class="flex items-center gap-3">
+                        <mat-icon class="text-lg">miscellaneous_services</mat-icon>
+                        <span class="text-sm font-medium">My Services</span>
+                      </span>
+                    </button>
+                  }
+                </div>
+              </div>
+              }
+
+              <!-- Marketplace -->
+              <div class="pt-4 mt-4 border-t border-gray-200">
+                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Marketplace</h3>
+                <div class="space-y-1">
+                  <button
+                    (click)="setSection('browse', 'hotels')"
+                    class="w-full text-left px-4 py-2.5 rounded-xl flex items-center gap-3 transition"
+                    [class.bg-green-50]="activeSection() === 'browse' && activeType() === 'hotels'"
+                    [class.text-green-600]="activeSection() === 'browse' && activeType() === 'hotels'"
+                  >
+                    <mat-icon class="text-lg">hotel</mat-icon>
+                    <span class="text-sm font-medium">Book Hotels</span>
+                  </button>
+                  <button
+                    (click)="setSection('browse', 'food')"
+                    class="w-full text-left px-4 py-2.5 rounded-xl flex items-center gap-3 transition"
+                    [class.bg-green-50]="activeSection() === 'browse' && activeType() === 'food'"
+                    [class.text-green-600]="activeSection() === 'browse' && activeType() === 'food'"
+                  >
+                    <mat-icon class="text-lg">restaurant</mat-icon>
+                    <span class="text-sm font-medium">Restaurant</span>
+                  </button>
+                  <button
+                    (click)="setSection('browse', 'shopping')"
+                    class="w-full text-left px-4 py-2.5 rounded-xl flex items-center gap-3 transition"
+                    [class.bg-green-50]="activeSection() === 'browse' && activeType() === 'shopping'"
+                    [class.text-green-600]="activeSection() === 'browse' && activeType() === 'shopping'"
+                  >
+                    <mat-icon class="text-lg">shopping_bag</mat-icon>
+                    <span class="text-sm font-medium">Go Shopping</span>
+                  </button>
+                  <button
+                    (click)="setSection('browse', 'tours')"
+                    class="w-full text-left px-4 py-2.5 rounded-xl flex items-center gap-3 transition"
+                    [class.bg-green-50]="activeSection() === 'browse' && activeType() === 'tours'"
+                    [class.text-green-600]="activeSection() === 'browse' && activeType() === 'tours'"
+                  >
+                    <mat-icon class="text-lg">flight</mat-icon>
+                    <span class="text-sm font-medium">Tours</span>
+                  </button>
+                  <button
+                    (click)="setSection('browse', 'services')"
+                    class="w-full text-left px-4 py-2.5 rounded-xl flex items-center gap-3 transition"
+                    [class.bg-green-50]="activeSection() === 'browse' && activeType() === 'services'"
+                    [class.text-green-600]="activeSection() === 'browse' && activeType() === 'services'"
+                  >
+                    <mat-icon class="text-lg">miscellaneous_services</mat-icon>
+                    <span class="text-sm font-medium">Services</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Profile -->
+              <div>
+                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Account</h3>
+                <div class="space-y-1">
+                  <button
+                    (click)="setSection('profile', null)"
+                    class="w-full text-left px-4 py-2.5 rounded-xl flex items-center gap-3 transition"
+                    [class.bg-blue-50]="activeSection() === 'profile'"
+                    [class.text-blue-600]="activeSection() === 'profile'"
+                  >
+                    <mat-icon class="text-lg">person</mat-icon>
+                    <span class="text-sm font-medium">Profile Settings</span>
+                  </button>
+                </div>
+              </div>
+            </nav>
+          </div>
+        </aside>
+      }
+
       <!-- Main Container with Sidebar -->
       <div class="flex flex-1 overflow-hidden">
         <!-- Sidebar -->
@@ -99,7 +278,7 @@ import { ToursComponent } from '../../tours/tours.component';
           <nav class="p-6 space-y-2">
             <!-- Dashboard -->
             <div class="mb-6">
-              <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mb-3">Dashboard</h3>
+              <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mb-3">Overview</h3>
               <button
                 (click)="setSection('dashboard', null)"
                 [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
@@ -108,189 +287,174 @@ import { ToursComponent } from '../../tours/tours.component';
                     : 'text-gray-700 hover:bg-gray-100')"
               >
                 <mat-icon class="text-xl">dashboard</mat-icon>
-                <span>Overview</span>
+                <span>My Dashboard</span>
               </button>
             </div>
 
-            <!-- My Bookings -->
-            <div class="mb-6">
-              <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mb-3">My Bookings</h3>
+            <!-- My Services Group -->
+            @if (hotelCount() > 0 || foodCount() > 0 || shoppingCount() > 0 || toursCount() > 0 || servicesCount() > 0) {
+              <div class="mb-6">
+              <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mb-3">My Acquired Services</h3>
 
-              <button
-                (click)="setSection('my-bookings', 'hotels')"
-                [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 justify-between ' +
-                  (activeSection() === 'my-bookings' && activeType() === 'hotels'
-                    ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600'
-                    : 'text-gray-700 hover:bg-gray-100')"
-              >
-                <span class="flex items-center gap-3">
-                  <mat-icon class="text-xl">hotel</mat-icon>
-                  <span>Hotels</span>
-                </span>
+              <div class="space-y-1">
                 @if (hotelCount() > 0) {
-                  <span class="bg-red-500 text-white text-xs font-bold rounded-full px-2 py-1">{{ hotelCount() }}</span>
+                  <button
+                    (click)="openHotelSection()"
+                    [class]="'w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-between ' +
+                      (activeSection() === 'my-bookings' && activeType() === 'hotels'
+                        ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600'
+                        : 'text-gray-700 hover:bg-gray-100')"
+                  >
+                    <span class="flex items-center gap-3">
+                      <mat-icon class="text-lg">hotel</mat-icon>
+                      <span>{{ primaryHotelNavLabel() }}</span>
+                    </span>
+                    <span class="bg-blue-600 text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center">{{ hotelCount() }}</span>
+                  </button>
                 }
-              </button>
 
-              <button
-                (click)="setSection('my-bookings', 'food')"
-                [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 justify-between ' +
-                  (activeSection() === 'my-bookings' && activeType() === 'food'
-                    ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600'
-                    : 'text-gray-700 hover:bg-gray-100')"
-              >
-                <span class="flex items-center gap-3">
-                  <mat-icon class="text-xl">restaurant</mat-icon>
-                  <span>Food Orders</span>
-                </span>
                 @if (foodCount() > 0) {
-                  <span class="bg-red-500 text-white text-xs font-bold rounded-full px-2 py-1">{{ foodCount() }}</span>
+                  <button
+                    (click)="setSection('my-bookings', 'food')"
+                    [class]="'w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-between ' +
+                      (activeSection() === 'my-bookings' && activeType() === 'food'
+                        ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600'
+                        : 'text-gray-700 hover:bg-gray-100')"
+                  >
+                    <span class="flex items-center gap-3">
+                      <mat-icon class="text-lg">restaurant</mat-icon>
+                      <span>My Restaurant Orders</span>
+                    </span>
+                    <span class="bg-orange-600 text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center">{{ foodCount() }}</span>
+                  </button>
                 }
-              </button>
 
-              <button
-                (click)="setSection('my-bookings', 'shopping')"
-                [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 justify-between ' +
-                  (activeSection() === 'my-bookings' && activeType() === 'shopping'
-                    ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600'
-                    : 'text-gray-700 hover:bg-gray-100')"
-              >
-                <span class="flex items-center gap-3">
-                  <mat-icon class="text-xl">shopping_bag</mat-icon>
-                  <span>Shopping</span>
-                </span>
                 @if (shoppingCount() > 0) {
-                  <span class="bg-red-500 text-white text-xs font-bold rounded-full px-2 py-1">{{ shoppingCount() }}</span>
+                  <button
+                    (click)="setSection('my-bookings', 'shopping')"
+                    [class]="'w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-between ' +
+                      (activeSection() === 'my-bookings' && activeType() === 'shopping'
+                        ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600'
+                        : 'text-gray-700 hover:bg-gray-100')"
+                  >
+                    <span class="flex items-center gap-3">
+                      <mat-icon class="text-lg">shopping_bag</mat-icon>
+                      <span>My Shopping</span>
+                    </span>
+                    <span class="bg-purple-600 text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center">{{ shoppingCount() }}</span>
+                  </button>
                 }
-              </button>
 
-              <button
-                (click)="setSection('my-bookings', 'tours')"
-                [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 justify-between ' +
-                  (activeSection() === 'my-bookings' && activeType() === 'tours'
-                    ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600'
-                    : 'text-gray-700 hover:bg-gray-100')"
-              >
-                <span class="flex items-center gap-3">
-                  <mat-icon class="text-xl">flight</mat-icon>
-                  <span>Tours</span>
-                </span>
                 @if (toursCount() > 0) {
-                  <span class="bg-red-500 text-white text-xs font-bold rounded-full px-2 py-1">{{ toursCount() }}</span>
+                  <button
+                    (click)="setSection('my-bookings', 'tours')"
+                    [class]="'w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-between ' +
+                      (activeSection() === 'my-bookings' && activeType() === 'tours'
+                        ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600'
+                        : 'text-gray-700 hover:bg-gray-100')"
+                  >
+                    <span class="flex items-center gap-3">
+                      <mat-icon class="text-lg">flight</mat-icon>
+                      <span>My Tours</span>
+                    </span>
+                    <span class="bg-indigo-600 text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center">{{ toursCount() }}</span>
+                  </button>
                 }
-              </button>
 
-              <button
-                (click)="setSection('my-bookings', 'services')"
-                [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 justify-between ' +
-                  (activeSection() === 'my-bookings' && activeType() === 'services'
-                    ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600'
-                    : 'text-gray-700 hover:bg-gray-100')"
-              >
-                <span class="flex items-center gap-3">
-                  <mat-icon class="text-xl">miscellaneous_services</mat-icon>
-                  <span>Services</span>
-                </span>
                 @if (servicesCount() > 0) {
-                  <span class="bg-red-500 text-white text-xs font-bold rounded-full px-2 py-1">{{ servicesCount() }}</span>
+                  <button
+                    (click)="setSection('my-bookings', 'services')"
+                    [class]="'w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-between ' +
+                      (activeSection() === 'my-bookings' && activeType() === 'services'
+                        ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600'
+                        : 'text-gray-700 hover:bg-gray-100')"
+                  >
+                    <span class="flex items-center gap-3">
+                      <mat-icon class="text-lg">miscellaneous_services</mat-icon>
+                      <span>My Services</span>
+                    </span>
+                    <span class="bg-green-600 text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center">{{ servicesCount() }}</span>
+                  </button>
                 }
-              </button>
+              </div>
+            </div>
+            }
+
+            <!-- Marketplace Group -->
+            <div class="mb-6 pt-4 border-t border-gray-200">
+              <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mb-3">Marketplace</h3>
+
+              <div class="space-y-1">
+                <button
+                  (click)="setSection('browse', 'hotels')"
+                  [class]="'w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-start gap-3 ' +
+                    (activeSection() === 'browse' && activeType() === 'hotels'
+                      ? 'bg-green-50 text-green-600 border-l-4 border-green-600'
+                      : 'text-gray-700 hover:bg-gray-100')"
+                >
+                  <span class="w-5 shrink-0 flex justify-center">
+                    <mat-icon class="text-lg">hotel</mat-icon>
+                  </span>
+                  <span class="text-left">Book Hotels</span>
+                </button>
+
+                <button
+                  (click)="setSection('browse', 'food')"
+                  [class]="'w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-start gap-3 ' +
+                    (activeSection() === 'browse' && activeType() === 'food'
+                      ? 'bg-green-50 text-green-600 border-l-4 border-green-600'
+                      : 'text-gray-700 hover:bg-gray-100')"
+                >
+                  <span class="w-5 shrink-0 flex justify-center">
+                    <mat-icon class="text-lg">restaurant</mat-icon>
+                  </span>
+                  <span class="text-left">Restaurant</span>
+                </button>
+
+                <button
+                  (click)="setSection('browse', 'shopping')"
+                  [class]="'w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-start gap-3 ' +
+                    (activeSection() === 'browse' && activeType() === 'shopping'
+                      ? 'bg-green-50 text-green-600 border-l-4 border-green-600'
+                      : 'text-gray-700 hover:bg-gray-100')"
+                >
+                  <span class="w-5 shrink-0 flex justify-center">
+                    <mat-icon class="text-lg">shopping_bag</mat-icon>
+                  </span>
+                  <span class="text-left">Go Shopping</span>
+                </button>
+
+                <button
+                  (click)="setSection('browse', 'tours')"
+                  [class]="'w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-start gap-3 ' +
+                    (activeSection() === 'browse' && activeType() === 'tours'
+                      ? 'bg-green-50 text-green-600 border-l-4 border-green-600'
+                      : 'text-gray-700 hover:bg-gray-100')"
+                >
+                  <span class="w-5 shrink-0 flex justify-center">
+                    <mat-icon class="text-lg">flight</mat-icon>
+                  </span>
+                  <span class="text-left">Tours</span>
+                </button>
+
+                <button
+                  (click)="setSection('browse', 'services')"
+                  [class]="'w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-start gap-3 ' +
+                    (activeSection() === 'browse' && activeType() === 'services'
+                      ? 'bg-green-50 text-green-600 border-l-4 border-green-600'
+                      : 'text-gray-700 hover:bg-gray-100')"
+                >
+                  <span class="w-5 shrink-0 flex justify-center">
+                    <mat-icon class="text-lg">miscellaneous_services</mat-icon>
+                  </span>
+                  <span class="text-left">Services</span>
+                </button>
+              </div>
             </div>
 
-            <!-- Browse Services -->
-            <div class="mb-6">
-              <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mb-3">Browse Services</h3>
-
-              <button
-                (click)="setSection('browse', 'hotels')"
-                [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
-                  (activeSection() === 'browse' && activeType() === 'hotels'
-                    ? 'bg-green-50 text-green-600 border-l-4 border-green-600'
-                    : 'text-gray-700 hover:bg-gray-100')"
-              >
-                <mat-icon class="text-xl">search</mat-icon>
-                <span class="flex items-center gap-2">
-                  <mat-icon class="text-lg">hotel</mat-icon>
-                  <span>Browse Hotels</span>
-                </span>
-              </button>
-
-              <button
-                (click)="setSection('browse', 'food')"
-                [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
-                  (activeSection() === 'browse' && activeType() === 'food'
-                    ? 'bg-green-50 text-green-600 border-l-4 border-green-600'
-                    : 'text-gray-700 hover:bg-gray-100')"
-              >
-                <mat-icon class="text-xl">search</mat-icon>
-                <span class="flex items-center gap-2">
-                  <mat-icon class="text-lg">restaurant</mat-icon>
-                  <span>Browse Restaurants</span>
-                </span>
-              </button>
-
-              <button
-                (click)="setSection('browse', 'shopping')"
-                [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
-                  (activeSection() === 'browse' && activeType() === 'shopping'
-                    ? 'bg-green-50 text-green-600 border-l-4 border-green-600'
-                    : 'text-gray-700 hover:bg-gray-100')"
-              >
-                <mat-icon class="text-xl">search</mat-icon>
-                <span class="flex items-center gap-2">
-                  <mat-icon class="text-lg">shopping_bag</mat-icon>
-                  <span>Browse Shopping</span>
-                </span>
-              </button>
-
-              <button
-                (click)="setSection('browse', 'services')"
-                [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
-                  (activeSection() === 'browse' && activeType() === 'services'
-                    ? 'bg-green-50 text-green-600 border-l-4 border-green-600'
-                    : 'text-gray-700 hover:bg-gray-100')"
-              >
-                <mat-icon class="text-xl">search</mat-icon>
-                <span class="flex items-center gap-2">
-                  <mat-icon class="text-lg">miscellaneous_services</mat-icon>
-                  <span>Browse Services</span>
-                </span>
-              </button>
-
-              <button
-                (click)="setSection('browse', 'tours')"
-                [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ' +
-                  (activeSection() === 'browse' && activeType() === 'tours'
-                    ? 'bg-green-50 text-green-600 border-l-4 border-green-600'
-                    : 'text-gray-700 hover:bg-gray-100')"
-              >
-                <mat-icon class="text-xl">search</mat-icon>
-                <span class="flex items-center gap-2">
-                  <mat-icon class="text-lg">flight</mat-icon>
-                  <span>Browse Tours</span>
-                </span>
-              </button>
-            </div>
-
-            <!-- Support & Profile -->
+            <!-- Profile -->
             <div>
-              <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mb-3">Support</h3>
-
-              <button
-                (click)="setSection('support', null)"
-                [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 justify-between ' +
-                  (activeSection() === 'support'
-                    ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600'
-                    : 'text-gray-700 hover:bg-gray-100')"
-              >
-                <span class="flex items-center gap-3">
-                  <mat-icon class="text-xl">chat</mat-icon>
-                  <span>Support Chat</span>
-                </span>
-                @if (chatCount() > 0) {
-                  <span class="bg-red-500 text-white text-xs font-bold rounded-full px-2 py-1">{{ chatCount() }}</span>
-                }
-              </button>
+              <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mb-3">Account</h3>
 
               <button
                 (click)="setSection('profile', null)"
@@ -323,140 +487,141 @@ import { ToursComponent } from '../../tours/tours.component';
             <!-- Content based on active section -->
             @if (activeSection() === 'dashboard') {
               <div class="max-w-6xl">
-                <h2 class="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h2>
-                <p class="text-gray-600 mb-8">Here's an overview of your bookings and orders</p>
-
-                <!-- Quick Stats -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-                  <div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <p class="text-gray-600 text-sm font-medium">Active Bookings</p>
-                        <p class="text-3xl font-bold text-gray-900">{{ hotelCount() + toursCount() }}</p>
-                      </div>
-                      <mat-icon class="text-4xl text-blue-500">hotel</mat-icon>
-                    </div>
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                  <div>
+                    <h2 class="text-3xl font-bold text-gray-900 mb-1">Welcome back, {{ authService.getCurrentUser()?.name }}!</h2>
+                    <p class="text-gray-600">Your central hub for all acquired services and bookings.</p>
                   </div>
-
-                  <div class="bg-white rounded-lg shadow p-6 border-l-4 border-orange-500">
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <p class="text-gray-600 text-sm font-medium">Food Orders</p>
-                        <p class="text-3xl font-bold text-gray-900">{{ foodCount() }}</p>
-                      </div>
-                      <mat-icon class="text-4xl text-orange-500">restaurant</mat-icon>
-                    </div>
-                  </div>
-
-                  <div class="bg-white rounded-lg shadow p-6 border-l-4 border-purple-500">
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <p class="text-gray-600 text-sm font-medium">Shopping Orders</p>
-                        <p class="text-3xl font-bold text-gray-900">{{ shoppingCount() }}</p>
-                      </div>
-                      <mat-icon class="text-4xl text-purple-500">shopping_bag</mat-icon>
-                    </div>
-                  </div>
-
-                  <div class="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <p class="text-gray-600 text-sm font-medium">Services</p>
-                        <p class="text-3xl font-bold text-gray-900">{{ servicesCount() }}</p>
-                      </div>
-                      <mat-icon class="text-4xl text-green-500">miscellaneous_services</mat-icon>
-                    </div>
-                  </div>
-
-                  <div class="bg-white rounded-lg shadow p-6 border-l-4 border-red-500">
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <p class="text-gray-600 text-sm font-medium">Support Chats</p>
-                        <p class="text-3xl font-bold text-gray-900">{{ chatCount() }}</p>
-                      </div>
-                      <mat-icon class="text-4xl text-red-500">chat</mat-icon>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Quick Actions Section 1: My Active Bookings -->
-                <div class="bg-white rounded-lg shadow p-6">
-                  <h3 class="text-xl font-bold text-gray-900 mb-4">My Active Bookings</h3>
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <button
-                      (click)="setSection('my-bookings', 'hotels')"
-                      class="bg-gradient-to-br from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 border border-blue-200 rounded-lg p-4 text-left transition"
-                    >
-                      <div class="flex items-center justify-between mb-2">
-                        <mat-icon class="text-3xl text-blue-600">hotel</mat-icon>
-                        @if (hotelCount() > 0) {
-                          <span class="bg-blue-600 text-white text-xs font-bold rounded-full px-2 py-1">{{ hotelCount() }}</span>
-                        }
-                      </div>
-                      <h4 class="font-bold text-gray-900">My Hotel Bookings</h4>
-                      <p class="text-sm text-gray-600">View and manage your stays</p>
-                    </button>
-
-                    <button
-                      (click)="setSection('my-bookings', 'food')"
-                      class="bg-gradient-to-br from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-200 border border-orange-200 rounded-lg p-4 text-left transition"
-                    >
-                      <div class="flex items-center justify-between mb-2">
-                        <mat-icon class="text-3xl text-orange-600">restaurant</mat-icon>
-                        @if (foodCount() > 0) {
-                          <span class="bg-orange-600 text-white text-xs font-bold rounded-full px-2 py-1">{{ foodCount() }}</span>
-                        }
-                      </div>
-                      <h4 class="font-bold text-gray-900">Food Orders</h4>
-                      <p class="text-sm text-gray-600">Track your orders</p>
-                    </button>
-
-                    <button
-                      (click)="setSection('my-bookings', 'shopping')"
-                      class="bg-gradient-to-br from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 border border-purple-200 rounded-lg p-4 text-left transition"
-                    >
-                      <div class="flex items-center justify-between mb-2">
-                        <mat-icon class="text-3xl text-purple-600">shopping_bag</mat-icon>
-                        @if (shoppingCount() > 0) {
-                          <span class="bg-purple-600 text-white text-xs font-bold rounded-full px-2 py-1">{{ shoppingCount() }}</span>
-                        }
-                      </div>
-                      <h4 class="font-bold text-gray-900">Shopping Orders</h4>
-                      <p class="text-sm text-gray-600">Manage purchases</p>
+                  <div class="flex gap-2">
+                    <button (click)="setSection('browse', 'hotels')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition shadow-sm flex items-center gap-2">
+                      <mat-icon>add</mat-icon>
+                      Book New
                     </button>
                   </div>
                 </div>
 
-                <!-- Quick Actions Section 2: Browse & Discover -->
-                <div class="bg-white rounded-lg shadow p-6">
-                  <h3 class="text-xl font-bold text-gray-900 mb-4">Discover More</h3>
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <button
-                      (click)="setSection('browse', 'hotels')"
-                      class="bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 border border-green-200 rounded-lg p-4 text-left transition"
-                    >
-                      <mat-icon class="text-3xl text-green-600 mb-2">search</mat-icon>
-                      <h4 class="font-bold text-gray-900">Find Hotels</h4>
-                      <p class="text-sm text-gray-600">Browse and book new hotels</p>
-                    </button>
+                @if (hotelCount() > 0 || foodCount() > 0) {
+                  <div class="mb-10">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                      <span class="w-2 h-6 bg-blue-600 rounded-full"></span>
+                      Live Snapshot
+                    </h3>
 
-                    <button
-                      (click)="setSection('browse', 'food')"
-                      class="bg-gradient-to-br from-yellow-50 to-yellow-100 hover:from-yellow-100 hover:to-yellow-200 border border-yellow-200 rounded-lg p-4 text-left transition"
-                    >
-                      <mat-icon class="text-3xl text-yellow-600 mb-2">search</mat-icon>
-                      <h4 class="font-bold text-gray-900">Find Restaurants</h4>
-                      <p class="text-sm text-gray-600">Order from new restaurants</p>
-                    </button>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      @if (activeHotelBookings().length > 0) {
+                        <div class="bg-white rounded-2xl shadow-sm p-5 border border-gray-100">
+                          <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                              <mat-icon class="text-blue-600">hotel</mat-icon>
+                            </div>
+                            <div>
+                              <p class="text-xs font-bold uppercase tracking-wider text-gray-500">Current Room</p>
+                              <p class="text-lg font-black text-gray-900">{{ getBookingRoomLabel(activeHotelBookings()[0]) }}</p>
+                            </div>
+                          </div>
+                          <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Hotel</p>
+                              <p class="font-semibold text-gray-900">{{ activeHotelBookings()[0].hotelName }}</p>
+                            </div>
+                            <div>
+                              <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Check-out</p>
+                              <p class="font-semibold text-gray-900">{{ activeHotelBookings()[0].checkOut | date:'mediumDate' }}</p>
+                            </div>
+                          </div>
+                        </div>
+                      }
 
-                    <button
-                      (click)="setSection('browse', 'tours')"
-                      class="bg-gradient-to-br from-indigo-50 to-indigo-100 hover:from-indigo-100 hover:to-indigo-200 border border-indigo-200 rounded-lg p-4 text-left transition"
-                    >
-                      <mat-icon class="text-3xl text-indigo-600 mb-2">search</mat-icon>
-                      <h4 class="font-bold text-gray-900">Explore Tours</h4>
-                      <p class="text-sm text-gray-600">Discover new travel packages</p>
-                    </button>
+                      @if (activeFoodOrders().length > 0) {
+                        <div class="bg-white rounded-2xl shadow-sm p-5 border border-gray-100">
+                          <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center">
+                              <mat-icon class="text-orange-600">restaurant</mat-icon>
+                            </div>
+                            <div>
+                              <p class="text-xs font-bold uppercase tracking-wider text-gray-500">Restaurant Orders</p>
+                              <p class="text-lg font-black text-gray-900">{{ activeFoodOrders().length }} Active</p>
+                            </div>
+                          </div>
+                          <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Latest Status</p>
+                              <p class="font-semibold text-gray-900">{{ activeFoodOrders()[0].status }}</p>
+                            </div>
+                            <div>
+                              <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Latest Order</p>
+                              <p class="font-semibold text-gray-900">#{{ activeFoodOrders()[0]._id?.substring(0,8) }}</p>
+                            </div>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+
+                <!-- Quick Stats Grid -->
+                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                  <span class="w-2 h-6 bg-slate-400 rounded-full"></span>
+                  Activity Summary
+                </h3>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-10">
+                  <div class="bg-white rounded-2xl shadow-sm p-5 border border-gray-100">
+                    <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center mb-3">
+                      <mat-icon class="text-blue-600">hotel</mat-icon>
+                    </div>
+                    <p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Current Room</p>
+                    <p class="text-2xl font-black text-gray-900">{{ primaryHotelNavLabel() }}</p>
+                    <p class="text-xs text-gray-500 mt-1">{{ hotelCount() }} active booking{{ hotelCount() === 1 ? '' : 's' }}</p>
+                  </div>
+
+                  <div (click)="setSection('my-bookings', 'food')" class="bg-white rounded-2xl shadow-sm p-5 border border-gray-100 hover:border-orange-300 transition cursor-pointer">
+                    <div class="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center mb-3">
+                      <mat-icon class="text-orange-600">restaurant</mat-icon>
+                    </div>
+                    <p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Restaurants</p>
+                    <p class="text-2xl font-black text-gray-900">{{ foodCount() }}</p>
+                  </div>
+
+                  <div (click)="setSection('my-bookings', 'shopping')" class="bg-white rounded-2xl shadow-sm p-5 border border-gray-100 hover:border-purple-300 transition cursor-pointer">
+                    <div class="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center mb-3">
+                      <mat-icon class="text-purple-600">shopping_bag</mat-icon>
+                    </div>
+                    <p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Orders</p>
+                    <p class="text-2xl font-black text-gray-900">{{ shoppingCount() }}</p>
+                  </div>
+
+                  <div (click)="setSection('my-bookings', 'services')" class="bg-white rounded-2xl shadow-sm p-5 border border-gray-100 hover:border-green-300 transition cursor-pointer">
+                    <div class="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center mb-3">
+                      <mat-icon class="text-green-600">miscellaneous_services</mat-icon>
+                    </div>
+                    <p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Services</p>
+                    <p class="text-2xl font-black text-gray-900">{{ servicesCount() }}</p>
+                  </div>
+
+                  <div (click)="openHotelChatSection()" class="bg-white rounded-2xl shadow-sm p-5 border border-gray-100 hover:border-red-300 transition cursor-pointer">
+                    <div class="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center mb-3">
+                      <mat-icon class="text-red-600">chat</mat-icon>
+                    </div>
+                    <p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Room Chat</p>
+                    <p class="text-2xl font-black text-gray-900">{{ chatCount() }}</p>
+                  </div>
+                </div>
+
+                <!-- Explore Section (Horizontal Cards) -->
+                <div class="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden">
+                  <div class="relative z-10">
+                    <h3 class="text-2xl font-bold mb-2">Ready for something new?</h3>
+                    <p class="text-slate-400 mb-6 max-w-md">Browse our marketplace and discover amazing services, food, and products tailord for you.</p>
+                    <div class="flex flex-wrap gap-3">
+                      <button (click)="setSection('browse', 'hotels')" class="bg-white text-slate-900 px-6 py-2.5 rounded-xl font-bold hover:bg-slate-100 transition">Book a Stay</button>
+                      <button (click)="setSection('browse', 'food')" class="bg-slate-800 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-slate-700 transition">Order Food</button>
+                      <button (click)="setSection('browse', 'shopping')" class="bg-slate-800 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-slate-700 transition">Shop Products</button>
+                    </div>
+                  </div>
+                  <!-- Decorative elements -->
+                  <div class="absolute -right-20 -bottom-20 w-64 h-64 bg-blue-600 rounded-full blur-3xl opacity-20"></div>
+                  <div class="absolute right-10 top-10">
+                    <mat-icon class="text-6xl text-slate-800">explore</mat-icon>
                   </div>
                 </div>
               </div>
@@ -502,10 +667,6 @@ import { ToursComponent } from '../../tours/tours.component';
               <app-tours [embedded]="true"></app-tours>
             }
 
-            @if (activeSection() === 'support') {
-              <app-customer-chat-support></app-customer-chat-support>
-            }
-
             @if (activeSection() === 'profile') {
               <app-customer-profile></app-customer-profile>
             }
@@ -522,7 +683,7 @@ import { ToursComponent } from '../../tours/tours.component';
     }
   `]
 })
-export class CustomerDashboardComponent implements OnInit {
+export class CustomerDashboardComponent implements OnInit, OnDestroy {
   activeSection = signal<DashboardSection>('dashboard');
   activeType = signal<ServiceType>(null);
   isMobileMenuOpen = signal<boolean>(false);
@@ -535,10 +696,37 @@ export class CustomerDashboardComponent implements OnInit {
   toursCount = signal<number>(0);
   chatCount = signal<number>(0);
 
+  // Active bookings details for the overview
+  activeHotelBookings = signal<any[]>([]);
+  activeFoodOrders = signal<any[]>([]);
+  private chatStreamDisconnect: (() => void) | null = null;
+  private readonly handleSwitchTab = (event: Event): void => {
+    const customEvent = event as CustomEvent<string>;
+    const tab = customEvent.detail;
+    if (tab === 'chat') {
+      this.openHotelChatSection();
+      return;
+    }
+    const tabMap: { [key: string]: { section: string; type?: string } } = {
+      'profile': { section: 'profile' },
+      'hotels': { section: 'my-bookings', type: 'hotels' },
+      'food': { section: 'my-bookings', type: 'food' },
+      'shopping': { section: 'my-bookings', type: 'shopping' },
+      'services': { section: 'my-bookings', type: 'services' },
+      'tours': { section: 'my-bookings', type: 'tours' }
+    };
+    const mapped = tabMap[tab];
+    if (mapped) {
+      this.setSection(mapped.section as any, mapped.type as any);
+      console.log('📌 Switching to section:', mapped.section, 'type:', mapped.type);
+    }
+  };
+
   constructor(
     private customerService: CustomerService,
-    private authService: AuthService,
-    private router: Router
+    public authService: AuthService,
+    private router: Router,
+    private chatRealtimeService: ChatRealtimeService
   ) {}
 
   ngOnInit(): void {
@@ -551,28 +739,26 @@ export class CustomerDashboardComponent implements OnInit {
 
     console.log('✅ Customer dashboard loaded for:', this.authService.getCurrentUser()?.name);
 
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      this.chatStreamDisconnect = this.chatRealtimeService.connectCustomer(userId, (event: ChatRealtimeEvent) => {
+        if (event.vendorType && event.vendorType !== 'hotel') {
+          return;
+        }
+        this.loadChatsCount();
+      });
+    }
+
     // Load counts for all services
     this.loadAllCounts();
 
     // Listen for tab switch events from child components
-    window.addEventListener('switchTab', (event: any) => {
-      const tab = event.detail;
-      // Map old tab names to new section/type
-      const tabMap: { [key: string]: { section: string; type?: string } } = {
-        'chat': { section: 'support' },
-        'profile': { section: 'profile' },
-        'hotels': { section: 'my-bookings', type: 'hotels' },
-        'food': { section: 'my-bookings', type: 'food' },
-        'shopping': { section: 'my-bookings', type: 'shopping' },
-        'services': { section: 'my-bookings', type: 'services' },
-        'tours': { section: 'my-bookings', type: 'tours' }
-      };
-      const mapped = tabMap[tab];
-      if (mapped) {
-        this.setSection(mapped.section as any, mapped.type as any);
-        console.log('📌 Switching to section:', mapped.section, 'type:', mapped.type);
-      }
-    });
+    window.addEventListener('switchTab', this.handleSwitchTab as EventListener);
+  }
+
+  ngOnDestroy(): void {
+    this.chatStreamDisconnect?.();
+    window.removeEventListener('switchTab', this.handleSwitchTab as EventListener);
   }
 
   /**
@@ -616,15 +802,21 @@ export class CustomerDashboardComponent implements OnInit {
       next: (response) => {
         if (response.success && response.data) {
           const activeBookings = Array.isArray(response.data)
-            ? response.data.filter(booking => booking.status !== 'cancelled' && booking.status !== 'completed')
+            ? response.data.filter(booking =>
+                booking.status !== 'cancelled' &&
+                booking.status !== 'completed' &&
+                booking.status !== 'checked-out'
+              )
             : [];
           this.hotelCount.set(activeBookings.length);
+          this.activeHotelBookings.set(activeBookings);
           console.log(`🏨 Hotels - Found ${activeBookings.length} active bookings`);
         }
       },
       error: (error) => {
         console.error('Error loading hotel count:', error);
         this.hotelCount.set(0);
+        this.activeHotelBookings.set([]);
       }
     });
   }
@@ -637,15 +829,21 @@ export class CustomerDashboardComponent implements OnInit {
       next: (response) => {
         if (response.success && response.data) {
           const activeOrders = Array.isArray(response.data)
-            ? response.data.filter(order => order.status !== 'delivered' && order.status !== 'cancelled')
+            ? response.data.filter(order =>
+                order.status !== 'delivered' &&
+                order.status !== 'cancelled' &&
+                order.status !== 'completed'
+              )
             : [];
           this.foodCount.set(activeOrders.length);
+          this.activeFoodOrders.set(activeOrders);
           console.log(`🍔 Food - Found ${activeOrders.length} active orders`);
         }
       },
       error: (error) => {
         console.error('Error loading food count:', error);
         this.foodCount.set(0);
+        this.activeFoodOrders.set([]);
       }
     });
   }
@@ -700,10 +898,11 @@ export class CustomerDashboardComponent implements OnInit {
       next: (response) => {
         if (response.success && response.data) {
           const activeChats = Array.isArray(response.data)
-            ? response.data.filter(chat => chat.status !== 'closed')
+            ? response.data.filter(chat => chat.vendorType === 'hotel')
             : [];
-          this.chatCount.set(activeChats.length);
-          console.log(`💬 Chats - Found ${activeChats.length} active chats`);
+          const unreadCount = activeChats.reduce((total: number, chat: any) => total + (chat.unreadForCustomer || 0), 0);
+          this.chatCount.set(unreadCount);
+          console.log(`💬 Chats - Found ${unreadCount} unread hotel messages`);
         }
       },
       error: (error) => {
@@ -719,6 +918,56 @@ export class CustomerDashboardComponent implements OnInit {
       this.activeType.set(type);
     }
     this.isMobileMenuOpen.set(false);
+  }
+
+  openHotelSection(booking?: any): void {
+    this.setSection('my-bookings', 'hotels');
+
+    const targetBooking = booking || this.activeHotelBookings()[0];
+    if (!targetBooking?._id) {
+      return;
+    }
+
+    sessionStorage.setItem('pendingHotelStay', JSON.stringify({
+      bookingId: targetBooking._id
+    }));
+
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('openHotelStay', { detail: { bookingId: targetBooking._id } }));
+    });
+  }
+
+  openHotelChatSection(booking?: any): void {
+    this.setSection('my-bookings', 'hotels');
+
+    const targetBooking = booking || this.activeHotelBookings()[0];
+    if (!targetBooking?._id) {
+      return;
+    }
+
+    sessionStorage.setItem('pendingHotelStay', JSON.stringify({
+      bookingId: targetBooking._id,
+      stayMenuItem: 'chat'
+    }));
+
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('openHotelStay', {
+        detail: {
+          bookingId: targetBooking._id,
+          stayMenuItem: 'chat'
+        }
+      }));
+    });
+  }
+
+  primaryHotelNavLabel(): string {
+    const firstBooking = this.activeHotelBookings()[0];
+    return this.getBookingRoomLabel(firstBooking);
+  }
+
+  getBookingRoomLabel(booking?: any): string {
+    const roomNumber = booking?.room?.roomNumber || booking?.roomNumber;
+    return roomNumber ? `Room ${roomNumber}` : 'Hotel Stay';
   }
 
   toggleMobileMenu(): void {

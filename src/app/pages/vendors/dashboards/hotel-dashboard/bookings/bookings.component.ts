@@ -114,7 +114,7 @@ import { HotelService } from '../../../../../services/hotel.service';
                 </tr>
               </thead>
               <tbody class="divide-y">
-                @for (booking of filteredBookings(); track booking._id) {
+                @for (booking of paginatedBookings(); track booking._id) {
                   <tr class="hover:bg-slate-50 transition">
                     <td class="px-6 py-4 text-sm text-slate-900 font-medium">
                       {{ booking.guestName || booking.guest?.name || booking.customerName || 'Unknown Guest' }}
@@ -146,8 +146,10 @@ import { HotelService } from '../../../../../services/hotel.service';
                           Edit
                         </button>
                         <button
-                          (click)="deleteBooking(booking._id)"
-                          class="text-red-600 hover:text-red-700 font-medium"
+                          type="button"
+                          disabled
+                          class="text-red-300 cursor-not-allowed font-medium"
+                          title="Deleting bookings is disabled"
                         >
                           Delete
                         </button>
@@ -158,6 +160,30 @@ import { HotelService } from '../../../../../services/hotel.service';
               </tbody>
             </table>
           </div>
+          @if (totalPages() > 1) {
+            <div class="flex items-center justify-between px-6 py-4 border-t bg-slate-50">
+              <p class="text-sm text-slate-500">
+                Showing {{ pageStartIndex() + 1 }}-{{ pageEndIndex() }} of {{ filteredBookings().length }} bookings
+              </p>
+              <div class="flex items-center gap-2">
+                <button
+                  (click)="goToPage(currentPage - 1)"
+                  [disabled]="currentPage === 1"
+                  class="px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 transition"
+                >
+                  Previous
+                </button>
+                <span class="text-sm font-medium text-slate-700">Page {{ currentPage }} of {{ totalPages() }}</span>
+                <button
+                  (click)="goToPage(currentPage + 1)"
+                  [disabled]="currentPage === totalPages()"
+                  class="px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 transition"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          }
         }
       </div>
 
@@ -313,6 +339,7 @@ import { HotelService } from '../../../../../services/hotel.service';
 export class HotelBookingsComponent implements OnInit {
   bookings = signal<any[]>([]);
   filteredBookings = signal<any[]>([]);
+  paginatedBookings = signal<any[]>([]);
   isLoading = signal(false);
   errorMessage = signal('');
   showModal = signal(false);
@@ -321,6 +348,8 @@ export class HotelBookingsComponent implements OnInit {
   searchQuery = '';
   filterStatus = '';
   sortBy = 'date-desc';
+  currentPage = 1;
+  readonly itemsPerPage = 10;
 
   formData: any = {
     customerName: '',
@@ -457,6 +486,32 @@ export class HotelBookingsComponent implements OnInit {
     });
 
     this.filteredBookings.set(result);
+    this.currentPage = 1;
+    this.updatePaginatedBookings();
+  }
+
+  updatePaginatedBookings(): void {
+    const start = (this.currentPage - 1) * this.itemsPerPage;
+    const end = start + this.itemsPerPage;
+    this.paginatedBookings.set(this.filteredBookings().slice(start, end));
+  }
+
+  totalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredBookings().length / this.itemsPerPage));
+  }
+
+  goToPage(page: number): void {
+    if (page < 1 || page > this.totalPages()) return;
+    this.currentPage = page;
+    this.updatePaginatedBookings();
+  }
+
+  pageStartIndex(): number {
+    return (this.currentPage - 1) * this.itemsPerPage;
+  }
+
+  pageEndIndex(): number {
+    return Math.min(this.pageStartIndex() + this.itemsPerPage, this.filteredBookings().length);
   }
 
   countByStatus(status: string): number {

@@ -17,8 +17,9 @@ export class AdminService {
   // OLD: 'https://us-central1-uni-backend01.cloudfunctions.net/api/admin'
   // NEW: Local Node.js/Express backend 'https://api-qpczzmaezq-uc.a.run.app'
   //private apiUrl = 'http://localhost:5001/admin';
-  //private apiUrl = 'http://localhost:5001/admin';
-  private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/admin';
+  private apiUrl = 'http://localhost:5001/admin';
+  //private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/admin';
+  private apiBaseUrl = this.apiUrl.replace(/\/admin$/, '');
 
   constructor(private http: HttpClient) {}
 
@@ -26,7 +27,7 @@ export class AdminService {
   private getAdminHeaders(): HttpHeaders {
     const userId = localStorage.getItem('userId');
     const adminRole = localStorage.getItem('adminRole');
-    
+
     return new HttpHeaders({
       'Content-Type': 'application/json',
       'x-user-id': userId || '',
@@ -180,6 +181,22 @@ export class AdminService {
     return this.http.get<ApiResponse<any[]>>(url, { headers: this.getAdminHeaders() });
   }
 
+  getDiscoveredDevices(page: number = 1, limit: number = 50, deviceType?: string): Observable<ApiResponse<any[]>> {
+    let url = `${this.apiUrl}/devices/discovered?page=${page}&limit=${limit}`;
+    if (deviceType) {
+      url += `&deviceType=${deviceType}`;
+    }
+    return this.http.get<ApiResponse<any[]>>(url, { headers: this.getAdminHeaders() });
+  }
+
+  acceptDevice(data: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${this.apiUrl}/devices/accept`,
+      data,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
   updateDeviceStatus(id: string, status: string): Observable<ApiResponse<any>> {
     return this.http.patch<ApiResponse<any>>(
       `${this.apiUrl}/devices/${id}/status`,
@@ -294,6 +311,101 @@ export class AdminService {
     return this.http.patch<ApiResponse<any>>(
       `${this.apiUrl}/vendors/${id}/block`,
       { reason },
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  getHotelByVendorOwner(vendorOwnerId: string): Observable<any> {
+    return this.http.get<any>(
+      `${this.apiBaseUrl}/hotels/${vendorOwnerId}`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  getHotelStaff(hotelId: string): Observable<any> {
+    return this.http.get<any>(
+      `${this.apiBaseUrl}/hotels/${hotelId}/staff?page=1&limit=200`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  getHotelRooms(hotelId: string): Observable<any> {
+    return this.http.get<any>(
+      `${this.apiBaseUrl}/hotels/${hotelId}/rooms?page=1&limit=200`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  getHotelBookings(hotelId: string, page: number = 1, limit: number = 200, status?: string): Observable<any> {
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: String(limit)
+    });
+
+    if (status) {
+      params.set('status', status);
+    }
+
+    return this.http.get<any>(
+      `${this.apiBaseUrl}/hotels/${hotelId}/bookings?${params.toString()}`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  getHotelReviews(hotelId: string, page: number = 1, limit: number = 200): Observable<any> {
+    return this.http.get<any>(
+      `${this.apiBaseUrl}/hotels/${hotelId}/reviews?page=${page}&limit=${limit}`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  rejectReview(reviewId: string): Observable<any> {
+    return this.http.put<any>(
+      `${this.apiBaseUrl}/reviews/${reviewId}/reject`,
+      {},
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  getHotelDeviceAssignments(hotelId: string): Observable<any> {
+    return this.http.get<any>(
+      `${this.apiBaseUrl}/hotels/${hotelId}/device-assignments`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  getHotelDeviceLogs(hotelId: string, deviceId: string, startTime?: number, endTime?: number, codes?: string): Observable<any> {
+    const params = new URLSearchParams();
+    if (startTime) params.set('start_time', String(startTime));
+    if (endTime) params.set('end_time', String(endTime));
+    if (codes) params.set('codes', codes);
+    const query = params.toString();
+
+    return this.http.get<any>(
+      `${this.apiBaseUrl}/hotels/${hotelId}/devices/${deviceId}/logs${query ? `?${query}` : ''}`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  getAdminDeviceLiveStatus(deviceId: string): Observable<any> {
+    return this.http.get<any>(
+      `${this.apiUrl}/devices/${deviceId}/live-status`,
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  assignHotelDeviceToRoom(hotelId: string, deviceId: string, roomId: string): Observable<any> {
+    return this.http.post<any>(
+      `${this.apiBaseUrl}/hotels/${hotelId}/device-assignments/${deviceId}/assign/${roomId}`,
+      {},
+      { headers: this.getAdminHeaders() }
+    );
+  }
+
+  unassignHotelDeviceFromRoom(hotelId: string, deviceId: string): Observable<any> {
+    return this.http.post<any>(
+      `${this.apiBaseUrl}/hotels/${hotelId}/device-assignments/${deviceId}/unassign`,
+      {},
       { headers: this.getAdminHeaders() }
     );
   }

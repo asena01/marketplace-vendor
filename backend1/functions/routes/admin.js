@@ -32,6 +32,111 @@ const tuyaContext = new TuyaContext({
   secretKey: TUYA_SECRET_KEY,
 });
 
+const inferTuyaDeviceType = (device = {}) => {
+  const candidates = [
+    device.category,
+    device.product_name,
+    device.name,
+    device.product_id,
+    device.uuid
+  ]
+    .filter(Boolean)
+    .map((value) => String(value).toLowerCase());
+
+  const combined = candidates.join(' ');
+
+  if (
+    combined.includes('door sensor') ||
+    combined.includes('door contact') ||
+    combined.includes('doorcontact') ||
+    combined.includes('contact sensor') ||
+    combined.includes('contact detector') ||
+    combined.includes('mcs')
+  ) {
+    return 'door_sensor';
+  }
+
+  if (
+    combined.includes('lock') ||
+    combined.includes('smart lock') ||
+    combined.includes('door lock')
+  ) {
+    return 'smart_lock';
+  }
+
+  if (combined.includes('motion') || combined.includes('pir')) {
+    return 'motion_sensor';
+  }
+
+  if (combined.includes('thermostat') || combined.includes('temperature')) {
+    return 'thermostat';
+  }
+
+  if (combined.includes('camera')) {
+    return 'camera';
+  }
+
+  if (combined.includes('light') || combined.includes('bulb')) {
+    return 'light';
+  }
+
+  if (combined.includes('speaker') || combined.includes('audio')) {
+    return 'speaker';
+  }
+
+  return 'motion_sensor';
+};
+
+const normalizeTuyaDevices = (result) => {
+  if (Array.isArray(result)) {
+    return result;
+  }
+
+  if (Array.isArray(result?.list)) {
+    return result.list;
+  }
+
+  if (Array.isArray(result?.devices)) {
+    return result.devices;
+  }
+
+  return [];
+};
+
+const resolveTuyaOnline = (device = {}) => {
+  if (typeof device.isOnline === 'boolean') return device.isOnline;
+  if (typeof device.online === 'boolean') return device.online;
+  return false;
+};
+
+const resolveTuyaUpdateTime = (device = {}) => {
+  return device.update_time || device.updateTime || device.activeTime || null;
+};
+
+const fetchTuyaLiveDeviceMap = async () => {
+  try {
+    const response = await tuyaContext.request({
+      path: '/v2.0/cloud/thing/device',
+      method: 'GET',
+      query: { page_size: 20 }
+    });
+
+    if (!response.success) {
+      return new Map();
+    }
+
+    return new Map(
+      normalizeTuyaDevices(response.result).map((device) => {
+        const normalizedDeviceId = device.device_id || device.id || device.uuid || device.dev_id || '';
+        return [normalizedDeviceId, device];
+      })
+    );
+  } catch (error) {
+    console.error('⚠️ Failed to refresh live Tuya device map:', error.message);
+    return new Map();
+  }
+};
+
 // ============================================
 // ADMIN AUTH & VERIFICATION MIDDLEWARE
 // ============================================
@@ -595,71 +700,53 @@ router.post('/payments/:id/refund', verifyAdmin, async (req, res) => {
 // DEVICES MANAGEMENT ROUTES
 // ============================================
 
-// Get all devices
+// Get accepted devices from database
 router.get('/devices', verifyAdmin, async (req, res) => {
   try {
-    const page = req.query.page || 1;
-    const limit = req.query.limit || 10;
+    const page = Number(req.query.page || 1);
+    const limit = Number(req.query.limit || 10);
+    const { deviceType, status } = req.query;
     const skip = (page - 1) * limit;
+    const filter = {};
 
-    console.log('🔄 Fetching devices from Tuya platform...');
+    if (deviceType) filter.deviceType = deviceType;
+    if (status === 'active') filter.status = true;
+    if (status === 'inactive') filter.status = false;
 
-    // Fetch devices from Tuya platform (using correct endpoint)
-    const tuyaResponse = await tuyaContext.request({
-      path: '/v2.0/cloud/thing/device',
-      method: 'GET',
-      query: {
-        page_size: limit
-      }
-    });
+    const devices = await Device.find(filter)
+      .skip(skip)
+      .limit(limit)
+      .sort({ updatedAt: -1, createdAt: -1 });
 
-    if (!tuyaResponse.success) {
-      console.error('❌ Tuya API Error:', tuyaResponse.msg);
-
-      // Fallback to MongoDB if Tuya fails
-      console.log('📌 Falling back to MongoDB devices...');
-      const devices = await Device.find()
-        .skip(skip)
-        .limit(limit)
-        .sort({ createdAt: -1 });
-
-      const total = await Device.countDocuments();
-
-      return res.status(200).json({
-        success: true,
-        source: 'mongodb',
-        data: devices,
-        pagination: {
-          total,
-          pages: Math.ceil(total / limit),
-          currentPage: page,
-          limit
+    const tuyaLiveMap = await fetchTuyaLiveDeviceMap();
+    await Promise.all(
+      devices.map(async (device) => {
+        const tuyaId = device.tuyaDeviceId || device.deviceId;
+        if (!tuyaId || !tuyaLiveMap.has(tuyaId)) {
+          return;
         }
-      });
-    }
 
-    // Process Tuya response (v2.0 endpoint returns devices directly in result)
-    const tuyaDevices = tuyaResponse.result || [];
-    const total = tuyaDevices.length;
+        const liveDevice = tuyaLiveMap.get(tuyaId);
+        const liveStatus = resolveTuyaOnline(liveDevice);
+        const updateTime = resolveTuyaUpdateTime(liveDevice);
+        const liveLastSeen = updateTime ? new Date(Number(updateTime) * 1000) : null;
 
-    console.log(`✅ Fetched ${tuyaDevices.length} devices from Tuya platform`);
+        if (device.status !== liveStatus || String(device.lastDetectionTime || '') !== String(liveLastSeen || '')) {
+          device.status = liveStatus;
+          if (liveLastSeen) {
+            device.lastDetectionTime = liveLastSeen;
+          }
+          await device.save();
+        }
+      })
+    );
 
-    // Enrich Tuya devices with additional info
-    const enrichedDevices = tuyaDevices.map(device => ({
-      _id: device.device_id,
-      deviceId: device.device_id,
-      name: device.name,
-      type: device.product_name || 'Smart Device',
-      status: device.online ? 'active' : 'inactive',
-      ownerName: device.owner_id || 'Unassigned',
-      lastActive: device.update_time ? new Date(device.update_time * 1000) : null,
-      tuyaData: device
-    }));
+    const total = await Device.countDocuments(filter);
 
     res.status(200).json({
       success: true,
-      source: 'tuya',
-      data: enrichedDevices,
+      source: 'database',
+      data: devices,
       pagination: {
         total,
         pages: Math.ceil(total / limit),
@@ -668,41 +755,155 @@ router.get('/devices', verifyAdmin, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Error fetching devices:', error.message);
+    console.error('❌ Error fetching accepted devices:', error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
 
-    // Final fallback to MongoDB
-    try {
-      console.log('📌 Final fallback to MongoDB devices...');
-      const page = req.query.page || 1;
-      const limit = req.query.limit || 10;
-      const skip = (page - 1) * limit;
+router.get('/devices/discovered', verifyAdmin, async (req, res) => {
+  try {
+    const page = Number(req.query.page || 1);
+    const limit = Number(req.query.limit || 50);
+    const { deviceType, status } = req.query;
+    const tuyaPageSize = Math.min(Math.max(limit, 1), 20);
+    const tuyaResponse = await tuyaContext.request({
+      path: '/v2.0/cloud/thing/device',
+      method: 'GET',
+      query: {
+        page_size: tuyaPageSize
+      }
+    });
 
-      const devices = await Device.find()
-        .skip(skip)
-        .limit(limit)
-        .sort({ createdAt: -1 });
+    if (!tuyaResponse.success) {
+      return res.status(400).json({
+        success: false,
+        message: tuyaResponse.msg || 'Failed to fetch devices from Tuya'
+      });
+    }
 
-      const total = await Device.countDocuments();
+    const acceptedDeviceIds = new Set(
+      (await Device.find().select('deviceId tuyaDeviceId'))
+        .flatMap((device) => [device.deviceId, device.tuyaDeviceId].filter(Boolean))
+    );
+
+    let discoveredDevices = normalizeTuyaDevices(tuyaResponse.result).map((device) => {
+      const normalizedDeviceId = device.device_id || device.id || device.uuid || device.dev_id || '';
+      return ({
+      _id: normalizedDeviceId,
+      deviceId: normalizedDeviceId,
+      tuyaDeviceId: normalizedDeviceId,
+      name: device.name,
+      type: device.product_name || 'Smart Device',
+      deviceType: inferTuyaDeviceType(device),
+      status: resolveTuyaOnline(device) ? 'active' : 'inactive',
+      ownerName: device.owner_id || 'Unassigned',
+      lastActive: resolveTuyaUpdateTime(device) ? new Date(Number(resolveTuyaUpdateTime(device)) * 1000) : null,
+      accepted: acceptedDeviceIds.has(normalizedDeviceId),
+      tuyaData: device
+    })});
+
+    if (deviceType) {
+      discoveredDevices = discoveredDevices.filter((device) => device.deviceType === deviceType);
+    }
+
+    if (status) {
+      discoveredDevices = discoveredDevices.filter((device) => device.status === status);
+    }
+
+    const start = (page - 1) * limit;
+    const pagedDevices = discoveredDevices.slice(start, start + limit);
+
+    res.status(200).json({
+      success: true,
+      source: 'tuya',
+      data: pagedDevices,
+      pagination: {
+        total: discoveredDevices.length,
+        pages: Math.ceil(discoveredDevices.length / limit),
+        currentPage: page,
+        limit
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error fetching discovered devices:', error.message);
+    const message = String(error?.message || '');
+    res.status(message.includes('param size too much') ? 400 : 500).json({
+      success: false,
+      message: message || 'Failed to fetch discovered devices from Tuya'
+    });
+  }
+});
+
+router.post('/devices/accept', verifyAdmin, async (req, res) => {
+  try {
+    const { deviceId, name, deviceType, tuyaData } = req.body;
+
+    if (!deviceId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Device ID is required'
+      });
+    }
+
+    const normalizedType = deviceType || inferTuyaDeviceType(tuyaData || { device_id: deviceId, name });
+    const existingDevice = await Device.findOne({
+      $or: [{ deviceId }, { tuyaDeviceId: deviceId }]
+    });
+
+    if (existingDevice) {
+      existingDevice.deviceId = deviceId;
+      existingDevice.tuyaDeviceId = deviceId;
+      existingDevice.deviceType = normalizedType;
+      existingDevice.status = resolveTuyaOnline(tuyaData || {});
+      existingDevice.isActive = true;
+      existingDevice.tuyaProductId = tuyaData?.product_id || existingDevice.tuyaProductId;
+      existingDevice.description = name || existingDevice.description;
+      existingDevice.metadata = {
+        ...(existingDevice.metadata || {}),
+        ...(tuyaData || {}),
+        source: 'tuya-accepted',
+        sensorRole: normalizedType === 'door_sensor' ? 'door_sensor' : existingDevice.metadata?.sensorRole
+      };
+      await existingDevice.save();
 
       return res.status(200).json({
         success: true,
-        source: 'mongodb',
-        data: devices,
-        pagination: {
-          total,
-          pages: Math.ceil(total / limit),
-          currentPage: page,
-          limit
-        }
-      });
-    } catch (fallbackError) {
-      console.error('❌ Fallback error:', fallbackError);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to fetch devices from both Tuya and MongoDB',
-        error: error.message
+        message: 'Device accepted successfully',
+        data: existingDevice
       });
     }
+
+    const device = new Device({
+      deviceId,
+      tuyaDeviceId: deviceId,
+      deviceType: normalizedType,
+      status: resolveTuyaOnline(tuyaData || {}),
+      isActive: true,
+      description: name || tuyaData?.name || '',
+      tuyaProductId: tuyaData?.product_id || null,
+      metadata: {
+        ...(tuyaData || {}),
+        source: 'tuya-accepted',
+        sensorRole: normalizedType === 'door_sensor' ? 'door_sensor' : undefined
+      }
+    });
+
+    await device.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Device accepted successfully',
+      data: device
+    });
+  } catch (error) {
+    console.error('❌ Error accepting device:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 });
 
@@ -750,6 +951,80 @@ router.post('/devices', verifyAdmin, async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message
+    });
+  }
+});
+
+router.get('/devices/:id/live-status', verifyAdmin, async (req, res) => {
+  try {
+    const device = await Device.findById(req.params.id);
+
+    if (!device) {
+      return res.status(404).json({
+        success: false,
+        message: 'Device not found'
+      });
+    }
+
+    const tuyaId = device.tuyaDeviceId || device.deviceId;
+    if (!tuyaId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Device is not linked to Tuya'
+      });
+    }
+
+    const listResponse = await tuyaContext.request({
+      path: '/v2.0/cloud/thing/device',
+      method: 'GET',
+      query: { page_size: 20 }
+    });
+
+    if (!listResponse.success) {
+      return res.status(400).json({
+        success: false,
+        message: listResponse.msg || 'Failed to fetch live Tuya status'
+      });
+    }
+
+    const liveDevice = normalizeTuyaDevices(listResponse.result).find((item) => {
+      const normalizedDeviceId = item.device_id || item.id || item.uuid || item.dev_id || '';
+      return normalizedDeviceId === tuyaId;
+    });
+
+    if (!liveDevice) {
+      return res.status(404).json({
+        success: false,
+        message: 'Device was not found in the current Tuya device list'
+      });
+    }
+
+    const liveStatus = resolveTuyaOnline(liveDevice);
+    const updateTime = resolveTuyaUpdateTime(liveDevice);
+    const liveLastSeen = updateTime ? new Date(Number(updateTime) * 1000) : null;
+
+    device.status = liveStatus;
+    if (liveLastSeen) {
+      device.lastDetectionTime = liveLastSeen;
+    }
+    await device.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Live device status retrieved successfully',
+      data: {
+        deviceId: device._id,
+        tuyaDeviceId: tuyaId,
+        online: liveStatus,
+        lastDetectionTime: liveLastSeen,
+        tuyaDevice: liveDevice
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error fetching live device status:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to fetch live device status'
     });
   }
 });

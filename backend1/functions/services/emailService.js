@@ -2,11 +2,18 @@ import nodemailer from 'nodemailer';
 
 // Create reusable transporter using environment variables for security
 const createTransporter = () => {
+  const user = process.env.EMAIL_USER || 'hotelmanagement546@gmail.com';
+  const pass = process.env.EMAIL_PASSWORD || process.env.GMAIL_APP_PASSWORD;
+
+  if (!user || !pass) {
+    throw new Error('Email service is not configured. Set EMAIL_USER and EMAIL_PASSWORD or GMAIL_APP_PASSWORD in the backend environment.');
+  }
+
   return nodemailer.createTransport({
     service: 'Gmail',
     auth: {
-      user: process.env.EMAIL_USER || 'hotelmanagement546@gmail.com',
-      pass: process.env.EMAIL_PASSWORD || process.env.GMAIL_APP_PASSWORD,
+      user,
+      pass,
     },
   });
 };
@@ -485,9 +492,296 @@ export const sendEmailBooking = async (email, booking) => {
   }
 };
 
+const formatReportPeriodLabel = (report) => {
+  if (!report) return 'Income Report';
+
+  const startDate = new Date(report.startDate);
+  if (report.period === 'monthly') {
+    return startDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  }
+
+  return startDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+};
+
+const formatCurrency = (amount) => new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits: 2
+}).format(amount || 0);
+
+const generateIncomeReportEmailTemplate = ({ hotelName, report }) => {
+  const entries = Array.isArray(report?.entries) ? report.entries : [];
+  const highlightedEntries = entries.slice(0, 10);
+
+  const entryRows = highlightedEntries.length > 0
+    ? highlightedEntries.map((entry) => `
+      <tr>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0;">${new Date(entry.occurredAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0;">${entry.category || '-'}</td>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0;">${entry.label || '-'}</td>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: right; white-space: nowrap;">${formatCurrency(entry.amount || 0)}</td>
+      </tr>
+    `).join('')
+    : `
+      <tr>
+        <td colspan="4" style="padding: 16px 12px; color: #64748b; text-align: center;">No income entries found for this period.</td>
+      </tr>
+    `;
+
+  return `
+    <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Hotel Income Report</title>
+      </head>
+      <body style="margin: 0; padding: 24px; background: #f8fafc; font-family: Arial, sans-serif; color: #0f172a;">
+        <div style="max-width: 760px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 18px; overflow: hidden;">
+          <div style="padding: 28px 32px; background: linear-gradient(135deg, #0f172a, #1d4ed8); color: #ffffff;">
+            <div style="font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.8;">Income Report</div>
+            <h1 style="margin: 10px 0 6px; font-size: 28px;">${hotelName || 'Hotel'} Revenue Summary</h1>
+            <p style="margin: 0; font-size: 14px; opacity: 0.88;">Reporting period: ${formatReportPeriodLabel(report)}</p>
+          </div>
+
+          <div style="padding: 28px 32px;">
+            <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 24px;">
+              <div style="padding: 16px; border: 1px solid #e2e8f0; border-radius: 14px; background: #f8fafc;">
+                <div style="font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em;">Total Income</div>
+                <div style="margin-top: 8px; font-size: 24px; font-weight: 700;">${formatCurrency(report?.summary?.totalIncome || 0)}</div>
+              </div>
+              <div style="padding: 16px; border: 1px solid #e2e8f0; border-radius: 14px; background: #f8fafc;">
+                <div style="font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em;">Generated</div>
+                <div style="margin-top: 8px; font-size: 16px; font-weight: 700;">${new Date(report?.generatedAt || Date.now()).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+              </div>
+              <div style="padding: 16px; border: 1px solid #e2e8f0; border-radius: 14px; background: #ffffff;">
+                <div style="font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em;">Room Bookings</div>
+                <div style="margin-top: 8px; font-size: 20px; font-weight: 700;">${formatCurrency(report?.summary?.roomBookings || 0)}</div>
+              </div>
+              <div style="padding: 16px; border: 1px solid #e2e8f0; border-radius: 14px; background: #ffffff;">
+                <div style="font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em;">Food and Drinks</div>
+                <div style="margin-top: 8px; font-size: 20px; font-weight: 700;">${formatCurrency(report?.summary?.foodAndDrinks || 0)}</div>
+              </div>
+            </div>
+
+            <div style="padding: 16px; border: 1px solid #e2e8f0; border-radius: 14px; background: #ffffff; margin-bottom: 24px;">
+              <div style="font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em;">Inhouse Services</div>
+              <div style="margin-top: 8px; font-size: 20px; font-weight: 700;">${formatCurrency(report?.summary?.inhouseServices || 0)}</div>
+            </div>
+
+            <h2 style="margin: 0 0 12px; font-size: 18px;">Recent entries</h2>
+            <table style="width: 100%; border-collapse: collapse; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden;">
+              <thead>
+                <tr style="background: #eff6ff;">
+                  <th style="padding: 12px; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: #475569;">Date</th>
+                  <th style="padding: 12px; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: #475569;">Category</th>
+                  <th style="padding: 12px; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: #475569;">Description</th>
+                  <th style="padding: 12px; text-align: right; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: #475569;">Amount</th>
+                </tr>
+              </thead>
+              <tbody>${entryRows}</tbody>
+            </table>
+
+            ${entries.length > 10 ? `<p style="margin: 14px 0 0; font-size: 13px; color: #64748b;">Showing 10 of ${entries.length} entries from the report preview.</p>` : ''}
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+};
+
+export const sendIncomeReportEmail = async (email, payload) => {
+  try {
+    const transporter = createTransporter();
+    const subject = `Hotel Income Report - ${formatReportPeriodLabel(payload.report)}`;
+    const html = generateIncomeReportEmailTemplate(payload);
+
+    const result = await transporter.sendMail({
+      from: process.env.EMAIL_USER || 'hotelmanagement546@gmail.com',
+      to: email,
+      subject,
+      html,
+    });
+
+    console.log('✅ Income report email sent:', result.messageId);
+    return { success: true, messageId: result.messageId };
+  } catch (error) {
+    console.error('❌ Failed to send income report email:', error);
+    throw new Error(`Email send failed: ${error.message}`);
+  }
+};
+
+const generateStayReviewReminderEmailTemplate = ({
+  guestName = 'Guest',
+  hotelName = 'Hotel',
+  roomLabel = 'your room',
+  checkOutDate,
+  reviewUrl = 'https://www.smarttrackbookings.live/customer-dashboard'
+}) => {
+  const formattedCheckOut = checkOutDate
+    ? new Date(checkOutDate).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
+    : 'today';
+
+  return `
+    <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>How was your stay at ${hotelName}?</title>
+      </head>
+      <body style="margin: 0; padding: 24px; background: #f8fafc; font-family: Arial, sans-serif; color: #0f172a;">
+        <div style="max-width: 640px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 18px; overflow: hidden;">
+          <div style="padding: 28px 32px; background: linear-gradient(135deg, #0f172a, #2563eb); color: #ffffff;">
+            <div style="font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.82;">Stay Feedback</div>
+            <h1 style="margin: 10px 0 6px; font-size: 28px;">How was your stay?</h1>
+            <p style="margin: 0; font-size: 14px; opacity: 0.88;">${hotelName}</p>
+          </div>
+
+          <div style="padding: 28px 32px;">
+            <p style="margin-top: 0;">Hi ${guestName},</p>
+            <p>Thanks for staying with <strong>${hotelName}</strong>. Your stay for <strong>${roomLabel}</strong> checked out on <strong>${formattedCheckOut}</strong>.</p>
+            <p>If you have a minute, please leave a rating and short review. Your feedback helps the hotel improve and helps future guests book with confidence.</p>
+
+            <div style="margin: 24px 0; padding: 18px; border: 1px solid #dbeafe; border-radius: 14px; background: #eff6ff;">
+              <div style="font-size: 12px; color: #475569; text-transform: uppercase; letter-spacing: 0.08em;">Where to review</div>
+              <div style="margin-top: 8px; font-size: 16px; font-weight: 700;">Customer Dashboard → My Stays → Review Stay</div>
+            </div>
+
+            <div style="margin-top: 24px;">
+              <a
+                href="${reviewUrl}"
+                style="display: inline-block; background: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 10px; font-weight: 700;"
+              >
+                Open Dashboard
+              </a>
+              <p style="margin: 14px 0 0; font-size: 13px; color: #475569;">
+                Direct link:
+                <a href="${reviewUrl}" style="color: #2563eb; word-break: break-all;">${reviewUrl}</a>
+              </p>
+            </div>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+};
+
+export const sendStayReviewReminderEmail = async (email, payload) => {
+  try {
+    const transporter = createTransporter();
+    const html = generateStayReviewReminderEmailTemplate(payload);
+
+    const result = await transporter.sendMail({
+      from: process.env.EMAIL_USER || 'hotelmanagement546@gmail.com',
+      to: email,
+      subject: `How was your stay at ${payload.hotelName || 'our hotel'}?`,
+      html,
+    });
+
+    console.log('✅ Stay review reminder email sent:', result.messageId);
+    return { success: true, messageId: result.messageId };
+  } catch (error) {
+    console.error('❌ Failed to send stay review reminder email:', error);
+    throw new Error(`Email send failed: ${error.message}`);
+  }
+};
+
+const generateStaffWelcomeEmailTemplate = ({
+  staffName = 'Team Member',
+  hotelName = 'Hotel',
+  position = 'Staff',
+  email,
+  temporaryPassword
+}) => {
+  const loginUrl = 'https://www.smarttrackbookings.live/staff-login';
+
+  return `
+  <!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Welcome to ${hotelName}</title>
+    </head>
+    <body style="margin: 0; padding: 24px; background: #f8fafc; font-family: Arial, sans-serif; color: #0f172a;">
+      <div style="max-width: 640px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 18px; overflow: hidden;">
+        <div style="padding: 28px 32px; background: linear-gradient(135deg, #0f172a, #1d4ed8); color: #ffffff;">
+          <div style="font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.82;">Staff Access</div>
+          <h1 style="margin: 10px 0 6px; font-size: 28px;">Your staff account is ready</h1>
+          <p style="margin: 0; font-size: 14px; opacity: 0.88;">${hotelName}</p>
+        </div>
+
+        <div style="padding: 28px 32px;">
+          <p style="margin-top: 0;">Hi ${staffName},</p>
+          <p>You have been added as <strong>${position}</strong> at <strong>${hotelName}</strong>. Use the credentials below to sign in to the staff dashboard.</p>
+
+          <div style="margin: 24px 0; padding: 20px; border: 1px solid #dbeafe; border-radius: 14px; background: #eff6ff;">
+            <div style="margin-bottom: 12px;">
+              <div style="font-size: 12px; color: #475569; text-transform: uppercase; letter-spacing: 0.08em;">Login email</div>
+              <div style="margin-top: 6px; font-size: 16px; font-weight: 700;">${email}</div>
+            </div>
+            <div>
+              <div style="font-size: 12px; color: #475569; text-transform: uppercase; letter-spacing: 0.08em;">Temporary password</div>
+              <div style="margin-top: 6px; font-size: 18px; font-weight: 700; letter-spacing: 0.06em;">${temporaryPassword}</div>
+            </div>
+          </div>
+
+          <div style="padding: 16px 18px; border-left: 4px solid #f59e0b; background: #fffbeb; border-radius: 8px; color: #92400e; font-size: 14px;">
+            You will be asked to change this password after your first login.
+          </div>
+
+          <div style="margin: 24px 0 0;">
+            <a
+              href="${loginUrl}"
+              style="display: inline-block; background: #1d4ed8; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 10px; font-weight: 700;"
+            >
+              Open Staff Login
+            </a>
+            <p style="margin: 14px 0 0; font-size: 13px; color: #475569;">
+              Direct login link:
+              <a href="${loginUrl}" style="color: #1d4ed8; word-break: break-all;">${loginUrl}</a>
+            </p>
+          </div>
+
+          <p style="margin: 24px 0 0;">If you were not expecting this account, contact your hotel administrator.</p>
+        </div>
+      </div>
+    </body>
+  </html>
+`;
+};
+
+export const sendStaffWelcomeEmail = async (email, payload) => {
+  try {
+    const transporter = createTransporter();
+    const html = generateStaffWelcomeEmailTemplate(payload);
+
+    const result = await transporter.sendMail({
+      from: process.env.EMAIL_USER || 'hotelmanagement546@gmail.com',
+      to: email,
+      subject: `Staff account created - ${payload.hotelName || 'Hotel'}`,
+      html,
+    });
+
+    console.log('✅ Staff welcome email sent:', result.messageId);
+    return { success: true, messageId: result.messageId };
+  } catch (error) {
+    console.error('❌ Failed to send staff welcome email:', error);
+    throw new Error(`Email send failed: ${error.message}`);
+  }
+};
+
 export default {
   sendSmartLockAccessEmail,
   sendEmailBooking,
+  sendIncomeReportEmail,
+  sendStayReviewReminderEmail,
+  sendStaffWelcomeEmail,
   createTransporter,
   generateSmartLockEmailTemplate
 };

@@ -1,4 +1,36 @@
 import FoodOrder from "../models/FoodOrder.js";
+import Booking from "../models/Booking.js";
+
+const deriveCategoryFromItems = (items = []) => {
+  const drinkItems = ["juice", "coffee", "tea", "wine", "beer", "cola", "sprite", "water", "lemonade"];
+  const drinkCount = items.filter((item) =>
+    drinkItems.some((drink) => item.toLowerCase().includes(drink))
+  ).length;
+
+  if (drinkCount === 0) return "food";
+  if (drinkCount === items.length) return "drink";
+  return "mixed";
+};
+
+const getEmbeddedOrderItemName = (item) => {
+  if (typeof item === "string") {
+    return item;
+  }
+
+  if (item && typeof item === "object") {
+    if (typeof item.name === "string") {
+      return item.name;
+    }
+    if (typeof item.itemName === "string") {
+      return item.itemName;
+    }
+    if (typeof item.title === "string") {
+      return item.title;
+    }
+  }
+
+  return "";
+};
 
 const getAllFoodOrders = async (req, res) => {
   try {
@@ -9,20 +41,58 @@ const getAllFoodOrders = async (req, res) => {
     if (status) filter.status = status;
     if (category) filter.category = category;
 
-    const skip = (page - 1) * limit;
-    const orders = await FoodOrder.find(filter)
+    const directOrders = await FoodOrder.find(filter)
       .populate("guest", "name email phone")
       .populate("assignedStaff", "name position")
-      .limit(limit * 1)
-      .skip(skip)
       .sort({ orderTime: -1 });
 
-    const total = await FoodOrder.countDocuments(filter);
+    const bookings = await Booking.find({
+      hotel: hotelId,
+      "roomServiceOrders.0": { $exists: true }
+    })
+      .populate("guest", "name email phone")
+      .populate("room", "roomNumber roomType")
+      .sort({ createdAt: -1 });
+
+    const embeddedOrders = bookings.flatMap((booking) =>
+      (booking.roomServiceOrders || [])
+        .filter((order) => !status || order.status === status)
+        .map((order) => {
+          const items = (order.items || []).map(getEmbeddedOrderItemName).filter(Boolean);
+          const mappedCategory = deriveCategoryFromItems(items);
+          return {
+            _id: order._id,
+            orderId: `RS-${order._id.toString().slice(-8).toUpperCase()}`,
+            roomNumber: booking.room?.roomNumber || "TBA",
+            guestName: booking.guest?.name || "Unknown Guest",
+            guest: booking.guest,
+            items,
+            totalPrice: order.totalPrice || 0,
+            status: order.status,
+            category: mappedCategory,
+            assignedStaff: null,
+            orderTime: order.orderedAt,
+            specialInstructions: order.notes || "",
+            bookingId: booking._id,
+            sourceType: "room-service-order"
+          };
+        })
+        .filter((order) => !category || order.category === category)
+    );
+
+    const allOrders = [...directOrders.map((order) => ({ ...order.toObject(), sourceType: "food-order" })), ...embeddedOrders]
+      .sort((a, b) => new Date(b.orderTime).getTime() - new Date(a.orderTime).getTime());
+
+    const pageNumber = Number(page);
+    const pageSize = Number(limit);
+    const skip = (pageNumber - 1) * pageSize;
+    const paginatedOrders = allOrders.slice(skip, skip + pageSize);
+    const total = allOrders.length;
 
     return res.status(200).json({
       status: "success",
-      data: orders,
-      pagination: { total, pages: Math.ceil(total / limit), currentPage: page }
+      data: paginatedOrders,
+      pagination: { total, pages: Math.ceil(total / pageSize), currentPage: pageNumber }
     });
   } catch (err) {
     console.error(err);
@@ -58,14 +128,7 @@ const createFoodOrder = async (req, res) => {
     // Auto-categorize if not provided
     let orderCategory = category;
     if (!orderCategory && items.length > 0) {
-      const drinkItems = ["juice", "coffee", "tea", "wine", "beer", "cola", "sprite", "water", "lemonade"];
-      const drinkCount = items.filter(item => 
-        drinkItems.some(drink => item.toLowerCase().includes(drink))
-      ).length;
-
-      if (drinkCount === 0) orderCategory = "food";
-      else if (drinkCount === items.length) orderCategory = "drink";
-      else orderCategory = "mixed";
+      orderCategory = deriveCategoryFromItems(items);
     }
 
     const orderId = "FO-" + Date.now().toString().slice(-10);
@@ -135,12 +198,43 @@ const updateFoodOrderStatus = async (req, res) => {
     else if (status === "delivered") updates.deliveryEndTime = now;
 
     const order = await FoodOrder.findByIdAndUpdate(id, updates, { new: true });
-    if (!order) return res.status(404).json({ status: "failed", message: "Food order not found" });
+    if (order) {
+      return res.status(200).json({
+        status: "success",
+        message: "Food order status updated",
+        data: order
+      });
+    }
+
+    const booking = await Booking.findOne({ "roomServiceOrders._id": id });
+    if (!booking) {
+      return res.status(404).json({ status: "failed", message: "Food order not found" });
+    }
+
+    const embeddedOrder = booking.roomServiceOrders.id(id) ||
+      booking.roomServiceOrders.find((item) => item._id?.toString() === id);
+
+    if (!embeddedOrder) {
+      return res.status(404).json({ status: "failed", message: "Food order not found" });
+    }
+
+    if (!["pending", "preparing", "ready", "delivered", "cancelled"].includes(status)) {
+      return res.status(400).json({ status: "failed", message: "Invalid room service order status" });
+    }
+
+    embeddedOrder.status = status;
+    if (status === "ready") {
+      embeddedOrder.etaAt = now;
+    }
+    if (status === "delivered") {
+      embeddedOrder.deliveredAt = now;
+    }
+    await booking.save();
 
     return res.status(200).json({
       status: "success",
       message: "Food order status updated",
-      data: order
+      data: embeddedOrder
     });
   } catch (err) {
     console.error(err);

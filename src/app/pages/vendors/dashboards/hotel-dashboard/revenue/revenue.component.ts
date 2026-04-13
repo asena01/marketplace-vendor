@@ -16,6 +16,17 @@ interface Transaction {
   roomNumber?: string;
 }
 
+interface IncomeReportEntry {
+  type: 'room-booking' | 'food-order' | 'drink-order' | 'room-service' | 'inhouse-service';
+  category: string;
+  label: string;
+  guestName: string;
+  roomNumber?: string;
+  amount: number;
+  status: string;
+  occurredAt: string;
+}
+
 interface RevenueStats {
   totalRevenue: number;
   roomRevenue: number;
@@ -114,7 +125,40 @@ interface RevenueStats {
 
       <!-- Filters -->
       <div class="bg-white rounded-lg p-4 shadow-md">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">Report Period</label>
+            <select
+              [(ngModel)]="reportPeriod"
+              (change)="loadRevenueReport()"
+              class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+            >
+              <option value="daily">Daily</option>
+              <option value="monthly">Monthly</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">
+              {{ reportPeriod === 'monthly' ? 'Month' : 'Date' }}
+            </label>
+            @if (reportPeriod === 'monthly') {
+              <input
+                type="month"
+                [(ngModel)]="reportMonth"
+                (change)="loadRevenueReport()"
+                class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            } @else {
+              <input
+                type="date"
+                [(ngModel)]="reportDate"
+                (change)="loadRevenueReport()"
+                class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            }
+          </div>
+
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-2">Filter by Type</label>
             <select
@@ -157,6 +201,18 @@ interface RevenueStats {
         </div>
       </div>
 
+      @if (isLoading()) {
+        <div class="bg-blue-50 border border-blue-300 text-blue-700 px-4 py-3 rounded-lg">
+          Loading revenue report...
+        </div>
+      }
+
+      @if (errorMessage()) {
+        <div class="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg">
+          {{ errorMessage() }}
+        </div>
+      }
+
       <!-- Transactions Table -->
       <div class="bg-white rounded-lg shadow-md overflow-hidden">
         <div class="overflow-x-auto">
@@ -179,7 +235,7 @@ interface RevenueStats {
                   </td>
                 </tr>
               } @else {
-                @for (transaction of filteredTransactions(); track transaction._id) {
+                @for (transaction of paginatedTransactions(); track transaction._id) {
                   <tr class="border-b border-slate-200 hover:bg-slate-50 transition">
                     <td class="px-6 py-4 font-medium text-slate-900">{{ transaction.guestName }}</td>
                     <td class="px-6 py-4">
@@ -216,6 +272,30 @@ interface RevenueStats {
             </tbody>
           </table>
         </div>
+        @if (filteredTransactions().length > 0 && totalPages() > 1) {
+          <div class="flex items-center justify-between px-6 py-4 border-t bg-slate-50">
+            <p class="text-sm text-slate-500">
+              Showing {{ pageStartIndex() + 1 }}-{{ pageEndIndex() }} of {{ filteredTransactions().length }} transactions
+            </p>
+            <div class="flex items-center gap-2">
+              <button
+                (click)="goToPage(currentPage - 1)"
+                [disabled]="currentPage === 1"
+                class="px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 transition"
+              >
+                Previous
+              </button>
+              <span class="text-sm font-medium text-slate-700">Page {{ currentPage }} of {{ totalPages() }}</span>
+              <button
+                (click)="goToPage(currentPage + 1)"
+                [disabled]="currentPage === totalPages()"
+                class="px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 transition"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        }
       </div>
     </div>
   `,
@@ -224,6 +304,9 @@ interface RevenueStats {
 export class RevenueComponent implements OnInit {
   transactions = signal<Transaction[]>([]);
   filteredTransactions = signal<Transaction[]>([]);
+  paginatedTransactions = signal<Transaction[]>([]);
+  isLoading = signal(false);
+  errorMessage = signal('');
   revenueStats = signal<RevenueStats>({
     totalRevenue: 0,
     roomRevenue: 0,
@@ -237,75 +320,126 @@ export class RevenueComponent implements OnInit {
   selectedType = '';
   selectedStatus = '';
   searchGuest = '';
+  reportPeriod: 'daily' | 'monthly' = 'daily';
+  reportDate = this.getTodayDateInput();
+  reportMonth = this.getCurrentMonthInput();
+  currentPage = 1;
+  readonly itemsPerPage = 10;
 
   constructor(private hotelService: HotelService) {}
 
   ngOnInit() {
-    this.loadTransactions();
+    this.loadRevenueReport();
   }
 
-  loadTransactions() {
-    // Load transactions from API
-    this.hotelService.getRevenue(1, 100, this.selectedType || undefined, this.selectedStatus || undefined, this.searchGuest || undefined).subscribe({
+  loadRevenueReport() {
+    this.isLoading.set(true);
+    this.errorMessage.set('');
+
+    this.hotelService.getIncomeReport(this.reportPeriod, this.getSelectedReportDate()).subscribe({
       next: (response: any) => {
-        if (response.status === 'success' && response.data) {
-          this.transactions.set(response.data);
+        this.isLoading.set(false);
+
+        if (response.status === 'success' && response.data?.entries) {
+          const entries = response.data.entries as IncomeReportEntry[];
+          this.transactions.set(entries.map((entry, index) => this.mapReportEntryToTransaction(entry, index)));
+          this.revenueStats.set(this.buildStatsFromReport(entries));
         } else {
           this.transactions.set([]);
+          this.revenueStats.set(this.getEmptyStats());
+          this.errorMessage.set(response.message || 'No revenue report data available');
         }
-        this.loadRevenueStats();
         this.filterTransactions();
       },
       error: (error) => {
-        console.error('Error loading transactions:', error);
+        this.isLoading.set(false);
+        console.error('Error loading revenue report:', error);
         this.transactions.set([]);
-        this.calculateStats();
+        this.revenueStats.set(this.getEmptyStats());
+        this.errorMessage.set(error.message || 'Failed to load revenue report');
+        this.filterTransactions();
       }
     });
   }
 
-  loadRevenueStats() {
-    // Load revenue stats from API
-    this.hotelService.getRevenueStats().subscribe({
-      next: (response: any) => {
-        if (response.status === 'success' && response.data) {
-          this.revenueStats.set(response.data);
-        } else {
-          this.calculateStats();
-        }
-      },
-      error: (error) => {
-        console.error('Error loading revenue stats:', error);
-        this.calculateStats();
-      }
-    });
-  }
-
-  calculateStats() {
-    const txns = this.transactions();
-    const stats: RevenueStats = {
+  getEmptyStats(): RevenueStats {
+    return {
       totalRevenue: 0,
       roomRevenue: 0,
       foodRevenue: 0,
       drinkRevenue: 0,
       serviceRevenue: 0,
-      totalTransactions: txns.length,
+      totalTransactions: 0,
       pendingAmount: 0
     };
+  }
 
-    txns.forEach(txn => {
-      if (txn.status === 'completed') {
-        stats.totalRevenue += txn.amount;
-        if (txn.type === 'room') stats.roomRevenue += txn.amount;
-        else if (txn.type === 'food') stats.foodRevenue += txn.amount;
-        else if (txn.type === 'drink') stats.drinkRevenue += txn.amount;
-        else if (txn.type === 'service') stats.serviceRevenue += txn.amount;
-      } else if (txn.status === 'pending') {
-        stats.pendingAmount += txn.amount;
+  buildStatsFromReport(entries: IncomeReportEntry[]): RevenueStats {
+    const stats = this.getEmptyStats();
+    stats.totalTransactions = entries.length;
+
+    entries.forEach((entry) => {
+      const amount = entry.amount || 0;
+      stats.totalRevenue += amount;
+
+      if (entry.type === 'room-booking') {
+        stats.roomRevenue += amount;
+      } else if (entry.type === 'drink-order') {
+        stats.drinkRevenue += amount;
+      } else if (entry.type === 'inhouse-service') {
+        stats.serviceRevenue += amount;
+      } else {
+        stats.foodRevenue += amount;
+      }
+
+      if (this.mapEntryStatus(entry.status) === 'pending') {
+        stats.pendingAmount += amount;
       }
     });
 
-    this.revenueStats.set(stats);
+    return stats;
+  }
+
+  mapReportEntryToTransaction(entry: IncomeReportEntry, index: number): Transaction {
+    return {
+      _id: `${entry.type}-${entry.occurredAt}-${index}`,
+      type: this.mapEntryType(entry.type),
+      description: entry.label,
+      amount: entry.amount || 0,
+      guestName: entry.guestName || 'Unknown Guest',
+      status: this.mapEntryStatus(entry.status),
+      timestamp: entry.occurredAt,
+      roomNumber: entry.roomNumber
+    };
+  }
+
+  mapEntryType(entryType: IncomeReportEntry['type']): Transaction['type'] {
+    if (entryType === 'room-booking') return 'room';
+    if (entryType === 'drink-order') return 'drink';
+    if (entryType === 'inhouse-service') return 'service';
+    return 'food';
+  }
+
+  mapEntryStatus(status: string): Transaction['status'] {
+    if (['checked-out', 'delivered', 'completed', 'paid'].includes(status)) {
+      return 'completed';
+    }
+    if (status === 'cancelled') {
+      return 'cancelled';
+    }
+    return 'pending';
+  }
+
+  getSelectedReportDate(): string {
+    return this.reportPeriod === 'monthly' ? this.reportMonth : this.reportDate;
+  }
+
+  getTodayDateInput(): string {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  getCurrentMonthInput(): string {
+    return new Date().toISOString().slice(0, 7);
   }
 
   filterTransactions() {
@@ -326,6 +460,32 @@ export class RevenueComponent implements OnInit {
     }
 
     this.filteredTransactions.set(filtered);
+    this.currentPage = 1;
+    this.updatePaginatedTransactions();
+  }
+
+  updatePaginatedTransactions(): void {
+    const start = (this.currentPage - 1) * this.itemsPerPage;
+    const end = start + this.itemsPerPage;
+    this.paginatedTransactions.set(this.filteredTransactions().slice(start, end));
+  }
+
+  totalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredTransactions().length / this.itemsPerPage));
+  }
+
+  goToPage(page: number): void {
+    if (page < 1 || page > this.totalPages()) return;
+    this.currentPage = page;
+    this.updatePaginatedTransactions();
+  }
+
+  pageStartIndex(): number {
+    return (this.currentPage - 1) * this.itemsPerPage;
+  }
+
+  pageEndIndex(): number {
+    return Math.min(this.pageStartIndex() + this.itemsPerPage, this.filteredTransactions().length);
   }
 
   getPercentage(amount: number): number {

@@ -2,20 +2,64 @@ import OccupancyAnalytics from '../models/OccupancyAnalytics.js';
 import Room from '../models/Room.js';
 import Booking from '../models/Booking.js';
 import Transaction from '../models/Transaction.js';
+import { buildIncomeReportData } from './revenueController.js';
+
+const buildRecentDateRange = (days) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const startDate = new Date(today);
+  startDate.setDate(startDate.getDate() - (days - 1));
+
+  return { startDate, endDate: today };
+};
+
+const formatDateKey = (date) => {
+  return new Date(date).toISOString().slice(0, 10);
+};
+
+const buildDailyRevenueSeries = async (hotelId, days) => {
+  const { startDate } = buildRecentDateRange(days);
+  const requests = [];
+
+  for (let offset = 0; offset < days; offset += 1) {
+    const currentDate = new Date(startDate);
+    currentDate.setDate(startDate.getDate() + offset);
+    const dateKey = formatDateKey(currentDate);
+
+    requests.push(
+      buildIncomeReportData(hotelId, 'daily', dateKey).then((report) => ({
+        date: dateKey,
+        revenue: report?.summary?.totalIncome || 0
+      }))
+    );
+  }
+
+  return Promise.all(requests);
+};
+
+const buildRevenueMap = (series) => {
+  return series.reduce((acc, item) => {
+    acc[item.date] = item.revenue || 0;
+    return acc;
+  }, {});
+};
 
 // Get analytics statistics
 const getAnalyticsStats = async (req, res) => {
   try {
     const { hotelId } = req.params;
 
-    // Get analytics data for last 7 days
-    const lastSevenDays = new Date();
-    lastSevenDays.setDate(lastSevenDays.getDate() - 7);
+    // Get analytics data for last 30 days
+    const { startDate } = buildRecentDateRange(30);
 
     const analyticsData = await OccupancyAnalytics.find({
       hotel: hotelId,
-      date: { $gte: lastSevenDays }
+      date: { $gte: startDate }
     }).sort({ date: 1 });
+
+    const revenueSeries = await buildDailyRevenueSeries(hotelId, 30);
+    const revenueValues = revenueSeries.map((item) => item.revenue || 0);
 
     // Calculate statistics
     let stats = {
@@ -30,17 +74,17 @@ const getAnalyticsStats = async (req, res) => {
 
     if (analyticsData.length > 0) {
       const occupancyRates = analyticsData.map(d => d.occupancyRate);
-      const revenues = analyticsData.map(d => d.revenue || 0);
       const stays = analyticsData.map(d => d.averageStay || 0);
 
       stats.averageOccupancy = Math.round(occupancyRates.reduce((a, b) => a + b, 0) / occupancyRates.length);
       stats.peakOccupancy = Math.max(...occupancyRates);
       stats.lowOccupancy = Math.min(...occupancyRates);
-      stats.totalRevenue = revenues.reduce((a, b) => a + b, 0);
-      stats.averageRevenue = Math.round(stats.totalRevenue / revenues.length);
       stats.totalGuests = analyticsData.reduce((sum, d) => sum + (d.totalGuests || 0), 0);
-      stats.averageStay = (stays.reduce((a, b) => a + b, 0) / stays.length).toFixed(1);
+      stats.averageStay = Number((stays.reduce((a, b) => a + b, 0) / stays.length).toFixed(1));
     }
+
+    stats.totalRevenue = revenueValues.reduce((a, b) => a + b, 0);
+    stats.averageRevenue = revenueValues.length > 0 ? Math.round(stats.totalRevenue / revenueValues.length) : 0;
 
     return res.status(200).json({
       status: 'success',
@@ -57,21 +101,23 @@ const getOccupancyTrend = async (req, res) => {
   try {
     const { hotelId } = req.params;
 
-    const lastSevenDays = new Date();
-    lastSevenDays.setDate(lastSevenDays.getDate() - 7);
+    const { startDate } = buildRecentDateRange(7);
 
     const trendData = await OccupancyAnalytics.find({
       hotel: hotelId,
-      date: { $gte: lastSevenDays }
+      date: { $gte: startDate }
     }).sort({ date: 1 });
+
+    const revenueSeries = await buildDailyRevenueSeries(hotelId, 7);
+    const revenueMap = buildRevenueMap(revenueSeries);
 
     // Format dates
     const formattedData = trendData.map(d => ({
-      date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      date: formatDateKey(d.date),
       occupancyRate: d.occupancyRate,
       occupiedRooms: d.occupiedRooms,
       totalRooms: d.totalRooms,
-      revenue: d.revenue || 0
+      revenue: revenueMap[formatDateKey(d.date)] || 0
     }));
 
     return res.status(200).json({
@@ -89,17 +135,11 @@ const getRevenueTrend = async (req, res) => {
   try {
     const { hotelId } = req.params;
 
-    const lastSevenDays = new Date();
-    lastSevenDays.setDate(lastSevenDays.getDate() - 7);
+    const revenueSeries = await buildDailyRevenueSeries(hotelId, 7);
 
-    const trendData = await OccupancyAnalytics.find({
-      hotel: hotelId,
-      date: { $gte: lastSevenDays }
-    }).sort({ date: 1 });
-
-    const formattedData = trendData.map(d => ({
-      date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      revenue: d.revenue || 0
+    const formattedData = revenueSeries.map((item) => ({
+      date: item.date,
+      revenue: item.revenue
     }));
 
     return res.status(200).json({

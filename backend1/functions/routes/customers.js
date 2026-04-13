@@ -1,9 +1,142 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import Customer from '../models/Customer.js';
+import Notification from '../models/Notification.js';
 import VendorChat from '../models/VendorChat.js';
+import Booking from '../models/Booking.js';
+import User from '../models/User.js';
+import { emitChatUpdate } from '../services/chatSocketService.js';
 
 const router = express.Router();
+const customerChatStreams = new Map();
+const vendorChatStreams = new Map();
+
+const registerStream = (registry, key, res) => {
+  const connections = registry.get(key) || new Set();
+  connections.add(res);
+  registry.set(key, connections);
+};
+
+const unregisterStream = (registry, key, res) => {
+  const connections = registry.get(key);
+  if (!connections) {
+    return;
+  }
+  connections.delete(res);
+  if (!connections.size) {
+    registry.delete(key);
+  }
+};
+
+const pushStreamEvent = (registry, key, event, payload) => {
+  const connections = registry.get(key);
+  if (!connections?.size) {
+    return;
+  }
+
+  const data = `event: ${event}\ndata: ${JSON.stringify(payload)}\n\n`;
+  for (const res of connections) {
+    res.write(data);
+  }
+};
+
+const broadcastChatUpdate = (chat, event = 'chat-updated', extra = {}) => {
+  if (!chat) {
+    return;
+  }
+
+  const chatId = chat._id?.toString?.() || chat._id;
+  const customerId = chat.customerId?.toString?.() || chat.customerId;
+  const vendorId = chat.vendorId?.toString?.() || chat.vendorId;
+  const payload = {
+    event,
+    chatId,
+    bookingId: chat.bookingId,
+    vendorType: chat.vendorType,
+    status: chat.status,
+    unreadForCustomer: chat.unreadForCustomer || 0,
+    unreadForVendor: chat.unreadForVendor || 0,
+    updatedAt: chat.updatedAt || new Date(),
+    ...extra
+  };
+
+  if (customerId) {
+    pushStreamEvent(customerChatStreams, customerId, event, payload);
+  }
+
+  if (vendorId) {
+    pushStreamEvent(vendorChatStreams, vendorId, event, payload);
+  }
+
+  emitChatUpdate(chat, event, extra);
+};
+
+const createChatNotification = async ({
+  userId,
+  businessId,
+  businessType,
+  title,
+  message,
+  relatedId
+}) => {
+  if (!userId || !businessId) {
+    return;
+  }
+
+  try {
+    await Notification.create({
+      userId,
+      businessId,
+      businessType,
+      type: 'system',
+      title,
+      message,
+      priority: 'high',
+      relatedId,
+      relatedModel: 'VendorChat'
+    });
+  } catch (error) {
+    console.error('❌ Error creating chat notification:', error);
+  }
+};
+
+const enrichChatsWithBookingContext = async (chats = []) => {
+  const bookingIds = [...new Set(
+    chats
+      .map((chat) => chat.bookingId)
+      .filter((bookingId) => typeof bookingId === 'string' && mongoose.Types.ObjectId.isValid(bookingId))
+  )];
+
+  if (!bookingIds.length) {
+    return chats;
+  }
+
+  const bookings = await Booking.find({ _id: { $in: bookingIds } })
+    .populate('guest', 'name email phone')
+    .populate('room', 'roomNumber roomType')
+    .populate('hotel', 'name phone')
+    .lean();
+
+  const bookingMap = new Map(bookings.map((booking) => [booking._id.toString(), booking]));
+
+  return chats.map((chat) => {
+    const booking = chat.bookingId ? bookingMap.get(chat.bookingId.toString()) : null;
+    return {
+      ...chat,
+      bookingContext: booking ? {
+        bookingId: booking._id?.toString(),
+        guestName: booking.guest?.name || 'Guest',
+        guestEmail: booking.guest?.email || '',
+        roomNumber: booking.room?.roomNumber || '',
+        roomType: booking.room?.roomType || '',
+        checkInDate: booking.checkInDate,
+        checkOutDate: booking.checkOutDate,
+        hotelName: booking.hotel?.name || chat.vendorName || '',
+        hotelPhone: booking.hotel?.phone || ''
+      } : null
+    };
+  });
+};
 
 // Get business customers
 router.get('/business/:businessId', async (req, res) => {
@@ -116,30 +249,6 @@ router.get('/business/:businessId/top', async (req, res) => {
     res.status(200).json({
       success: true,
       data: topCustomers,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-});
-
-// Get single customer
-router.get('/:customerId', async (req, res) => {
-  try {
-    const customer = await Customer.findById(req.params.customerId);
-
-    if (!customer) {
-      return res.status(404).json({
-        success: false,
-        message: 'Customer not found',
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      data: customer,
     });
   } catch (error) {
     res.status(500).json({
@@ -318,6 +427,65 @@ router.delete('/:customerId', async (req, res) => {
 
 // ==================== VENDOR CHAT ENDPOINTS ====================
 
+router.get('/vendor-chats/stream', (req, res) => {
+  const userId = req.query.userId || req.headers['x-user-id'];
+
+  if (!userId) {
+    return res.status(400).json({
+      success: false,
+      message: 'User ID is required'
+    });
+  }
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders?.();
+
+  registerStream(customerChatStreams, userId.toString(), res);
+  res.write(`event: connected\ndata: ${JSON.stringify({ ok: true, scope: 'customer', userId })}\n\n`);
+
+  const heartbeat = setInterval(() => {
+    res.write(`event: ping\ndata: ${JSON.stringify({ ts: Date.now() })}\n\n`);
+  }, 30000);
+
+  req.on('close', () => {
+    clearInterval(heartbeat);
+    unregisterStream(customerChatStreams, userId.toString(), res);
+    res.end();
+  });
+});
+
+router.get('/vendor-chats-by-vendor/:vendorId/stream', (req, res) => {
+  const { vendorId } = req.params;
+  const authVendorId = req.query.vendorId || req.headers['x-vendor-id'];
+
+  if (!authVendorId || authVendorId !== vendorId) {
+    return res.status(403).json({
+      success: false,
+      message: 'Unauthorized: You can only subscribe to your own chats'
+    });
+  }
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders?.();
+
+  registerStream(vendorChatStreams, vendorId.toString(), res);
+  res.write(`event: connected\ndata: ${JSON.stringify({ ok: true, scope: 'vendor', vendorId })}\n\n`);
+
+  const heartbeat = setInterval(() => {
+    res.write(`event: ping\ndata: ${JSON.stringify({ ts: Date.now() })}\n\n`);
+  }, 30000);
+
+  req.on('close', () => {
+    clearInterval(heartbeat);
+    unregisterStream(vendorChatStreams, vendorId.toString(), res);
+    res.end();
+  });
+});
+
 // Get all vendor chats for current user
 router.get('/vendor-chats', async (req, res) => {
   try {
@@ -334,9 +502,11 @@ router.get('/vendor-chats', async (req, res) => {
       .sort({ updatedAt: -1 })
       .lean();
 
+    const enrichedChats = await enrichChatsWithBookingContext(chats);
+
     res.status(200).json({
       success: true,
-      data: chats
+      data: enrichedChats
     });
   } catch (error) {
     console.error('❌ Error fetching vendor chats:', error);
@@ -360,12 +530,25 @@ router.post('/vendor-chats', async (req, res) => {
       });
     }
 
+    let resolvedVendorId = `vendor-${Date.now()}`;
+    let resolvedVendorName = vendorName;
+
+    if (vendorType === 'hotel' && bookingId && mongoose.Types.ObjectId.isValid(bookingId)) {
+      const booking = await Booking.findById(bookingId).populate('hotel', 'name');
+      if (booking?.hotel) {
+        const hotel = booking.hotel;
+        resolvedVendorId = hotel._id?.toString() || hotel.toString();
+        resolvedVendorName = hotel.name || vendorName;
+      }
+    }
+
     // Check if chat already exists for this booking/order
     let chat = null;
     if (bookingId) {
       chat = await VendorChat.findOne({
         customerId: userId,
-        bookingId: bookingId
+        bookingId: bookingId,
+        vendorType
       });
     }
 
@@ -374,15 +557,19 @@ router.post('/vendor-chats', async (req, res) => {
       chat = new VendorChat({
         customerId: userId,
         bookingId: bookingId,
-        vendorId: `vendor-${Date.now()}`, // Temporary vendor ID
-        vendorName,
+        vendorId: resolvedVendorId,
+        vendorName: resolvedVendorName,
         vendorType,
-        subject: `Chat about ${vendorType} ${bookingId ? 'booking' : 'order'}`,
+        unreadForCustomer: 0,
+        unreadForVendor: 0,
+        subject: vendorType === 'hotel'
+          ? `Hotel stay support`
+          : `Chat about ${vendorType} ${bookingId ? 'booking' : 'order'}`,
         messages: [
           {
             _id: new mongoose.Types.ObjectId(),
             sender: 'vendor',
-            senderName: vendorName,
+            senderName: resolvedVendorName,
             message: `Hello! How can I help you with your ${vendorType} booking/order?`,
             timestamp: new Date(),
             read: false
@@ -393,6 +580,10 @@ router.post('/vendor-chats', async (req, res) => {
       await chat.save();
       console.log('✅ New vendor chat created:', chat._id);
     } else {
+      if (vendorType === 'hotel') {
+        chat.vendorId = resolvedVendorId;
+        chat.vendorName = resolvedVendorName;
+      }
       // Mark chat as open if it was closed
       chat.status = 'open';
       await chat.save();
@@ -401,9 +592,11 @@ router.post('/vendor-chats', async (req, res) => {
 
     res.status(chat.isNew ? 201 : 200).json({
       success: true,
-      data: chat,
+      data: (await enrichChatsWithBookingContext([chat.toObject ? chat.toObject() : chat]))[0],
       message: chat.isNew ? 'Chat created successfully' : 'Chat opened successfully'
     });
+
+    broadcastChatUpdate(chat, chat.isNew ? 'chat-created' : 'chat-opened');
   } catch (error) {
     console.error('❌ Error creating/opening vendor chat:', error);
     res.status(500).json({
@@ -444,10 +637,14 @@ router.post('/vendor-chats/:chatId/message', async (req, res) => {
       });
     }
 
+    const customer = mongoose.Types.ObjectId.isValid(userId)
+      ? await User.findById(userId).select('name')
+      : null;
+
     const newMessage = {
       _id: new mongoose.Types.ObjectId(),
       sender: 'customer',
-      senderName: 'You',
+      senderName: customer?.name || 'Customer',
       message: message.trim(),
       timestamp: new Date(),
       read: false
@@ -455,9 +652,17 @@ router.post('/vendor-chats/:chatId/message', async (req, res) => {
 
     chat.messages.push(newMessage);
     chat.updatedAt = new Date();
+    chat.unreadForVendor = (chat.unreadForVendor || 0) + 1;
+    chat.unreadForCustomer = 0;
+    chat.lastReadAtCustomer = new Date();
     await chat.save();
 
     console.log('✅ Message sent in chat:', chatId);
+
+    broadcastChatUpdate(chat, 'message-created', {
+      chatId: chat._id?.toString?.() || chat._id,
+      messageId: newMessage._id?.toString?.() || newMessage._id
+    });
 
     res.status(201).json({
       success: true,
@@ -496,6 +701,18 @@ router.get('/vendor-chats-by-vendor/:vendorId', async (req, res) => {
       filter.vendorType = vendorType;
     }
 
+    if (vendorType === 'hotel' && mongoose.Types.ObjectId.isValid(vendorId)) {
+      const hotelBookings = await Booking.find({ hotel: vendorId }).select('_id').lean();
+      const bookingIds = hotelBookings.map((booking) => booking._id.toString());
+      filter = {
+        vendorType: 'hotel',
+        $or: [
+          { vendorId },
+          ...(bookingIds.length ? [{ bookingId: { $in: bookingIds } }] : [])
+        ]
+      };
+    }
+
     const chats = await VendorChat.find(filter)
       .sort({ updatedAt: -1 })
       .skip(skip)
@@ -504,11 +721,13 @@ router.get('/vendor-chats-by-vendor/:vendorId', async (req, res) => {
 
     const total = await VendorChat.countDocuments(filter);
 
-    console.log(`✅ Fetched ${chats.length} chats for vendor ${vendorId}`);
+    const enrichedChats = await enrichChatsWithBookingContext(chats);
+
+    console.log(`✅ Fetched ${enrichedChats.length} chats for vendor ${vendorId}`);
 
     res.status(200).json({
       success: true,
-      data: chats,
+      data: enrichedChats,
       pagination: {
         total,
         page: parseInt(page),
@@ -555,9 +774,22 @@ router.post('/vendor-chats/:chatId/vendor-reply', async (req, res) => {
       });
     }
 
+    let isAuthorizedVendor = chat.vendorId === vendorId;
+
+    if (!isAuthorizedVendor && chat.vendorType === 'hotel' && chat.bookingId && mongoose.Types.ObjectId.isValid(vendorId)) {
+      const booking = await Booking.findById(chat.bookingId).select('hotel');
+      if (booking?.hotel?.toString() === vendorId.toString()) {
+        isAuthorizedVendor = true;
+        chat.vendorId = vendorId.toString();
+        if (vendorName) {
+          chat.vendorName = vendorName;
+        }
+      }
+    }
+
     // Verify vendor authorization
-    if (chat.vendorId !== vendorId) {
-      console.warn('⚠️ Unauthorized vendor reply attempt:', { vendorId, chatVendorId: chat.vendorId });
+    if (!isAuthorizedVendor) {
+      console.warn('⚠️ Unauthorized vendor reply attempt:', { vendorId, chatVendorId: chat.vendorId, bookingId: chat.bookingId });
       return res.status(403).json({
         success: false,
         message: 'Unauthorized: This chat does not belong to you'
@@ -583,9 +815,26 @@ router.post('/vendor-chats/:chatId/vendor-reply', async (req, res) => {
 
     chat.messages.push(newMessage);
     chat.updatedAt = new Date();
+    chat.unreadForCustomer = (chat.unreadForCustomer || 0) + 1;
+    chat.unreadForVendor = 0;
+    chat.lastReadAtVendor = new Date();
     await chat.save();
 
     console.log(`✅ Vendor reply sent in chat ${chatId}`);
+
+    broadcastChatUpdate(chat, 'message-created', {
+      chatId: chat._id?.toString?.() || chat._id,
+      messageId: newMessage._id?.toString?.() || newMessage._id
+    });
+
+    await createChatNotification({
+      userId: chat.customerId,
+      businessId: chat.vendorId,
+      businessType: chat.vendorType,
+      title: `${vendorName || chat.vendorName} replied`,
+      message: message.trim(),
+      relatedId: chat._id
+    });
 
     res.status(201).json({
       success: true,
@@ -597,6 +846,90 @@ router.post('/vendor-chats/:chatId/vendor-reply', async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message
+    });
+  }
+});
+
+router.put('/vendor-chats/:chatId/read-customer', async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const userId = req.query.userId || req.headers['x-user-id'];
+    const chat = await VendorChat.findById(chatId);
+
+    if (!chat) {
+      return res.status(404).json({ success: false, message: 'Chat not found' });
+    }
+
+    if (chat.customerId.toString() !== userId) {
+      return res.status(403).json({ success: false, message: 'Unauthorized to update this chat' });
+    }
+
+    chat.unreadForCustomer = 0;
+    chat.lastReadAtCustomer = new Date();
+    await chat.save();
+
+    broadcastChatUpdate(chat, 'chat-opened');
+
+    return res.status(200).json({ success: true, data: chat, message: 'Customer chat marked as read' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+router.put('/vendor-chats/:chatId/read-vendor', async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const vendorId = req.headers['x-vendor-id'] || req.query.vendorId;
+    const chat = await VendorChat.findById(chatId);
+
+    if (!chat) {
+      return res.status(404).json({ success: false, message: 'Chat not found' });
+    }
+
+    let isAuthorizedVendor = chat.vendorId === vendorId;
+    if (!isAuthorizedVendor && chat.vendorType === 'hotel' && chat.bookingId && mongoose.Types.ObjectId.isValid(vendorId)) {
+      const booking = await Booking.findById(chat.bookingId).select('hotel');
+      if (booking?.hotel?.toString() === vendorId.toString()) {
+        isAuthorizedVendor = true;
+      }
+    }
+
+    if (!isAuthorizedVendor) {
+      return res.status(403).json({ success: false, message: 'Unauthorized to update this chat' });
+    }
+
+    chat.unreadForVendor = 0;
+    chat.lastReadAtVendor = new Date();
+    await chat.save();
+
+    broadcastChatUpdate(chat, 'chat-opened');
+
+    return res.status(200).json({ success: true, data: chat, message: 'Vendor chat marked as read' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Get single customer
+router.get('/:customerId', async (req, res) => {
+  try {
+    const customer = await Customer.findById(req.params.customerId);
+
+    if (!customer) {
+      return res.status(404).json({
+        success: false,
+        message: 'Customer not found',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: customer,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 });

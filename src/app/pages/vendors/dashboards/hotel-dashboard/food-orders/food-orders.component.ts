@@ -21,6 +21,21 @@ interface FoodOrder {
   specialInstructions?: string;
 }
 
+interface StaffOption {
+  _id?: string;
+  name: string;
+  position: string;
+  department?: string;
+}
+
+interface LinkedTask {
+  _id?: string;
+  sourceType?: string;
+  sourceId?: string;
+  status?: string;
+  assignedStaff?: { _id?: string; name?: string } | string;
+}
+
 @Component({
   selector: 'app-hotel-food-orders',
   standalone: true,
@@ -30,8 +45,8 @@ interface FoodOrder {
       <!-- Header -->
       <div class="flex justify-between items-center">
         <div>
-          <h1 class="text-3xl font-bold text-slate-900">🍽️ Food Service Orders</h1>
-          <p class="text-slate-600 mt-1">Manage guest food orders and room service deliveries</p>
+          <h1 class="text-3xl font-bold text-slate-900">🍽️ Restaurant Orders</h1>
+          <p class="text-slate-600 mt-1">Manage guest restaurant orders and room service deliveries</p>
         </div>
         <button
           (click)="refreshOrders()"
@@ -135,7 +150,7 @@ interface FoodOrder {
       <!-- Loading & Error States -->
       @if (isLoading()) {
         <div class="bg-blue-50 border border-blue-300 text-blue-700 px-4 py-3 rounded-lg">
-          <p class="font-semibold">Loading food orders...</p>
+          <p class="font-semibold">Loading restaurant orders...</p>
         </div>
       }
 
@@ -155,6 +170,7 @@ interface FoodOrder {
               <th class="px-6 py-3 text-left text-sm font-semibold text-slate-900">Guest</th>
               <th class="px-6 py-3 text-left text-sm font-semibold text-slate-900">Items</th>
               <th class="px-6 py-3 text-left text-sm font-semibold text-slate-900">Status</th>
+              <th class="px-6 py-3 text-left text-sm font-semibold text-slate-900">Task Assignment</th>
               <th class="px-6 py-3 text-left text-sm font-semibold text-slate-900">Amount</th>
               <th class="px-6 py-3 text-left text-sm font-semibold text-slate-900">Time</th>
               <th class="px-6 py-3 text-left text-sm font-semibold text-slate-900">Actions</th>
@@ -163,13 +179,13 @@ interface FoodOrder {
           <tbody class="divide-y divide-slate-200">
             @if (filteredOrders().length === 0) {
               <tr>
-                <td colspan="8" class="px-6 py-8 text-center text-slate-500">
+                <td colspan="9" class="px-6 py-8 text-center text-slate-500">
                   <p class="font-medium">No food orders found</p>
                   <p class="text-sm mt-1">Orders will appear here when guests place food service requests</p>
                 </td>
               </tr>
             } @else {
-              @for (order of filteredOrders(); track order._id) {
+              @for (order of paginatedOrders(); track order._id) {
                 <tr class="hover:bg-slate-50 transition">
                   <td class="px-6 py-4 text-sm font-medium text-slate-900">{{ order.orderId }}</td>
                   <td class="px-6 py-4 text-sm text-slate-700 font-medium">{{ order.roomNumber }}</td>
@@ -188,6 +204,31 @@ interface FoodOrder {
                     <span [class]="getStatusBadgeClass(order.status)">
                       {{ getStatusIcon(order.status) }} {{ order.status | titlecase }}
                     </span>
+                  </td>
+                  <td class="px-6 py-4 text-sm">
+                    <div class="space-y-2">
+                      <select
+                        [ngModel]="linkedTaskAssignedStaffId(order)"
+                        (ngModelChange)="assignOrderTask(order, $event)"
+                        class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Assign delivery</option>
+                        @for (staff of assignableStaff(); track staff._id) {
+                          <option [value]="staff._id">{{ staff.name }} · {{ formatRole(staff.position) }}</option>
+                        }
+                      </select>
+                      @if (linkedTask(order)) {
+                        <span class="inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                          [ngClass]="{
+                            'bg-slate-100 text-slate-700': linkedTask(order)?.status === 'open' || linkedTask(order)?.status === 'assigned',
+                            'bg-amber-100 text-amber-700': linkedTask(order)?.status === 'in-progress',
+                            'bg-emerald-100 text-emerald-700': linkedTask(order)?.status === 'completed'
+                          }"
+                        >
+                          Task {{ formatRole(linkedTask(order)?.status || 'assigned') }}
+                        </span>
+                      }
+                    </div>
                   </td>
                   <td class="px-6 py-4 text-sm font-semibold text-slate-900">₦{{ order.totalPrice | number }}</td>
                   <td class="px-6 py-4 text-sm text-slate-600">{{ formatTime(order.orderTime) }}</td>
@@ -228,6 +269,30 @@ interface FoodOrder {
             }
           </tbody>
         </table>
+        @if (totalPages() > 1) {
+          <div class="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-6 py-4">
+            <p class="text-sm text-slate-500">
+              Showing {{ pageStartIndex() + 1 }}-{{ pageEndIndex() }} of {{ filteredOrders().length }} orders
+            </p>
+            <div class="flex items-center gap-2">
+              <button
+                (click)="goToPage(currentPage - 1)"
+                [disabled]="currentPage === 1"
+                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40 hover:bg-slate-100"
+              >
+                Previous
+              </button>
+              <span class="text-sm font-medium text-slate-700">Page {{ currentPage }} of {{ totalPages() }}</span>
+              <button
+                (click)="goToPage(currentPage + 1)"
+                [disabled]="currentPage === totalPages()"
+                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40 hover:bg-slate-100"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        }
       </div>
 
       <!-- Order Details Modal (simplified) -->
@@ -301,6 +366,7 @@ interface FoodOrder {
   styles: []
 })
 export class HotelFoodOrdersComponent implements OnInit {
+  private readonly fetchLimit = 500;
   isLoading = signal(false);
   errorMessage = signal('');
   searchQuery = signal('');
@@ -311,18 +377,26 @@ export class HotelFoodOrdersComponent implements OnInit {
 
   foodOrders = signal<FoodOrder[]>([]);
   filteredOrders = signal<FoodOrder[]>([]);
+  deliveryStaff = signal<StaffOption[]>([]);
+  linkedTasks = signal<LinkedTask[]>([]);
+  currentPage = 1;
+  readonly itemsPerPage = 10;
 
   constructor(private hotelService: HotelService) {}
 
   ngOnInit(): void {
     this.loadFoodOrders();
+    this.loadAssignableStaff();
+    this.loadLinkedTasks();
   }
 
   loadFoodOrders(): void {
     this.isLoading.set(true);
     this.errorMessage.set('');
 
-    this.hotelService.getFoodOrders().subscribe({
+    // This screen does its own search/filter/sort/pagination on the client,
+    // so it needs more than the backend default page size of 10.
+    this.hotelService.getFoodOrders(1, this.fetchLimit).subscribe({
       next: (response: any) => {
         if (response.status === 'success' && Array.isArray(response.data)) {
           this.foodOrders.set(response.data);
@@ -379,6 +453,29 @@ export class HotelFoodOrdersComponent implements OnInit {
     });
 
     this.filteredOrders.set(filtered);
+    this.currentPage = 1;
+  }
+
+  paginatedOrders(): FoodOrder[] {
+    const start = (this.currentPage - 1) * this.itemsPerPage;
+    return this.filteredOrders().slice(start, start + this.itemsPerPage);
+  }
+
+  totalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredOrders().length / this.itemsPerPage));
+  }
+
+  goToPage(page: number): void {
+    if (page < 1 || page > this.totalPages()) return;
+    this.currentPage = page;
+  }
+
+  pageStartIndex(): number {
+    return (this.currentPage - 1) * this.itemsPerPage;
+  }
+
+  pageEndIndex(): number {
+    return Math.min(this.pageStartIndex() + this.itemsPerPage, this.filteredOrders().length);
   }
 
   updateStatus(order: FoodOrder, newStatus: string): void {
@@ -393,6 +490,7 @@ export class HotelFoodOrdersComponent implements OnInit {
           );
           this.foodOrders.set(updatedOrders);
           this.filterOrders();
+          this.loadLinkedTasks();
           console.log('✅ Order status updated to:', newStatus);
         }
       },
@@ -409,6 +507,66 @@ export class HotelFoodOrdersComponent implements OnInit {
 
   refreshOrders(): void {
     this.loadFoodOrders();
+    this.loadLinkedTasks();
+  }
+
+  loadAssignableStaff(): void {
+    this.hotelService.getStaff(1, 200, 'active').subscribe({
+      next: (response: any) => {
+        this.deliveryStaff.set(response.status === 'success' && Array.isArray(response.data) ? response.data : []);
+      },
+      error: () => this.deliveryStaff.set([])
+    });
+  }
+
+  loadLinkedTasks(): void {
+    this.hotelService.getRoomTasks(1, 200).subscribe({
+      next: (response: any) => {
+        const tasks = response.status === 'success' && Array.isArray(response.data) ? response.data : [];
+        this.linkedTasks.set(tasks.filter((task: any) => task.sourceType === 'food-order'));
+      },
+      error: () => this.linkedTasks.set([])
+    });
+  }
+
+  linkedTask(order: FoodOrder): LinkedTask | null {
+    return this.linkedTasks().find((task) => task.sourceId === order._id) || null;
+  }
+
+  linkedTaskAssignedStaffId(order: FoodOrder): string {
+    const task = this.linkedTask(order);
+    const assigned = task?.assignedStaff;
+    if (!assigned) return '';
+    return typeof assigned === 'string' ? assigned : assigned._id || '';
+  }
+
+  assignableStaff(): StaffOption[] {
+    return this.deliveryStaff().filter((staff) =>
+      ['waiter', 'chef', 'bellboy', 'manager'].includes(staff.position) ||
+      ['restaurant', 'kitchen'].includes(staff.department || '')
+    );
+  }
+
+  assignOrderTask(order: FoodOrder, staffId: string): void {
+    this.hotelService.upsertSourceTask({
+      sourceType: 'food-order',
+      sourceId: order._id,
+      taskType: 'room-service-delivery',
+      title: `Deliver order ${order.orderId} to room ${order.roomNumber}`,
+      description: `Guest: ${order.guestName}. Items: ${order.items.join(', ')}`,
+      priority: order.status === 'ready' ? 'high' : 'medium',
+      assignedStaffId: staffId || undefined
+    }).subscribe({
+      next: () => this.loadLinkedTasks(),
+      error: (error: any) => {
+        console.error('Error assigning food order task:', error);
+        this.errorMessage.set(error.error?.message || 'Failed to assign room service delivery task');
+      }
+    });
+  }
+
+  formatRole(value: string): string {
+    return value.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
   }
 
   getPendingCount(): number {

@@ -19,7 +19,7 @@ const StaffSchema = new Schema({
   phone: String,
   position: {
     type: String,
-    enum: ['manager', 'receptionist', 'housekeeping', 'chef', 'waiter', 'bellboy', 'maintenance', 'security', 'other'],
+    enum: ['manager', 'receptionist', 'housekeeping', 'housekeeper', 'chef', 'waiter', 'bellboy', 'maintenance', 'security', 'other'],
     required: true
   },
   department: {
@@ -37,6 +37,54 @@ const StaffSchema = new Schema({
     enum: ['active', 'inactive', 'on-leave'],
     default: 'active'
   },
+  accessRole: {
+    type: String,
+    enum: ['admin', 'operations', 'front-desk', 'housekeeping', 'food-service', 'maintenance', 'security', 'custom'],
+    default: 'operations'
+  },
+  allowedModules: [{
+    type: String,
+    enum: ['overview', 'bookings', 'rooms', 'guests', 'revenue', 'analytics', 'food-orders', 'food-menu', 'maintenance', 'housekeeping', 'pre-checkin', 'staff', 'services', 'chat']
+  }],
+  allowedAreas: [{
+    type: String,
+    enum: ['front-desk', 'lobby', 'guest-rooms', 'restaurant', 'kitchen', 'maintenance', 'security', 'admin-office', 'spa-services']
+  }],
+  permissions: {
+    canManageBookings: {
+      type: Boolean,
+      default: false
+    },
+    canManageRooms: {
+      type: Boolean,
+      default: false
+    },
+    canManageOrders: {
+      type: Boolean,
+      default: false
+    },
+    canViewRevenue: {
+      type: Boolean,
+      default: false
+    },
+    canViewAnalytics: {
+      type: Boolean,
+      default: false
+    },
+    canManageStaff: {
+      type: Boolean,
+      default: false
+    },
+    canHandleMaintenance: {
+      type: Boolean,
+      default: false
+    }
+  },
+  mustChangePassword: {
+    type: Boolean,
+    default: true
+  },
+  temporaryPasswordIssuedAt: Date,
   address: String,
   city: String,
   emergencyContact: String,

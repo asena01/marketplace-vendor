@@ -110,7 +110,7 @@ interface SidenavItem {
             <p class="text-xs text-slate-400 truncate">{{ vendorType | titlecase }}</p>
           </div>
         </div>
-        
+
         <button
           (click)="onLogout()"
           class="w-full flex items-center gap-3 px-4 py-3 text-slate-300 hover:text-white hover:bg-red-900/50 rounded-lg transition-all duration-200 text-sm font-medium"
@@ -380,8 +380,13 @@ export class VendorSidenavComponent implements OnInit {
       'Orders': 'assignment',
       'Menu': 'menu_book',
       'Food & Beverage': 'restaurant',
-      'Food Orders': 'restaurant_menu',
-      'Food Menu': 'menu_book',
+      'Operations': 'apartment',
+      'Guest Experience': 'bedroom_parent',
+      'Chat Center': 'chat',
+      'Team & Systems': 'hub',
+      'Insights & Finance': 'insights',
+      'Restaurant Orders': 'restaurant_menu',
+      'Restaurant Menu': 'menu_book',
       'Food Delivery': 'local_shipping',
       'Drink Orders': 'local_bar',
       'Drink Menu': 'wine_bar',
@@ -389,6 +394,7 @@ export class VendorSidenavComponent implements OnInit {
       'Calendar': 'calendar_month',
       'Pricing': 'sell',
       'Rooms': 'hotel',
+      'Inhouse Services': 'room_service',
       'Food Service': 'restaurant',
       'Staff': 'people',
       'Products': 'inventory_2',
@@ -463,32 +469,59 @@ export class VendorSidenavComponent implements OnInit {
       );
     } else if (this.vendorType === 'hotel') {
       items.push(
-        { label: 'Calendar', icon: '📅', route: `${dashboardPath}/calendar` },
-        // NOTE: Pricing management disabled - backend not implemented yet
-        // { label: 'Pricing', icon: '💰', route: `${dashboardPath}/pricing` },
-        { label: 'Rooms', icon: '🏨', route: `${dashboardPath}/rooms`, badge: 0 },
-        { label: 'Bookings', icon: '📅', route: `${dashboardPath}/bookings` },
-        { label: 'Pre-Checkin', icon: '✓', route: `${dashboardPath}/pre-checkin` },
-        { label: 'Revenue', icon: '💰', route: `${dashboardPath}/revenue` },
-        { label: 'Analytics', icon: '📊', route: `${dashboardPath}/analytics` },
-        { label: 'Staff Logs', icon: '📝', route: `${dashboardPath}/staff-logs` },
+        {
+          label: 'Operations',
+          icon: '🏨',
+          collapsed: true,
+          children: [
+            { label: 'Calendar', icon: '📅', route: `${dashboardPath}/calendar` },
+            { label: 'Rooms', icon: '🏨', route: `${dashboardPath}/rooms`, badge: 0 },
+            { label: 'Bookings', icon: '📅', route: `${dashboardPath}/bookings` }
+          ]
+        },
+        {
+          label: 'Guest Experience',
+          icon: '✨',
+          collapsed: true,
+          children: [
+            { label: 'Inhouse Services', icon: '✨', route: `${dashboardPath}/services` },
+            { label: 'Chat Center', icon: '💬', route: `${dashboardPath}/chat-center` },
+            { label: 'Notifications', icon: '🔔', route: `${dashboardPath}/notifications`, badge: 0 },
+            { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` }
+          ]
+        },
         {
           label: 'Food & Beverage',
           icon: '🍽️',
           collapsed: true,
           children: [
-            { label: 'Food Orders', icon: '📋', route: `${dashboardPath}/food-orders`, badge: 0 },
-            { label: 'Food Menu', icon: '📖', route: `${dashboardPath}/food-menu` },
+            { label: 'Restaurant Orders', icon: '📋', route: `${dashboardPath}/food-orders`, badge: 0 },
+            { label: 'Restaurant Menu', icon: '📖', route: `${dashboardPath}/food-menu` },
             { label: 'Drink Orders', icon: '🍹', route: `${dashboardPath}/drink-orders`, badge: 0 },
             { label: 'Drink Menu', icon: '🍷', route: `${dashboardPath}/drink-menu` },
             { label: 'Delivery', icon: '🚚', route: `${dashboardPath}/food-delivery` }
           ]
         },
-        { label: 'Devices', icon: '📱', route: `${dashboardPath}/devices` },
-        { label: 'Staff', icon: '👥', route: `${dashboardPath}/staff` },
-        { label: 'Notifications', icon: '🔔', route: `${dashboardPath}/notifications`, badge: 0 },
-        { label: 'Reviews', icon: '⭐', route: `${dashboardPath}/reviews` },
-        { label: 'Finance', icon: '💼', route: `${dashboardPath}/finance` }
+        {
+          label: 'Team & Systems',
+          icon: '👥',
+          collapsed: true,
+          children: [
+            { label: 'Staff', icon: '👥', route: `${dashboardPath}/staff` },
+            { label: 'Staff Logs', icon: '📝', route: `${dashboardPath}/staff-logs` },
+            { label: 'Devices', icon: '📱', route: `${dashboardPath}/devices` }
+          ]
+        },
+        {
+          label: 'Insights & Finance',
+          icon: '💼',
+          collapsed: true,
+          children: [
+            { label: 'Revenue', icon: '💰', route: `${dashboardPath}/revenue` },
+            { label: 'Analytics', icon: '📊', route: `${dashboardPath}/analytics` },
+            { label: 'Finance', icon: '💼', route: `${dashboardPath}/finance` }
+          ]
+        }
       );
     } else if (this.vendorType === 'jewelry') {
       items.push(

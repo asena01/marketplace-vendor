@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HotelService } from '../../../../../services/hotel.service';
 import { AuthService } from '../../../../../services/auth.service';
 import { ImageUploadService } from '../../../../../services/image-upload.service';
+import { forkJoin } from 'rxjs';
 
 interface Room {
   _id?: string;
@@ -12,12 +13,37 @@ interface Room {
   floor: number;
   capacity: number;
   pricePerNight: number;
-  status: 'available' | 'occupied' | 'cleaning' | 'maintenance' | 'blocked';
+  status: 'available' | 'occupied' | 'cleaning' | 'maintenance' | 'reserved';
+  displayStatus?: 'available' | 'occupied' | 'cleaning' | 'maintenance' | 'reserved';
   amenities?: string[];
   images?: string[];
   description?: string;
   createdAt?: string;
   updatedAt?: string;
+}
+
+interface RoomTask {
+  _id?: string;
+  room?: { _id?: string; roomNumber?: string; floor?: number; status?: string } | string;
+  roomNumber: string;
+  booking?: { bookingNumber?: string; checkOutDate?: string; status?: string } | string;
+  taskType: 'checkout-cleaning' | 'stayover-cleaning' | 'deep-cleaning' | 'maintenance' | 'inspection' | 'minibar-restock' | 'room-service-delivery' | 'hotel-service-request';
+  title: string;
+  description?: string;
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  status: 'open' | 'assigned' | 'in-progress' | 'completed' | 'cancelled';
+  scheduledDate: string;
+  dueAt?: string;
+  assignedStaff?: { _id?: string; name?: string; position?: string; department?: string } | string;
+  completionNotes?: string;
+  source?: string;
+}
+
+interface StaffOption {
+  _id: string;
+  name: string;
+  position: string;
+  department: string;
 }
 
 @Component({
@@ -27,86 +53,251 @@ interface Room {
   template: `
     <div class="p-8 space-y-6">
       <!-- Header -->
-      <div class="flex justify-between items-center">
-        <div>
-          <h1 class="text-3xl font-bold text-slate-900">Rooms Management</h1>
-          <p class="text-slate-600 mt-1">Manage hotel rooms and availability</p>
+      <div class="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-8 text-white shadow-lg">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-3xl font-bold mb-2">Rooms Management</h1>
+            <p class="text-blue-100">Manage room inventory with booking-synced availability</p>
+          </div>
+          <button
+            (click)="openAddRoomModal()"
+            class="bg-white text-blue-600 font-bold py-2 px-6 rounded-lg hover:bg-blue-50 transition"
+          >
+            ➕ Add New Room
+          </button>
         </div>
-        <button
-          (click)="openAddRoomModal()"
-          class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition"
-        >
-          ➕ Add New Room
-        </button>
       </div>
 
-      <!-- Search & Filter Bar -->
-      <div class="bg-white rounded-lg p-6 shadow-md space-y-4">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">Search</label>
-            <input
-              type="text"
-              [(ngModel)]="searchQuery"
-              (change)="filterRooms()"
-              placeholder="Search room number..."
-              class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">Room Type</label>
-            <select
-              [(ngModel)]="selectedType"
-              (change)="filterRooms()"
-              class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Types</option>
-              <option value="single">Single</option>
-              <option value="double">Double</option>
-              <option value="suite">Suite</option>
-              <option value="deluxe">Deluxe</option>
-              <option value="villa">Villa</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">Status</label>
-            <select
-              [(ngModel)]="selectedStatus"
-              (change)="filterRooms()"
-              class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Status</option>
-              <option value="available">Available</option>
-              <option value="occupied">Occupied</option>
-              <option value="cleaning">Cleaning</option>
-              <option value="maintenance">Maintenance</option>
-              <option value="blocked">Blocked</option>
-            </select>
-          </div>
+      <!-- Loading State -->
+      @if (isLoading()) {
+        <div class="bg-blue-50 border border-blue-300 text-blue-700 px-4 py-3 rounded-lg">
+          <p class="font-semibold">Loading rooms...</p>
         </div>
+      }
+
+      <!-- Error State -->
+      @if (errorMessage()) {
+        <div class="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg">
+          <p class="font-semibold">{{ errorMessage() }}</p>
+        </div>
+      }
+
+      <!-- Search & Filter Bar -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-4 rounded-lg shadow-md">
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          (keyup)="filterRooms()"
+          placeholder="Search by room number..."
+          class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600"
+        />
+        <select
+          [(ngModel)]="selectedType"
+          (change)="filterRooms()"
+          class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600"
+        >
+          <option value="">All Types</option>
+          <option value="single">Single</option>
+          <option value="double">Double</option>
+          <option value="suite">Suite</option>
+          <option value="deluxe">Deluxe</option>
+          <option value="villa">Villa</option>
+        </select>
+        <select
+          [(ngModel)]="selectedStatus"
+          (change)="filterRooms()"
+          class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600"
+        >
+          <option value="">All Status</option>
+          <option value="available">Available</option>
+          <option value="occupied">Occupied</option>
+          <option value="reserved">Reserved</option>
+          <option value="cleaning">Cleaning</option>
+          <option value="maintenance">Maintenance</option>
+        </select>
+      </div>
+
+      <div class="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg">
+        <p class="text-sm font-medium">
+          Room availability shown here is derived from both room records and active bookings.
+        </p>
       </div>
 
       <!-- Rooms Statistics -->
-      <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div class="bg-white rounded-lg p-4 shadow-md">
+      <div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4">
+        <div class="bg-white rounded-lg p-4 shadow-md border-l-4 border-slate-500">
           <p class="text-slate-600 text-sm font-medium">Total Rooms</p>
-          <p class="text-2xl font-bold text-slate-900">{{ filteredRooms().length }}</p>
+          <p class="text-2xl font-bold text-slate-900 mt-1">{{ rooms().length }}</p>
         </div>
-        <div class="bg-emerald-50 rounded-lg p-4 shadow-md border-l-4 border-emerald-500">
+        <div class="bg-white rounded-lg p-4 shadow-md border-l-4 border-emerald-500">
           <p class="text-slate-600 text-sm font-medium">Available</p>
-          <p class="text-2xl font-bold text-emerald-600">{{ countByStatus('available') }}</p>
+          <p class="text-2xl font-bold text-slate-900 mt-1">{{ countByStatus('available') }}</p>
         </div>
-        <div class="bg-blue-50 rounded-lg p-4 shadow-md border-l-4 border-blue-500">
+        <div class="bg-white rounded-lg p-4 shadow-md border-l-4 border-blue-500">
           <p class="text-slate-600 text-sm font-medium">Occupied</p>
-          <p class="text-2xl font-bold text-blue-600">{{ countByStatus('occupied') }}</p>
+          <p class="text-2xl font-bold text-slate-900 mt-1">{{ countByStatus('occupied') }}</p>
         </div>
-        <div class="bg-yellow-50 rounded-lg p-4 shadow-md border-l-4 border-yellow-500">
+        <div class="bg-white rounded-lg p-4 shadow-md border-l-4 border-indigo-500">
+          <p class="text-slate-600 text-sm font-medium">Reserved</p>
+          <p class="text-2xl font-bold text-slate-900 mt-1">{{ countByStatus('reserved') }}</p>
+        </div>
+        <div class="bg-white rounded-lg p-4 shadow-md border-l-4 border-yellow-500">
           <p class="text-slate-600 text-sm font-medium">Cleaning</p>
-          <p class="text-2xl font-bold text-yellow-600">{{ countByStatus('cleaning') }}</p>
+          <p class="text-2xl font-bold text-slate-900 mt-1">{{ countByStatus('cleaning') }}</p>
         </div>
-        <div class="bg-red-50 rounded-lg p-4 shadow-md border-l-4 border-red-500">
+        <div class="bg-white rounded-lg p-4 shadow-md border-l-4 border-red-500">
           <p class="text-slate-600 text-sm font-medium">Maintenance</p>
-          <p class="text-2xl font-bold text-red-600">{{ countByStatus('maintenance') }}</p>
+          <p class="text-2xl font-bold text-slate-900 mt-1">{{ countByStatus('maintenance') }}</p>
+        </div>
+      </div>
+
+      <div class="space-y-4 rounded-xl bg-white p-6 shadow-md">
+        <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+          <div>
+            <h2 class="text-2xl font-bold text-slate-900">Room Operations Queue</h2>
+            <p class="mt-1 text-sm text-slate-500">
+              Checkout cleaning tasks are created automatically after checkout. Assign housekeeping, inspections, and maintenance from here.
+            </p>
+          </div>
+          <div class="flex flex-col gap-3 md:flex-row">
+            <select
+              [(ngModel)]="selectedTaskType"
+              (change)="loadRoomTasks()"
+              class="rounded-lg border border-slate-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">All Task Types</option>
+              <option value="checkout-cleaning">Checkout Cleaning</option>
+              <option value="stayover-cleaning">Stayover Cleaning</option>
+              <option value="deep-cleaning">Deep Cleaning</option>
+              <option value="maintenance">Maintenance</option>
+              <option value="inspection">Inspection</option>
+              <option value="minibar-restock">Minibar Restock</option>
+            </select>
+            <select
+              [(ngModel)]="selectedTaskStatus"
+              (change)="loadRoomTasks()"
+              class="rounded-lg border border-slate-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">All Statuses</option>
+              <option value="open">Open</option>
+              <option value="assigned">Assigned</option>
+              <option value="in-progress">In Progress</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+            <button
+              (click)="openTaskModal()"
+              class="rounded-lg bg-slate-900 px-5 py-2.5 font-medium text-white hover:bg-slate-800"
+            >
+              Create Room Task
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <div class="rounded-lg bg-slate-50 p-4">
+            <p class="text-sm text-slate-500">Open Tasks</p>
+            <p class="mt-2 text-2xl font-bold text-slate-900">{{ countTasksByStatus('open') + countTasksByStatus('assigned') + countTasksByStatus('in-progress') }}</p>
+          </div>
+          <div class="rounded-lg bg-amber-50 p-4">
+            <p class="text-sm text-slate-500">Cleaning Tasks</p>
+            <p class="mt-2 text-2xl font-bold text-amber-700">{{ countTasksByType('checkout-cleaning') + countTasksByType('stayover-cleaning') + countTasksByType('deep-cleaning') }}</p>
+          </div>
+          <div class="rounded-lg bg-red-50 p-4">
+            <p class="text-sm text-slate-500">Maintenance Tasks</p>
+            <p class="mt-2 text-2xl font-bold text-red-700">{{ countTasksByType('maintenance') }}</p>
+          </div>
+          <div class="rounded-lg bg-emerald-50 p-4">
+            <p class="text-sm text-slate-500">Completed</p>
+            <p class="mt-2 text-2xl font-bold text-emerald-700">{{ countTasksByStatus('completed') }}</p>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto rounded-lg border border-slate-200">
+          <table class="w-full min-w-[1180px]">
+            <thead class="border-b border-slate-200 bg-slate-100">
+              <tr>
+                <th class="px-5 py-3 text-left text-sm font-semibold text-slate-900">Room</th>
+                <th class="px-5 py-3 text-left text-sm font-semibold text-slate-900">Task</th>
+                <th class="px-5 py-3 text-left text-sm font-semibold text-slate-900">Scheduled</th>
+                <th class="px-5 py-3 text-left text-sm font-semibold text-slate-900">Priority</th>
+                <th class="px-5 py-3 text-left text-sm font-semibold text-slate-900">Assigned</th>
+                <th class="px-5 py-3 text-left text-sm font-semibold text-slate-900">Status</th>
+                <th class="px-5 py-3 text-left text-sm font-semibold text-slate-900">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+              @if (roomTasks().length === 0) {
+                <tr>
+                  <td colspan="7" class="px-5 py-8 text-center text-slate-500">No room tasks found for the current filter.</td>
+                </tr>
+              } @else {
+                @for (task of roomTasks(); track task._id) {
+                  <tr>
+                    <td class="px-5 py-4">
+                      <p class="font-medium text-slate-900">{{ task.roomNumber }}</p>
+                      <p class="text-xs text-slate-500">Source: {{ formatTaskLabel(task.source || 'manual') }}</p>
+                    </td>
+                    <td class="px-5 py-4">
+                      <p class="font-medium text-slate-900">{{ task.title }}</p>
+                      <p class="mt-1 text-xs text-slate-500">{{ formatTaskLabel(task.taskType) }}</p>
+                    </td>
+                    <td class="px-5 py-4 text-sm text-slate-600">
+                      <p>{{ formatDate(task.scheduledDate) }}</p>
+                      @if (task.booking && $any(task.booking).bookingNumber) {
+                        <p class="mt-1 text-xs text-slate-400">Booking {{ $any(task.booking).bookingNumber }}</p>
+                      }
+                    </td>
+                    <td class="px-5 py-4 text-sm">
+                      <span class="rounded-full px-3 py-1 text-xs font-semibold"
+                        [ngClass]="{
+                          'bg-slate-100 text-slate-700': task.priority === 'low',
+                          'bg-blue-100 text-blue-700': task.priority === 'medium',
+                          'bg-amber-100 text-amber-700': task.priority === 'high',
+                          'bg-red-100 text-red-700': task.priority === 'critical'
+                        }"
+                      >
+                        {{ task.priority | titlecase }}
+                      </span>
+                    </td>
+                    <td class="px-5 py-4">
+                      <select
+                        [ngModel]="assignedStaffId(task)"
+                        (ngModelChange)="assignTask(task, $event)"
+                        class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Unassigned</option>
+                        @for (staff of staffOptionsForTask(task); track staff._id) {
+                          <option [value]="staff._id">{{ staff.name }} · {{ formatTaskLabel(staff.position) }}</option>
+                        }
+                      </select>
+                    </td>
+                    <td class="px-5 py-4">
+                      <span class="rounded-full px-3 py-1 text-xs font-semibold"
+                        [ngClass]="{
+                          'bg-slate-100 text-slate-700': task.status === 'open',
+                          'bg-sky-100 text-sky-700': task.status === 'assigned',
+                          'bg-amber-100 text-amber-700': task.status === 'in-progress',
+                          'bg-emerald-100 text-emerald-700': task.status === 'completed',
+                          'bg-red-100 text-red-700': task.status === 'cancelled'
+                        }"
+                      >
+                        {{ formatTaskLabel(task.status) }}
+                      </span>
+                    </td>
+                    <td class="px-5 py-4">
+                      <div class="flex flex-wrap gap-2">
+                        @if (task.status !== 'completed') {
+                          <button (click)="markTaskStatus(task, 'in-progress')" class="text-sm font-medium text-blue-600 hover:text-blue-700">Start</button>
+                          <button (click)="markTaskStatus(task, 'completed')" class="text-sm font-medium text-emerald-600 hover:text-emerald-700">Complete</button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -125,7 +316,7 @@ interface Room {
                 <th class="px-6 py-4 text-left text-sm font-semibold text-slate-900">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody class="divide-y divide-slate-200">
               @if (filteredRooms().length === 0) {
                 <tr>
                   <td colspan="7" class="px-6 py-8 text-center text-slate-600">
@@ -133,8 +324,8 @@ interface Room {
                   </td>
                 </tr>
               } @else {
-                @for (room of filteredRooms(); track room._id) {
-                  <tr class="border-b border-slate-200 hover:bg-slate-50 transition">
+                @for (room of paginatedRooms(); track room._id) {
+                  <tr class="hover:bg-slate-50 transition">
                     <td class="px-6 py-4 font-medium text-slate-900">{{ room.roomNumber }}</td>
                     <td class="px-6 py-4 text-slate-600">{{ room.roomType | titlecase }}</td>
                     <td class="px-6 py-4 text-slate-600">{{ room.floor }}</td>
@@ -145,30 +336,32 @@ interface Room {
                     <td class="px-6 py-4">
                       <span
                         [ngClass]="{
-                          'bg-emerald-100 text-emerald-700': room.status === 'available',
-                          'bg-blue-100 text-blue-700': room.status === 'occupied',
-                          'bg-yellow-100 text-yellow-700': room.status === 'cleaning',
-                          'bg-red-100 text-red-700': room.status === 'maintenance',
-                          'bg-slate-100 text-slate-700': room.status === 'blocked'
+                          'bg-emerald-100 text-emerald-700': (room.displayStatus || room.status) === 'available',
+                          'bg-blue-100 text-blue-700': (room.displayStatus || room.status) === 'occupied',
+                          'bg-indigo-100 text-indigo-700': (room.displayStatus || room.status) === 'reserved',
+                          'bg-yellow-100 text-yellow-700': (room.displayStatus || room.status) === 'cleaning',
+                          'bg-red-100 text-red-700': (room.displayStatus || room.status) === 'maintenance'
                         }"
                         class="px-3 py-1 rounded-full text-xs font-medium"
                       >
-                        {{ room.status | titlecase }}
+                        {{ (room.displayStatus || room.status) | titlecase }}
                       </span>
                     </td>
-                    <td class="px-6 py-4 space-x-2">
-                      <button
-                        (click)="editRoom(room)"
-                        class="text-blue-600 hover:text-blue-700 font-medium text-sm"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        (click)="deleteRoom(room._id)"
-                        class="text-red-600 hover:text-red-700 font-medium text-sm"
-                      >
-                        Delete
-                      </button>
+                    <td class="px-6 py-4 text-sm">
+                      <div class="flex gap-2">
+                        <button
+                          (click)="editRoom(room)"
+                          class="text-blue-600 hover:text-blue-700 font-medium"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          (click)="deleteRoom(room._id)"
+                          class="text-red-600 hover:text-red-700 font-medium"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 }
@@ -176,6 +369,30 @@ interface Room {
             </tbody>
           </table>
         </div>
+        @if (totalPages() > 1) {
+          <div class="flex items-center justify-between px-6 py-4 border-t bg-slate-50">
+            <p class="text-sm text-slate-500">
+              Showing {{ pageStartIndex() + 1 }}-{{ pageEndIndex() }} of {{ filteredRooms().length }} rooms
+            </p>
+            <div class="flex items-center gap-2">
+              <button
+                (click)="goToPage(currentPage - 1)"
+                [disabled]="currentPage === 1"
+                class="px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 transition"
+              >
+                Previous
+              </button>
+              <span class="text-sm font-medium text-slate-700">Page {{ currentPage }} of {{ totalPages() }}</span>
+              <button
+                (click)="goToPage(currentPage + 1)"
+                [disabled]="currentPage === totalPages()"
+                class="px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 transition"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        }
       </div>
 
       <!-- Add/Edit Room Modal -->
@@ -268,9 +485,9 @@ interface Room {
                   >
                     <option value="available">Available</option>
                     <option value="occupied">Occupied</option>
+                    <option value="reserved">Reserved</option>
                     <option value="cleaning">Cleaning</option>
                     <option value="maintenance">Maintenance</option>
-                    <option value="blocked">Blocked</option>
                   </select>
                 </div>
               </div>
@@ -370,6 +587,83 @@ interface Room {
         </div>
       }
 
+      @if (showTaskModal()) {
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div class="w-full max-w-2xl rounded-2xl bg-white p-8 shadow-2xl">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <h2 class="text-2xl font-bold text-slate-900">Create Room Task</h2>
+                <p class="mt-1 text-sm text-slate-500">Use this for manual maintenance, inspections, restocking, or planned cleaning.</p>
+              </div>
+              <button (click)="closeTaskModal()" class="text-xl text-slate-400 hover:text-slate-700">✕</button>
+            </div>
+
+            <form (ngSubmit)="saveTask()" class="mt-6 space-y-5">
+              <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div>
+                  <label class="mb-2 block text-sm font-medium text-slate-700">Room *</label>
+                  <select [(ngModel)]="newTask.roomId" name="roomId" required class="w-full rounded-lg border border-slate-300 px-4 py-2">
+                    <option value="">Select room</option>
+                    @for (room of rooms(); track room._id) {
+                      <option [value]="room._id">{{ room.roomNumber }} · Floor {{ room.floor }}</option>
+                    }
+                  </select>
+                </div>
+                <div>
+                  <label class="mb-2 block text-sm font-medium text-slate-700">Task Type *</label>
+                  <select [(ngModel)]="newTask.taskType" name="taskType" required class="w-full rounded-lg border border-slate-300 px-4 py-2">
+                    <option value="checkout-cleaning">Checkout Cleaning</option>
+                    <option value="stayover-cleaning">Stayover Cleaning</option>
+                    <option value="deep-cleaning">Deep Cleaning</option>
+                    <option value="maintenance">Maintenance</option>
+                    <option value="inspection">Inspection</option>
+                    <option value="minibar-restock">Minibar Restock</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="mb-2 block text-sm font-medium text-slate-700">Scheduled Date *</label>
+                  <input [(ngModel)]="newTask.scheduledDate" name="scheduledDate" type="date" required class="w-full rounded-lg border border-slate-300 px-4 py-2" />
+                </div>
+                <div>
+                  <label class="mb-2 block text-sm font-medium text-slate-700">Priority</label>
+                  <select [(ngModel)]="newTask.priority" name="priority" class="w-full rounded-lg border border-slate-300 px-4 py-2">
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label class="mb-2 block text-sm font-medium text-slate-700">Title</label>
+                <input [(ngModel)]="newTask.title" name="title" class="w-full rounded-lg border border-slate-300 px-4 py-2" />
+              </div>
+
+              <div>
+                <label class="mb-2 block text-sm font-medium text-slate-700">Description</label>
+                <textarea [(ngModel)]="newTask.description" name="description" rows="3" class="w-full rounded-lg border border-slate-300 px-4 py-2"></textarea>
+              </div>
+
+              <div>
+                <label class="mb-2 block text-sm font-medium text-slate-700">Assign To</label>
+                <select [(ngModel)]="newTask.assignedStaffId" name="assignedStaffId" class="w-full rounded-lg border border-slate-300 px-4 py-2">
+                  <option value="">Leave unassigned</option>
+                  @for (staff of staffOptionsForTaskType(newTask.taskType); track staff._id) {
+                    <option [value]="staff._id">{{ staff.name }} · {{ formatTaskLabel(staff.position) }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="flex justify-end gap-3">
+                <button type="button" (click)="closeTaskModal()" class="rounded-lg border border-slate-300 px-5 py-2 font-medium text-slate-700 hover:bg-slate-50">Cancel</button>
+                <button type="submit" class="rounded-lg bg-slate-900 px-5 py-2 font-medium text-white hover:bg-slate-800">Create Task</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      }
+
       <!-- Success/Error Messages -->
       @if (successMessage()) {
         <div class="fixed bottom-4 right-4 bg-emerald-100 border border-emerald-400 text-emerald-700 px-6 py-4 rounded-lg shadow-lg">
@@ -392,18 +686,27 @@ interface Room {
 export class HotelRoomsComponent implements OnInit {
   rooms = signal<Room[]>([]);
   filteredRooms = signal<Room[]>([]);
+  paginatedRooms = signal<Room[]>([]);
+  roomTasks = signal<RoomTask[]>([]);
+  staffOptions = signal<StaffOption[]>([]);
   showRoomModal = signal(false);
+  showTaskModal = signal(false);
   isEditing = signal(false);
   searchQuery = signal('');
   selectedType = signal('');
   selectedStatus = signal('');
+  selectedTaskType = signal('');
+  selectedTaskStatus = signal('');
   successMessage = signal('');
   errorMessage = signal('');
   isLoading = signal(false);
   isUploadingImages = signal(false);
   isDragging = signal(false);
+  currentPage = 1;
+  readonly itemsPerPage = 10;
 
   newRoom: Room = this.getEmptyRoom();
+  newTask = this.getEmptyTask();
 
   private hotelId: string = '';
 
@@ -426,16 +729,33 @@ export class HotelRoomsComponent implements OnInit {
     }
 
     this.isLoading.set(true);
-    this.hotelService.getRooms().subscribe({
-      next: (response: any) => {
+    forkJoin({
+      rooms: this.hotelService.getRooms(1, 200),
+      bookings: this.hotelService.getHotelBookings(1, 500),
+      staff: this.hotelService.getStaff(1, 200, 'active')
+    }).subscribe({
+      next: ({ rooms: response, bookings: bookingsResponse, staff: staffResponse }: any) => {
         this.isLoading.set(false);
         if (response.status === 'success' && response.data) {
-          this.rooms.set(response.data);
+          const bookings = bookingsResponse.status === 'success' && Array.isArray(bookingsResponse.data)
+            ? bookingsResponse.data
+            : [];
+          const syncedRooms = response.data.map((room: Room) => this.mapRoomWithBookingStatus(room, bookings));
+          this.rooms.set(syncedRooms);
+          this.staffOptions.set(
+            staffResponse.status === 'success' && Array.isArray(staffResponse.data)
+              ? staffResponse.data
+              : []
+          );
+          this.errorMessage.set('');
           this.filterRooms();
+          this.loadRoomTasks();
         } else {
           // Fallback to empty array if no data
           this.rooms.set([]);
+          this.staffOptions.set([]);
           this.filterRooms();
+          this.loadRoomTasks();
         }
       },
       error: (error: any) => {
@@ -462,20 +782,179 @@ export class HotelRoomsComponent implements OnInit {
     }
 
     if (this.selectedStatus()) {
-      filtered = filtered.filter(r => r.status === this.selectedStatus());
+      filtered = filtered.filter(r => (r.displayStatus || r.status) === this.selectedStatus());
     }
 
     this.filteredRooms.set(filtered);
+    this.currentPage = 1;
+    this.updatePaginatedRooms();
   }
 
   countByStatus(status: string): number {
-    return this.rooms().filter(r => r.status === status).length;
+    return this.rooms().filter(r => (r.displayStatus || r.status) === status).length;
+  }
+
+  loadRoomTasks(): void {
+    this.hotelService.getRoomTasks(1, 100, this.selectedTaskStatus() || undefined, this.selectedTaskType() || undefined).subscribe({
+      next: (response: any) => {
+        this.roomTasks.set(response.status === 'success' && Array.isArray(response.data) ? response.data : []);
+      },
+      error: (error: any) => {
+        console.error('Error loading room tasks:', error);
+        this.roomTasks.set([]);
+      }
+    });
+  }
+
+  countTasksByStatus(status: RoomTask['status']): number {
+    return this.roomTasks().filter((task) => task.status === status).length;
+  }
+
+  countTasksByType(taskType: RoomTask['taskType']): number {
+    return this.roomTasks().filter((task) => task.taskType === taskType).length;
+  }
+
+  updatePaginatedRooms(): void {
+    const start = (this.currentPage - 1) * this.itemsPerPage;
+    const end = start + this.itemsPerPage;
+    this.paginatedRooms.set(this.filteredRooms().slice(start, end));
+  }
+
+  totalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredRooms().length / this.itemsPerPage));
+  }
+
+  goToPage(page: number): void {
+    if (page < 1 || page > this.totalPages()) return;
+    this.currentPage = page;
+    this.updatePaginatedRooms();
+  }
+
+  pageStartIndex(): number {
+    return (this.currentPage - 1) * this.itemsPerPage;
+  }
+
+  pageEndIndex(): number {
+    return Math.min(this.pageStartIndex() + this.itemsPerPage, this.filteredRooms().length);
   }
 
   openAddRoomModal() {
     this.isEditing.set(false);
     this.newRoom = this.getEmptyRoom();
     this.showRoomModal.set(true);
+  }
+
+  openTaskModal() {
+    this.newTask = this.getEmptyTask();
+    this.showTaskModal.set(true);
+  }
+
+  closeTaskModal() {
+    this.showTaskModal.set(false);
+    this.newTask = this.getEmptyTask();
+  }
+
+  saveTask(): void {
+    if (!this.newTask.roomId || !this.newTask.taskType || !this.newTask.scheduledDate) {
+      this.errorMessage.set('Please complete the room task form.');
+      return;
+    }
+
+    const currentUser = this.authService.getCurrentUser();
+    this.hotelService.createRoomTask({
+      roomId: this.newTask.roomId,
+      taskType: this.newTask.taskType,
+      title: this.newTask.title,
+      description: this.newTask.description,
+      priority: this.newTask.priority,
+      scheduledDate: this.newTask.scheduledDate,
+      dueAt: this.newTask.scheduledDate,
+      assignedStaff: this.newTask.assignedStaffId || undefined,
+      assignedBy: currentUser?._id,
+      assignedByName: currentUser?.name || currentUser?.email || 'hotel-admin'
+    }).subscribe({
+      next: (response: any) => {
+        if (response.status === 'success') {
+          this.flashSuccess('Room task created successfully.');
+          this.closeTaskModal();
+          this.loadRoomTasks();
+          this.loadRooms();
+          return;
+        }
+        this.errorMessage.set('Failed to create room task.');
+      },
+      error: (error: any) => {
+        this.errorMessage.set(error.error?.message || 'Failed to create room task.');
+      }
+    });
+  }
+
+  assignTask(task: RoomTask, assignedStaffId: string): void {
+    const currentUser = this.authService.getCurrentUser();
+    this.hotelService.assignRoomTask(
+      task._id || '',
+      assignedStaffId || undefined,
+      currentUser?._id,
+      currentUser?.name || currentUser?.email || 'hotel-admin'
+    ).subscribe({
+      next: () => {
+        this.loadRoomTasks();
+      },
+      error: (error: any) => {
+        this.errorMessage.set(error.error?.message || 'Failed to update task assignment.');
+      }
+    });
+  }
+
+  markTaskStatus(task: RoomTask, status: RoomTask['status']): void {
+    this.hotelService.updateRoomTaskStatus(task._id || '', status).subscribe({
+      next: () => {
+        this.loadRoomTasks();
+        this.loadRooms();
+      },
+      error: (error: any) => {
+        this.errorMessage.set(error.error?.message || 'Failed to update task status.');
+      }
+    });
+  }
+
+  assignedStaffId(task: RoomTask): string {
+    if (!task.assignedStaff) return '';
+    return typeof task.assignedStaff === 'string' ? task.assignedStaff : task.assignedStaff._id || '';
+  }
+
+  staffOptionsForTask(task: RoomTask): StaffOption[] {
+    return this.staffOptionsForTaskType(task.taskType);
+  }
+
+  staffOptionsForTaskType(taskType: RoomTask['taskType']): StaffOption[] {
+    return this.staffOptions().filter((staff) => {
+      if (taskType === 'maintenance') {
+        return ['maintenance', 'manager'].includes(staff.position) || ['maintenance', 'admin'].includes(staff.department || '');
+      }
+
+      if (taskType === 'room-service-delivery') {
+        return ['waiter', 'chef', 'bellboy', 'manager'].includes(staff.position) ||
+          ['restaurant', 'kitchen'].includes(staff.department || '');
+      }
+
+      if (taskType === 'hotel-service-request') {
+        return ['receptionist', 'bellboy', 'manager'].includes(staff.position) ||
+          ['front-office', 'admin'].includes(staff.department || '');
+      }
+
+      return ['housekeeping', 'housekeeper', 'manager'].includes(staff.position) ||
+        ['housekeeping', 'admin'].includes(staff.department || '');
+    });
+  }
+
+  formatTaskLabel(value: string): string {
+    return value.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+
+  formatDate(value?: string): string {
+    if (!value) return 'N/A';
+    return new Date(value).toLocaleDateString('en-NG', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
   editRoom(room: Room) {
@@ -510,18 +989,11 @@ export class HotelRoomsComponent implements OnInit {
         next: (response: any) => {
           this.isLoading.set(false);
           if (response.status === 'success') {
-            const index = this.rooms().findIndex(r => r._id === this.newRoom._id);
-            if (index !== -1) {
-              const updated = [...this.rooms()];
-              // Merge response data with newRoom to preserve images and other local data
-              updated[index] = { ...this.newRoom, ...response.data };
-              this.rooms.set(updated);
-            }
             this.successMessage.set('Room updated successfully!');
+            this.loadRooms();
           } else {
             this.errorMessage.set('Failed to update room');
           }
-          this.filterRooms();
           this.closeRoomModal();
           setTimeout(() => {
             this.successMessage.set('');
@@ -541,12 +1013,11 @@ export class HotelRoomsComponent implements OnInit {
         next: (response: any) => {
           this.isLoading.set(false);
           if (response.status === 'success' && response.data) {
-            this.rooms.set([...this.rooms(), response.data]);
             this.successMessage.set('Room created successfully!');
+            this.loadRooms();
           } else {
             this.errorMessage.set('Failed to create room');
           }
-          this.filterRooms();
           this.closeRoomModal();
           setTimeout(() => {
             this.successMessage.set('');
@@ -571,9 +1042,8 @@ export class HotelRoomsComponent implements OnInit {
         next: (response: any) => {
           this.isLoading.set(false);
           if (response.status === 'success') {
-            this.rooms.set(this.rooms().filter(r => r._id !== roomId));
-            this.filterRooms();
             this.successMessage.set('Room deleted successfully!');
+            this.loadRooms();
             setTimeout(() => this.successMessage.set(''), 3000);
           } else {
             this.errorMessage.set('Failed to delete room');
@@ -685,4 +1155,44 @@ export class HotelRoomsComponent implements OnInit {
     };
   }
 
+  private getEmptyTask() {
+    return {
+      roomId: '',
+      taskType: 'checkout-cleaning' as RoomTask['taskType'],
+      title: '',
+      description: '',
+      priority: 'medium' as RoomTask['priority'],
+      scheduledDate: new Date().toISOString().slice(0, 10),
+      assignedStaffId: ''
+    };
+  }
+
+  private flashSuccess(message: string): void {
+    this.successMessage.set(message);
+    setTimeout(() => this.successMessage.set(''), 3000);
+  }
+
+  private mapRoomWithBookingStatus(room: Room, bookings: any[]): Room {
+    const activeBooking = bookings.find((booking) =>
+      (booking.room?._id === room._id || booking.room === room._id) &&
+      ['pending', 'confirmed', 'checked-in'].includes(booking.status)
+    );
+
+    let displayStatus: Room['displayStatus'] = room.status;
+
+    if (room.status !== 'maintenance' && room.status !== 'cleaning') {
+      if (activeBooking?.status === 'checked-in') {
+        displayStatus = 'occupied';
+      } else if (activeBooking?.status === 'confirmed' || activeBooking?.status === 'pending') {
+        displayStatus = 'reserved';
+      } else if (room.status === 'occupied' || room.status === 'reserved') {
+        displayStatus = 'available';
+      }
+    }
+
+    return {
+      ...room,
+      displayStatus
+    };
+  }
 }

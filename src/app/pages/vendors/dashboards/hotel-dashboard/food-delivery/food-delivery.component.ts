@@ -30,8 +30,8 @@ interface DeliveryTask {
       <!-- Header -->
       <div class="flex justify-between items-center">
         <div>
-          <h1 class="text-3xl font-bold text-slate-900">🚚 Food Delivery Tracking</h1>
-          <p class="text-slate-600 mt-1">Track real-time delivery of food orders to guest rooms</p>
+          <h1 class="text-3xl font-bold text-slate-900">🚚 Restaurant Delivery Tracking</h1>
+          <p class="text-slate-600 mt-1">Track real-time delivery of restaurant orders to guest rooms</p>
         </div>
         <button
           (click)="refreshDeliveries()"

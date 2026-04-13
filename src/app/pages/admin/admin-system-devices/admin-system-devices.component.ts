@@ -3,194 +3,223 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../../services/admin.service';
 
+type DeviceView = 'discovered' | 'accepted';
+
 @Component({
   selector: 'app-admin-system-devices',
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="space-y-4">
-      <!-- Page Header -->
-      <div class="flex items-center gap-3 mb-4">
-        <span class="material-icons text-3xl text-indigo-600">devices</span>
-        <div>
-          <h2 class="text-2xl font-bold text-gray-800">Smart Devices</h2>
-          <p class="text-xs text-gray-600">Manage all IoT and smart devices</p>
+    <div class="space-y-6">
+      <div class="rounded-[28px] bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 px-6 py-7 text-white shadow-xl">
+        <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-[0.24em] text-indigo-200">Admin Devices</p>
+            <h2 class="mt-3 text-3xl font-black tracking-tight">Smart Device Intake</h2>
+            <p class="mt-2 max-w-3xl text-sm text-slate-200">
+              Review devices discovered directly from Tuya, accept the ones you want in the platform, and manage accepted devices separately.
+            </p>
+          </div>
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div class="rounded-2xl bg-white/10 px-4 py-3 backdrop-blur">
+              <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-indigo-100">Discovered</p>
+              <p class="mt-2 text-2xl font-black">{{ discoveredTotal() }}</p>
+            </div>
+            <div class="rounded-2xl bg-white/10 px-4 py-3 backdrop-blur">
+              <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-indigo-100">Accepted</p>
+              <p class="mt-2 text-2xl font-black">{{ acceptedTotal() }}</p>
+            </div>
+            <div class="rounded-2xl bg-white/10 px-4 py-3 backdrop-blur">
+              <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-indigo-100">Door Sensors</p>
+              <p class="mt-2 text-2xl font-black">{{ doorSensorCount() }}</p>
+            </div>
+            <div class="rounded-2xl bg-white/10 px-4 py-3 backdrop-blur">
+              <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-indigo-100">Smart Locks</p>
+              <p class="mt-2 text-2xl font-black">{{ smartLockCount() }}</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Search and Filter -->
-      <div class="bg-white rounded-lg shadow-md p-3 flex flex-col sm:flex-row gap-2">
-        <input
-          type="text"
-          [(ngModel)]="searchTerm"
-          placeholder="Search devices..."
-          class="flex-1 px-3 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        />
-        <select
-          [(ngModel)]="filterStatus"
-          class="px-3 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        >
-          <option value="">All Status</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-          <option value="error">Error</option>
-        </select>
-        <button
-          (click)="searchDevices()"
-          class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded text-xs font-semibold transition flex items-center gap-1 whitespace-nowrap"
-        >
-          <span class="material-icons text-sm">search</span>
-          <span class="hidden sm:inline">Search</span>
-        </button>
-        <button
-          (click)="openAddDeviceModal()"
-          class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-xs font-semibold transition flex items-center gap-1 whitespace-nowrap"
-        >
-          <span class="material-icons text-sm">add_circle</span>
-          <span class="hidden sm:inline">Add Device</span>
-        </button>
+      <div class="rounded-[24px] border border-slate-200 bg-white p-3 shadow-sm">
+        <div class="flex flex-wrap gap-2">
+          <button
+            (click)="switchView('discovered')"
+            [class]="'rounded-2xl px-4 py-3 text-sm font-bold transition ' + (activeView() === 'discovered' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900')"
+          >
+            Discovered from Tuya
+          </button>
+          <button
+            (click)="switchView('accepted')"
+            [class]="'rounded-2xl px-4 py-3 text-sm font-bold transition ' + (activeView() === 'accepted' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900')"
+          >
+            Accepted in Platform
+          </button>
+        </div>
       </div>
 
-      <!-- Devices Table - Desktop View -->
-      <div class="bg-white rounded-lg shadow-md overflow-x-auto hidden md:block">
-        @if (devices().length > 0) {
-          <table class="w-full text-sm">
-            <thead class="bg-gray-200 border-b border-gray-300 sticky top-0">
-              <tr>
-                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700">Device Name</th>
-                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700">Type</th>
-                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700">Owner</th>
-                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700">Status</th>
-                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700">Last Active</th>
-                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (device of devices(); track device._id) {
-                <tr class="border-b border-gray-200 hover:bg-gray-50">
-                  <td class="px-3 py-2 text-xs font-semibold text-gray-800 truncate">{{ device.name }}</td>
-                  <td class="px-3 py-2 text-xs text-gray-600 truncate">{{ device.type || '-' }}</td>
-                  <td class="px-3 py-2 text-xs text-gray-600 truncate">{{ device.ownerName || '-' }}</td>
-                  <td class="px-3 py-2 text-xs whitespace-nowrap">
-                    <span [class]="'px-2 py-0.5 rounded text-xs font-semibold ' +
-                      (device.status === 'active' ? 'bg-green-100 text-green-800' :
-                       device.status === 'inactive' ? 'bg-gray-100 text-gray-800' :
-                       'bg-red-100 text-red-800')">
-                      {{ device.status || 'unknown' }}
-                    </span>
-                  </td>
-                  <td class="px-3 py-2 text-xs text-gray-600">{{ (device.lastActive | date:'short') ?? '-' }}</td>
-                  <td class="px-3 py-2 text-xs space-x-0.5">
-                    <button
-                      (click)="editDevice(device._id)"
-                      class="text-blue-600 hover:text-blue-800 transition p-1 rounded hover:bg-blue-50"
-                      title="Edit"
-                    >
-                      <span class="material-icons text-base">edit</span>
-                    </button>
-                    <button
-                      (click)="deleteDevice(device._id)"
-                      class="text-red-600 hover:text-red-800 transition p-1 rounded hover:bg-red-50"
-                      title="Delete"
-                    >
-                      <span class="material-icons text-base">delete</span>
-                    </button>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        }
+      <div class="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="flex flex-col gap-3 lg:flex-row">
+          <label class="flex-1">
+            <span class="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Search</span>
+            <input
+              [(ngModel)]="searchTerm"
+              (ngModelChange)="applyFilters()"
+              type="text"
+              placeholder="Search by device ID, name, or type"
+              class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-900 outline-none transition focus:border-indigo-400 focus:bg-white"
+            />
+          </label>
+
+          <label class="w-full lg:max-w-xs">
+            <span class="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Status</span>
+            <select
+              [(ngModel)]="filterStatus"
+              (ngModelChange)="applyFilters()"
+              class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-900 outline-none transition focus:border-indigo-400 focus:bg-white"
+            >
+              <option value="">All statuses</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </label>
+
+          <div class="flex gap-2">
+            <button
+              (click)="refreshActiveView()"
+              class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+            >
+              <span class="material-icons text-base">refresh</span>
+              Refresh
+            </button>
+          </div>
+        </div>
       </div>
 
-      <!-- Devices Cards - Mobile View -->
-      <div class="space-y-2 md:hidden">
-        @if (devices().length > 0) {
-          @for (device of devices(); track device._id) {
-            <div class="bg-white rounded shadow-sm p-3 border border-gray-200">
-              <div class="flex justify-between items-start mb-2">
-                <div class="flex-1 min-w-0">
-                  <h3 class="text-xs font-semibold text-gray-800 truncate">{{ device.name }}</h3>
-                  <p class="text-xs text-gray-600 truncate">{{ device.type || '-' }}</p>
-                </div>
-                <span [class]="'px-2 py-0.5 rounded text-xs font-semibold ml-2 ' +
-                  (device.status === 'active' ? 'bg-green-100 text-green-800' :
-                   device.status === 'inactive' ? 'bg-gray-100 text-gray-800' :
-                   'bg-red-100 text-red-800')">
-                  {{ device.status || 'unknown' }}
-                </span>
-              </div>
-              <div class="text-xs text-gray-600 space-y-0.5 mb-2">
-                <p><strong>Owner:</strong> {{ device.ownerName || '-' }}</p>
-                <p><strong>Last Active:</strong> {{ (device.lastActive | date:'short') ?? '-' }}</p>
-              </div>
-              <div class="flex gap-1">
-                <button
-                  (click)="editDevice(device._id)"
-                  class="flex-1 text-blue-600 hover:text-blue-800 transition text-xs py-1.5 px-2 border border-blue-300 rounded hover:bg-blue-50 flex items-center justify-center gap-1"
-                >
-                  <span class="material-icons text-sm">edit</span>
-                  <span class="hidden sm:inline">Edit</span>
-                </button>
-                <button
-                  (click)="deleteDevice(device._id)"
-                  class="flex-1 text-red-600 hover:text-red-800 transition text-xs py-1.5 px-2 border border-red-300 rounded hover:bg-red-50 flex items-center justify-center gap-1"
-                >
-                  <span class="material-icons text-sm">delete</span>
-                  <span class="hidden sm:inline">Delete</span>
-                </button>
-              </div>
-            </div>
-          }
-        }
-      </div>
-
-      <!-- Empty State -->
-      @if (devices().length === 0) {
-        <div class="bg-white rounded-lg shadow-md p-8 text-center">
-          <span class="material-icons text-6xl text-gray-300 mx-auto mb-4 block">devices_other</span>
-          <p class="text-gray-600 font-medium">No devices found</p>
-          <p class="text-gray-400 text-sm mt-1">Try adjusting your filters or add a new device</p>
+      @if (errorMessage()) {
+        <div class="rounded-[24px] border border-rose-200 bg-rose-50 px-5 py-4 text-sm font-semibold text-rose-700 shadow-sm">
+          {{ errorMessage() }}
         </div>
       }
 
-      <!-- Pagination -->
-      @if (totalPages() > 1 && devices().length > 0) {
-        <div class="bg-white rounded-lg shadow-md p-3 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <div class="text-xs text-gray-600">
-            Page {{ currentPage() }}/{{ totalPages() }} ({{ totalItems() }} total)
+      @if (isLoading()) {
+        <div class="rounded-[24px] border border-slate-200 bg-white px-6 py-16 text-center shadow-sm">
+          <p class="text-sm font-semibold text-slate-500">Loading {{ activeView() === 'discovered' ? 'discovered Tuya devices' : 'accepted devices' }}...</p>
+        </div>
+      } @else if (visibleDevices().length === 0) {
+        <div class="rounded-[24px] border border-dashed border-slate-300 bg-white px-6 py-16 text-center shadow-sm">
+          <span class="material-icons text-5xl text-slate-300">devices_other</span>
+          <h3 class="mt-4 text-xl font-black tracking-tight text-slate-900">No devices in this view</h3>
+          <p class="mt-2 text-sm text-slate-500">
+            {{ activeView() === 'discovered' ? 'No devices were discovered from Tuya.' : 'No devices have been accepted into the platform yet.' }}
+          </p>
+        </div>
+      } @else {
+        <section class="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm">
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200">
+              <thead class="bg-slate-50">
+                <tr class="text-left text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">
+                  <th class="px-6 py-4">Device</th>
+                  <th class="px-6 py-4">Type</th>
+                  <th class="px-6 py-4">Status</th>
+                  <th class="px-6 py-4">{{ activeView() === 'discovered' ? 'Tuya Last Seen' : 'Platform Updated' }}</th>
+                  <th class="px-6 py-4">Assignment</th>
+                  <th class="px-6 py-4 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 bg-white">
+                @for (device of visibleDevices(); track device._id || device.deviceId) {
+                  <tr class="transition hover:bg-slate-50/80">
+                    <td class="px-6 py-5">
+                      <p class="text-sm font-bold text-slate-900">{{ device.name || device.deviceId }}</p>
+                      <p class="mt-1 text-xs text-slate-500">{{ device.deviceId }}</p>
+                    </td>
+                    <td class="px-6 py-5 text-sm font-semibold text-slate-700">{{ getDeviceTypeLabel(device.deviceType || device.type) }}</td>
+                    <td class="px-6 py-5">
+                      <span [class]="'inline-flex rounded-full px-3 py-1 text-xs font-bold ' + getStatusClass(device.status)">
+                        {{ formatStatus(device.status) }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-5 text-sm text-slate-600">
+                      {{ getDeviceDateLabel(device) }}
+                    </td>
+                    <td class="px-6 py-5 text-sm text-slate-600">
+                      @if (activeView() === 'accepted') {
+                        {{ getAssignmentLabel(device) }}
+                      } @else {
+                        {{ device.accepted ? 'Already accepted' : 'Not accepted' }}
+                      }
+                    </td>
+                    <td class="px-6 py-5 text-right">
+                      @if (activeView() === 'discovered') {
+                        @if (device.accepted) {
+                          <span class="inline-flex rounded-2xl bg-emerald-100 px-4 py-2 text-xs font-bold text-emerald-700">Accepted</span>
+                        } @else {
+                          <div class="flex justify-end gap-2">
+                            <button
+                              (click)="rejectDiscovered(device.deviceId)"
+                              class="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50"
+                            >
+                              Reject
+                            </button>
+                            <button
+                              (click)="acceptDiscovered(device)"
+                              class="rounded-2xl bg-slate-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-indigo-600"
+                            >
+                              Accept
+                            </button>
+                          </div>
+                        }
+                      } @else {
+                        <div class="flex justify-end gap-2">
+                          <button
+                            (click)="checkLiveStatus(device)"
+                            [disabled]="checkingDeviceId() === device._id"
+                            class="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {{ checkingDeviceId() === device._id ? 'Checking...' : 'Check Status' }}
+                          </button>
+                          <button
+                            (click)="promptDeleteDevice(device)"
+                            class="rounded-2xl bg-rose-100 px-4 py-2 text-xs font-bold text-rose-700 transition hover:bg-rose-200"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
           </div>
-          <div class="flex items-center gap-1">
-            <button
-              (click)="previousPage()"
-              [disabled]="currentPage() === 1"
-              class="px-2 py-1 bg-gray-300 text-gray-900 rounded hover:bg-gray-400 transition text-xs disabled:opacity-50 flex items-center gap-0.5 whitespace-nowrap"
-            >
-              <span class="material-icons text-sm">chevron_left</span>
-            </button>
+        </section>
+      }
 
-            <div class="flex gap-0.5">
-              @for (page of getPageNumbers(); track page) {
-                <button
-                  (click)="goToPage(page)"
-                  [class.bg-indigo-600]="page === currentPage()"
-                  [class.text-white]="page === currentPage()"
-                  [class.bg-gray-300]="page !== currentPage()"
-                  [class.text-gray-900]="page !== currentPage()"
-                  class="px-2 py-1 rounded hover:opacity-80 transition text-xs font-semibold"
-                >
-                  {{ page }}
-                </button>
-              }
+      @if (showDeleteDeviceConfirm()) {
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-4">
+          <div class="w-full max-w-md rounded-[28px] bg-white p-6 shadow-2xl">
+            <p class="text-xs font-bold uppercase tracking-[0.18em] text-rose-600">Delete Device</p>
+            <h3 class="mt-2 text-xl font-black tracking-tight text-slate-900">Remove this device?</h3>
+            <p class="mt-3 text-sm text-slate-600">
+              {{ deleteDeviceCandidate()?.name || deleteDeviceCandidate()?.deviceId || 'This device' }} will be deleted from the accepted platform inventory.
+            </p>
+            <div class="mt-6 flex justify-end gap-3">
+              <button
+                (click)="cancelDeleteDevice()"
+                class="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                (click)="confirmDeleteDevice()"
+                [disabled]="!deleteDeviceCandidate() || deletingDeviceId() === deleteDeviceCandidate()?._id"
+                class="rounded-2xl bg-rose-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {{ deletingDeviceId() === deleteDeviceCandidate()?._id ? 'Deleting...' : 'Delete Device' }}
+              </button>
             </div>
-
-            <button
-              (click)="nextPage()"
-              [disabled]="currentPage() === totalPages()"
-              class="px-2 py-1 bg-gray-300 text-gray-900 rounded hover:bg-gray-400 transition text-xs disabled:opacity-50 flex items-center gap-0.5 whitespace-nowrap"
-            >
-              <span class="material-icons text-sm">chevron_right</span>
-            </button>
           </div>
         </div>
       }
@@ -198,9 +227,9 @@ import { AdminService } from '../../../services/admin.service';
   `,
   styles: [`
     .material-icons {
-      font-size: 24px;
-      height: 24px;
-      width: 24px;
+      font-size: 22px;
+      height: 22px;
+      width: 22px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -208,121 +237,255 @@ import { AdminService } from '../../../services/admin.service';
   `]
 })
 export class AdminSystemDevicesComponent implements OnInit {
-  devices = signal<any[]>([]);
+  activeView = signal<DeviceView>('discovered');
+  isLoading = signal(false);
+  errorMessage = signal('');
+  deletingDeviceId = signal<string | null>(null);
+  checkingDeviceId = signal<string | null>(null);
+  showDeleteDeviceConfirm = signal(false);
+  deleteDeviceCandidate = signal<any | null>(null);
+
+  discoveredDevices = signal<any[]>([]);
+  acceptedDevices = signal<any[]>([]);
+  visibleDevices = signal<any[]>([]);
+
+  discoveredTotal = signal(0);
+  acceptedTotal = signal(0);
+
   searchTerm = '';
   filterStatus = '';
-
-  // Pagination
-  currentPage = signal(1);
-  pageSize = signal(10);
-  totalItems = signal(0);
-  totalPages = signal(0);
+  private rejectedDiscoveredIds = new Set<string>();
 
   constructor(private adminService: AdminService) {}
 
   ngOnInit(): void {
-    this.loadDevices();
+    this.loadDiscoveredDevices();
+    this.loadAcceptedDevices();
   }
 
-  loadDevices(): void {
-    console.log(`🔄 Loading devices - Page: ${this.currentPage()}, Status: ${this.filterStatus || 'all'}`);
+  switchView(view: DeviceView): void {
+    this.activeView.set(view);
+    this.applyFilters();
+  }
 
-    this.adminService.getDevices(this.currentPage(), this.pageSize()).subscribe({
+  refreshActiveView(): void {
+    if (this.activeView() === 'discovered') {
+      this.loadDiscoveredDevices();
+      return;
+    }
+    this.loadAcceptedDevices();
+  }
+
+  loadDiscoveredDevices(): void {
+    this.isLoading.set(true);
+    this.errorMessage.set('');
+    this.adminService.getDiscoveredDevices(1, 200).subscribe({
       next: (response: any) => {
-        console.log('✅ Devices API Response:', response);
-
-        // Handle response with data
-        if (response.data) {
-          const deviceList = Array.isArray(response.data) ? response.data : [response.data];
-
-          // Filter by status if needed
-          let filtered = deviceList;
-          if (this.filterStatus) {
-            filtered = deviceList.filter((d: any) => d.status === this.filterStatus);
-          }
-
-          this.devices.set(filtered);
-
-          // Handle pagination
-          if (response.pagination) {
-            this.totalItems.set(response.pagination.total);
-            this.totalPages.set(response.pagination.pages);
-          } else {
-            // Default pagination if not provided
-            this.totalItems.set(filtered.length);
-            this.totalPages.set(1);
-          }
-
-          console.log(`📱 Loaded ${filtered.length} devices`);
-        } else {
-          this.devices.set([]);
-          this.totalItems.set(0);
-          this.totalPages.set(0);
-        }
+        const devices = Array.isArray(response?.data) ? response.data : [];
+        this.discoveredDevices.set(devices.filter((device: any) => !this.rejectedDiscoveredIds.has(device.deviceId)));
+        this.discoveredTotal.set(Number(response?.pagination?.total) || devices.length);
+        this.isLoading.set(false);
+        this.applyFilters();
       },
       error: (error: any) => {
-        console.error('❌ Error loading devices:', error);
-        this.devices.set([]);
-        this.totalItems.set(0);
-        this.totalPages.set(0);
+        console.error('❌ Error loading discovered devices:', error);
+        this.errorMessage.set('Failed to load devices directly from Tuya.');
+        this.discoveredDevices.set([]);
+        this.discoveredTotal.set(0);
+        this.isLoading.set(false);
+        this.applyFilters();
       }
     });
   }
 
-  searchDevices(): void {
-    console.log(`🔍 Searching devices: "${this.searchTerm}", Status: "${this.filterStatus}"`);
-    this.currentPage.set(1);
-    this.loadDevices();
+  loadAcceptedDevices(): void {
+    this.isLoading.set(true);
+    this.errorMessage.set('');
+    this.adminService.getDevices(1, 200).subscribe({
+      next: (response: any) => {
+        const devices = Array.isArray(response?.data) ? response.data : [];
+        this.acceptedDevices.set(devices);
+        this.acceptedTotal.set(Number(response?.pagination?.total) || devices.length);
+        this.isLoading.set(false);
+        this.applyFilters();
+      },
+      error: (error: any) => {
+        console.error('❌ Error loading accepted devices:', error);
+        this.errorMessage.set('Failed to load accepted devices from the platform database.');
+        this.acceptedDevices.set([]);
+        this.acceptedTotal.set(0);
+        this.isLoading.set(false);
+        this.applyFilters();
+      }
+    });
   }
 
-  goToPage(page: number): void {
-    if (page >= 1 && page <= this.totalPages()) {
-      this.currentPage.set(page);
-      this.loadDevices();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+  applyFilters(): void {
+    const search = this.searchTerm.trim().toLowerCase();
+    const status = this.filterStatus;
+    const source = this.activeView() === 'discovered' ? this.discoveredDevices() : this.acceptedDevices();
+
+    this.visibleDevices.set(
+      source.filter((device) => {
+        const matchesSearch = !search || [
+          device.name,
+          device.deviceId,
+          this.getDeviceTypeLabel(device.deviceType || device.type)
+        ].some((value) => String(value || '').toLowerCase().includes(search));
+
+        const matchesStatus = !status || this.formatStatus(device.status).toLowerCase() === status;
+        return matchesSearch && matchesStatus;
+      })
+    );
+  }
+
+  private resolveDeviceId(device: any): string {
+    return device?.deviceId || device?.device_id || device?.tuyaDeviceId || device?.id || device?.uuid || '';
+  }
+
+  acceptDiscovered(device: any): void {
+    const deviceId = this.resolveDeviceId(device);
+    this.adminService.acceptDevice({
+      deviceId,
+      name: device.name,
+      deviceType: device.deviceType,
+      tuyaData: device.tuyaData
+    }).subscribe({
+      next: () => {
+        this.loadAcceptedDevices();
+        this.loadDiscoveredDevices();
+      },
+      error: (error: any) => {
+        console.error('❌ Error accepting device:', error);
+        this.errorMessage.set(error?.error?.message || 'Failed to accept Tuya device.');
+      }
+    });
+  }
+
+  rejectDiscovered(deviceId: string): void {
+    this.rejectedDiscoveredIds.add(deviceId);
+    this.discoveredDevices.set(this.discoveredDevices().filter((device) => this.resolveDeviceId(device) !== deviceId));
+    this.applyFilters();
+  }
+
+  removeAccepted(deviceId: string): void {
+    this.deletingDeviceId.set(deviceId);
+    this.adminService.deleteDevice(deviceId).subscribe({
+      next: () => {
+        this.loadAcceptedDevices();
+        this.loadDiscoveredDevices();
+        this.deletingDeviceId.set(null);
+      },
+      error: (error: any) => {
+        console.error('❌ Error removing accepted device:', error);
+        this.errorMessage.set(error?.error?.message || 'Failed to remove accepted device.');
+        this.deletingDeviceId.set(null);
+      }
+    });
+  }
+
+  promptDeleteDevice(device: any): void {
+    this.deleteDeviceCandidate.set(device);
+    this.showDeleteDeviceConfirm.set(true);
+  }
+
+  cancelDeleteDevice(): void {
+    this.showDeleteDeviceConfirm.set(false);
+    this.deleteDeviceCandidate.set(null);
+  }
+
+  confirmDeleteDevice(): void {
+    const deviceId = this.deleteDeviceCandidate()?._id;
+    if (!deviceId) {
+      return;
     }
+
+    this.removeAccepted(deviceId);
+    this.cancelDeleteDevice();
   }
 
-  nextPage(): void {
-    this.goToPage(this.currentPage() + 1);
-  }
-
-  previousPage(): void {
-    this.goToPage(this.currentPage() - 1);
-  }
-
-  getPageNumbers(): number[] {
-    const total = this.totalPages();
-    const current = this.currentPage();
-    const pages: number[] = [];
-
-    if (total > 0) pages.push(1);
-    for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
-      if (!pages.includes(i)) pages.push(i);
+  checkLiveStatus(device: any): void {
+    if (!device?._id) {
+      return;
     }
-    if (total > 1 && !pages.includes(total)) pages.push(total);
 
-    return pages;
+    this.checkingDeviceId.set(device._id);
+    this.errorMessage.set('');
+    this.adminService.getAdminDeviceLiveStatus(device._id).subscribe({
+      next: (response: any) => {
+        const online = response?.data?.online === true;
+        const lastDetectionTime = response?.data?.lastDetectionTime || null;
+        const updatedDevices = this.acceptedDevices().map((item) =>
+          item._id === device._id
+            ? { ...item, status: online, lastDetectionTime, updatedAt: new Date().toISOString() }
+            : item
+        );
+        this.acceptedDevices.set(updatedDevices);
+        this.applyFilters();
+        this.checkingDeviceId.set(null);
+      },
+      error: (error: any) => {
+        console.error('❌ Failed to check live device status:', error);
+        this.errorMessage.set(error?.error?.message || 'Failed to check live device status.');
+        this.checkingDeviceId.set(null);
+      }
+    });
   }
 
-  editDevice(deviceId: string): void {
-    alert(`Edit device: ${deviceId} (To be implemented)`);
+  getDeviceTypeLabel(deviceType: string): string {
+    const normalized = String(deviceType || '').toLowerCase();
+    const labels: Record<string, string> = {
+      smart_lock: 'Smart Lock',
+      door_sensor: 'Door Sensor',
+      motion_sensor: 'Motion Sensor',
+      thermostat: 'Thermostat',
+      camera: 'Camera',
+      light: 'Light',
+      speaker: 'Speaker'
+    };
+    return labels[normalized] || deviceType || 'Device';
   }
 
-  deleteDevice(deviceId: string): void {
-    if (confirm('Are you sure you want to delete this device?')) {
-      console.log(`🗑️  Deleting device: ${deviceId}`);
-
-      // Note: deleteDevice endpoint might not be in admin service yet
-      // For now, just reload the list
-      // this.adminService.deleteDevice(deviceId).subscribe({...})
-
-      alert('Device deletion not yet implemented on backend');
-      this.loadDevices();
+  formatStatus(status: string | boolean | undefined): string {
+    if (status === true || status === 'active') {
+      return 'active';
     }
+    return 'inactive';
   }
 
-  openAddDeviceModal(): void {
-    alert('Add Device modal (To be implemented)');
+  getStatusClass(status: string | boolean | undefined): string {
+    return this.formatStatus(status) === 'active'
+      ? 'bg-emerald-100 text-emerald-700'
+      : 'bg-slate-100 text-slate-700';
+  }
+
+  getDeviceDateLabel(device: any): string {
+    const sourceDate = this.activeView() === 'discovered'
+      ? device.lastActive
+      : (device.updatedAt || device.createdAt);
+
+    if (!sourceDate) {
+      return 'N/A';
+    }
+
+    return new Date(sourceDate).toLocaleString();
+  }
+
+  getAssignmentLabel(device: any): string {
+    if (device.roomNumber) {
+      return `Room ${device.roomNumber}`;
+    }
+    if (device.hotel) {
+      return 'Assigned to hotel';
+    }
+    return 'Unassigned';
+  }
+
+  doorSensorCount(): number {
+    return this.discoveredDevices().filter((device) => device.deviceType === 'door_sensor').length;
+  }
+
+  smartLockCount(): number {
+    return this.discoveredDevices().filter((device) => device.deviceType === 'smart_lock').length;
   }
 }

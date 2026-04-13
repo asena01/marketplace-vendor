@@ -12,10 +12,11 @@
 export const DEVICE_COMPATIBILITY = {
   single: {
     required: ['smart_lock'],
-    recommended: ['smart_lock', 'motion_sensor', 'light'],
+    recommended: ['smart_lock', 'door_sensor', 'light'],
     optional: ['thermostat', 'camera'],
     maxDevices: {
       smart_lock: 1,
+      door_sensor: 1,
       motion_sensor: 1,
       thermostat: 1,
       light: 2,
@@ -25,10 +26,11 @@ export const DEVICE_COMPATIBILITY = {
   },
   double: {
     required: ['smart_lock'],
-    recommended: ['smart_lock', 'motion_sensor', 'thermostat', 'light'],
+    recommended: ['smart_lock', 'door_sensor', 'thermostat', 'light'],
     optional: ['camera', 'speaker'],
     maxDevices: {
       smart_lock: 1,
+      door_sensor: 1,
       motion_sensor: 2,
       thermostat: 1,
       light: 3,
@@ -38,10 +40,11 @@ export const DEVICE_COMPATIBILITY = {
   },
   suite: {
     required: ['smart_lock'],
-    recommended: ['smart_lock', 'motion_sensor', 'thermostat', 'light', 'speaker'],
+    recommended: ['smart_lock', 'door_sensor', 'thermostat', 'light', 'speaker'],
     optional: ['camera'],
     maxDevices: {
       smart_lock: 1,
+      door_sensor: 1,
       motion_sensor: 3,
       thermostat: 2,
       light: 4,
@@ -51,10 +54,11 @@ export const DEVICE_COMPATIBILITY = {
   },
   deluxe: {
     required: ['smart_lock'],
-    recommended: ['smart_lock', 'motion_sensor', 'thermostat', 'light', 'camera', 'speaker'],
+    recommended: ['smart_lock', 'door_sensor', 'thermostat', 'light', 'camera', 'speaker'],
     optional: [],
     maxDevices: {
       smart_lock: 1,
+      door_sensor: 1,
       motion_sensor: 3,
       thermostat: 2,
       light: 5,
@@ -64,10 +68,11 @@ export const DEVICE_COMPATIBILITY = {
   },
   presidential: {
     required: ['smart_lock'],
-    recommended: ['smart_lock', 'motion_sensor', 'thermostat', 'light', 'camera', 'speaker'],
+    recommended: ['smart_lock', 'door_sensor', 'thermostat', 'light', 'camera', 'speaker'],
     optional: [],
     maxDevices: {
       smart_lock: 1,
+      door_sensor: 1,
       motion_sensor: 4,
       thermostat: 3,
       light: 6,
@@ -92,6 +97,13 @@ export const DEVICE_DESCRIPTIONS = {
     name: '🎯 Motion Sensor',
     description: 'Detects room occupancy and movement',
     purpose: 'Security, energy efficiency, occupancy tracking',
+    required: false,
+    priority: 2
+  },
+  door_sensor: {
+    name: '🚪 Door Sensor',
+    description: 'Detects door open and close events for monitoring',
+    purpose: 'Door monitoring, security alerts, audit visibility',
     required: false,
     priority: 2
   },
@@ -130,6 +142,7 @@ export const DEVICE_DESCRIPTIONS = {
  */
 export const DEVICE_ICONS = {
   smart_lock: '🔐',
+  door_sensor: '🚪',
   motion_sensor: '🎯',
   thermostat: '🌡️',
   light: '💡',

@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HotelService } from '../../../../../services/hotel.service';
@@ -237,6 +237,24 @@ interface DeviceLog {
               {{ isLoading() ? '⏳ Loading...' : '📱 Load Device' }}
             </button>
           </div>
+          @if (selectedDevice()) {
+            <p class="mt-3 text-sm text-slate-600">
+              Monitoring {{ selectedDevice()?.deviceId }} · {{ selectedDevice()?.deviceType }}
+              @if (selectedDevice()?.roomNumber) {
+                <span> · Room {{ selectedDevice()?.roomNumber }}</span>
+              }
+            </p>
+          }
+          <div class="mt-3 flex items-center gap-2">
+            <input
+              id="auto-refresh"
+              type="checkbox"
+              [checked]="autoRefreshEnabled()"
+              (change)="toggleAutoRefresh()"
+              class="h-4 w-4"
+            />
+            <label for="auto-refresh" class="text-xs font-medium text-slate-600">Auto-refresh every 20 seconds</label>
+          </div>
         </div>
 
         @if (selectedDeviceId) {
@@ -269,11 +287,36 @@ interface DeviceLog {
 
           <!-- Long Durations -->
           <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-amber-500">
-            <p class="text-slate-600 text-sm font-medium mb-2">Motion Periods >20min</p>
+            <p class="text-slate-600 text-sm font-medium mb-2">{{ isDoorMonitoringDevice() ? 'Door Open Periods >20min' : 'Motion Periods >20min' }}</p>
             <p class="text-3xl font-bold text-amber-600">{{ longDurationPeriods().length }}</p>
-            <p class="text-sm text-slate-600 mt-2">Extended motion detection</p>
+            <p class="text-sm text-slate-600 mt-2">{{ isDoorMonitoringDevice() ? 'Extended open-door monitoring' : 'Extended motion detection' }}</p>
           </div>
-        </div>
+          </div>
+
+          @if (isDoorMonitoringDevice()) {
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-indigo-500">
+                <p class="text-slate-600 text-sm font-medium mb-2">Current Door State</p>
+                <p class="text-3xl font-bold" [ngClass]="{
+                  'text-red-600': currentDoorState() === 'open',
+                  'text-emerald-600': currentDoorState() === 'closed',
+                  'text-slate-500': currentDoorState() === 'unknown'
+                }">
+                  {{ currentDoorState() === 'open' ? 'Open' : currentDoorState() === 'closed' ? 'Closed' : 'Unknown' }}
+                </p>
+                <p class="text-sm text-slate-600 mt-2">Updated from the latest door-contact event</p>
+              </div>
+              <div class="bg-white rounded-lg p-6 shadow-md border-l-4 border-purple-500">
+                <p class="text-slate-600 text-sm font-medium mb-2">Latest Door Event</p>
+                @if (latestDoorEvent()) {
+                  <p class="text-lg font-bold text-slate-900">{{ getEventValueLabel(latestDoorEvent()!) }}</p>
+                  <p class="text-sm text-slate-600 mt-2">{{ formatDate(latestDoorEvent()!.event_time) }}</p>
+                } @else {
+                  <p class="text-sm text-slate-500 italic">No recent door events</p>
+                }
+              </div>
+            </div>
+          }
 
         <!-- Tabs -->
         <div class="flex gap-2 bg-white rounded-lg shadow-md p-2">
@@ -309,7 +352,7 @@ interface DeviceLog {
         <!-- Timeline View -->
         @if (monitoringTab === 'timeline') {
           <div class="bg-white rounded-lg shadow-md p-6 space-y-4">
-            <h2 class="text-xl font-bold text-slate-900 mb-6">Device Activity Timeline</h2>
+            <h2 class="text-xl font-bold text-slate-900 mb-6">{{ getMonitoringHeadline() }}</h2>
             
             @if (deviceLogs().length === 0) {
               <div class="text-center py-8 text-slate-500">
@@ -330,7 +373,7 @@ interface DeviceLog {
                       </div>
                     </div>
                     <div class="flex-1">
-                      <p class="font-semibold text-slate-900">{{ log.code }}</p>
+                      <p class="font-semibold text-slate-900">{{ getEventCodeLabel(log) }}</p>
                       <p class="text-sm text-slate-600">{{ formatDate(log.event_time) }}</p>
                     </div>
                     <span class="px-3 py-1 rounded-full text-xs font-medium" [ngClass]="{
@@ -338,7 +381,7 @@ interface DeviceLog {
                       'bg-red-100 text-red-700': log.value === 'false',
                       'bg-slate-100 text-slate-700': log.value !== 'true' && log.value !== 'false'
                     }">
-                      {{ log.value }}
+                      {{ getEventValueLabel(log) }}
                     </span>
                   </div>
                 }
@@ -373,13 +416,13 @@ interface DeviceLog {
                     @for (log of deviceLogs().slice(0, 50); track log.event_time) {
                       <tr class="hover:bg-slate-50">
                         <td class="px-6 py-3 text-slate-600">{{ formatDate(log.event_time) }}</td>
-                        <td class="px-6 py-3 font-medium text-slate-900">{{ log.code }}</td>
+                        <td class="px-6 py-3 font-medium text-slate-900">{{ getEventCodeLabel(log) }}</td>
                         <td class="px-6 py-3">
                           <span class="px-3 py-1 rounded-full text-xs font-medium" [ngClass]="{
                             'bg-green-100 text-green-700': log.value === 'true',
                             'bg-red-100 text-red-700': log.value === 'false'
                           }">
-                            {{ log.value }}
+                            {{ getEventValueLabel(log) }}
                           </span>
                         </td>
                       </tr>
@@ -397,12 +440,12 @@ interface DeviceLog {
         <!-- Long Duration Periods -->
         @if (monitoringTab === 'periods') {
           <div class="bg-white rounded-lg shadow-md p-6 space-y-4">
-            <h2 class="text-xl font-bold text-slate-900 mb-6">Extended Motion Periods (>20 minutes)</h2>
+            <h2 class="text-xl font-bold text-slate-900 mb-6">{{ getLongPeriodsHeadline() }}</h2>
             
             @if (longDurationPeriods().length === 0) {
               <div class="text-center py-8 text-slate-500">
                 <p class="text-lg font-semibold">No extended periods found</p>
-                <p class="text-sm mt-1">Motion detection periods lasting more than 20 minutes will appear here</p>
+                <p class="text-sm mt-1">{{ isDoorMonitoringDevice() ? 'Door-open periods lasting more than 20 minutes will appear here' : 'Motion detection periods lasting more than 20 minutes will appear here' }}</p>
               </div>
             } @else {
               <div class="space-y-4">
@@ -457,7 +500,7 @@ interface DeviceLog {
   `,
   styles: []
 })
-export class HotelDevicesComponent implements OnInit {
+export class HotelDevicesComponent implements OnInit, OnDestroy {
   selectedDeviceId = '';
   activeTab: 'devices' | 'monitoring' = 'devices';
   monitoringTab: 'timeline' | 'logs' | 'periods' = 'timeline';
@@ -471,6 +514,11 @@ export class HotelDevicesComponent implements OnInit {
   longDurationPeriods = signal<any[]>([]);
   assignedDevices = signal<any[]>([]);
   filteredDevices = signal<any[]>([]);
+  selectedDevice = signal<any>(null);
+  currentDoorState = signal<'open' | 'closed' | 'unknown'>('unknown');
+  latestDoorEvent = signal<DeviceLog | null>(null);
+  autoRefreshEnabled = signal(true);
+  private monitorRefreshTimer: ReturnType<typeof setInterval> | null = null;
 
   dateRangeStart = '';
   dateRangeEnd = '';
@@ -487,85 +535,28 @@ export class HotelDevicesComponent implements OnInit {
     this.loadDevicesList();
   }
 
+  ngOnDestroy(): void {
+    this.stopMonitoringRefresh();
+  }
+
   loadDevicesList(): void {
     this.isLoading.set(true);
     this.errorMessage.set('');
     this.successMessage.set('');
-
-    // Get the hotel ID from localStorage
-    const hotelId = localStorage.getItem('hotelId');
-    if (!hotelId) {
-      this.errorMessage.set('Hotel ID not found. Please log in again.');
-      this.isLoading.set(false);
-      return;
-    }
-
-    // In a real scenario, you would call an API endpoint to get all devices assigned to this hotel
-    // For now, we'll simulate this - the actual endpoint would be something like:
-    // this.hotelService.getHotelDevices(hotelId).subscribe({...})
-
-    // Simulated devices data - replace with actual API call
-    const simulatedDevices = [
-      {
-        _id: 'device_motion_001',
-        deviceId: 'device_motion_001',
-        deviceType: 'motion_sensor',
-        status: true,
-        isActive: true,
-        lastActive: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 minutes ago
-        createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days ago
-        name: 'Lobby Motion Sensor'
+    this.hotelService.getHotelSecurityDevices().subscribe({
+      next: (response: any) => {
+        const allDevices = Array.isArray(response?.data) ? response.data : [];
+        this.assignedDevices.set(allDevices);
+        this.filteredDevices.set(allDevices);
+        this.successMessage.set(`Loaded ${allDevices.length} devices successfully`);
+        this.isLoading.set(false);
       },
-      {
-        _id: 'device_motion_002',
-        deviceId: 'device_motion_002',
-        deviceType: 'motion_sensor',
-        status: true,
-        isActive: true,
-        lastActive: new Date(Date.now() - 15 * 60 * 1000).toISOString(), // 15 minutes ago
-        createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
-        name: 'Corridor Motion Sensor'
-      },
-      {
-        _id: 'device_door_001',
-        deviceId: 'device_door_001',
-        deviceType: 'door_sensor',
-        status: false,
-        isActive: false,
-        lastActive: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-        createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-        name: 'Main Entrance Door Sensor'
-      },
-      {
-        _id: 'device_temp_001',
-        deviceId: 'device_temp_001',
-        deviceType: 'temperature_sensor',
-        status: true,
-        isActive: true,
-        lastActive: new Date(Date.now() - 1 * 60 * 1000).toISOString(), // 1 minute ago
-        createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-        name: 'Room 101 Temperature Sensor'
-      },
-      {
-        _id: 'device_smart_lock_001',
-        deviceId: 'device_smart_lock_001',
-        deviceType: 'smart_lock',
-        status: true,
-        isActive: true,
-        lastActive: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 minutes ago
-        createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
-        name: 'Room 101 Smart Lock'
+      error: (error: any) => {
+        console.error('❌ Error loading devices:', error);
+        this.errorMessage.set('Failed to load hotel devices');
+        this.isLoading.set(false);
       }
-    ];
-
-    // Set the devices and apply filters
-    this.assignedDevices.set(simulatedDevices);
-    this.filteredDevices.set(simulatedDevices);
-
-    this.successMessage.set(`Loaded ${simulatedDevices.length} devices successfully`);
-    this.isLoading.set(false);
-
-    console.log('✅ Devices loaded:', simulatedDevices);
+    });
   }
 
   filterDevices(): void {
@@ -637,9 +628,11 @@ export class HotelDevicesComponent implements OnInit {
 
   selectDeviceForMonitoring(deviceId: string): void {
     this.selectedDeviceId = deviceId;
+    this.selectedDevice.set(this.assignedDevices().find((device) => (device._id || device.deviceId) === deviceId) || null);
     this.activeTab = 'monitoring';
     // Load the selected device's data
     this.loadDeviceData();
+    this.startMonitoringRefresh();
   }
 
   getActiveDevicesCount(): number {
@@ -663,6 +656,7 @@ export class HotelDevicesComponent implements OnInit {
     this.isLoading.set(true);
     this.errorMessage.set('');
     this.successMessage.set('');
+    this.selectedDevice.set(this.assignedDevices().find((device) => (device._id || device.deviceId) === this.selectedDeviceId) || null);
 
     // Load device status
     this.hotelService.getDeviceStatus(this.selectedDeviceId).subscribe({
@@ -689,6 +683,7 @@ export class HotelDevicesComponent implements OnInit {
           this.deviceLogs.set(response.data?.logs || []);
           this.totalLogs = response.data?.totalLogs || 0;
           this.longDurationPeriods.set(response.data?.timeDifferences || []);
+          this.updateDoorFeedState(response.data?.logs || []);
           
           this.successMessage.set(`Loaded ${this.totalLogs} logs with ${this.longDurationPeriods().length} extended periods`);
           console.log('✅ Device logs:', response.data);
@@ -724,5 +719,82 @@ export class HotelDevicesComponent implements OnInit {
   getTotalDuration(): number {
     const periods = this.longDurationPeriods();
     return periods.reduce((sum, p) => sum + p.duration, 0);
+  }
+
+  isDoorMonitoringDevice(): boolean {
+    const type = this.selectedDevice()?.deviceType;
+    return type === 'door_sensor';
+  }
+
+  getMonitoringHeadline(): string {
+    return this.isDoorMonitoringDevice() ? 'Door Event Monitoring' : 'Device Activity Timeline';
+  }
+
+  getLongPeriodsHeadline(): string {
+    return this.isDoorMonitoringDevice() ? 'Extended Door Open Periods (>20 minutes)' : 'Extended Motion Periods (>20 minutes)';
+  }
+
+  getEventValueLabel(log: DeviceLog): string {
+    if (this.isDoorMonitoringDevice()) {
+      return log.value === 'true' ? 'Open' : log.value === 'false' ? 'Closed' : log.value;
+    }
+    return log.value;
+  }
+
+  getEventCodeLabel(log: DeviceLog): string {
+    if (this.isDoorMonitoringDevice() && log.code === 'doorcontact_state') {
+      return 'Door Contact';
+    }
+    return log.code;
+  }
+
+  private updateDoorFeedState(logs: DeviceLog[]): void {
+    if (!this.isDoorMonitoringDevice()) {
+      this.currentDoorState.set('unknown');
+      this.latestDoorEvent.set(null);
+      return;
+    }
+
+    const doorLogs = logs
+      .filter((log) => log.code === 'doorcontact_state')
+      .sort((a, b) => b.event_time - a.event_time);
+
+    const latest = doorLogs[0] || null;
+    this.latestDoorEvent.set(latest);
+    if (!latest) {
+      this.currentDoorState.set('unknown');
+      return;
+    }
+
+    this.currentDoorState.set(latest.value === 'true' ? 'open' : latest.value === 'false' ? 'closed' : 'unknown');
+  }
+
+  toggleAutoRefresh(): void {
+    this.autoRefreshEnabled.set(!this.autoRefreshEnabled());
+    if (this.autoRefreshEnabled()) {
+      this.startMonitoringRefresh();
+    } else {
+      this.stopMonitoringRefresh();
+    }
+  }
+
+  startMonitoringRefresh(): void {
+    this.stopMonitoringRefresh();
+    if (!this.autoRefreshEnabled()) {
+      return;
+    }
+
+    this.monitorRefreshTimer = setInterval(() => {
+      if (this.activeTab === 'monitoring' && this.selectedDeviceId) {
+        this.loadDeviceData();
+      }
+    }, 20000);
+  }
+
+  stopMonitoringRefresh(): void {
+    if (this.monitorRefreshTimer) {
+      clearInterval(this.monitorRefreshTimer);
+      this.monitorRefreshTimer = null;
+    }
   }
 }

@@ -62,6 +62,10 @@ const BookingSchema = new Schema({
     enum: ['credit_card', 'debit_card', 'cash', 'bank_transfer', 'online', 'contactless', 'mobile_money', 'digital_wallet']
   },
   notes: String,
+  reviewReminderSentAt: {
+    type: Date,
+    default: null
+  },
   smartLockAccess: {
     accessToken: String,
     backupPin: String,
@@ -100,11 +104,43 @@ const BookingSchema = new Schema({
       enum: ['pending', 'preparing', 'ready', 'delivered', 'cancelled'],
       default: 'pending'
     },
+    estimatedDurationMinutes: {
+      type: Number,
+      default: 30
+    },
     orderedAt: {
       type: Date,
       default: Date.now
     },
+    etaAt: Date,
     deliveredAt: Date
+  }],
+  hotelServiceOrders: [{
+    _id: Schema.Types.ObjectId,
+    serviceId: {
+      type: Schema.Types.ObjectId,
+      ref: 'HotelAmenityService'
+    },
+    category: String,
+    name: String,
+    description: String,
+    price: Number,
+    quantity: {
+      type: Number,
+      default: 1
+    },
+    totalPrice: Number,
+    notes: String,
+    status: {
+      type: String,
+      enum: ['pending', 'confirmed', 'in-progress', 'completed', 'cancelled'],
+      default: 'pending'
+    },
+    requestedAt: {
+      type: Date,
+      default: Date.now
+    },
+    fulfilledAt: Date
   }],
   createdAt: {
     type: Date,

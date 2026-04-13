@@ -1,5 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { forkJoin } from 'rxjs';
 import { AdminService } from '../../../services/admin.service';
 
 @Component({
@@ -36,20 +37,20 @@ import { AdminService } from '../../../services/admin.service';
           </div>
         </div>
 
-        <!-- Total Vendors -->
+        <!-- Hotel Vendors -->
         <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500 hover:shadow-lg transition">
           <div class="flex items-center justify-between">
             <div>
               <p class="text-gray-600 text-sm font-medium flex items-center gap-1">
-                <span class="material-icons text-sm">business</span>
-                Total Vendors
+                <span class="material-icons text-sm">hotel</span>
+                Hotel Vendors
               </p>
-              <p class="text-4xl font-bold text-gray-800 mt-2">{{ stats()?.vendors?.total || 0 }}</p>
+              <p class="text-4xl font-bold text-gray-800 mt-2">{{ hotelStats().total }}</p>
               <p class="text-xs text-gray-500 mt-1">
-                {{ stats()?.vendors?.active || 0 }} active
+                {{ hotelStats().active }} active
               </p>
             </div>
-            <span class="material-icons text-6xl text-green-200">business</span>
+            <span class="material-icons text-6xl text-green-200">hotel</span>
           </div>
         </div>
 
@@ -88,38 +89,43 @@ import { AdminService } from '../../../services/admin.service';
 
       <!-- Secondary Stats -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Platform Commission -->
+        <!-- Pending Hotel Approvals -->
         <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
           <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <span class="material-icons text-green-600">trending_up</span>
-            Platform Commission
+            <span class="material-icons text-amber-600">pending_actions</span>
+            Pending Hotel Approvals
           </h3>
-          <p class="text-3xl font-bold text-green-600">
-            \${{ (stats()?.payments?.platformCommission || 0).toLocaleString('en-US', { maximumFractionDigits: 2 }) }}
-          </p>
-          <p class="text-sm text-gray-600 mt-2">Total platform earnings</p>
+          <p class="text-3xl font-bold text-amber-600">{{ hotelStats().pending }}</p>
+          <p class="text-sm text-gray-600 mt-2">Hotel vendors waiting for admin approval</p>
         </div>
 
-        <!-- Vendor Status -->
+        <!-- Hotel Approval Status -->
         <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
           <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <span class="material-icons text-blue-600">info</span>
-            Vendor Status
+            <span class="material-icons text-blue-600">verified_user</span>
+            Hotel Approval Status
           </h3>
           <div class="space-y-3">
             <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
               <span class="text-gray-600 flex items-center gap-2">
                 <span class="material-icons text-sm text-green-600">check_circle</span>
-                Active
+                Active Hotels
               </span>
-              <span class="font-bold text-green-600">{{ stats()?.vendors?.active || 0 }}</span>
+              <span class="font-bold text-green-600">{{ hotelStats().active }}</span>
             </div>
             <div class="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
               <span class="text-gray-600 flex items-center gap-2">
                 <span class="material-icons text-sm text-yellow-600">schedule</span>
-                Pending Verification
+                Pending Approval
               </span>
-              <span class="font-bold text-yellow-600">{{ stats()?.vendors?.pending || 0 }}</span>
+              <span class="font-bold text-yellow-600">{{ hotelStats().pending }}</span>
+            </div>
+            <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+              <span class="text-gray-600 flex items-center gap-2">
+                <span class="material-icons text-sm text-blue-600">verified</span>
+                KYC Approved
+              </span>
+              <span class="font-bold text-blue-600">{{ hotelStats().approvedKyc }}</span>
             </div>
           </div>
         </div>
@@ -174,6 +180,12 @@ import { AdminService } from '../../../services/admin.service';
 })
 export class AdminOverviewComponent implements OnInit {
   stats = signal<any>(null);
+  hotelStats = signal({
+    total: 0,
+    active: 0,
+    pending: 0,
+    approvedKyc: 0
+  });
   isLoading = signal(true);
   error = signal('');
 
@@ -187,12 +199,24 @@ export class AdminOverviewComponent implements OnInit {
     this.isLoading.set(true);
     this.error.set('');
 
-    this.adminService.getStats().subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.stats.set(response.data);
-          console.log('✅ Stats loaded:', response.data);
+    forkJoin({
+      stats: this.adminService.getStats(),
+      hotels: this.adminService.getVendors(1, 500, { vendorType: 'hotel' })
+    }).subscribe({
+      next: ({ stats, hotels }) => {
+        if (stats?.success) {
+          this.stats.set(stats.data);
+          console.log('✅ Stats loaded:', stats.data);
         }
+
+        const hotelVendors = Array.isArray(hotels?.data) ? hotels.data : [];
+        this.hotelStats.set({
+          total: hotelVendors.length,
+          active: hotelVendors.filter((vendor: any) => vendor.status === 'active').length,
+          pending: hotelVendors.filter((vendor: any) => vendor.status === 'pending').length,
+          approvedKyc: hotelVendors.filter((vendor: any) => vendor.kycStatus === 'approved').length
+        });
+
         this.isLoading.set(false);
       },
       error: (error: any) => {

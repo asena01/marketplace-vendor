@@ -1,8 +1,10 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { CustomerService } from '../../../services/customer.service';
+import { ChatRealtimeEvent, ChatRealtimeService } from '../../../services/chat-realtime.service';
+import { AuthService } from '../../../services/auth.service';
 
 interface ChatMessage {
   _id: string;
@@ -353,7 +355,7 @@ interface VendorChat {
     }
   `]
 })
-export class CustomerChatSupportComponent implements OnInit {
+export class CustomerChatSupportComponent implements OnInit, OnDestroy {
   conversations = signal<VendorChat[]>([]);
   selectedChat = signal<VendorChat | null>(null);
   newMessage = signal('');
@@ -366,10 +368,22 @@ export class CustomerChatSupportComponent implements OnInit {
   tourBookings = signal<any[]>([]);
   deliveryOrders = signal<any[]>([]);
   shoppingOrders = signal<any[]>([]);
+  private streamDisconnect: (() => void) | null = null;
 
-  constructor(private customerService: CustomerService) {}
+  constructor(
+    private customerService: CustomerService,
+    private chatRealtimeService: ChatRealtimeService,
+    private authService: AuthService
+  ) {}
 
   ngOnInit(): void {
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      this.streamDisconnect = this.chatRealtimeService.connectCustomer(userId, (_event: ChatRealtimeEvent) => {
+        this.loadConversations();
+      });
+    }
+
     this.loadConversations();
     this.loadActiveBookings();
 
@@ -377,6 +391,10 @@ export class CustomerChatSupportComponent implements OnInit {
     setTimeout(() => {
       this.checkForPendingChat();
     }, 500);
+  }
+
+  ngOnDestroy(): void {
+    this.streamDisconnect?.();
   }
 
   /**
@@ -430,21 +448,31 @@ export class CustomerChatSupportComponent implements OnInit {
       this.customerService.getVendorChats().subscribe({
         next: (response: any) => {
           if (response.success && response.data) {
-            this.conversations.set(response.data);
-            if (response.data.length > 0) {
-              this.selectConversation(response.data[0]);
-            }
+            const chats = Array.isArray(response.data) ? response.data : [];
+            this.conversations.set(chats);
+            this.syncSelectedConversation(chats);
+          } else {
+            this.conversations.set([]);
+            this.selectedChat.set(null);
           }
         },
         error: (error) => {
           console.warn('⚠️ Chat service not fully implemented yet');
           this.conversations.set([]);
+          this.selectedChat.set(null);
         }
       });
     } else {
       console.log('💬 Chat service not available - showing empty state');
       this.conversations.set([]);
+      this.selectedChat.set(null);
     }
+  }
+
+  private syncSelectedConversation(chats: VendorChat[]): void {
+    const selectedId = this.selectedChat()?._id;
+    const nextSelected = chats.find((chat) => chat._id === selectedId) || chats[0] || null;
+    this.selectedChat.set(nextSelected);
   }
 
   loadActiveBookings(): void {
@@ -589,7 +617,7 @@ export class CustomerChatSupportComponent implements OnInit {
             const localMessage: ChatMessage = {
               _id: `msg-${Date.now()}`,
               sender: 'customer',
-              senderName: 'You',
+              senderName: this.getCustomerDisplayName(),
               message: messageText,
               timestamp: new Date().toISOString(),
               read: false
@@ -609,7 +637,7 @@ export class CustomerChatSupportComponent implements OnInit {
         const localMessage: ChatMessage = {
           _id: `msg-${Date.now()}`,
           sender: 'customer',
-          senderName: 'You',
+          senderName: this.getCustomerDisplayName(),
           message: messageText,
           timestamp: new Date().toISOString(),
           read: false
@@ -746,5 +774,9 @@ export class CustomerChatSupportComponent implements OnInit {
     // Use tel: protocol to initiate phone call
     window.location.href = `tel:${cleanPhone}`;
     console.log('📞 Initiating phone call to support: ' + supportPhone);
+  }
+
+  private getCustomerDisplayName(): string {
+    return this.authService.getCurrentUser()?.name || 'Customer';
   }
 }

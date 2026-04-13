@@ -1,8 +1,9 @@
-import { Component, OnInit, signal, effect, computed, Input } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal, effect, computed, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
 import { HeaderComponent } from '../../components/header/header.component';
 import { IdentityVerificationComponent } from '../customer/identity-verification/identity-verification.component';
 import { MARKETPLACE_SERVICES } from '../../shared/data/marketplace-data';
@@ -93,11 +94,11 @@ interface FilterOptions {
 @Component({
   selector: 'app-hotels',
   standalone: true,
-  imports: [CommonModule, HeaderComponent, FormsModule, HttpClientModule, IdentityVerificationComponent],
+  imports: [CommonModule, HeaderComponent, FormsModule, HttpClientModule, IdentityVerificationComponent, MatIconModule],
   templateUrl: './hotels.component.html',
   styleUrl: './hotels.component.css'
 })
-export class HotelsComponent implements OnInit {
+export class HotelsComponent implements OnInit, OnDestroy {
   // Embedded mode for use within dashboard (hides header and navigation)
   @Input() embedded: boolean = false;
 
@@ -115,18 +116,18 @@ export class HotelsComponent implements OnInit {
   // Loading states
   isLoadingHotels = signal<boolean>(false);
   hotelError = signal<string>('');
-  
+
   // Filter Signals
   priceRange = signal<[number, number]>([0, 500000]);
   minRating = signal<number>(0);
   selectedAmenities = signal<string[]>([]);
   selectedPropertyTypes = signal<string[]>([]);
-  
+
   // Hotel List & State
   hotels = signal<Hotel[]>([]);
   expandedHotelIds = signal<Set<string>>(new Set());
   favorites = signal<Set<string>>(new Set());
-  
+
   // Carousel State
   carouselIndices = signal<Map<string, number>>(new Map());
   roomImageIndices = signal<Map<string, number>>(new Map());
@@ -134,7 +135,7 @@ export class HotelsComponent implements OnInit {
   // Room Group Pagination
   roomGroupPages = signal<Map<string, number>>(new Map()); // Key: ${hotelId}_${roomType}
   roomsPerPage = 5;
-  
+
   // Booking Modal Signals
   showBookingForm = signal<boolean>(false);
   selectedHotel = signal<Hotel | null>(null);
@@ -198,22 +199,23 @@ export class HotelsComponent implements OnInit {
 
   // Booking method selection
   useContactlessCheckIn = signal<boolean>(false); // User choice for contactless
-  
+
   // Pagination
   currentPage = signal<number>(1);
   itemsPerPage = signal<number>(6);
+  private autoRefreshTimeout: ReturnType<typeof setTimeout> | null = null;
 
   // Computed values
   filteredHotels = computed(() => {
     let filtered = [...this.hotels()];
-    
+
     // Price filter
     const [minPrice, maxPrice] = this.priceRange();
     filtered = filtered.filter(h => h.price >= minPrice && h.price <= maxPrice);
-    
+
     // Rating filter
     filtered = filtered.filter(h => h.rating >= this.minRating());
-    
+
     // Amenities filter
     const selectedAmenities = this.selectedAmenities();
     if (selectedAmenities.length > 0) {
@@ -221,13 +223,13 @@ export class HotelsComponent implements OnInit {
         selectedAmenities.some(a => h.amenities.includes(a))
       );
     }
-    
+
     // Property type filter
     const selectedTypes = this.selectedPropertyTypes();
     if (selectedTypes.length > 0) {
       filtered = filtered.filter(h => selectedTypes.includes(h.type));
     }
-    
+
     return filtered;
   });
 
@@ -298,19 +300,7 @@ export class HotelsComponent implements OnInit {
 
       return () => clearInterval(interval);
     });
-  }
 
-  ngOnInit(): void {
-    console.log('🚀 Hotels component initialized');
-    console.log('🔌 Backend URL configured: http://localhost:5001');
-
-    // Set default dates for availability check
-    this.setDefaultDates();
-
-    this.checkBackendConnection();
-    this.loadHotelsFromAPI();
-
-    // Watch for login completion and resume pending booking
     effect(() => {
       const isLoginOpen = this.authModalService.isLoginOpen();
 
@@ -326,6 +316,27 @@ export class HotelsComponent implements OnInit {
         }
       }
     });
+  }
+
+  ngOnInit(): void {
+    console.log('🚀 Hotels component initialized');
+    console.log('🔌 Backend URL configured: http://localhost:5001');
+
+    // Set default dates for availability check
+    this.setDefaultDates();
+
+    this.checkBackendConnection();
+    this.loadHotelsFromAPI();
+
+    // Watch for login completion and resume pending booking
+
+  }
+
+  ngOnDestroy(): void {
+    if (this.autoRefreshTimeout) {
+      clearTimeout(this.autoRefreshTimeout);
+      this.autoRefreshTimeout = null;
+    }
   }
 
   /**
@@ -350,7 +361,7 @@ export class HotelsComponent implements OnInit {
    * Check if backend is running and accessible
    */
   private checkBackendConnection(): void {
-    this.hotelService.getPublicHotels(1, 1).subscribe({
+    this.hotelService.getPublicHotels(1, 1, this.searchLocation(), this.checkInDate(), this.checkOutDate(), this.guests()).subscribe({
       next: () => {
         console.log('✅ Backend is running and connected!');
       },
@@ -374,7 +385,7 @@ export class HotelsComponent implements OnInit {
     console.log('🔄 Loading hotels from API...');
 
     // Load from API
-    this.hotelService.getPublicHotels(1, 50).subscribe({
+    this.hotelService.getPublicHotels(1, 50, this.searchLocation(), this.checkInDate(), this.checkOutDate(), this.guests()).subscribe({
       next: (apiResponse) => {
         console.log('📡 API Response received:', apiResponse);
         if (apiResponse.data && apiResponse.data.length > 0) {
@@ -395,7 +406,7 @@ export class HotelsComponent implements OnInit {
             imageUrl: hotel.imageUrl || hotel.image || '',
             thumbnail: hotel.thumbnail || '',
             // CRITICAL: Include contactlessCheckInEnabled from API response
-            contactlessCheckInEnabled: hotel.contactlessCheckInEnabled === true,
+            contactlessCheckInEnabled: this.normalizeBoolean(hotel.contactlessCheckInEnabled),
             // Convert image URLs to array
             photos: hotel.photos && hotel.photos.length > 0
               ? hotel.photos.map((img: any) => typeof img === 'string'
@@ -423,17 +434,36 @@ export class HotelsComponent implements OnInit {
           console.log('✅ DISPLAYING HOTELS FROM API:', apiHotels);
           this.hotels.set(apiHotels);
         } else {
-          console.log('⚠️ API returned no data. Loading test hotels...');
-          this.loadTestHotels();
+          console.log('⚠️ API returned no hotel data.');
+          this.hotels.set([]);
+          this.hotelError.set('No hotels were returned from the backend for the current search.');
         }
         this.isLoadingHotels.set(false);
       },
       error: (error) => {
         console.error('❌ API CALL FAILED:', error);
-        console.log('📦 Loading test hotels instead...');
-        this.loadTestHotels();
+        this.hotels.set([]);
+        this.hotelError.set('Failed to load hotels from the backend.');
+        this.isLoadingHotels.set(false);
       }
     });
+  }
+
+  queueAvailabilityRefresh(): void {
+    this.currentPage.set(1);
+
+    if (!this.checkInDate() || !this.checkOutDate()) {
+      return;
+    }
+
+    if (this.autoRefreshTimeout) {
+      clearTimeout(this.autoRefreshTimeout);
+    }
+
+    this.autoRefreshTimeout = setTimeout(() => {
+      this.loadHotelsFromAPI();
+      this.autoRefreshTimeout = null;
+    }, 300);
   }
 
   /**
@@ -786,9 +816,26 @@ export class HotelsComponent implements OnInit {
     return this.expandedHotelIds().has(hotelId);
   }
 
+  private normalizeBoolean(value: unknown): boolean {
+    if (typeof value === 'boolean') {
+      return value;
+    }
+
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase();
+      return normalized === 'true' || normalized === '1' || normalized === 'yes';
+    }
+
+    if (typeof value === 'number') {
+      return value === 1;
+    }
+
+    return false;
+  }
+
   isSelectedHotelContactless(): boolean {
     const hotel = this.selectedHotel();
-    const contactlessEnabled = (hotel as any)?.contactlessCheckInEnabled === true;
+    const contactlessEnabled = this.normalizeBoolean((hotel as any)?.contactlessCheckInEnabled);
 
     // Debug logging
     if (hotel) {
@@ -865,6 +912,10 @@ export class HotelsComponent implements OnInit {
       variants,
       availableCount: variants.reduce((sum, v) => sum + v.availableCount, 0)
     }));
+  }
+
+  getTotalAvailableRooms(hotel: Hotel): number {
+    return this.getGroupedRooms(hotel).reduce((sum, room) => sum + room.availableCount, 0);
   }
 
   getCarouselIndex(hotelId: string): number {
@@ -1193,7 +1244,7 @@ export class HotelsComponent implements OnInit {
     }
 
     const hotel = this.selectedHotel();
-    const hotelSupportsContactless = (hotel as any)?.contactlessCheckInEnabled === true;
+    const hotelSupportsContactless = this.normalizeBoolean((hotel as any)?.contactlessCheckInEnabled);
     const userWantsContactless = this.useContactlessCheckIn();
 
     console.log('🏨 ============ BOOKING SUBMISSION ============');
@@ -1542,6 +1593,7 @@ export class HotelsComponent implements OnInit {
     this.selectedAmenities.set([]);
     this.selectedPropertyTypes.set([]);
     this.currentPage.set(1);
+    this.queueAvailabilityRefresh();
   }
 
   goToPage(page: number): void {

@@ -1,6 +1,7 @@
 import TourBooking from '../models/TourBooking.js';
 import Tour from '../models/Tour.js';
 import VendorChat from '../models/VendorChat.js';
+import mongoose from 'mongoose';
 
 // Helper function to generate booking number
 const generateBookingNumber = () => {

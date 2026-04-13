@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
+import { createServer } from 'http';
 import { connectDB } from './database.js';
 import User from './models/User.js';
 import productRoutes from './routes/products.js';
@@ -18,12 +19,14 @@ import invoiceRoutes from './routes/invoices.js';
 import foodOrderRoutes from './routes/foodOrders.js';
 import menuRoutes from './routes/menus.js';
 import roomServiceRoutes from './routes/roomService.js';
+import hotelAmenityServiceRoutes from './routes/hotelAmenityServices.js';
 import deviceRoutes from './routes/devices.js';
 // New hotel feature routes
 import revenueRoutes from './routes/revenue.js';
 import staffLogsRoutes from './routes/staffLogs.js';
 import preCheckinRoutes from './routes/preCheckin.js';
 import analyticsRoutes from './routes/analytics.js';
+import roomTaskRoutes from './routes/roomTasks.js';
 import adminRoutes from './routes/admin.js';
 import deliveryRoutesOld from './routes/delivery.js';
 import restaurantRoutes from './routes/restaurants.js';
@@ -49,9 +52,13 @@ import reviewRoutes from './routes/reviews.js';
 import customerRoutes from './routes/customers.js';
 import financeRoutes from './routes/finance.js';
 import smartLockRoutes from './routes/smartLock.js';
+import smartAccessRoutes from './routes/smartAccess.js';
 import deviceAssignmentRoutes from './routes/deviceAssignments.js';
 // Models
 import Booking from './models/Booking.js';
+import HotelAmenityService from './models/HotelAmenityService.js';
+import { syncExpiredBookings, addRoomServiceOrder } from './controllers/bookingsController.js';
+import { initializeChatSocket } from './services/chatSocketService.js';
 // Service Provider Dashboard Routes
 import serviceProviderRoutes from './routes/serviceProviders.js';
 import appointmentRoutes from './routes/appointments.js';
@@ -61,6 +68,7 @@ import serviceStaffRoutes from './routes/serviceStaff.js';
 dotenv.config();
 
 const app = express();
+const server = createServer(app);
 const PORT = process.env.PORT || 5001;
 
 // Middleware
@@ -84,7 +92,8 @@ const corsOptions = {
       'https://www.smarttrackbookings.live',
       'https://smarttrackbookings.live'
     ];
-    if (allowedOrigins.includes(origin)) {
+    const isFirebaseHostingOrigin = origin.endsWith('.web.app') || origin.endsWith('.firebaseapp.com');
+    if (allowedOrigins.includes(origin) || isFirebaseHostingOrigin) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -456,9 +465,11 @@ app.get('/hotel-bookings/customer/:customerId', async (req, res) => {
     console.log('🏨 ========== FETCH CUSTOMER BOOKINGS ==========');
     console.log('👤 Customer ID:', customerId);
 
+    await syncExpiredBookings({ guest: customerId });
+
     const bookings = await Booking.find({ guest: customerId })
-      .populate('hotel', 'name location address')
-      .populate('room', 'roomType bedType amenities')
+      .populate('hotel', 'name location address phone')
+      .populate('room', 'roomNumber roomType bedType amenities')
       .sort({ createdAt: -1 });
 
     console.log('✅ Found', bookings.length, 'bookings for customer:', customerId);
@@ -480,21 +491,17 @@ app.get('/hotel-bookings/customer/:customerId', async (req, res) => {
 });
 
 // Room Service Order - Add order to booking
-app.post('/hotel-bookings/:bookingId/room-service-orders', async (req, res) => {
+app.post('/hotel-bookings/:bookingId/room-service-orders', addRoomServiceOrder);
+
+app.post('/hotel-bookings/:bookingId/hotel-service-orders', async (req, res) => {
   try {
     const { bookingId } = req.params;
-    const { items, totalPrice, notes } = req.body;
+    const { serviceId, quantity = 1, notes = '' } = req.body;
 
-    console.log('🍽️ ========== ADD ROOM SERVICE ORDER ==========');
-    console.log('📌 Booking ID:', bookingId);
-    console.log('📦 Order items:', items);
-    console.log('💰 Total price:', totalPrice);
-    console.log('📝 Notes:', notes);
-
-    if (!bookingId || !items || items.length === 0) {
+    if (!bookingId || !serviceId) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required fields: bookingId, items'
+        message: 'Missing required fields: bookingId, serviceId'
       });
     }
 
@@ -506,37 +513,112 @@ app.post('/hotel-bookings/:bookingId/room-service-orders', async (req, res) => {
       });
     }
 
-    const roomServiceOrder = {
+    const service = await HotelAmenityService.findById(serviceId);
+    if (!service || !service.isActive || !service.available) {
+      return res.status(404).json({
+        success: false,
+        message: 'Hotel service not available'
+      });
+    }
+
+    if (booking.hotel.toString() !== service.hotel.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Service does not belong to this booking hotel'
+      });
+    }
+
+    const order = {
       _id: new mongoose.Types.ObjectId(),
-      items,
-      totalPrice,
+      serviceId: service._id,
+      category: service.category,
+      name: service.name,
+      description: service.description,
+      price: service.price,
+      quantity,
+      totalPrice: service.price * quantity,
       notes,
       status: 'pending',
-      orderedAt: new Date()
+      requestedAt: new Date()
     };
 
-    if (!booking.roomServiceOrders) {
-      booking.roomServiceOrders = [];
+    if (!booking.hotelServiceOrders) {
+      booking.hotelServiceOrders = [];
     }
-    booking.roomServiceOrders.push(roomServiceOrder);
+    booking.hotelServiceOrders.push(order);
     await booking.save();
-
-    console.log('✅ Room service order added successfully!');
-    console.log('🔔 Order ID:', roomServiceOrder._id);
 
     return res.status(201).json({
       success: true,
-      message: 'Room service order placed successfully',
+      message: 'Hotel service requested successfully',
       data: {
-        orderId: roomServiceOrder._id,
+        orderId: order._id,
         booking
       }
     });
   } catch (err) {
-    console.error('❌ Error adding room service order:', err);
+    console.error('❌ Error adding hotel service order:', err);
     return res.status(500).json({
       success: false,
-      message: 'Failed to place room service order',
+      message: 'Failed to request hotel service',
+      error: err.message
+    });
+  }
+});
+
+app.put('/hotel-bookings/:bookingId/hotel-service-orders/:orderId/status', async (req, res) => {
+  try {
+    const { bookingId, orderId } = req.params;
+    const { status } = req.body;
+    const allowedStatuses = ['pending', 'confirmed', 'in-progress', 'completed', 'cancelled'];
+
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid hotel service order status'
+      });
+    }
+
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    const order = booking.hotelServiceOrders?.id(orderId) ||
+      booking.hotelServiceOrders?.find((item) => item._id?.toString() === orderId);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Hotel service order not found'
+      });
+    }
+
+    order.status = status;
+    if (status === 'completed') {
+      order.fulfilledAt = new Date();
+    } else if (status !== 'completed') {
+      order.fulfilledAt = undefined;
+    }
+
+    await booking.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Hotel service order status updated successfully',
+      data: {
+        booking,
+        order
+      }
+    });
+  } catch (err) {
+    console.error('❌ Error updating hotel service order status:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update hotel service order status',
       error: err.message
     });
   }
@@ -547,11 +629,13 @@ app.use('/hotels/:hotelId/invoices', invoiceRoutes);
 app.use('/hotels/:hotelId/food-orders', foodOrderRoutes);
 app.use('/hotels/:hotelId/menus', menuRoutes);
 app.use('/hotels/:hotelId/room-service', roomServiceRoutes);
+app.use('/hotels/:hotelId/amenity-services', hotelAmenityServiceRoutes);
 // New hotel feature routes
 app.use('/hotels/:hotelId/revenue', revenueRoutes);
 app.use('/hotels/:hotelId/staff-logs', staffLogsRoutes);
 app.use('/hotels/:hotelId/pre-checkin', preCheckinRoutes);
 app.use('/hotels/:hotelId/analytics', analyticsRoutes);
+app.use('/hotels/:hotelId/room-tasks', roomTaskRoutes);
 
 // Restaurant Delivery Routes
 app.use('/restaurants', restaurantRoutes);
@@ -602,6 +686,7 @@ app.use('/devices', deviceRoutes);
 
 // Smart Lock Routes (Booking Access & Room Unlocking)
 app.use('/smart-lock', smartLockRoutes);
+app.use('/', smartAccessRoutes);
 
 // Device Assignment Routes (Room-Device Connections)
 app.use('/', deviceAssignmentRoutes);
@@ -638,7 +723,9 @@ app.use((req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+initializeChatSocket(server, corsOptions);
+
+server.listen(PORT, () => {
   console.log(`🚀 MarketHub Backend running on http://localhost:${PORT}`);
   console.log(`📊 API Health Check: http://localhost:${PORT}/health`);
   console.log('✅ All routes loaded successfully');

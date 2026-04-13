@@ -314,56 +314,65 @@ interface MenuItem {
               <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-2">Menu Item Image</label>
 
-                @if (isUploadingImages()) {
-                  <div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div class="flex items-center gap-2">
-                      <div class="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-                      <span class="text-sm font-medium text-blue-900">Uploading image...</span>
-                    </div>
+                <div class="flex items-center gap-6">
+                  <!-- Image Preview -->
+                  <div class="flex-shrink-0">
+                    @if (formData.image) {
+                      <div class="relative group">
+                        <img [src]="formData.image" alt="Menu item preview" class="w-24 h-24 rounded-lg object-cover border-2 border-slate-300 shadow-sm" />
+                        <button
+                          type="button"
+                          (click)="removeImage()"
+                          [disabled]="isUploadingImages()"
+                          class="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 group-hover:opacity-100 transition rounded-lg disabled:opacity-50"
+                        >
+                          <span class="text-2xl">✕</span>
+                        </button>
+                      </div>
+                    } @else {
+                      <div class="w-24 h-24 rounded-lg bg-slate-100 flex items-center justify-center text-4xl border-2 border-dashed border-slate-300">
+                        🍽️
+                      </div>
+                    }
                   </div>
-                }
 
-                <div
-                  class="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center cursor-pointer hover:border-blue-500 transition"
-                  (dragover)="$event.preventDefault(); isDragging.set(true)"
-                  (dragleave)="isDragging.set(false)"
-                  (drop)="onDropImage($event)"
-                  [class.border-blue-500]="isDragging()"
-                  [class.bg-blue-50]="isDragging()"
-                  [class.opacity-50]="isUploadingImages()"
-                  [class.pointer-events-none]="isUploadingImages()"
-                >
-                  <input
-                    #imageInput
-                    type="file"
-                    accept="image/*"
-                    (change)="onImageSelected($event)"
-                    [disabled]="isUploadingImages()"
-                    style="display: none"
-                    class="hidden"
-                  />
-                  <div (click)="imageInput.click()" [class.cursor-not-allowed]="isUploadingImages()">
-                    <p class="text-sm font-medium text-slate-700">Click to upload or drag and drop</p>
-                    <p class="text-xs text-slate-500 mt-1">PNG, JPG, GIF up to 10MB</p>
+                  <!-- Upload Area -->
+                  <div class="flex-1">
+                    <div
+                      class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition relative"
+                      (dragover)="$event.preventDefault(); isDragging.set(true)"
+                      (dragleave)="isDragging.set(false)"
+                      (drop)="onDropImage($event)"
+                      [class.border-blue-500]="isDragging()"
+                      [class.bg-blue-50]="isDragging()"
+                      [class.opacity-50]="isUploadingImages()"
+                      [class.pointer-events-none]="isUploadingImages()"
+                    >
+                      <input
+                        #imageInput
+                        type="file"
+                        accept="image/*"
+                        (change)="onImageSelected($event)"
+                        [disabled]="isUploadingImages()"
+                        style="display: none"
+                        class="hidden"
+                      />
+                      <div (click)="imageInput.click()" [class.cursor-not-allowed]="isUploadingImages()">
+                        <p class="text-sm font-medium text-slate-700">Click to upload or drag and drop</p>
+                        <p class="text-xs text-slate-500 mt-1">PNG, JPG up to 10MB</p>
+                      </div>
+
+                      @if (isUploadingImages()) {
+                        <div class="absolute inset-0 bg-white/60 flex items-center justify-center rounded-lg">
+                          <div class="flex items-center gap-2">
+                            <div class="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                            <span class="text-sm font-bold text-blue-600">Uploading...</span>
+                          </div>
+                        </div>
+                      }
+                    </div>
                   </div>
                 </div>
-
-                @if (formData.image) {
-                  <div class="mt-3">
-                    <label class="block text-sm font-medium text-slate-700 mb-2">Image Preview</label>
-                    <div class="relative inline-block">
-                      <img [src]="formData.image" alt="Menu item image" class="h-24 w-24 object-cover rounded-lg border-2 border-slate-300" />
-                      <button
-                        type="button"
-                        (click)="removeImage()"
-                        [disabled]="isUploadingImages()"
-                        class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white opacity-0 hover:opacity-100 transition rounded-lg disabled:opacity-50"
-                      >
-                        <span class="text-2xl">×</span>
-                      </button>
-                    </div>
-                  </div>
-                }
               </div>
 
               <!-- Room Service & Active -->
@@ -453,6 +462,11 @@ export class HotelFoodMenuComponent implements OnInit {
   }
 
   loadMenuItems(): void {
+    const hotelId = localStorage.getItem('hotelId');
+    if (!hotelId) {
+      console.warn('⚠️ No hotelId found in localStorage');
+      return;
+    }
     this.isLoading.set(true);
     this.errorMessage.set('');
 
@@ -521,7 +535,8 @@ export class HotelFoodMenuComponent implements OnInit {
 
   editMenuItem(item: MenuItem): void {
     this.editingItem.set(item);
-    this.formData = { ...item };
+    // Use JSON parse/stringify for a deep copy to avoid direct mutation of the list
+    this.formData = JSON.parse(JSON.stringify(item));
     // Ensure image field is initialized
     if (!this.formData.image) {
       this.formData.image = '';
@@ -645,7 +660,6 @@ export class HotelFoodMenuComponent implements OnInit {
 
     this.isUploadingImages.set(true);
 
-    // Generate upload path
     const uploadPath = `menu-items/${this.hotelId}/${this.formData.name || 'new'}`;
 
     // Use ImageUploadService to upload image

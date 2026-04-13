@@ -1,7 +1,122 @@
 import Booking from "../models/Booking.js";
 import Room from "../models/Room.js";
 import VendorChat from "../models/VendorChat.js";
+import Hotel from "../models/Hotel.js";
+import User from "../models/User.js";
 import mongoose from "mongoose";
+import { ensureCheckoutCleaningTask } from "../services/roomTaskService.js";
+import { sendStayReviewReminderEmail } from "../services/emailService.js";
+import { revokeSmartLockAccessForBooking } from "./smartLockController.js";
+
+const sendCheckoutReviewReminder = async (booking) => {
+  try {
+    if (!booking || booking.reviewReminderSentAt) {
+      return;
+    }
+
+    const hotelDoc = booking.hotel?.name
+      ? booking.hotel
+      : await Hotel.findById(booking.hotel).select('name');
+    const guestDoc = booking.guest?.email
+      ? booking.guest
+      : await User.findById(booking.guest).select('name email');
+
+    if (!guestDoc?.email) {
+      return;
+    }
+
+    const roomLabel = booking.room?.roomNumber
+      ? `Room ${booking.room.roomNumber}`
+      : (booking.room?.roomType ? `${booking.room.roomType} Room` : 'your room');
+
+    await sendStayReviewReminderEmail(guestDoc.email, {
+      guestName: guestDoc.name || 'Guest',
+      hotelName: hotelDoc?.name || 'Hotel',
+      roomLabel,
+      checkOutDate: booking.checkOutDate,
+      reviewUrl: 'https://www.smarttrackbookings.live/customer-dashboard'
+    });
+
+    await Booking.findByIdAndUpdate(booking._id, {
+      reviewReminderSentAt: new Date()
+    });
+  } catch (error) {
+    console.error('Failed to send checkout review reminder:', error);
+  }
+};
+
+const revokeGuestSmartAccessIfNeeded = async (bookingId) => {
+  try {
+    await revokeSmartLockAccessForBooking(bookingId);
+  } catch (error) {
+    console.warn('Failed to revoke smart lock access during checkout:', error.message);
+  }
+};
+
+const syncExpiredBookings = async (baseFilter = {}) => {
+  const now = new Date();
+  const expiredFilter = {
+    ...baseFilter,
+    status: { $in: ['confirmed', 'checked-in'] },
+    checkOutDate: { $lt: now }
+  };
+
+  const expiredBookings = await Booking.find(expiredFilter)
+    .select('_id hotel room guest status checkOutDate reviewReminderSentAt')
+    .populate('room', 'roomNumber roomType')
+    .populate('hotel', 'name')
+    .populate('guest', 'name email');
+  if (!expiredBookings.length) {
+    return 0;
+  }
+
+  const bookingIds = expiredBookings.map((booking) => booking._id);
+  const roomIds = expiredBookings
+    .map((booking) => booking.room)
+    .filter(Boolean);
+
+  await Booking.updateMany(
+    { _id: { $in: bookingIds } },
+    { $set: { status: 'checked-out' } }
+  );
+
+  if (roomIds.length) {
+    await Room.updateMany(
+      { _id: { $in: roomIds } },
+      {
+        $set: {
+          status: 'available',
+          currentGuest: null,
+          checkInDate: null,
+          checkOutDate: null
+        }
+      }
+    );
+  }
+
+  await Promise.all(
+    expiredBookings.map((booking) =>
+      ensureCheckoutCleaningTask({
+        _id: booking._id,
+        hotel: booking.hotel,
+        room: booking.room?._id || booking.room,
+        roomNumber: booking.room?.roomNumber,
+        status: 'checked-out'
+      })
+    )
+  );
+
+  await Promise.all(
+    expiredBookings.map((booking) => sendCheckoutReviewReminder(booking))
+  );
+
+  await Promise.all(
+    expiredBookings.map((booking) => revokeGuestSmartAccessIfNeeded(booking._id))
+  );
+
+  console.log(`✅ Auto checked-out ${expiredBookings.length} expired booking(s)`);
+  return expiredBookings.length;
+};
 
 /**
  * Create vendor chat for hotel booking
@@ -51,6 +166,8 @@ const getAllBookings = async (req, res) => {
     if (status) filter.status = status;
     if (paymentStatus) filter.paymentStatus = paymentStatus;
 
+    await syncExpiredBookings({ hotel: hotelId });
+
     console.log('🔎 Filter object:', filter);
 
     const skip = (page - 1) * limit;
@@ -85,6 +202,9 @@ const getAllBookings = async (req, res) => {
 const getBookingById = async (req, res) => {
   try {
     const { id } = req.params;
+
+    await syncExpiredBookings({ _id: id });
+
     const booking = await Booking.findById(id)
       .populate("hotel", "name")
       .populate("guest", "name email phone")
@@ -220,8 +340,33 @@ const updateBookingStatus = async (req, res) => {
       return res.status(400).json({ status: "failed", message: "Invalid status" });
     }
 
-    const booking = await Booking.findByIdAndUpdate(id, { status }, { new: true });
+    const booking = await Booking.findByIdAndUpdate(id, { status }, { new: true })
+      .populate('room', 'roomNumber roomType')
+      .populate('hotel', 'name')
+      .populate('guest', 'name email');
     if (!booking) return res.status(404).json({ status: "failed", message: "Booking not found" });
+
+    if (status === 'checked-out') {
+      await Room.findByIdAndUpdate(booking.room?._id || booking.room, {
+        status: 'cleaning',
+        currentGuest: null,
+        checkInDate: null,
+        checkOutDate: null
+      });
+      await ensureCheckoutCleaningTask({
+        _id: booking._id,
+        hotel: booking.hotel,
+        room: booking.room?._id || booking.room,
+        roomNumber: booking.room?.roomNumber,
+        status
+      });
+      await sendCheckoutReviewReminder(booking);
+      await revokeGuestSmartAccessIfNeeded(booking._id);
+    }
+
+    if (status === 'cancelled') {
+      await revokeGuestSmartAccessIfNeeded(booking._id);
+    }
 
     return res.status(200).json({
       status: "success",
@@ -262,7 +407,7 @@ const updatePaymentStatus = async (req, res) => {
 const addRoomServiceOrder = async (req, res) => {
   try {
     const { bookingId } = req.params;
-    const { items, totalPrice, notes } = req.body;
+    const { items, totalPrice, notes, estimatedDurationMinutes = 30 } = req.body;
 
     console.log('🍽️ ========== ADD ROOM SERVICE ORDER ==========');
     console.log('📌 Booking ID:', bookingId);
@@ -291,7 +436,9 @@ const addRoomServiceOrder = async (req, res) => {
       totalPrice,
       notes,
       status: 'pending',
-      orderedAt: new Date()
+      estimatedDurationMinutes,
+      orderedAt: new Date(),
+      etaAt: new Date(Date.now() + (Number(estimatedDurationMinutes) * 60 * 1000))
     };
 
     if (!booking.roomServiceOrders) {
@@ -329,5 +476,6 @@ export {
   deleteBooking,
   updateBookingStatus,
   updatePaymentStatus,
-  addRoomServiceOrder
+  addRoomServiceOrder,
+  syncExpiredBookings
 };

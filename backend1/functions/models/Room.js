@@ -39,12 +39,35 @@ const RoomSchema = new Schema({
   amenities: [String],
   status: {
     type: String,
-    enum: ['available', 'occupied', 'maintenance', 'reserved'],
+    enum: ['available', 'occupied', 'maintenance', 'reserved', 'cleaning'],
     default: 'available'
   },
   currentGuest: {
     type: Schema.Types.ObjectId,
     ref: 'User'
+  },
+  smartLockDevice: {
+    type: Schema.Types.ObjectId,
+    ref: 'Device',
+    default: null
+  },
+  doorSensorDevice: {
+    type: Schema.Types.ObjectId,
+    ref: 'Device',
+    default: null
+  },
+  accessMode: {
+    type: String,
+    enum: ['none', 'smart_lock', 'door_sensor', 'hybrid'],
+    default: 'none'
+  },
+  contactlessReady: {
+    type: Boolean,
+    default: false
+  },
+  monitoringEnabled: {
+    type: Boolean,
+    default: false
   },
   checkInDate: Date,
   checkOutDate: Date,

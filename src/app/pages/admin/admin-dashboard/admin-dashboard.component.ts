@@ -9,6 +9,7 @@ import { AdminOverviewComponent } from '../admin-overview/admin-overview.compone
 import { AdminSettingsComponent } from '../admin-settings/admin-settings.component';
 import { AdminProfileComponent } from '../admin-profile/admin-profile.component';
 import { RolesComponent } from '../admin-roles/roles.component';
+import { AdminHotelDirectoryComponent } from '../admin-vendors/admin-hotel-directory.component';
 
 // Business vendor list component for hierarchical drill-down
 import { BusinessVendorListComponent } from '../admin-vendors/business-vendor-list.component';
@@ -26,6 +27,7 @@ import { AdminSystemDevicesComponent } from '../admin-system-devices/admin-syste
     AdminSettingsComponent,
     AdminProfileComponent,
     RolesComponent,
+    AdminHotelDirectoryComponent,
     BusinessVendorListComponent,
     AdminSystemUsersComponent,
     AdminSystemDevicesComponent
@@ -173,7 +175,7 @@ import { AdminSystemDevicesComponent } from '../admin-system-devices/admin-syste
             <!-- Business Vendor List - Hierarchical Drill-Down View -->
             @switch (currentCategory()) {
               @case ('hotels') {
-                <app-business-vendor-list [businessType]="'hotels'"></app-business-vendor-list>
+                <app-admin-hotel-directory></app-admin-hotel-directory>
               }
               @case ('restaurants') {
                 <app-business-vendor-list [businessType]="'restaurants'"></app-business-vendor-list>
@@ -286,6 +288,9 @@ export class AdminDashboardComponent implements OnInit {
       if (params['page']) {
         console.log('📍 Page param detected:', params['page']);
         this.setCurrentPage(params['page']);
+      } else if (params['category']) {
+        console.log('📍 Category param detected:', params['category']);
+        this.selectCategory(params['category']);
       }
     });
   }

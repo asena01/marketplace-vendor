@@ -16,7 +16,7 @@ interface Room {
 interface Device {
   _id: string;
   deviceId: string;
-  deviceType: 'motion_sensor' | 'smart_lock' | 'thermostat' | 'camera' | 'light' | 'speaker';
+  deviceType: 'motion_sensor' | 'door_sensor' | 'smart_lock' | 'thermostat' | 'camera' | 'light' | 'speaker';
   status: boolean;
   battery?: number;
   tuyaDeviceId?: string;
@@ -480,6 +480,7 @@ export class RoomDeviceAssignmentComponent implements OnInit {
   getDeviceTypeLabel(type: string): string {
     const labels: { [key: string]: string } = {
       'smart_lock': '🔐 Smart Lock',
+      'door_sensor': '🚪 Door Sensor',
       'motion_sensor': '🎯 Motion Sensor',
       'thermostat': '🌡️ Thermostat',
       'camera': '📹 Camera',

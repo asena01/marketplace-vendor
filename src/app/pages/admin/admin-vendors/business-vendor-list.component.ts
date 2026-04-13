@@ -238,9 +238,9 @@ import { AdminService } from '../../../services/admin.service';
                                       <div class="flex items-center justify-between p-2 border border-gray-200 rounded bg-white">
                                         <div>
                                           <p class="font-semibold text-gray-800">{{ device.name || device.deviceId }}</p>
-                                          <p class="text-gray-600">{{ device.type || 'Device' }} •
-                                            <span [class]="device.status === 'active' ? 'text-green-600 font-semibold' : 'text-red-600'">
-                                              {{ device.status || 'unknown' }}
+                                          <p class="text-gray-600">{{ device.deviceType || device.type || 'Device' }} •
+                                            <span [class]="device.status === true || device.status === 'active' ? 'text-green-600 font-semibold' : 'text-red-600'">
+                                              {{ device.status === true ? 'active' : (device.status || 'unknown') }}
                                             </span>
                                           </p>
                                           @if (device.lastActive) {
@@ -258,6 +258,151 @@ import { AdminService } from '../../../services/admin.service';
                                   </div>
                                 } @else {
                                   <p class="text-gray-600 text-xs py-2">No devices found. Click "Load Devices" to fetch from platform.</p>
+                                }
+                              </div>
+                            }
+                          </div>
+
+                          <div class="bg-white rounded border border-gray-200 overflow-hidden">
+                            <button
+                              (click)="toggleSection(vendor._id, 'room-security'); loadHotelSecurity(vendor._id)"
+                              class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition"
+                            >
+                              <div class="flex items-center gap-2">
+                                <span class="material-icons text-indigo-600 text-sm">lock</span>
+                                <span class="text-sm font-semibold text-gray-800">Room Security & Access</span>
+                              </div>
+                              <span class="material-icons text-gray-400 text-sm transition-transform"
+                                [style.transform]="openSection(vendor._id) === 'room-security' ? 'rotate(180deg)' : 'rotate(0deg)'"
+                              >expand_more</span>
+                            </button>
+                            @if (openSection(vendor._id) === 'room-security') {
+                              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs space-y-3">
+                                @if (hotelSecurityError()) {
+                                  <div class="px-3 py-2 rounded border border-red-200 bg-red-50 text-red-700">
+                                    {{ hotelSecurityError() }}
+                                  </div>
+                                }
+
+                                <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                                  <div class="bg-white border border-gray-200 rounded p-3">
+                                    <p class="text-gray-500">Rooms</p>
+                                    <p class="text-lg font-bold text-gray-800">{{ roomsList().length }}</p>
+                                  </div>
+                                  <div class="bg-white border border-gray-200 rounded p-3">
+                                    <p class="text-gray-500">Contactless Ready</p>
+                                    <p class="text-lg font-bold text-blue-700">{{ getSecuritySummary('contactlessReadyRooms') }}</p>
+                                  </div>
+                                  <div class="bg-white border border-gray-200 rounded p-3">
+                                    <p class="text-gray-500">Monitored Only</p>
+                                    <p class="text-lg font-bold text-amber-700">{{ getSecuritySummary('monitoredOnlyRooms') }}</p>
+                                  </div>
+                                  <div class="bg-white border border-gray-200 rounded p-3">
+                                    <p class="text-gray-500">Unassigned Devices</p>
+                                    <p class="text-lg font-bold text-indigo-700">{{ getSecuritySummary('unassignedDevices') }}</p>
+                                  </div>
+                                </div>
+
+                                @if (hotelSecurityLoading()) {
+                                  <div class="py-4 text-gray-600">Loading room security…</div>
+                                } @else if (roomsList().length > 0) {
+                                  <div class="space-y-2">
+                                    @for (room of roomsList(); track room.id) {
+                                      <div class="border border-gray-200 rounded bg-white p-3 space-y-3">
+                                        <div class="flex items-start justify-between gap-3">
+                                          <div>
+                                            <p class="font-semibold text-gray-800">Room {{ room.number }}</p>
+                                            <p class="text-gray-600">{{ room.type }} • {{ room.capacity }} guests</p>
+                                          </div>
+                                          <span [class]="'px-2 py-1 rounded text-xs font-semibold ' + getRoomAccessBadgeClass(room)">
+                                            {{ getRoomAccessLabel(room) }}
+                                          </span>
+                                        </div>
+
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                          <div class="border border-blue-100 rounded p-3 bg-blue-50">
+                                            <p class="font-semibold text-blue-900 mb-2">Smart Lock</p>
+                                            @if (room.smartLockDevice) {
+                                              <div class="flex items-center justify-between gap-2">
+                                                <div>
+                                                  <p class="font-medium text-gray-800">{{ room.smartLockDevice.deviceId }}</p>
+                                                  <p class="text-gray-600">Contactless key issuance enabled</p>
+                                                </div>
+                                                <button
+                                                  (click)="unassignSecurityDevice(room.smartLockDevice._id, vendor._id)"
+                                                  class="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs"
+                                                >
+                                                  Remove
+                                                </button>
+                                              </div>
+                                            } @else {
+                                              <div class="space-y-2">
+                                                <p class="text-gray-600">No smart lock assigned</p>
+                                                <select
+                                                  [ngModel]="getSelectedSecurityDevice(room.id, 'smart_lock')"
+                                                  (ngModelChange)="setSelectedSecurityDevice(room.id, 'smart_lock', $event)"
+                                                  class="w-full px-2 py-1 border border-gray-300 rounded text-xs"
+                                                >
+                                                  <option value="">Select smart lock...</option>
+                                                  @for (device of getAvailableSecurityDevices('smart_lock'); track device._id) {
+                                                    <option [value]="device._id">{{ device.deviceId }}</option>
+                                                  }
+                                                </select>
+                                                <button
+                                                  (click)="assignSecurityDevice(room.id, 'smart_lock', vendor._id)"
+                                                  [disabled]="!getSelectedSecurityDevice(room.id, 'smart_lock')"
+                                                  class="px-2 py-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded text-xs"
+                                                >
+                                                  Assign Smart Lock
+                                                </button>
+                                              </div>
+                                            }
+                                          </div>
+
+                                          <div class="border border-amber-100 rounded p-3 bg-amber-50">
+                                            <p class="font-semibold text-amber-900 mb-2">Door Sensor</p>
+                                            @if (room.doorSensorDevice) {
+                                              <div class="flex items-center justify-between gap-2">
+                                                <div>
+                                                  <p class="font-medium text-gray-800">{{ room.doorSensorDevice.deviceId }}</p>
+                                                  <p class="text-gray-600">Door monitoring enabled</p>
+                                                </div>
+                                                <button
+                                                  (click)="unassignSecurityDevice(room.doorSensorDevice._id, vendor._id)"
+                                                  class="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs"
+                                                >
+                                                  Remove
+                                                </button>
+                                              </div>
+                                            } @else {
+                                              <div class="space-y-2">
+                                                <p class="text-gray-600">No door sensor assigned</p>
+                                                <select
+                                                  [ngModel]="getSelectedSecurityDevice(room.id, 'door_sensor')"
+                                                  (ngModelChange)="setSelectedSecurityDevice(room.id, 'door_sensor', $event)"
+                                                  class="w-full px-2 py-1 border border-gray-300 rounded text-xs"
+                                                >
+                                                  <option value="">Select door sensor...</option>
+                                                  @for (device of getAvailableSecurityDevices('door_sensor'); track device._id) {
+                                                    <option [value]="device._id">{{ device.deviceId }}</option>
+                                                  }
+                                                </select>
+                                                <button
+                                                  (click)="assignSecurityDevice(room.id, 'door_sensor', vendor._id)"
+                                                  [disabled]="!getSelectedSecurityDevice(room.id, 'door_sensor')"
+                                                  class="px-2 py-1 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white rounded text-xs"
+                                                >
+                                                  Assign Door Sensor
+                                                </button>
+                                              </div>
+                                            }
+                                          </div>
+                                        </div>
+                                      </div>
+                                    }
+                                  </div>
+                                } @else {
+                                  <p class="text-gray-600 py-2">No room security data available for this hotel.</p>
                                 }
                               </div>
                             }
@@ -326,6 +471,7 @@ import { AdminService } from '../../../services/admin.service';
                                         <div>
                                           <p class="font-semibold text-gray-800">Room {{ room.number }}</p>
                                           <p class="text-gray-600">{{ room.type }} • {{ room.capacity }} guests • <span [class]="room.status === 'available' ? 'text-green-600 font-semibold' : 'text-orange-600'">{{ room.status }}</span></p>
+                                          <p class="text-gray-500 mt-1">Security: {{ getRoomAccessLabel(room) }}</p>
                                         </div>
                                         <button
                                           (click)="deleteRoom(room.id)"
@@ -1083,6 +1229,11 @@ export class BusinessVendorListComponent implements OnInit {
   // Devices management
   devicesList = signal<any[]>([]);
   devicesLoading = signal(false);
+  hotelSecurityLoading = signal(false);
+  hotelSecurityError = signal('');
+  currentHotelId = signal<string | null>(null);
+  deviceAssignmentsData = signal<any | null>(null);
+  securityDeviceSelections: Record<string, string> = {};
 
   // Rooms management
   roomsList = signal<any[]>([]);
@@ -1328,23 +1479,47 @@ export class BusinessVendorListComponent implements OnInit {
     }
   }
 
+  private resolveHotelByVendor(vendorId: string, onResolved: (hotel: any) => void): void {
+    this.hotelSecurityError.set('');
+    this.adminService.getHotelByVendorOwner(vendorId).subscribe({
+      next: (response: any) => {
+        const hotel = response?.data || null;
+        if (!hotel?._id) {
+          this.hotelSecurityError.set('Hotel profile not found for this vendor.');
+          return;
+        }
+
+        this.currentHotelId.set(hotel._id);
+        onResolved(hotel);
+      },
+      error: (error: any) => {
+        console.error('❌ Error resolving hotel for vendor:', error);
+        this.hotelSecurityError.set('Failed to resolve hotel profile.');
+      }
+    });
+  }
+
   // ============================================
   // DEVICES MANAGEMENT
   // ============================================
 
   loadDevices(vendorId: string): void {
     this.devicesLoading.set(true);
-    this.adminService.getDevices(1, 10).subscribe({
-      next: (response: any) => {
-        const devices = Array.isArray(response.data) ? response.data : [];
-        this.devicesList.set(devices);
-        console.log('✅ Devices loaded:', devices);
-        this.devicesLoading.set(false);
-      },
-      error: (error: any) => {
-        console.error('❌ Error loading devices:', error);
-        this.devicesLoading.set(false);
-      }
+    this.resolveHotelByVendor(vendorId, (hotel) => {
+      this.adminService.getHotelDeviceAssignments(hotel._id).subscribe({
+        next: (response: any) => {
+          const data = response?.data || {};
+          this.deviceAssignmentsData.set(data);
+          this.devicesList.set(this.flattenHotelDevices(data));
+          console.log('✅ Hotel devices loaded:', data);
+          this.devicesLoading.set(false);
+        },
+        error: (error: any) => {
+          console.error('❌ Error loading hotel devices:', error);
+          this.devicesLoading.set(false);
+          this.hotelSecurityError.set('Failed to load hotel devices.');
+        }
+      });
     });
   }
 
@@ -1365,13 +1540,31 @@ export class BusinessVendorListComponent implements OnInit {
   // ============================================
 
   loadRooms(vendorId: string): void {
-    // Mock rooms data
-    const mockRooms = [
-      { id: '101', number: '101', type: 'standard', capacity: 2, status: 'available' },
-      { id: '102', number: '102', type: 'deluxe', capacity: 4, status: 'occupied' },
-      { id: '103', number: '103', type: 'suite', capacity: 6, status: 'available' }
-    ];
-    this.roomsList.set(mockRooms);
+    this.resolveHotelByVendor(vendorId, (hotel) => {
+      this.adminService.getHotelRooms(hotel._id).subscribe({
+        next: (response: any) => {
+          const rooms = Array.isArray(response?.data) ? response.data : [];
+          this.roomsList.set(
+            rooms.map((room: any) => ({
+              id: room._id,
+              number: room.roomNumber,
+              type: room.roomType,
+              capacity: room.capacity,
+              status: room.status,
+              accessMode: room.accessMode || 'none',
+              contactlessReady: room.contactlessReady === true,
+              monitoringEnabled: room.monitoringEnabled === true,
+              smartLockDevice: room.smartLockDevice || null,
+              doorSensorDevice: room.doorSensorDevice || null
+            }))
+          );
+        },
+        error: (error: any) => {
+          console.error('❌ Error loading hotel rooms:', error);
+          this.hotelSecurityError.set('Failed to load rooms.');
+        }
+      });
+    });
   }
 
   addRoom(vendorId: string): void {
@@ -1400,6 +1593,125 @@ export class BusinessVendorListComponent implements OnInit {
     if (confirm('Delete this room?')) {
       this.roomsList.set(this.roomsList().filter(r => r.id !== roomId));
     }
+  }
+
+  loadHotelSecurity(vendorId: string): void {
+    this.hotelSecurityLoading.set(true);
+    this.resolveHotelByVendor(vendorId, (hotel) => {
+      this.adminService.getHotelDeviceAssignments(hotel._id).subscribe({
+        next: (response: any) => {
+          this.deviceAssignmentsData.set(response?.data || null);
+          const assignmentMap = response?.data?.assignmentMap || {};
+          this.roomsList.set(
+            Object.values(assignmentMap).map((entry: any) => ({
+              id: entry.room?._id,
+              number: entry.room?.roomNumber,
+              type: entry.room?.roomType,
+              capacity: entry.room?.capacity,
+              status: entry.room?.status,
+              accessMode: entry.room?.accessMode || 'none',
+              contactlessReady: entry.room?.contactlessReady === true,
+              monitoringEnabled: entry.room?.monitoringEnabled === true,
+              smartLockDevice: entry.room?.smartLockDevice || null,
+              doorSensorDevice: entry.room?.doorSensorDevice || null,
+              assignedDevices: entry.devices || []
+            }))
+          );
+          this.devicesList.set(this.flattenHotelDevices(response?.data || {}));
+          this.hotelSecurityLoading.set(false);
+        },
+        error: (error: any) => {
+          console.error('❌ Error loading room security:', error);
+          this.hotelSecurityError.set('Failed to load room security.');
+          this.hotelSecurityLoading.set(false);
+        }
+      });
+    });
+  }
+
+  flattenHotelDevices(data: any): any[] {
+    const assignmentMap = data?.assignmentMap || {};
+    const assignedDevices = Object.values(assignmentMap).flatMap((entry: any) => entry?.devices || []);
+    const unassignedDevices = Array.isArray(data?.unassignedDevices) ? data.unassignedDevices : [];
+    return [...assignedDevices, ...unassignedDevices];
+  }
+
+  getSecuritySummary(key: 'contactlessReadyRooms' | 'monitoredOnlyRooms' | 'unassignedDevices' | 'assignedDevices'): number {
+    const summary = this.deviceAssignmentsData()?.summary || {};
+    return Number(summary[key] || 0);
+  }
+
+  getAvailableSecurityDevices(type: 'smart_lock' | 'door_sensor'): any[] {
+    const unassignedDevices = this.deviceAssignmentsData()?.unassignedDevices || [];
+    return unassignedDevices.filter((device: any) => device.deviceType === type);
+  }
+
+  getSelectedSecurityDevice(roomId: string, type: 'smart_lock' | 'door_sensor'): string {
+    return this.securityDeviceSelections[`${roomId}:${type}`] || '';
+  }
+
+  setSelectedSecurityDevice(roomId: string, type: 'smart_lock' | 'door_sensor', value: string): void {
+    this.securityDeviceSelections[`${roomId}:${type}`] = value;
+  }
+
+  assignSecurityDevice(roomId: string, type: 'smart_lock' | 'door_sensor', vendorId: string): void {
+    const hotelId = this.currentHotelId();
+    const deviceId = this.getSelectedSecurityDevice(roomId, type);
+    if (!hotelId || !deviceId) {
+      return;
+    }
+
+    this.hotelSecurityLoading.set(true);
+    this.adminService.assignHotelDeviceToRoom(hotelId, deviceId, roomId).subscribe({
+      next: () => {
+        this.setSelectedSecurityDevice(roomId, type, '');
+        this.loadHotelSecurity(vendorId);
+      },
+      error: (error: any) => {
+        console.error('❌ Error assigning security device:', error);
+        this.hotelSecurityError.set(`Failed to assign ${type.replace('_', ' ')}.`);
+        this.hotelSecurityLoading.set(false);
+      }
+    });
+  }
+
+  unassignSecurityDevice(deviceId: string, vendorId: string): void {
+    const hotelId = this.currentHotelId();
+    if (!hotelId) {
+      return;
+    }
+
+    this.hotelSecurityLoading.set(true);
+    this.adminService.unassignHotelDeviceFromRoom(hotelId, deviceId).subscribe({
+      next: () => {
+        this.loadHotelSecurity(vendorId);
+      },
+      error: (error: any) => {
+        console.error('❌ Error unassigning security device:', error);
+        this.hotelSecurityError.set('Failed to unassign device.');
+        this.hotelSecurityLoading.set(false);
+      }
+    });
+  }
+
+  getRoomAccessBadgeClass(room: any): string {
+    const classes: Record<string, string> = {
+      hybrid: 'bg-emerald-100 text-emerald-700',
+      smart_lock: 'bg-blue-100 text-blue-700',
+      door_sensor: 'bg-amber-100 text-amber-700',
+      none: 'bg-slate-100 text-slate-700'
+    };
+    return classes[room?.accessMode || 'none'] || 'bg-slate-100 text-slate-700';
+  }
+
+  getRoomAccessLabel(room: any): string {
+    const labels: Record<string, string> = {
+      hybrid: 'Contactless + Monitoring',
+      smart_lock: 'Contactless Ready',
+      door_sensor: 'Monitored Only',
+      none: 'Manual Access'
+    };
+    return labels[room?.accessMode || 'none'] || 'Manual Access';
   }
 
   // ============================================

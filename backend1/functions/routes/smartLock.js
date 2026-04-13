@@ -3,6 +3,7 @@ import {
   createSmartLockAccess,
   unlockRoom,
   unlockWithPin,
+  getBookingSmartLockAccess,
   getUnlockHistory,
   revokeSmartLockAccess
 } from '../controllers/smartLockController.js';
@@ -28,6 +29,12 @@ router.post('/unlock', unlockRoom);
  * Body: { backupPin: string, bookingNumber: string }
  */
 router.post('/unlock-with-pin', unlockWithPin);
+
+/**
+ * Get smart lock access state for a booking
+ * GET /smart-lock/access/:bookingId
+ */
+router.get('/access/:bookingId', getBookingSmartLockAccess);
 
 /**
  * Get unlock attempt history for a booking

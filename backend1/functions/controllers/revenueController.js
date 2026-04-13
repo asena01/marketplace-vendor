@@ -2,6 +2,95 @@ import Transaction from '../models/Transaction.js';
 import Booking from '../models/Booking.js';
 import FoodOrder from '../models/FoodOrder.js';
 import RoomServiceMenuItem from '../models/RoomServiceMenuItem.js';
+import Hotel from '../models/Hotel.js';
+import { sendIncomeReportEmail } from '../services/emailService.js';
+
+const buildReportRange = (period, dateInput, endDateInput) => {
+  const now = new Date();
+  let start;
+
+  if (period === 'custom') {
+    const customStart = dateInput ? new Date(`${dateInput}T00:00:00.000Z`) : new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
+    const customEndBase = endDateInput ? new Date(`${endDateInput}T00:00:00.000Z`) : new Date(customStart);
+    const end = new Date(customEndBase);
+    end.setUTCDate(end.getUTCDate() + 1);
+    return { start: customStart, end };
+  }
+
+  if (period === 'monthly') {
+    if (dateInput) {
+      const [year, month] = dateInput.split('-').map(Number);
+      start = new Date(Date.UTC(year, (month || 1) - 1, 1, 0, 0, 0, 0));
+    } else {
+      start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0));
+    }
+    const end = new Date(start);
+    end.setUTCMonth(end.getUTCMonth() + 1);
+    return { start, end };
+  }
+
+  if (dateInput) {
+    start = new Date(`${dateInput}T00:00:00.000Z`);
+  } else {
+    start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
+  }
+
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + 1);
+  return { start, end };
+};
+
+const roundCurrency = (value) => Math.round((value || 0) * 100) / 100;
+
+const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value || '');
+
+const getRoomServiceBreakdown = (bookings) => {
+  let revenue = 0;
+  let count = 0;
+  let pendingAmount = 0;
+
+  bookings.forEach((booking) => {
+    (booking.roomServiceOrders || []).forEach((order) => {
+      if (order.status === 'cancelled') {
+        return;
+      }
+
+      const amount = order.totalPrice || 0;
+      revenue += amount;
+      count += 1;
+
+      if (order.status !== 'delivered') {
+        pendingAmount += amount;
+      }
+    });
+  });
+
+  return { revenue, count, pendingAmount };
+};
+
+const getHotelServiceBreakdown = (bookings) => {
+  let revenue = 0;
+  let count = 0;
+  let pendingAmount = 0;
+
+  bookings.forEach((booking) => {
+    (booking.hotelServiceOrders || []).forEach((order) => {
+      if (order.status === 'cancelled') {
+        return;
+      }
+
+      const amount = order.totalPrice || order.price || 0;
+      revenue += amount;
+      count += 1;
+
+      if (order.status !== 'completed') {
+        pendingAmount += amount;
+      }
+    });
+  });
+
+  return { revenue, count, pendingAmount };
+};
 
 // Get all transactions for a hotel
 const getAllTransactions = async (req, res) => {
@@ -55,64 +144,93 @@ const getRevenueStats = async (req, res) => {
 
     const roomRevenue = roomBookings.reduce((sum, booking) => sum + (booking.totalPrice || 0), 0);
     const roomTransactionCount = roomBookings.length;
+    const roomPendingAmount = roomBookings.reduce((sum, booking) => {
+      return booking.status === 'checked-out' ? sum : sum + (booking.totalPrice || 0);
+    }, 0);
 
     // Calculate food and drink revenue from food orders
     const foodOrders = await FoodOrder.find({
       hotel: hotelId,
-      status: { $in: ['ready', 'delivered'] }
+      status: { $ne: 'cancelled' }
     });
 
     let foodRevenue = 0;
     let drinkRevenue = 0;
     let foodTransactionCount = 0;
+    let foodPendingAmount = 0;
+    let drinkPendingAmount = 0;
 
     foodOrders.forEach(order => {
+      const amount = order.totalPrice || 0;
+
       if (order.category === 'drink') {
-        drinkRevenue += order.totalPrice || 0;
+        drinkRevenue += amount;
+        if (order.status !== 'delivered') {
+          drinkPendingAmount += amount;
+        }
       } else if (order.category === 'food' || order.category === 'mixed') {
-        foodRevenue += order.totalPrice || 0;
+        foodRevenue += amount;
+        if (order.status !== 'delivered') {
+          foodPendingAmount += amount;
+        }
       }
       foodTransactionCount += 1;
     });
 
-    // Try to get service revenue (if service bookings exist)
-    let serviceRevenue = 0;
-    let serviceTransactionCount = 0;
+    // Include embedded booking orders the same way the report does
+    const bookingsWithServices = await Booking.find({
+      hotel: hotelId,
+      $or: [
+        { 'roomServiceOrders.0': { $exists: true } },
+        { 'hotelServiceOrders.0': { $exists: true } }
+      ]
+    });
+
+    const roomServiceBreakdown = getRoomServiceBreakdown(bookingsWithServices);
+    const hotelServiceBreakdown = getHotelServiceBreakdown(bookingsWithServices);
+
+    foodRevenue += roomServiceBreakdown.revenue;
+    foodTransactionCount += roomServiceBreakdown.count;
+    foodPendingAmount += roomServiceBreakdown.pendingAmount;
+
+    let serviceRevenue = hotelServiceBreakdown.revenue;
+    let serviceTransactionCount = hotelServiceBreakdown.count;
+    let servicePendingAmount = hotelServiceBreakdown.pendingAmount;
+
+    let pendingAmount = roomPendingAmount + foodPendingAmount + drinkPendingAmount + servicePendingAmount;
+
+    // Include standalone service bookings if that model exists in this deployment
     try {
       const ServiceBooking = require('../models/ServiceBooking.js').default;
       const serviceBookings = await ServiceBooking.find({
         hotel: hotelId,
-        status: { $in: ['completed', 'paid'] }
+        status: { $in: ['completed', 'paid', 'pending', 'confirmed', 'in-progress'] }
       });
 
-      serviceBookings.forEach(booking => {
-        serviceRevenue += booking.totalPrice || booking.price || 0;
+      serviceBookings.forEach((booking) => {
+        const amount = booking.totalPrice || booking.price || 0;
+        serviceRevenue += amount;
+        serviceTransactionCount += 1;
+
+        if (!['completed', 'paid'].includes(booking.status)) {
+          servicePendingAmount += amount;
+          pendingAmount += amount;
+        }
       });
-      serviceTransactionCount = serviceBookings.length;
     } catch (e) {
-      // Service booking model may not exist, that's okay
       console.log('ℹ️  Service booking model not available');
     }
 
-    // Calculate totals
-    const totalRevenue = roomRevenue + foodRevenue + drinkRevenue + serviceRevenue;
     const totalTransactions = roomTransactionCount + foodTransactionCount + serviceTransactionCount;
 
-    // Calculate pending amount from transactions marked as pending
-    const pendingTransactions = await Transaction.find({
-      hotel: hotelId,
-      status: 'pending'
-    });
-    const pendingAmount = pendingTransactions.reduce((sum, tx) => sum + (tx.amount || 0), 0);
-
     const stats = {
-      totalRevenue: Math.round(totalRevenue * 100) / 100,
-      roomRevenue: Math.round(roomRevenue * 100) / 100,
-      foodRevenue: Math.round(foodRevenue * 100) / 100,
-      drinkRevenue: Math.round(drinkRevenue * 100) / 100,
-      serviceRevenue: Math.round(serviceRevenue * 100) / 100,
+      totalRevenue: roundCurrency(roomRevenue + foodRevenue + drinkRevenue + serviceRevenue),
+      roomRevenue: roundCurrency(roomRevenue),
+      foodRevenue: roundCurrency(foodRevenue),
+      drinkRevenue: roundCurrency(drinkRevenue),
+      serviceRevenue: roundCurrency(serviceRevenue),
       totalTransactions: totalTransactions,
-      pendingAmount: Math.round(pendingAmount * 100) / 100,
+      pendingAmount: roundCurrency(pendingAmount),
       completedCount: totalTransactions
     };
 
@@ -125,6 +243,177 @@ const getRevenueStats = async (req, res) => {
   } catch (err) {
     console.error('❌ Error calculating revenue stats:', err);
     return res.status(500).json({ status: 'error', message: 'Internal Server Error' });
+  }
+};
+
+const buildIncomeReportData = async (hotelId, period, date, endDate) => {
+  const { start, end } = buildReportRange(period, date, endDate);
+
+  const bookings = await Booking.find({
+    hotel: hotelId,
+    status: { $in: ['confirmed', 'checked-in', 'checked-out'] },
+    createdAt: { $gte: start, $lt: end }
+  })
+    .populate('guest', 'name email')
+    .populate('room', 'roomNumber roomType');
+
+  const serviceBookings = await Booking.find({
+    hotel: hotelId,
+    $or: [
+      { 'roomServiceOrders.0': { $exists: true } },
+      { 'hotelServiceOrders.0': { $exists: true } }
+    ]
+  })
+    .populate('guest', 'name email')
+    .populate('room', 'roomNumber roomType');
+
+  const foodOrders = await FoodOrder.find({
+    hotel: hotelId,
+    status: { $ne: 'cancelled' },
+    createdAt: { $gte: start, $lt: end }
+  }).populate('guest', 'name email');
+
+  const roomEntries = bookings.map((booking) => ({
+    type: 'room-booking',
+    category: 'Room Bookings',
+    label: booking.bookingNumber || `Booking ${booking._id.toString().slice(-6)}`,
+    guestName: booking.guest?.name || 'Unknown Guest',
+    roomNumber: booking.room?.roomNumber || '',
+    amount: roundCurrency(booking.totalPrice || 0),
+    status: booking.status,
+    occurredAt: booking.createdAt
+  }));
+
+  const roomServiceEntries = [];
+  const inhouseServiceEntries = [];
+
+  serviceBookings.forEach((booking) => {
+    const guestName = booking.guest?.name || 'Unknown Guest';
+    const roomNumber = booking.room?.roomNumber || '';
+
+    (booking.roomServiceOrders || []).forEach((order) => {
+      const occurredAt = order.orderedAt || booking.updatedAt || booking.createdAt;
+      if (order.status === 'cancelled' || occurredAt < start || occurredAt >= end) {
+        return;
+      }
+
+      roomServiceEntries.push({
+        type: 'room-service',
+        category: 'Food & Drink Orders',
+        label: order.items?.map((item) => item.name).filter(Boolean).join(', ') || 'Room service order',
+        guestName,
+        roomNumber,
+        amount: roundCurrency(order.totalPrice || 0),
+        status: order.status,
+        occurredAt
+      });
+    });
+
+    (booking.hotelServiceOrders || []).forEach((order) => {
+      const occurredAt = order.requestedAt || booking.updatedAt || booking.createdAt;
+      if (order.status === 'cancelled' || occurredAt < start || occurredAt >= end) {
+        return;
+      }
+
+      inhouseServiceEntries.push({
+        type: 'inhouse-service',
+        category: 'Inhouse Services',
+        label: order.name || 'Inhouse service',
+        guestName,
+        roomNumber,
+        amount: roundCurrency(order.totalPrice || order.price || 0),
+        status: order.status,
+        occurredAt
+      });
+    });
+  });
+
+  const foodOrderEntries = foodOrders.map((order) => ({
+    type: order.category === 'drink' ? 'drink-order' : 'food-order',
+    category: 'Food & Drink Orders',
+    label: order.items?.join(', ') || `${order.category || 'Food'} order`,
+    guestName: order.guestName || order.guest?.name || 'Unknown Guest',
+    roomNumber: order.roomNumber || '',
+    amount: roundCurrency(order.totalPrice || 0),
+    status: order.status,
+    occurredAt: order.createdAt
+  }));
+
+  const entries = [
+    ...roomEntries,
+    ...foodOrderEntries,
+    ...roomServiceEntries,
+    ...inhouseServiceEntries
+  ].sort((a, b) => new Date(a.occurredAt) - new Date(b.occurredAt));
+
+  const summary = {
+    roomBookings: roundCurrency(roomEntries.reduce((sum, entry) => sum + entry.amount, 0)),
+    foodAndDrinks: roundCurrency([...foodOrderEntries, ...roomServiceEntries].reduce((sum, entry) => sum + entry.amount, 0)),
+    inhouseServices: roundCurrency(inhouseServiceEntries.reduce((sum, entry) => sum + entry.amount, 0))
+  };
+
+  return {
+    period,
+    startDate: start,
+    endDate: new Date(end.getTime() - 1),
+    generatedAt: new Date(),
+    summary: {
+      ...summary,
+      totalIncome: roundCurrency(summary.roomBookings + summary.foodAndDrinks + summary.inhouseServices)
+    },
+    entries
+  };
+};
+
+const getIncomeReport = async (req, res) => {
+  try {
+    const { hotelId } = req.params;
+    const period = req.query.period === 'monthly' ? 'monthly' : req.query.period === 'custom' ? 'custom' : 'daily';
+    const { date, endDate } = req.query;
+
+    const report = await buildIncomeReportData(hotelId, period, date, endDate);
+
+    return res.status(200).json({
+      status: 'success',
+      data: report
+    });
+  } catch (err) {
+    console.error('❌ Error generating income report:', err);
+    return res.status(500).json({ status: 'error', message: 'Failed to generate income report' });
+  }
+};
+
+const sendIncomeReport = async (req, res) => {
+  try {
+    const { hotelId } = req.params;
+    const period = req.body.period === 'monthly' ? 'monthly' : req.body.period === 'custom' ? 'custom' : 'daily';
+    const date = req.body.date;
+    const endDate = req.body.endDate;
+    const recipientEmail = (req.body.recipientEmail || '').trim().toLowerCase();
+
+    if (!isValidEmail(recipientEmail)) {
+      return res.status(400).json({ status: 'error', message: 'A valid recipient email is required' });
+    }
+
+    const hotel = await Hotel.findById(hotelId).select('name');
+    if (!hotel) {
+      return res.status(404).json({ status: 'error', message: 'Hotel not found' });
+    }
+
+    const report = await buildIncomeReportData(hotelId, period, date, endDate);
+
+    await sendIncomeReportEmail(recipientEmail, {
+      hotelName: hotel.name || 'Hotel',
+      report
+    });
+
+    return res.status(200).json({
+      status: 'success',
+      message: `Income report sent to ${recipientEmail}`
+    });
+  } catch (err) {
+    console.error('❌ Error sending income report email:', err);
+    return res.status(500).json({ status: 'error', message: 'Failed to send income report email' });
   }
 };
 
@@ -163,10 +452,10 @@ const syncTransactionsFromSources = async (hotelId) => {
       }
     }
 
-    // Get delivered food orders and create food/drink transactions
+    // Get non-cancelled food orders and create food/drink transactions
     const foodOrders = await FoodOrder.find({
       hotel: hotelId,
-      status: { $in: ['ready', 'delivered'] }
+      status: { $ne: 'cancelled' }
     }).populate('guest', 'name email');
 
     for (const order of foodOrders) {
@@ -189,6 +478,81 @@ const syncTransactionsFromSources = async (hotelId) => {
           paymentMethod: 'card',
           timestamp: order.createdAt || new Date()
         });
+      }
+    }
+
+    // Sync embedded room service and hotel service orders from bookings
+    const bookingsWithServices = await Booking.find({
+      hotel: hotelId,
+      $or: [
+        { 'roomServiceOrders.0': { $exists: true } },
+        { 'hotelServiceOrders.0': { $exists: true } }
+      ]
+    }).populate('guest', 'name email').populate('room', 'roomNumber');
+
+    for (const booking of bookingsWithServices) {
+      const guestName = booking.guest?.name || 'Unknown Guest';
+      const roomNumber = booking.room?.roomNumber || '';
+
+      for (const order of booking.roomServiceOrders || []) {
+        if (order.status === 'cancelled' || !order.totalPrice) {
+          continue;
+        }
+
+        const orderId = order._id?.toString();
+        const description = `Room service order${orderId ? ` #${orderId.slice(-6)}` : ''} - Room ${roomNumber || 'N/A'}`;
+        const existingTx = await Transaction.findOne({
+          hotel: hotelId,
+          booking: booking._id,
+          type: 'food',
+          description
+        });
+
+        if (!existingTx) {
+          await Transaction.create({
+            hotel: hotelId,
+            type: 'food',
+            description,
+            amount: order.totalPrice,
+            guestName,
+            guest: booking.guest?._id,
+            booking: booking._id,
+            status: order.status === 'delivered' ? 'completed' : 'pending',
+            paymentMethod: 'card',
+            timestamp: order.orderedAt || booking.updatedAt || booking.createdAt || new Date()
+          });
+        }
+      }
+
+      for (const order of booking.hotelServiceOrders || []) {
+        if (order.status === 'cancelled' || !(order.totalPrice || order.price)) {
+          continue;
+        }
+
+        const amount = order.totalPrice || order.price || 0;
+        const orderId = order._id?.toString();
+        const description = `${order.name || 'Inhouse service'}${orderId ? ` #${orderId.slice(-6)}` : ''} - Room ${roomNumber || 'N/A'}`;
+        const existingTx = await Transaction.findOne({
+          hotel: hotelId,
+          booking: booking._id,
+          type: 'service',
+          description
+        });
+
+        if (!existingTx) {
+          await Transaction.create({
+            hotel: hotelId,
+            type: 'service',
+            description,
+            amount,
+            guestName,
+            guest: booking.guest?._id,
+            booking: booking._id,
+            status: order.status === 'completed' ? 'completed' : 'pending',
+            paymentMethod: 'card',
+            timestamp: order.requestedAt || booking.updatedAt || booking.createdAt || new Date()
+          });
+        }
       }
     }
 
@@ -311,8 +675,11 @@ const deleteTransaction = async (req, res) => {
 export {
   getAllTransactions,
   getRevenueStats,
+  getIncomeReport,
+  sendIncomeReport,
   createTransaction,
   updateTransactionStatus,
   getTransactionById,
-  deleteTransaction
+  deleteTransaction,
+  buildIncomeReportData
 };

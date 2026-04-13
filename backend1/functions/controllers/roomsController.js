@@ -20,6 +20,8 @@ const getAllRooms = async (req, res) => {
     const rooms = await Room.find(filter)
       .populate("hotel", "name")
       .populate("currentGuest", "name email")
+      .populate("smartLockDevice", "deviceId deviceType tuyaDeviceId status")
+      .populate("doorSensorDevice", "deviceId deviceType tuyaDeviceId status")
       .limit(limit * 1)
       .skip(skip)
       .sort({ roomNumber: 1 });
@@ -47,7 +49,9 @@ const getRoomById = async (req, res) => {
     const { id } = req.params;
     const room = await Room.findById(id)
       .populate("hotel", "name")
-      .populate("currentGuest", "name email phone");
+      .populate("currentGuest", "name email phone")
+      .populate("smartLockDevice", "deviceId deviceType tuyaDeviceId status")
+      .populate("doorSensorDevice", "deviceId deviceType tuyaDeviceId status");
 
     if (!room) return res.status(404).json({ status: "failed", message: "Room not found" });
 
@@ -122,7 +126,9 @@ const updateRoom = async (req, res) => {
 
     const room = await Room.findByIdAndUpdate(id, updates, { new: true })
       .populate("hotel", "name")
-      .populate("currentGuest", "name email");
+      .populate("currentGuest", "name email")
+      .populate("smartLockDevice", "deviceId deviceType tuyaDeviceId status")
+      .populate("doorSensorDevice", "deviceId deviceType tuyaDeviceId status");
 
     if (!room) return res.status(404).json({ status: "failed", message: "Room not found" });
 
@@ -162,7 +168,7 @@ const updateRoomStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
-    if (!["available", "occupied", "maintenance", "reserved"].includes(status)) {
+    if (!["available", "occupied", "maintenance", "reserved", "cleaning"].includes(status)) {
       return res.status(400).json({ status: "failed", message: "Invalid status" });
     }
 

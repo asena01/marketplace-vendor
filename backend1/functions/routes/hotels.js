@@ -2,14 +2,44 @@ import express from 'express';
 import Hotel from '../models/Hotel.js';
 import Room from '../models/Room.js';
 import Booking from '../models/Booking.js';
+import Review from '../models/Review.js';
 import mongoose from 'mongoose';
+import { syncExpiredBookings } from '../controllers/bookingsController.js';
 import {
   getDeviceStatus,
   getDeviceLogs,
   getDeviceShadowProperties
 } from '../controllers/deviceController.js';
+import { buildIncomeReportData } from '../controllers/revenueController.js';
 
 const router = express.Router();
+
+const syncHotelRating = async (hotelId) => {
+  const stats = await Review.aggregate([
+    {
+      $match: {
+        businessId: new mongoose.Types.ObjectId(hotelId),
+        businessType: 'hotel',
+        status: 'approved'
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        averageRating: { $avg: '$rating' },
+        totalReviews: { $sum: 1 }
+      }
+    }
+  ]);
+
+  const averageRating = stats[0]?.averageRating || 0;
+  const totalReviews = stats[0]?.totalReviews || 0;
+
+  await Hotel.findByIdAndUpdate(hotelId, {
+    rating: Number(averageRating.toFixed(1)),
+    reviewsCount: totalReviews
+  });
+};
 
 // ==================== CHECK ROOM AVAILABILITY ====================
 // MUST BE DEFINED BEFORE GENERIC /:id ROUTE
@@ -98,12 +128,15 @@ router.get('/public/search', async (req, res) => {
       page = 1,
       limit = 50,
       location,
+      checkIn,
+      checkOut,
+      guests,
       minRating = 0,
       amenities,
       propertyTypes
     } = req.query;
 
-    console.log('🔍 Public hotel search requested:', { page, limit, location, minRating, amenities, propertyTypes });
+    console.log('🔍 Public hotel search requested:', { page, limit, location, checkIn, checkOut, guests, minRating, amenities, propertyTypes });
 
     // Build filter for active hotels only
     let filter = { isActive: true };
@@ -139,6 +172,23 @@ router.get('/public/search', async (req, res) => {
     // Pagination
     const skip = (page - 1) * limit;
 
+    let checkInDate = null;
+    let checkOutDate = null;
+    const requestedGuests = Number(guests) || 0;
+    const hasDateRange = Boolean(checkIn && checkOut);
+
+    if (hasDateRange) {
+      checkInDate = new Date(checkIn);
+      checkOutDate = new Date(checkOut);
+
+      if (isNaN(checkInDate.getTime()) || isNaN(checkOutDate.getTime()) || checkInDate >= checkOutDate) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Invalid check-in/check-out date range'
+        });
+      }
+    }
+
     // Fetch hotels
     const hotels = await Hotel.find(filter)
       .populate('owner', 'name email phone')
@@ -153,8 +203,30 @@ router.get('/public/search', async (req, res) => {
     // Transform data for frontend - fetch rooms and calculate price
     const transformedHotels = await Promise.all(
       hotels.map(async (hotel) => {
-        // Fetch rooms for this hotel to get pricing
-        const rooms = await Room.find({ hotel: hotel._id });
+        // Fetch rooms for this hotel to get pricing and availability
+        let rooms = await Room.find({ hotel: hotel._id });
+
+        if (requestedGuests > 0) {
+          rooms = rooms.filter((room) => (room.capacity || room.maxOccupancy || 0) >= requestedGuests);
+        }
+
+        if (hasDateRange && rooms.length > 0) {
+          const roomIds = rooms.map((room) => room._id);
+          const conflictingBookings = await Booking.find({
+            room: { $in: roomIds },
+            status: { $in: ['pending', 'confirmed', 'checked-in'] },
+            checkInDate: { $lt: checkOutDate },
+            checkOutDate: { $gt: checkInDate }
+          }).select('room');
+
+          const unavailableRoomIds = new Set(
+            conflictingBookings.map((booking) => booking.room?.toString()).filter(Boolean)
+          );
+
+          rooms = rooms.filter((room) => !unavailableRoomIds.has(room._id.toString()));
+        }
+
+        rooms = rooms.filter((room) => room.status !== 'maintenance');
 
         // Calculate base price (minimum room price) or use existing basePrice
         let price = hotel.basePrice || 0;
@@ -212,6 +284,133 @@ router.get('/public/search', async (req, res) => {
   }
 });
 
+router.get('/:id/reviews', async (req, res) => {
+  try {
+    const { id: hotelId } = req.params;
+    const { page = 1, limit = 50 } = req.query;
+
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const reviews = await Review.find({
+      businessId: hotelId,
+      businessType: 'hotel',
+      status: 'approved'
+    })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(Number(limit));
+
+    const total = await Review.countDocuments({
+      businessId: hotelId,
+      businessType: 'hotel',
+      status: 'approved'
+    });
+
+    const formattedReviews = reviews.map((review) => ({
+      ...review.toObject(),
+      guestName: review.customerName,
+      response: review.vendorResponse?.text || null,
+      responseDate: review.vendorResponse?.respondedAt || null,
+    }));
+
+    res.status(200).json({
+      status: 'success',
+      data: formattedReviews,
+      pagination: {
+        total,
+        pages: Math.ceil(total / Number(limit)),
+        currentPage: Number(page)
+      }
+    });
+  } catch (err) {
+    console.error('Error fetching hotel reviews:', err);
+    res.status(500).json({ status: 'error', message: 'Failed to fetch hotel reviews' });
+  }
+});
+
+router.post('/:id/reviews', async (req, res) => {
+  try {
+    const { id: hotelId } = req.params;
+    const {
+      bookingId,
+      customerId,
+      customerName,
+      customerEmail,
+      rating,
+      title,
+      comment
+    } = req.body;
+
+    if (!bookingId || !customerId || !customerName || !rating || !title || !comment) {
+      return res.status(400).json({ status: 'failed', message: 'Missing required review fields' });
+    }
+
+    const booking = await Booking.findById(bookingId).populate('room', 'roomNumber roomType');
+    if (!booking) {
+      return res.status(404).json({ status: 'failed', message: 'Booking not found' });
+    }
+
+    if (booking.hotel?.toString() !== hotelId) {
+      return res.status(400).json({ status: 'failed', message: 'Booking does not belong to this hotel' });
+    }
+
+    if (booking.guest?.toString() !== customerId) {
+      return res.status(403).json({ status: 'failed', message: 'You can only review your own stay' });
+    }
+
+    if (!['checked-out', 'completed'].includes(booking.status)) {
+      return res.status(400).json({ status: 'failed', message: 'You can review only after checkout is completed' });
+    }
+
+    const existingReview = await Review.findOne({
+      businessId: hotelId,
+      businessType: 'hotel',
+      bookingId,
+      customerId
+    });
+
+    if (existingReview) {
+      return res.status(409).json({ status: 'failed', message: 'You already reviewed this stay' });
+    }
+
+    const review = new Review({
+      businessId: hotelId,
+      businessType: 'hotel',
+      customerId,
+      customerName,
+      customerEmail,
+      bookingId,
+      orderId: bookingId,
+      productName: booking.room?.roomType || null,
+      roomNumber: booking.room?.roomNumber || null,
+      checkInDate: booking.checkInDate,
+      checkOutDate: booking.checkOutDate,
+      rating,
+      title,
+      comment,
+      isVerifiedPurchase: true,
+      status: 'approved'
+    });
+
+    await review.save();
+    await syncHotelRating(hotelId);
+
+    res.status(201).json({
+      status: 'success',
+      message: 'Review submitted successfully',
+      data: {
+        ...review.toObject(),
+        guestName: review.customerName,
+        response: null,
+        responseDate: null
+      }
+    });
+  } catch (err) {
+    console.error('Error creating hotel review:', err);
+    res.status(500).json({ status: 'error', message: 'Failed to submit hotel review' });
+  }
+});
+
 // Get all hotels
 router.get('/', async (req, res) => {
   try {
@@ -244,6 +443,65 @@ router.get('/', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ status: 'error', message: 'Internal Server Error' });
+  }
+});
+
+// Get hotel dashboard stats
+// MUST BE DEFINED BEFORE GENERIC /:id ROUTE
+router.get('/:id/stats', async (req, res) => {
+  try {
+    const { id: hotelId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(hotelId)) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Invalid hotel ID',
+        data: null
+      });
+    }
+
+    const today = new Date();
+    const startOfDay = new Date(today);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(startOfDay);
+    endOfDay.setDate(endOfDay.getDate() + 1);
+
+    const [rooms, activeBookings, checkInsToday, report] = await Promise.all([
+      Room.countDocuments({ hotel: hotelId }),
+      Booking.countDocuments({
+        hotel: hotelId,
+        status: { $in: ['confirmed', 'checked-in'] }
+      }),
+      Booking.countDocuments({
+        hotel: hotelId,
+        checkInDate: { $gte: startOfDay, $lt: endOfDay },
+        status: { $in: ['confirmed', 'checked-in', 'checked-out'] }
+      }),
+      buildIncomeReportData(hotelId, 'daily', startOfDay.toISOString().slice(0, 10))
+    ]);
+
+    const totalRevenue = report?.summary?.totalIncome || 0;
+    const occupiedRooms = activeBookings;
+    const occupancyRate = rooms > 0 ? Math.round((occupiedRooms / rooms) * 100) : 0;
+
+    return res.status(200).json({
+      status: 'success',
+      data: {
+        totalRooms: rooms,
+        occupiedRooms,
+        activeBookings,
+        checkInsToday,
+        occupancyRate,
+        totalRevenue
+      }
+    });
+  } catch (err) {
+    console.error('❌ Error fetching hotel stats:', err);
+    return res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch hotel stats',
+      data: null
+    });
   }
 });
 
@@ -412,6 +670,8 @@ router.get('/:hotelId/bookings', async (req, res) => {
 
     // Filter bookings by rooms in this hotel
     filter.room = { $in: roomIds };
+
+    await syncExpiredBookings({ room: { $in: roomIds } });
 
     // Filter by status if provided
     if (status) {

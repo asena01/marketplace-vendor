@@ -7,6 +7,7 @@ import Vendor from '../models/Vendor.js';
 import Hotel from '../models/Hotel.js';
 import Restaurant from '../models/Restaurant.js';
 import Tour from '../models/Tour.js';
+import Staff from '../models/Staff.js';
 
 const router = express.Router();
 
@@ -305,6 +306,115 @@ router.post('/login', async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message,
+    });
+  }
+});
+
+router.post('/staff-login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide email and password'
+      });
+    }
+
+    const staff = await Staff.findOne({ email }).select('+password').populate('hotel', 'name');
+    if (!staff) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
+    }
+
+    const isPasswordValid = await staff.comparePassword(password);
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
+    }
+
+    staff.lastLogin = new Date();
+    await staff.save();
+
+    const token = jwt.sign(
+      { id: staff._id, email: staff.email, type: 'staff', hotelId: staff.hotel?._id || staff.hotel },
+      process.env.JWT_SECRET || 'your_jwt_secret_key',
+      { expiresIn: '7d' }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Staff login successful',
+      token,
+      user: {
+        _id: staff._id,
+        name: staff.name,
+        email: staff.email,
+        userType: 'staff',
+        vendorType: 'hotel',
+        hotelId: staff.hotel?._id || staff.hotel,
+        hotelName: staff.hotel?.name || 'Hotel',
+        staffPosition: staff.position,
+        accessRole: staff.accessRole,
+        allowedModules: staff.allowedModules || [],
+        allowedAreas: staff.allowedAreas || [],
+        permissions: staff.permissions || {},
+        mustChangePassword: staff.mustChangePassword === true
+      }
+    });
+  } catch (error) {
+    console.error('❌ Staff login error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+router.post('/staff-change-password', async (req, res) => {
+  try {
+    const { staffId, currentPassword, newPassword } = req.body;
+
+    if (!staffId || !currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'staffId, currentPassword and newPassword are required'
+      });
+    }
+
+    const staff = await Staff.findById(staffId).select('+password');
+    if (!staff) {
+      return res.status(404).json({
+        success: false,
+        message: 'Staff not found'
+      });
+    }
+
+    const isValid = await staff.comparePassword(currentPassword);
+    if (!isValid) {
+      return res.status(401).json({
+        success: false,
+        message: 'Current password is incorrect'
+      });
+    }
+
+    staff.password = newPassword;
+    staff.mustChangePassword = false;
+    await staff.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Password changed successfully'
+    });
+  } catch (error) {
+    console.error('❌ Staff change password error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message
     });
   }
 });

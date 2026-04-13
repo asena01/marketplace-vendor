@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
+import { apiConfig } from '../config/api-config';
 
 export interface Customer {
   _id?: string;
@@ -50,10 +51,8 @@ export interface CustomerResponse<T> {
   providedIn: 'root'
 })
 export class CustomerService {
-  //private apiUrl = 'http://localhost:5001/customers';
-  //private apiUrl2 = 'http://localhost:5001';
-  private apiUrl = 'https://api-qpczzmaezq-uc.a.run.app/customers';
-  private apiUrl2 = 'https://api-qpczzmaezq-uc.a.run.app';
+  private apiUrl = `https://api-qpczzmaezq-uc.a.run.app/customers`;
+  private apiUrl2 = `https://api-qpczzmaezq-uc.a.run.app`;
   constructor(private http: HttpClient) {}
 
   // Get business customers
@@ -223,6 +222,14 @@ export class CustomerService {
     );
   }
 
+  requestHotelService(serviceRequestData: any): Observable<CustomerResponse<any>> {
+    const { bookingId, ...data } = serviceRequestData;
+    return this.http.post<CustomerResponse<any>>(
+      `${this.apiUrl2}/hotel-bookings/${bookingId}/hotel-service-orders`,
+      data
+    );
+  }
+
   // Service bookings
   getServiceBookings(): Observable<CustomerResponse<any>> {
       const userId = localStorage.getItem('userId');
@@ -299,5 +306,11 @@ export class CustomerService {
     return this.http.post<CustomerResponse<any>>(`${this.apiUrl}/vendor-chats/${chatId}/message${params}`, {
       message
     });
+  }
+
+  markVendorChatRead(chatId: string): Observable<CustomerResponse<any>> {
+    const userId = localStorage.getItem('userId');
+    const params = userId ? `?userId=${userId}` : '';
+    return this.http.put<CustomerResponse<any>>(`${this.apiUrl}/vendor-chats/${chatId}/read-customer${params}`, {});
   }
 }

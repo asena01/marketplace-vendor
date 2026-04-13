@@ -2,6 +2,8 @@ import express from 'express';
 import {
   getAllTransactions,
   getRevenueStats,
+  getIncomeReport,
+  sendIncomeReport,
   createTransaction,
   updateTransactionStatus,
   getTransactionById,
@@ -15,6 +17,12 @@ router.get('/', getAllTransactions);
 
 // Get revenue statistics
 router.get('/stats', getRevenueStats);
+
+// Get printable income report data
+router.get('/report', getIncomeReport);
+
+// Send income report email
+router.post('/report/email', sendIncomeReport);
 
 // Create new transaction
 router.post('/', createTransaction);

@@ -7,8 +7,16 @@ export interface User {
   _id: string;
   name: string;
   email: string;
-  userType: 'customer' | 'vendor' | 'admin';
+  userType: 'customer' | 'vendor' | 'admin' | 'staff';
   vendorType?: string;
+  hotelId?: string;
+  hotelName?: string;
+  staffPosition?: string;
+  accessRole?: string;
+  allowedModules?: string[];
+  allowedAreas?: string[];
+  permissions?: any;
+  mustChangePassword?: boolean;
   businessName?: string;
   businessDescription?: string;
   phone: string;
@@ -41,7 +49,7 @@ export class AuthService {
   // Signals for reactive state
   isAuthenticated = signal(this.hasToken());
   currentUser = signal<User | null>(this.getStoredUser());
-  userType = signal<'customer' | 'vendor' | 'admin' | null>(this.getStoredUser()?.userType || null);
+  userType = signal<'customer' | 'vendor' | 'admin' | 'staff' | null>(this.getStoredUser()?.userType || null);
 
   private authSubject = new BehaviorSubject<User | null>(this.getStoredUser());
   public auth$ = this.authSubject.asObservable();
@@ -199,6 +207,31 @@ export class AuthService {
     );
   }
 
+  loginStaff(email: string, password: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/auth/staff-login`, { email, password }).pipe(
+      tap((response: any) => {
+        if (response.success && response.token) {
+          this.setToken(response.token);
+          this.setUser(response.user);
+          this.updateAuthState(response.user);
+          localStorage.setItem('userId', response.user._id);
+          localStorage.setItem('userType', response.user.userType);
+          if (response.user.hotelId) {
+            localStorage.setItem('hotelId', response.user.hotelId);
+          }
+        }
+      })
+    );
+  }
+
+  changeStaffPassword(staffId: string, currentPassword: string, newPassword: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/auth/staff-change-password`, {
+      staffId,
+      currentPassword,
+      newPassword
+    });
+  }
+
   /**
    * Logout user
    */
@@ -293,6 +326,14 @@ export class AuthService {
     return this.currentUser();
   }
 
+  updateStoredUser(patch: Partial<User>): void {
+    const current = this.getCurrentUser();
+    if (!current) return;
+    const nextUser = { ...current, ...patch } as User;
+    this.setUser(nextUser);
+    this.updateAuthState(nextUser);
+  }
+
   /**
    * Get user type
    */
@@ -305,6 +346,10 @@ export class AuthService {
    */
   isVendor(): boolean {
     return this.userType() === 'vendor';
+  }
+
+  isStaff(): boolean {
+    return this.userType() === 'staff';
   }
 
   /**
